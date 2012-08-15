@@ -1,0 +1,5 @@
+anyjson==0.3.3
+boto==2.5.2
+jsonklog==0.15.0
+pymongo==2.2.1
+requests==0.13.6

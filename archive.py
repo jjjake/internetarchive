@@ -7,9 +7,10 @@ import time
 import os
 import json
 
+import requests
+from lxml import etree
 from jsonklog.formatters import JSONFormatter
 from jsonklog.formatters import JSONFormatterSimple
-import requests
 import boto
 from boto.s3.key import Key
 from boto.s3.connection import OrdinaryCallingFormat
@@ -30,6 +31,27 @@ COOKIES = {'logged-in-sig': os.environ['LOGGED_IN_SIG'],
 
 S3_CONNECTION = boto.connect_s3(host='s3.us.archive.org',
                                 calling_format=OrdinaryCallingFormat())
+
+class User(object):
+
+    def __init__(self, user):
+        self.user = user
+
+    def tasks(self, task_type=None):
+        tasks_url = ('http://archive.org/catalog_status.php?'
+                     'where=submitter="%s"' % self.user)
+        xml_object = etree.parse(tasks_url)
+        raw_tasks = {'greenrows': xml_object.find('wait_admin0'),
+                     'bluerows': xml_object.find('wait_admin1'),
+                     'redrows': xml_object.find('wait_admin2'),
+        }
+        tasks = {k: v.text for k,v in raw_tasks.iteritems() if v is not None}
+        if task_type:
+            return tasks.get(task_type)
+        else:
+            return tasks
+
+
 
 class Item(object):
 

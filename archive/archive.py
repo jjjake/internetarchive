@@ -31,9 +31,6 @@ class Item(object):
         src = self.metadata[target]
         dest = dict((src.items() + patch.items()))
         patch = make_patch(src, dest) #.patch
-        print patch
-        print dir(patch)
-        print dir(patch.patch)
         params = {"-patch": json.dumps(patch), "-target": target}
         r = requests.patch(self.metadata_url, params=ptextarams, cookies=log_in_cookies)
         return r

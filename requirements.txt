@@ -4,3 +4,4 @@ jsonklog==0.15.0
 lxml==2.3.5
 pymongo==2.2.1
 requests==0.13.6
+jsonpatch==0.4

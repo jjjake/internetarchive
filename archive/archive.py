@@ -1,15 +1,44 @@
 import time
 import os
 import json
+import math
+from multiprocessing import Pool
+from filechunkio import FileChunkIO
 
 import requests
-from lxml import etree
 from boto.s3.key import Key
 from jsonpatch import make_patch
 
 from config import DotDict, log_in_cookies, log, s3_connection
 
 
+# S3 Multi-Part Upload (Must be outside of class) >>>
+#______________________________________________________________________________
+def _upload_part(bucketname, multipart_id, part_num, source_path, offset, 
+                 bytes, amount_of_retries=10):
+    """
+    Upload a part of a file with retries.
+    """
+    def _upload(retries_left=amount_of_retries):
+        try:
+            log.info('Start uploading part #%d ...' % part_num)
+            bucket = s3_connection.get_bucket(bucketname)
+            for mp in bucket.get_all_multipart_uploads():
+                if mp.id == multipart_id:
+                    with FileChunkIO(source_path, 'r', offset=offset, 
+                                     bytes=bytes) as fp:
+                        mp.upload_part_from_file(fp=fp, part_num=part_num)
+                    break
+        except Exception, exc:
+            if retries_left:
+                _upload(retries_left=retries_left - 1)
+            else:
+                log.info('... Failed uploading part #%d' % part_num)
+                raise exc
+        else:
+            log.info('... Uploaded part #%d' % part_num)
+    
+    _upload()
 
 class Item(object):
 
@@ -32,7 +61,8 @@ class Item(object):
         dest = dict((src.items() + patch.items()))
         patch = make_patch(src, dest) #.patch
         params = {"-patch": json.dumps(patch), "-target": target}
-        r = requests.patch(self.metadata_url, params=ptextarams, cookies=log_in_cookies)
+        r = requests.patch(self.metadata_url, params=params, 
+                           cookies=log_in_cookies)
         return r
 
 
@@ -60,7 +90,8 @@ class Item(object):
                 i+=1
             raise NameError('Could not create or lookup %s' % self.identifier)
 
-    def upload(self, files, meta_dict, dry_run=False, derive=True):
+    def upload(self, files, meta_dict, dry_run=False, derive=True, 
+               multipart=False):
 
         headers = {'x-archive-meta-%s' % k: v for k,v in
                    meta_dict.iteritems() if type(v) != list}
@@ -86,11 +117,41 @@ class Item(object):
                 return None
             if not derive:
                 headers = {'x-archive-queue-derive': 0}
-            k = Key(bucket)
-            k.name = filename
-            k.set_contents_from_filename(file, headers=headers)
-            log.info('Created: http://archive.org/details/%s' % self.identifier)
+            if multipart is False:
+                k = Key(bucket)
+                k.name = filename
+                k.set_contents_from_filename(file, headers=headers)
+                log.info('Upload complete:\t%s' % self.identifier)
+            # MULTI-PART UPLOAD ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~>
+            else:
+                parallel_processes=4
+                keyname = filename
+                mp = bucket.initiate_multipart_upload(keyname, headers=headers)
+                print mp
+                source_size = os.stat(file).st_size
+                headers['x-archive-size-hint'] = source_size
+                bytes_per_chunk = (max(int(math.sqrt(5242880) * 
+                                   math.sqrt(source_size)), 5242880))
+                chunk_amount = (int(math.ceil(source_size / 
+                                float(bytes_per_chunk))))
+                pool = Pool(processes=parallel_processes)
+                for i in range(chunk_amount):
+                    offset = i * bytes_per_chunk
+                    remaining_bytes = source_size - offset
+                    bytes = min([bytes_per_chunk, remaining_bytes])
+                    part_num = i + 1
+                    pool.apply_async(_upload_part, 
+                                     [self.identifier, mp.id, part_num, file, 
+                                      offset, bytes])
+                pool.close()
+                pool.join()
 
+                if len(mp.get_all_parts()) == chunk_amount:
+                    mp.complete_upload()
+                    key = bucket.get_key(keyname)
+                    log.info('Upload complete:\t%s' % self.identifier)
+                else:
+                    mp.cancel_upload()
 
 
 class Catalog(object):

@@ -23,17 +23,14 @@ log_in_cookies = {'logged-in-sig': os.environ['LOGGED_IN_SIG'],
 
 
 # S3
-import boto
-from boto.s3.key import Key
-from boto.s3.connection import OrdinaryCallingFormat
+#import boto
+#from boto.s3.connection import OrdinaryCallingFormat
+#s3_connection = boto.connect_s3(host='s3.us.archive.org', is_secure=False,
+#                                calling_format=OrdinaryCallingFormat())
 
-S3_ACCES_KEY = os.environ['S3_KEYS'].split(':')[0]
-S3_SECRET_KEY = os.environ['S3_KEYS'].split(':')[1]
 
-s3_connection = boto.connect_s3(S3_ACCES_KEY, S3_SECRET_KEY,
-                                host='s3.us.archive.org', is_secure=False,
-                                calling_format=OrdinaryCallingFormat())
-
+from boto.s3.connection import S3Connection
+s3_connection = S3Connection(host='s3.us.archive.org', is_secure=False)
 
 
 class DotDict(dict):

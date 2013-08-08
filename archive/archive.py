@@ -3,6 +3,7 @@ import os
 import json
 import math
 import multiprocessing
+import urllib
 
 import filechunkio
 import requests
@@ -12,11 +13,9 @@ import jsonpatch
 
 
 
-
-
 # S3 Multi-Part Upload (Must be outside of class (I'm probably doing this
 # wrong :)) >>>
-#______________________________________________________________________________
+#_________________________________________________________________________________________
 def _upload_part(conn, bucketname, multipart_id, part_num, source_path, offset,
                  bytes, amount_of_retries=10):
     """
@@ -43,8 +42,27 @@ def _upload_part(conn, bucketname, multipart_id, part_num, source_path, offset,
 
     _upload()
 
-class Item(object):
 
+# Item class
+#_________________________________________________________________________________________
+class Item(object):
+    """This class represents an archive.org item.
+    You can use this class to access item metadata:
+        >>> import archive
+        >>> item = archive.Item('stairs')
+        >>> print item.metadata
+
+    This class also uses IA's S3-like interface to upload files to an item. You need to
+    supply your IAS3 credentials in environment variables in order to upload. You can
+    retrieve S3 keys from https://archive.org/account/s3.php
+        >>> import os;
+        >>> os.environ['AWS_ACCESS_KEY_ID']='x'; os.environ['AWS_SECRET_ACCESS_KEY']='y'
+        >>> item.upload('myfile')
+        True
+    """
+
+    # init()
+    #_____________________________________________________________________________________
     def __init__(self, identifier):
         self.identifier = identifier
         self.details_url = 'https://archive.org/details/{0}'.format(identifier)
@@ -59,7 +77,29 @@ class Item(object):
             self.exists = True
 
 
-    # METADATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~>
+    # files()
+    #_____________________________________________________________________________________
+    def files(self):
+        """Generator for iterating over files in an item"""
+        for file_dict in self.metadata['files']:
+            file = File(self, file_dict)
+            yield file
+
+
+    # file()
+    #_____________________________________________________________________________________
+    def file(self, name):
+        """Return an archive.File object for the named file.
+        If the specified file was not found in the item, return None
+        """
+        for file_dict in self.metadata['files']:
+            if file_dict['name'] == name:
+                return File(self, file_dict)
+        return None
+
+
+    # modify_metadata()
+    #_____________________________________________________________________________________
     def modify_metadata(self, metadata={}, target='metadata'):
         """function for modifying the metadata of an existing archive.org item
         The IA Metadata API does not yet comply with the latest Json-Patch
@@ -93,7 +133,8 @@ class Item(object):
         return r
 
 
-    # UPLOADING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~>
+    # _get_s3_conn()
+    #_____________________________________________________________________________________
     def _get_s3_conn(self):
         if self._s3_conn is None:
             self._s3_conn = S3Connection(host='s3.us.archive.org', is_secure=False,
@@ -101,6 +142,8 @@ class Item(object):
         return self._s3_conn
 
 
+    # _get_s3_bucket()
+    #_____________________________________________________________________________________
     def _get_s3_bucket(self, conn, headers={}, ignore_bucket=False):
         if ignore_bucket is True:
             bucket = None
@@ -120,6 +163,8 @@ class Item(object):
         raise NameError('Could not create or lookup %s' % self.identifier)
 
 
+    # upload()
+    #_____________________________________________________________________________________
     def upload(self, files, meta_dict={}, headers={}, dry_run=False,
                derive=True, multipart=False, ignore_bucket=False,
                parallel_processes=4):
@@ -140,7 +185,7 @@ class Item(object):
             >>> item = archive.Item('identifier')
             >>> item.upload('/path/to/image.jpg', dict(mediatype='image', creator='Jake Johnson'))
         """
-        # ~ Convert metadata from :meta_dict: into S3 headers ~~~~~~~~~~~~~~~~ >
+        # Convert metadata from :meta_dict: into S3 headers
         for key,v in meta_dict.iteritems():
             if type(v) == list:
                 i=1
@@ -155,28 +200,28 @@ class Item(object):
                 else:
                     headers[s3_header_key] = v
         headers = {k: str(v) for k,v in headers.iteritems() if v}
-        # < ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         if dry_run:
             return headers
 
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ >
         if type(files) != list:
             files = [files]
         for file in files:
             filename = file.split('/')[-1]
             conn = self._get_s3_conn()
             bucket = self._get_s3_bucket(conn, headers, ignore_bucket=ignore_bucket)
-            ####################headers['x-archive-ignore-preexisting-bucket'] = 1 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            #headers['x-archive-ignore-preexisting-bucket'] = 1
+
             if bucket.get_key(filename):
                 continue
+
             if not derive:
                 headers = {'x-archive-queue-derive': 0}
+
             if not multipart:
                 k = boto.s3.key.Key(bucket)
                 k.name = filename
                 k.set_contents_from_filename(file, headers=headers)
-            # MULTI-PART UPLOAD ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~>
             else:
                 parallel_processes=4
                 mp = bucket.initiate_multipart_upload(filename, headers=headers)
@@ -205,8 +250,45 @@ class Item(object):
         return True
 
 
+# File class
+#_________________________________________________________________________________________
+class File(object):
+
+    # init()
+    #_____________________________________________________________________________________
+    def __init__(self, item, file_dict):
+        def get(d, key):
+            if key in d:
+                return d[key]
+            else:
+                return None
+
+        self.item = item
+        self.name = file_dict['name']
+        self.md5  = file_dict['md5']
+        self.sha1 = get(file_dict, 'sha1')
+        self.size = int(get(file_dict, 'size'))
+
+
+    # download()
+    #_____________________________________________________________________________________
+    def download(self, file_path=None):
+        if file_path is None:
+            file_path = self.name  #TODO: what about files in subdirs?
+
+        if os.path.exists(file_path):
+            raise IOError('File already exists: %s' % file_path)
+
+        url = 'https://archive.org/download/%s/%s' % (self.item.identifier, self.name)
+        urllib.urlretrieve(url, file_path)
+
+
+# Catalog class
+#_________________________________________________________________________________________
 class Catalog(object):
 
+    # init()
+    #_____________________________________________________________________________________
     def __init__(self, params=None):
         if not params:
             params = {'justme': 1}

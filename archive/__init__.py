@@ -4,7 +4,7 @@
 Internet Archive library
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Archive is an Internet Archive lbirary, written in python. 
+Archive is an Internet Archive lbirary, written in python.
 
 :copyright: (c) 2013 by Jacob M. Johnson.
 :license: GPL, see LICENSE for more details.
@@ -17,4 +17,4 @@ __author__ = 'Jacob M. Johnson'
 __license__ = 'GPL'
 __copyright__ = 'Copyright 2013 Jacob M. Johnson'
 
-from .archive import Item, Catalog
+from .archive import Item, File, Catalog

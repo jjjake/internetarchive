@@ -17,13 +17,13 @@ S3_CONNECTION = S3Connection(host='s3.us.archive.org', is_secure=False,
 LOG_IN_COOKIES = {
         'logged-in-sig': os.environ['LOGGED_IN_SIG'],
         'logged-in-user': os.environ['LOGGED_IN_USER'],
-}   
+}
 
 
-# S3 Multi-Part Upload (Must be outside of class (I'm probably doing this 
+# S3 Multi-Part Upload (Must be outside of class (I'm probably doing this
 # wrong :)) >>>
 #______________________________________________________________________________
-def _upload_part(bucketname, multipart_id, part_num, source_path, offset, 
+def _upload_part(bucketname, multipart_id, part_num, source_path, offset,
                  bytes, amount_of_retries=10):
     """
     Upload a part of a file with retries.
@@ -33,8 +33,8 @@ def _upload_part(bucketname, multipart_id, part_num, source_path, offset,
             bucket = S3_CONNECTION.get_bucket(bucketname)
             for mp in bucket.get_all_multipart_uploads():
                 if mp.id == multipart_id:
-                    with filechunkio.FileChunkIO(source_path, 'r', 
-                                                 offset=offset, 
+                    with filechunkio.FileChunkIO(source_path, 'r',
+                                                 offset=offset,
                                                  bytes=bytes) as fp:
                         mp.upload_part_from_file(fp=fp, part_num=part_num)
                     break
@@ -46,7 +46,7 @@ def _upload_part(bucketname, multipart_id, part_num, source_path, offset,
         #else:
         #    print ''
             #continue
-    
+
     _upload()
 
 class Item(object):
@@ -66,7 +66,7 @@ class Item(object):
 
     # METADATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~>
     def modify_metadata(self, metadata={}, target='metadata'):
-        """function for modifying the metadata of an existing archive.org item 
+        """function for modifying the metadata of an existing archive.org item
         The IA Metadata API does not yet comply with the latest Json-Patch
         standard. It currently complies with version 02:
 
@@ -79,7 +79,7 @@ class Item(object):
         :param target: Metadata target to update.
 
         Usage::
-            
+
             >>> import archive
             >>> item = archive.Item('identifier')
             >>> item.modify_metadata(dict(new_key='new_value', foo=['bar', 'bar2']))
@@ -117,10 +117,10 @@ class Item(object):
             i+=1
         raise NameError('Could not create or lookup %s' % self.identifier)
 
-    def upload(self, files, meta_dict={}, headers={}, dry_run=False, 
-               derive=True, multipart=False, ignore_bucket=False,  
+    def upload(self, files, meta_dict={}, headers={}, dry_run=False,
+               derive=True, multipart=False, ignore_bucket=False,
                parallel_processes=4):
-        """Upload file(s) to an item. The item will be created if it does not 
+        """Upload file(s) to an item. The item will be created if it does not
         exist.
 
         :param files: Either a list of filepaths, or a string pointing to a single file.
@@ -132,7 +132,7 @@ class Item(object):
         :param parallel_processes: (optional) Integer. Only used when :param:`multipart` is ``True``.
 
         Usage::
-            
+
             >>> import archive
             >>> item = archive.Item('identifier')
             >>> item.upload('/path/to/image.jpg', dict(mediatype='image', creator='Jake Johnson'))
@@ -178,9 +178,9 @@ class Item(object):
                 mp = bucket.initiate_multipart_upload(filename, headers=headers)
                 source_size = os.stat(file).st_size
                 headers['x-archive-size-hint'] = source_size
-                bytes_per_chunk = (max(int(math.sqrt(5242880) * 
+                bytes_per_chunk = (max(int(math.sqrt(5242880) *
                                            math.sqrt(source_size)), 5242880))
-                chunk_amount = (int(math.ceil(source_size / 
+                chunk_amount = (int(math.ceil(source_size /
                                 float(bytes_per_chunk))))
                 pool = multiprocessing.Pool(processes=parallel_processes)
                 for i in range(chunk_amount):
@@ -188,8 +188,8 @@ class Item(object):
                     remaining_bytes = source_size - offset
                     bytes = min([bytes_per_chunk, remaining_bytes])
                     part_num = i + 1
-                    pool.apply_async(_upload_part, 
-                                     [self.identifier, mp.id, part_num, file, 
+                    pool.apply_async(_upload_part,
+                                     [self.identifier, mp.id, part_num, file,
                                       offset, bytes])
                 pool.close()
                 pool.join()

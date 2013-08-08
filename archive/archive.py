@@ -11,30 +11,24 @@ import boto
 import jsonpatch
 
 
-S3_CONNECTION = S3Connection(host='s3.us.archive.org', is_secure=False,
-                             calling_format=OrdinaryCallingFormat())
-
-LOG_IN_COOKIES = {
-        'logged-in-sig': os.environ['LOGGED_IN_SIG'],
-        'logged-in-user': os.environ['LOGGED_IN_USER'],
-}   
 
 
-# S3 Multi-Part Upload (Must be outside of class (I'm probably doing this 
+
+# S3 Multi-Part Upload (Must be outside of class (I'm probably doing this
 # wrong :)) >>>
 #______________________________________________________________________________
-def _upload_part(bucketname, multipart_id, part_num, source_path, offset, 
+def _upload_part(conn, bucketname, multipart_id, part_num, source_path, offset,
                  bytes, amount_of_retries=10):
     """
     Upload a part of a file with retries.
     """
     def _upload(retries_left=amount_of_retries):
         try:
-            bucket = S3_CONNECTION.get_bucket(bucketname)
+            bucket = conn.get_bucket(bucketname)
             for mp in bucket.get_all_multipart_uploads():
                 if mp.id == multipart_id:
-                    with filechunkio.FileChunkIO(source_path, 'r', 
-                                                 offset=offset, 
+                    with filechunkio.FileChunkIO(source_path, 'r',
+                                                 offset=offset,
                                                  bytes=bytes) as fp:
                         mp.upload_part_from_file(fp=fp, part_num=part_num)
                     break
@@ -46,7 +40,7 @@ def _upload_part(bucketname, multipart_id, part_num, source_path, offset,
         #else:
         #    print ''
             #continue
-    
+
     _upload()
 
 class Item(object):
@@ -57,6 +51,7 @@ class Item(object):
         self.download_url = 'http://archive.org/download/{0}'.format(identifier)
         self.metadata_url = 'http://archive.org/metadata/{0}'.format(identifier)
         self.req = requests.get(self.metadata_url)
+        self._s3_conn = None
         self.metadata = self.req.json()
         if self.metadata == {}:
             self.exists = False
@@ -66,7 +61,7 @@ class Item(object):
 
     # METADATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~>
     def modify_metadata(self, metadata={}, target='metadata'):
-        """function for modifying the metadata of an existing archive.org item 
+        """function for modifying the metadata of an existing archive.org item
         The IA Metadata API does not yet comply with the latest Json-Patch
         standard. It currently complies with version 02:
 
@@ -79,7 +74,7 @@ class Item(object):
         :param target: Metadata target to update.
 
         Usage::
-            
+
             >>> import archive
             >>> item = archive.Item('identifier')
             >>> item.modify_metadata(dict(new_key='new_value', foo=['bar', 'bar2']))
@@ -99,28 +94,36 @@ class Item(object):
 
 
     # UPLOADING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~>
-    def _get_s3_bucket(self, headers={}, ignore_bucket=False):
+    def _get_s3_conn(self):
+        if self._s3_conn is None:
+            self._s3_conn = S3Connection(host='s3.us.archive.org', is_secure=False,
+                                         calling_format=OrdinaryCallingFormat())
+        return self._s3_conn
+
+
+    def _get_s3_bucket(self, conn, headers={}, ignore_bucket=False):
         if ignore_bucket is True:
             bucket = None
         else:
-            bucket = S3_CONNECTION.lookup(self.identifier)
+            bucket = conn.lookup(self.identifier)
         if bucket:
             return bucket
         headers['x-archive-queue-derive'] = 0
-        bucket = S3_CONNECTION.create_bucket(self.identifier, headers=headers)
+        bucket = conn.create_bucket(self.identifier, headers=headers)
         i=0
         while i<60:
-            b = S3_CONNECTION.lookup(self.identifier)
+            b = conn.lookup(self.identifier)
             if b:
                 return bucket
             time.sleep(10)
             i+=1
         raise NameError('Could not create or lookup %s' % self.identifier)
 
-    def upload(self, files, meta_dict={}, headers={}, dry_run=False, 
-               derive=True, multipart=False, ignore_bucket=False,  
+
+    def upload(self, files, meta_dict={}, headers={}, dry_run=False,
+               derive=True, multipart=False, ignore_bucket=False,
                parallel_processes=4):
-        """Upload file(s) to an item. The item will be created if it does not 
+        """Upload file(s) to an item. The item will be created if it does not
         exist.
 
         :param files: Either a list of filepaths, or a string pointing to a single file.
@@ -132,7 +135,7 @@ class Item(object):
         :param parallel_processes: (optional) Integer. Only used when :param:`multipart` is ``True``.
 
         Usage::
-            
+
             >>> import archive
             >>> item = archive.Item('identifier')
             >>> item.upload('/path/to/image.jpg', dict(mediatype='image', creator='Jake Johnson'))
@@ -162,7 +165,8 @@ class Item(object):
             files = [files]
         for file in files:
             filename = file.split('/')[-1]
-            bucket = self._get_s3_bucket(headers, ignore_bucket=ignore_bucket)
+            conn = self._get_s3_conn()
+            bucket = self._get_s3_bucket(conn, headers, ignore_bucket=ignore_bucket)
             ####################headers['x-archive-ignore-preexisting-bucket'] = 1 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
             if bucket.get_key(filename):
                 continue
@@ -178,9 +182,9 @@ class Item(object):
                 mp = bucket.initiate_multipart_upload(filename, headers=headers)
                 source_size = os.stat(file).st_size
                 headers['x-archive-size-hint'] = source_size
-                bytes_per_chunk = (max(int(math.sqrt(5242880) * 
+                bytes_per_chunk = (max(int(math.sqrt(5242880) *
                                            math.sqrt(source_size)), 5242880))
-                chunk_amount = (int(math.ceil(source_size / 
+                chunk_amount = (int(math.ceil(source_size /
                                 float(bytes_per_chunk))))
                 pool = multiprocessing.Pool(processes=parallel_processes)
                 for i in range(chunk_amount):
@@ -188,8 +192,8 @@ class Item(object):
                     remaining_bytes = source_size - offset
                     bytes = min([bytes_per_chunk, remaining_bytes])
                     part_num = i + 1
-                    pool.apply_async(_upload_part, 
-                                     [self.identifier, mp.id, part_num, file, 
+                    pool.apply_async(_upload_part,
+                                     [conn, self.identifier, mp.id, part_num, file,
                                       offset, bytes])
                 pool.close()
                 pool.join()
@@ -210,6 +214,10 @@ class Catalog(object):
         params['output'] = 'json'
         params['callback'] = 'foo'
         url = 'http://www.us.archive.org/catalog.php'
+        LOG_IN_COOKIES = {
+                'logged-in-sig': os.environ['LOGGED_IN_SIG'],
+                'logged-in-user': os.environ['LOGGED_IN_USER'],
+        }
         r = requests.get(url, params=params, cookies=LOG_IN_COOKIES)
 
         # This ugly little line is used to parse the faux JSON available from

@@ -3,14 +3,13 @@ import os
 import json
 import math
 import multiprocessing
+import urllib
 
 import filechunkio
 import requests
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 import boto
 import jsonpatch
-
-
 
 
 
@@ -50,7 +49,7 @@ class Item(object):
     """This class represents an archive.org item.
     You can use this class to access item metadata:
         >>> import archive
-        >>> item = archive.Item('myitem')
+        >>> item = archive.Item('stairs')
         >>> print item.metadata
 
     This class also uses IA's S3-like interface to upload files to an item. You need to
@@ -58,7 +57,7 @@ class Item(object):
     retrieve S3 keys from https://archive.org/account/s3.php
         >>> import os;
         >>> os.environ['AWS_ACCESS_KEY_ID']='x'; os.environ['AWS_SECRET_ACCESS_KEY']='y'
-        >>> item.upload('MANIFEST.in')
+        >>> item.upload('myfile')
         True
     """
 
@@ -76,6 +75,27 @@ class Item(object):
             self.exists = False
         else:
             self.exists = True
+
+
+    # files()
+    #_____________________________________________________________________________________
+    def files(self):
+        """Generator for iterating over files in an item"""
+        for file_dict in self.metadata['files']:
+            file = File(self, file_dict)
+            yield file
+
+
+    # file()
+    #_____________________________________________________________________________________
+    def file(self, name):
+        """Return an archive.File object for the named file.
+        If the specified file was not found in the item, return None
+        """
+        for file_dict in self.metadata['files']:
+            if file_dict['name'] == name:
+                return File(self, file_dict)
+        return None
 
 
     # modify_metadata()
@@ -228,6 +248,39 @@ class Item(object):
                 else:
                     mp.cancel_upload()
         return True
+
+
+# File class
+#_________________________________________________________________________________________
+class File(object):
+
+    # init()
+    #_____________________________________________________________________________________
+    def __init__(self, item, file_dict):
+        def get(d, key):
+            if key in d:
+                return d[key]
+            else:
+                return None
+
+        self.item = item
+        self.name = file_dict['name']
+        self.md5  = file_dict['md5']
+        self.sha1 = get(file_dict, 'sha1')
+        self.size = int(get(file_dict, 'size'))
+
+
+    # download()
+    #_____________________________________________________________________________________
+    def download(self, file_path=None):
+        if file_path is None:
+            file_path = self.name  #TODO: what about files in subdirs?
+
+        if os.path.exists(file_path):
+            raise IOError('File already exists: %s' % file_path)
+
+        url = 'https://archive.org/download/%s/%s' % (self.item.identifier, self.name)
+        urllib.urlretrieve(url, file_path)
 
 
 # Catalog class

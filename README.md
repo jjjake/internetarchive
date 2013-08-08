@@ -11,8 +11,8 @@ The Internet Archive stores data in "items". You can query the archive using an 
 Items contains files, which can be downloaded:
 
 ```python
->>> file = item.file('glogo.png')
->>> file.download() #writes to disk
+>>> f = item.file('glogo.png')
+>>> f.download() #writes to disk
 >>> f.download('/foo/bar/some_other_name.png')
 ```
 

@@ -8,7 +8,13 @@ The Internet Archive stores data in "items". You can query the archive using an 
 >>> print item.metadata
 ```
 
-Items contains files, which can be downloaded:
+Items contains files. You can download the entire item:
+
+```python
+>>> item.download()
+```
+
+or you can download just a particular file:
 
 ```python
 >>> f = item.file('glogo.png')

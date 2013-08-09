@@ -2,7 +2,6 @@ import time
 import os
 import json
 import math
-import multiprocessing
 import urllib
 import httplib
 
@@ -12,36 +11,6 @@ from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 import boto
 import jsonpatch
 
-
-
-# S3 Multi-Part Upload (Must be outside of class (I'm probably doing this
-# wrong :)) >>>
-#_________________________________________________________________________________________
-def _upload_part(conn, bucketname, multipart_id, part_num, source_path, offset,
-                 bytes, amount_of_retries=10):
-    """
-    Upload a part of a file with retries.
-    """
-    def _upload(retries_left=amount_of_retries):
-        try:
-            bucket = conn.get_bucket(bucketname)
-            for mp in bucket.get_all_multipart_uploads():
-                if mp.id == multipart_id:
-                    with filechunkio.FileChunkIO(source_path, 'r',
-                                                 offset=offset,
-                                                 bytes=bytes) as fp:
-                        mp.upload_part_from_file(fp=fp, part_num=part_num)
-                    break
-        except Exception, exc:
-            if retries_left:
-                _upload(retries_left=retries_left - 1)
-            else:
-                raise exc
-        #else:
-        #    print ''
-            #continue
-
-    _upload()
 
 
 # Item class
@@ -207,8 +176,7 @@ class Item(object):
     # upload()
     #_____________________________________________________________________________________
     def upload(self, files, meta_dict={}, headers={}, dry_run=False,
-               derive=True, multipart=False, ignore_bucket=False,
-               parallel_processes=4):
+               derive=True, multipart=False, ignore_bucket=False):
         """Upload file(s) to an item. The item will be created if it does not
         exist.
 
@@ -218,7 +186,6 @@ class Item(object):
         :param derive: (optional) Boolean. Set to False to prevent an item from being derived after upload.
         :param multipart: (optional) Boolean. Set to True to upload files in parts. Useful when uploading large files.
         :param ignore_bucket: (optional) Boolean. Set to True to ignore and clobber existing files and metadata.
-        :param parallel_processes: (optional) Integer. Only used when :param:`multipart` is ``True``.
 
         Usage::
 
@@ -264,25 +231,21 @@ class Item(object):
                 k.name = filename
                 k.set_contents_from_filename(file, headers=headers)
             else:
-                parallel_processes=4
                 mp = bucket.initiate_multipart_upload(filename, headers=headers)
                 source_size = os.stat(file).st_size
                 headers['x-archive-size-hint'] = source_size
                 bytes_per_chunk = (max(int(math.sqrt(5242880) *
                                            math.sqrt(source_size)), 5242880))
-                chunk_amount = (int(math.ceil(source_size /
-                                float(bytes_per_chunk))))
-                pool = multiprocessing.Pool(processes=parallel_processes)
+                chunk_amount = (int(math.ceil(source_size/float(bytes_per_chunk))))
                 for i in range(chunk_amount):
                     offset = i * bytes_per_chunk
                     remaining_bytes = source_size - offset
-                    bytes = min([bytes_per_chunk, remaining_bytes])
+                    part_bytes = min([bytes_per_chunk, remaining_bytes])
                     part_num = i + 1
-                    pool.apply_async(_upload_part,
-                                     [conn, self.identifier, mp.id, part_num, file,
-                                      offset, bytes])
-                pool.close()
-                pool.join()
+                    with filechunkio.FileChunkIO(file, 'r',
+                                                 offset=offset,
+                                                 bytes=part_bytes) as f:
+                        mp.upload_part_from_file(fp=f, part_num=part_num)
                 if len(mp.get_all_parts()) == chunk_amount:
                     mp.complete_upload()
                     key = bucket.get_key(filename)

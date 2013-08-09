@@ -293,7 +293,7 @@ class File(object):
             raise IOError('File already exists: %s' % file_path)
 
         parent_dir = os.path.dirname(file_path)
-        if not os.path.exists(parent_dir):
+        if parent_dir != '' and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
         url = 'https://archive.org/download/%s/%s' % (self.item.identifier, self.name)

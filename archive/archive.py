@@ -98,6 +98,17 @@ class Item(object):
         return None
 
 
+    # download()
+    #_____________________________________________________________________________________
+    def download(self):
+        """Download the entire item into the current working directory"""
+        for f in self.files():
+            print '  downloading', f.name
+            path = os.path.join(self.identifier, f.name)
+            parent_dir = os.path.dirname(path)
+            f.download(path)
+
+
     # modify_metadata()
     #_____________________________________________________________________________________
     def modify_metadata(self, metadata={}, target='metadata'):
@@ -267,17 +278,23 @@ class File(object):
         self.name = file_dict['name']
         self.md5  = file_dict['md5']
         self.sha1 = get(file_dict, 'sha1')
-        self.size = int(get(file_dict, 'size'))
+        self.size = get(file_dict, 'size')
+        if self.size is not None:
+            self.size = int(self.size)
 
 
     # download()
     #_____________________________________________________________________________________
     def download(self, file_path=None):
         if file_path is None:
-            file_path = self.name  #TODO: what about files in subdirs?
+            file_path = self.name
 
         if os.path.exists(file_path):
             raise IOError('File already exists: %s' % file_path)
+
+        parent_dir = os.path.dirname(file_path)
+        if not os.path.exists(parent_dir):
+            os.makedirs(parent_dir)
 
         url = 'https://archive.org/download/%s/%s' % (self.item.identifier, self.name)
         urllib.urlretrieve(url, file_path)

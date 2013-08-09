@@ -3,8 +3,8 @@
 The Internet Archive stores data in "items". You can query the archive using an item identifier:
 
 ```python
->>> import archive
->>> item = archive.Item('stairs')
+>>> import internetarchive
+>>> item = internetarchive.Item('stairs')
 >>> print item.metadata
 ```
 

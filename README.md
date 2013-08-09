@@ -1,6 +1,7 @@
 ## A python interface to archive.org ##
 
-The Internet Archive stores data in "items". You can query the archive using an item identifier:
+The Internet Archive stores data in [items](http://blog.archive.org/2011/03/31/how-archive-org-items-are-structured/ "How Archive.org items are structured").
+You can query the archive using an item identifier:
 
 ```python
 >>> import internetarchive

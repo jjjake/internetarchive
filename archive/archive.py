@@ -4,6 +4,7 @@ import json
 import math
 import multiprocessing
 import urllib
+import httplib
 
 import filechunkio
 import requests
@@ -111,37 +112,68 @@ class Item(object):
 
     # modify_metadata()
     #_____________________________________________________________________________________
-    def modify_metadata(self, metadata={}, target='metadata'):
-        """function for modifying the metadata of an existing archive.org item
-        The IA Metadata API does not yet comply with the latest Json-Patch
+    def modify_metadata(self, target='metadata'):
+        """function for modifying the metadata of an existing item on archive.org.
+        Note: The Metadata Write API does not yet comply with the latest Json-Patch
         standard. It currently complies with version 02:
 
-            https://tools.ietf.org/html/draft-ietf-appsawg-json-patch-02
+        https://tools.ietf.org/html/draft-ietf-appsawg-json-patch-02
 
-        The "patch = ..." line is a little hack, for the mean-time, to reformat the
-        patch returned by jsonpatch.py (wich complies with version 08).
+        :param metadata: Dictionary. Metadata used to update the item.
+        :param target: (optional) String. Metadata target to update.
 
-        :param metadata: Dictionary used to update an items metadata.
-        :param target: Metadata target to update.
+        Usage:
 
-        Usage::
+        >>> import archive
+        >>> item = archive.Item('mapi_test_item1')
+        >>> md = dict(new_key='new_value', foo=['bar', 'bar2'])
+        >>> item.modify_metadata(md)
 
-            >>> import archive
-            >>> item = archive.Item('identifier')
-            >>> item.modify_metadata(dict(new_key='new_value', foo=['bar', 'bar2']))
         """
-        LOG_IN_COOKIES = {'logged-in-sig': os.environ['LOGGED_IN_SIG'],
-                          'logged-in-user': os.environ['LOGGED_IN_USER']}
+        access_key = os.environ['AWS_ACCESS_KEY_ID']
+        secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
         src = self.metadata.get(target, {})
         dest = dict((src.items() + metadata.items()))
+
+        # Prepare patch to remove metadata elements with the value: "REMOVE_TAG".
+        for k,v in metadata.items():
+            if v == 'REMOVE_TAG' or not v:
+                del dest[k]
+
         json_patch = jsonpatch.make_patch(src, dest).patch
-        print json_patch
-        patch = [{p['op']: p['path'], 'value': p['value']} for p in json_patch]
-        if patch == []:
-            return None
-        params = {'-patch': json.dumps(patch), '-target': target}
-        r = requests.patch(self.metadata_url, params=params, cookies=LOG_IN_COOKIES)
-        return r
+        # Reformat patch to be compliant with version 02 of the Json-Patch standard.
+        patch = []
+        for p in json_patch:
+            pd = {p['op']: p['path']}
+            if p['op'] != 'remove':
+                pd['value'] = p['value']
+            patch.append(dict((k,v) for k,v in pd.items() if v))
+
+        data = {
+            '-patch': json.dumps(patch),
+            '-target': target,
+            'access': access_key,
+            'secret': secret_key,
+        }
+
+        host = 'archive.org'
+        path = '/metadata/{0}'.format(self.identifier)
+        http = httplib.HTTP(host)
+        http.putrequest("POST", path)
+        http.putheader("Host", host)
+        data = urllib.urlencode(data)
+        http.putheader("Content-Type", 'application/x-www-form-urlencoded')
+        http.putheader("Content-Length", str(len(data)))
+        http.endheaders()
+        http.send(data)
+        status_code, error_message, headers = http.getreply()
+        resp_file = http.getfile()
+        return dict(
+            status_code = status_code,
+            error_message = error_message,
+            headers = headers,
+            content = json.loads(resp_file.read()),
+        )
 
 
     # _get_s3_conn()

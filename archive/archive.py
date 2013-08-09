@@ -112,7 +112,7 @@ class Item(object):
 
     # modify_metadata()
     #_____________________________________________________________________________________
-    def modify_metadata(self, target='metadata'):
+    def modify_metadata(self, metadata, target='metadata'):
         """function for modifying the metadata of an existing item on archive.org.
         Note: The Metadata Write API does not yet comply with the latest Json-Patch
         standard. It currently complies with version 02:

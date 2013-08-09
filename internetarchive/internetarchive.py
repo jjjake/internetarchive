@@ -70,9 +70,13 @@ class Item(object):
 
     # download()
     #_____________________________________________________________________________________
-    def download(self):
+    def download(self, formats=None):
         """Download the entire item into the current working directory"""
         for f in self.files():
+            if type(formats) == str:
+                formats = [formats]
+            if formats is not None and f.format not in formats:
+                continue
             print '  downloading', f.name
             path = os.path.join(self.identifier, f.name)
             parent_dir = os.path.dirname(path)
@@ -274,6 +278,7 @@ class File(object):
         self.size = get(file_dict, 'size')
         if self.size is not None:
             self.size = int(self.size)
+        self.format = file_dict['format'] 
 
 
     # download()

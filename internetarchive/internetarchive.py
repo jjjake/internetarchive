@@ -49,8 +49,8 @@ def _upload_part(conn, bucketname, multipart_id, part_num, source_path, offset,
 class Item(object):
     """This class represents an archive.org item.
     You can use this class to access item metadata:
-        >>> import archive
-        >>> item = archive.Item('stairs')
+        >>> import internetarchive
+        >>> item = internetarchive.Item('stairs')
         >>> print item.metadata
 
     This class also uses IA's S3-like interface to upload files to an item. You need to
@@ -90,7 +90,7 @@ class Item(object):
     # file()
     #_____________________________________________________________________________________
     def file(self, name):
-        """Return an archive.File object for the named file.
+        """Return an archive.org File object for the named file.
         If the specified file was not found in the item, return None
         """
         for file_dict in self.metadata['files']:
@@ -124,8 +124,8 @@ class Item(object):
 
         Usage:
 
-        >>> import archive
-        >>> item = archive.Item('mapi_test_item1')
+        >>> import internetarchive
+        >>> item = internetarchive.Item('mapi_test_item1')
         >>> md = dict(new_key='new_value', foo=['bar', 'bar2'])
         >>> item.modify_metadata(md)
 
@@ -224,8 +224,8 @@ class Item(object):
 
         Usage::
 
-            >>> import archive
-            >>> item = archive.Item('identifier')
+            >>> import internetarchive
+            >>> item = internetarchive.Item('identifier')
             >>> item.upload('/path/to/image.jpg', dict(mediatype='image', creator='Jake Johnson'))
         """
         # Convert metadata from :meta_dict: into S3 headers

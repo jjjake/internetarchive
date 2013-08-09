@@ -170,8 +170,6 @@ class Item(object):
         resp_file = http.getfile()
         return dict(
             status_code = status_code,
-            error_message = error_message,
-            headers = headers,
             content = json.loads(resp_file.read()),
         )
 

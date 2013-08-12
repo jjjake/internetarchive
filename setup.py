@@ -1,5 +1,10 @@
 from distutils.core import setup
 
+requires = [
+    'boto==2.5.2',
+    'jsonpatch==0.4',
+]
+
 setup(
     name='internetarchive',
     version='0.1',

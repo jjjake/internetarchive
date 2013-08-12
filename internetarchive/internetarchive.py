@@ -3,10 +3,10 @@ import os
 import json
 import math
 import urllib
+import urllib2
 import httplib
 
 import filechunkio
-import requests
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 import boto
 import jsonpatch
@@ -317,16 +317,16 @@ class Catalog(object):
         params['json'] = 2
         params['output'] = 'json'
         params['callback'] = 'foo'
+        params = urllib.urlencode(params)
         url = 'http://www.us.archive.org/catalog.php'
-        LOG_IN_COOKIES = {
-                'logged-in-sig': os.environ['LOGGED_IN_SIG'],
-                'logged-in-user': os.environ['LOGGED_IN_USER'],
-        }
-        r = requests.get(url, params=params, cookies=LOG_IN_COOKIES)
+        ia_cookies = ('logged-in-sig={LOGGED_IN_SIG}; '
+                      'logged-in-user={LOGGED_IN_USER}'.format(**os.environ))
+        opener = urllib2.build_opener()
+        opener.addheaders.append(('Cookie', ia_cookies))
+        f = opener.open(url, params)
 
-        # This ugly little line is used to parse the faux JSON available from
-        # catalog.php
-        self.tasks_json = json.loads(r.text.strip('foo').strip().strip('()'))
+        # Remove callback foo() from catalog JSON, and parse into python array.
+        self.tasks_json = json.loads(f.read().strip('foo').strip().strip('()'))
         self.tasks = []
         for t in self.tasks_json:
             td = {}

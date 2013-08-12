@@ -36,15 +36,21 @@ class Item(object):
     def __init__(self, identifier):
         self.identifier = identifier
         self.details_url = 'https://archive.org/details/{0}'.format(identifier)
-        self.download_url = 'http://archive.org/download/{0}'.format(identifier)
-        self.metadata_url = 'http://archive.org/metadata/{0}'.format(identifier)
-        self.req = requests.get(self.metadata_url)
+        self.download_url = 'https://archive.org/download/{0}'.format(identifier)
+        self.metadata_url = 'https://archive.org/metadata/{0}'.format(identifier)
         self._s3_conn = None
-        self.metadata = self.req.json()
+        self.metadata = self._get_item_metadata()
         if self.metadata == {}:
             self.exists = False
         else:
             self.exists = True
+
+
+    # _get_item_metadata()
+    #_____________________________________________________________________________________
+    def _get_item_metadata(self):
+        f = urllib.urlopen(self.metadata_url)
+        return json.loads(f.read())
 
 
     # files()
@@ -141,6 +147,7 @@ class Item(object):
         http.send(data)
         status_code, error_message, headers = http.getreply()
         resp_file = http.getfile()
+        self.metadata = self._get_item_metadata()
         return dict(
             status_code = status_code,
             content = json.loads(resp_file.read()),

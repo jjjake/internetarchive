@@ -312,21 +312,30 @@ class Catalog(object):
     # init()
     #_____________________________________________________________________________________
     def __init__(self, params=None):
+        url = 'http://www.us.archive.org/catalog.php'
+
         if not params:
             params = {'justme': 1}
+
+        # Add params required to retrieve JSONP from the IA catalog.
         params['json'] = 2
         params['output'] = 'json'
         params['callback'] = 'foo'
         params = urllib.urlencode(params)
-        url = 'http://www.us.archive.org/catalog.php'
+
         ia_cookies = ('logged-in-sig={LOGGED_IN_SIG}; '
-                      'logged-in-user={LOGGED_IN_USER}'.format(**os.environ))
+                      'logged-in-user={LOGGED_IN_USER}; '
+                      'verbose=1'.format(**os.environ))
+
         opener = urllib2.build_opener()
         opener.addheaders.append(('Cookie', ia_cookies))
         f = opener.open(url, params)
 
-        # Remove callback foo() from catalog JSON, and parse into python array.
-        self.tasks_json = json.loads(f.read().strip('foo').strip().strip('()'))
+        # Hack to convert JSONP to JSON (then parse the JSON).
+        jsonp_str = f.read()
+        json_str = jsonp_str[(jsonp_str.index("(") + 1):jsonp_str.rindex(")")]
+
+        self.tasks_json = json.loads(json_str)
         self.tasks = []
         for t in self.tasks_json:
             td = {}
@@ -339,7 +348,6 @@ class Catalog(object):
             td['task_id'] = t[6]
             td['type'] = t[7]
             self.tasks.append(td)
-
         self.green_rows = [x for x in self.tasks if x['type'] == 0]
         self.blue_rows = [x for x in self.tasks if x['type'] == 1]
         self.red_rows = [x for x in self.tasks if x['type'] == 2]

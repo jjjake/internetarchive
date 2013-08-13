@@ -60,7 +60,7 @@ class Item(object):
     #_____________________________________________________________________________________
     def files(self):
         """Generator for iterating over files in an item"""
-        for file_dict in self.metadata['files']:
+        for file_dict in self.metadata.get('files', []):
             file = File(self, file_dict)
             yield file
 
@@ -277,6 +277,7 @@ class File(object):
     #_____________________________________________________________________________________
     def __init__(self, item, file_dict):
         self.item = item
+        self.external_identifier = file_dict.get('external-identifier')
         self.name = file_dict.get('name')
         self.source = file_dict.get('source')
         self.size = file_dict.get('size')

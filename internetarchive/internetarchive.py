@@ -181,7 +181,7 @@ class Item(object):
                 return bucket
             time.sleep(10)
             i+=1
-        raise NameError('Could not create or lookup %s' % self.identifier)
+        raise NameError('Could not create or lookup {0}'.format(self.identifier))
 
 
     # upload()
@@ -214,7 +214,7 @@ class Item(object):
                     else:
                         headers[s3_header_key] = value
             else:
-                s3_header_key = 'x-archive-meta-%s' % key
+                s3_header_key = 'x-archive-meta-{0}'.format(key)
                 if type(v) == str:
                     headers[s3_header_key] = v.encode('utf-8')
                 else:
@@ -296,13 +296,14 @@ class File(object):
             file_path = self.name
 
         if os.path.exists(file_path):
-            raise IOError('File already exists: %s' % file_path)
+            raise IOError('File already exists: {0}'.format(file_path))
 
         parent_dir = os.path.dirname(file_path)
         if parent_dir != '' and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
-        url = 'https://archive.org/download/%s/%s' % (self.item.identifier, self.name)
+        url = 'https://archive.org/download/{0}/{1}'.format(self.item.identifier,
+                                                            self.name)
         urllib.urlretrieve(url, file_path)
 
 

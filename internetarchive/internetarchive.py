@@ -207,18 +207,19 @@ class Item(object):
         # Convert metadata from :meta_dict: into S3 headers
         for key,v in meta_dict.iteritems():
             if type(v) == list:
-                i=1
-                for value in v:
+                for i, value in enumerate(v):
                     s3_header_key = 'x-archive-meta{0:02d}-{1}'.format(i, key)
-                    headers[s3_header_key] = value.encode('utf-8')
-                    i+=1
+                    if type(value) == str:
+                        headers[s3_header_key] = value.encode('utf-8')
+                    else:
+                        headers[s3_header_key] = value
             else:
                 s3_header_key = 'x-archive-meta-%s' % key
-                if type(v) != int:
+                if type(v) == str:
                     headers[s3_header_key] = v.encode('utf-8')
                 else:
                     headers[s3_header_key] = v
-        headers = {k: str(v) for k,v in headers.iteritems() if v}
+        headers = {k: v for k,v in headers.iteritems() if v}
 
         if dry_run:
             return headers

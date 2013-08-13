@@ -276,20 +276,18 @@ class File(object):
     # init()
     #_____________________________________________________________________________________
     def __init__(self, item, file_dict):
-        def get(d, key):
-            if key in d:
-                return d[key]
-            else:
-                return None
-
         self.item = item
-        self.name = file_dict['name']
-        self.md5  = file_dict['md5']
-        self.sha1 = get(file_dict, 'sha1')
-        self.size = get(file_dict, 'size')
+        self.name = file_dict.get('name')
+        self.source = file_dict.get('source')
+        self.size = file_dict.get('size')
+        self.size = file_dict.get('size')
         if self.size is not None:
             self.size = int(self.size)
-        self.format = file_dict['format'] 
+        self.format = file_dict.get('format') 
+        self.mtime = file_dict.get('mtime')
+        self.md5  = file_dict.get('md5')
+        self.sha1 = file_dict.get('crc32')
+        self.sha1 = file_dict.get('sha1')
 
 
     # download()

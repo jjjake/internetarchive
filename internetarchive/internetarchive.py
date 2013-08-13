@@ -1,15 +1,18 @@
-import time
-import os
-import json
-import math
+try:
+    import ujson as json
+except ImportError:
+    import json
 import urllib
-import urllib2
+import os
 import httplib
+import time
+import math
+import urllib2
 
-import filechunkio
+import jsonpatch
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 import boto
-import jsonpatch
+import filechunkio
 
 
 

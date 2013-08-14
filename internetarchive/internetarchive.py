@@ -308,6 +308,61 @@ class File(object):
         urllib.urlretrieve(url, file_path)
 
 
+# Search class
+#_________________________________________________________________________________________
+class Search(object):
+    """This class represents an archive.org item search. You can use this class to search
+    for archive.org items using the advanced search engine:
+        >>> import internetarchive
+        >>> search = internetarchive.Search('(uploader:jake@archive.org)')
+        >>> for result in search.results: 
+        ...     print result['identifier']
+    """
+
+    # init()
+    #_____________________________________________________________________________________
+    def __init__(self, query, fields=['identifier'], params={}):
+        self._base_url = 'https://archive.org/advancedsearch.php'
+        self.query = query
+        self.params = dict(dict(
+                q = self.query,
+                output = params.get('output', 'json'),
+                rows = 100,
+        ).items() + params.items())
+        # Updata params dict with fields.
+        self.params.update({'fl[{0}]'.format(k): v for k, v in enumerate(fields)})
+        self.encoded_params = urllib.urlencode(self.params)
+        self.url = '{0}?{1}'.format(self._base_url, self.encoded_params)
+        self.search_info = self._get_search_info()
+        self.num_found = self.search_info['response']['numFound']
+        self.results = self._iter_results()
+
+
+    # _get_search_info()
+    #_____________________________________________________________________________________
+    def _get_search_info(self):
+        info_params = self.params.copy()
+        info_params['rows'] = 0
+        encoded_info_params = urllib.urlencode(info_params)
+        f = urllib.urlopen(self._base_url, encoded_info_params)
+        results = json.loads(f.read())
+        del results['response']['docs']
+        return results
+
+        
+    # _iter_results()
+    #_____________________________________________________________________________________
+    def _iter_results(self):
+        """Generator for iterating over search results"""
+        for page in range(1, (self.num_found + 1), self.params['rows']):
+            self.params['page'] = page
+            encoded_params = urllib.urlencode(self.params)
+            f = urllib.urlopen(self._base_url, encoded_params)
+            results = json.loads(f.read())
+            for doc in results['response']['docs']:
+                yield doc
+
+
 # Catalog class
 #_________________________________________________________________________________________
 class Catalog(object):

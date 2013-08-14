@@ -170,12 +170,12 @@ class Item(object):
     #_____________________________________________________________________________________
     def _get_s3_bucket(self, conn, headers={}, ignore_bucket=False):
         if ignore_bucket is True:
+            headers['x-archive-ignore-preexisting-bucket'] = 1
             bucket = None
         else:
             bucket = conn.lookup(self.identifier)
         if bucket:
             return bucket
-        headers['x-archive-queue-derive'] = 0
         bucket = conn.create_bucket(self.identifier, headers=headers)
         i=0
         while i<60:
@@ -222,7 +222,7 @@ class Item(object):
                     headers[s3_header_key] = v.encode('utf-8')
                 else:
                     headers[s3_header_key] = v
-        headers = {k: v for k,v in headers.iteritems() if v}
+        headers = dict((k, v) for k, v in headers.iteritems() if v)
 
         if dry_run:
             return headers
@@ -233,13 +233,12 @@ class Item(object):
             filename = file.split('/')[-1]
             conn = self._get_s3_conn()
             bucket = self._get_s3_bucket(conn, headers, ignore_bucket=ignore_bucket)
-            #headers['x-archive-ignore-preexisting-bucket'] = 1
-
-            if bucket.get_key(filename):
-                continue
 
             if not derive:
                 headers = {'x-archive-queue-derive': 0}
+
+            if bucket.get_key(filename) and ignore_bucket is False:
+                continue
 
             if not multipart:
                 k = boto.s3.key.Key(bucket)
@@ -309,6 +308,61 @@ class File(object):
         urllib.urlretrieve(url, file_path)
 
 
+# Search class
+#_________________________________________________________________________________________
+class Search(object):
+    """This class represents an archive.org item search. You can use this class to search
+    for archive.org items using the advanced search engine:
+        >>> import internetarchive
+        >>> search = internetarchive.Search('(uploader:jake@archive.org)')
+        >>> for result in search.results: 
+        ...     print result['identifier']
+    """
+
+    # init()
+    #_____________________________________________________________________________________
+    def __init__(self, query, fields=['identifier'], params={}):
+        self._base_url = 'https://archive.org/advancedsearch.php'
+        self.query = query
+        self.params = dict(dict(
+                q = self.query,
+                output = params.get('output', 'json'),
+                rows = 100,
+        ).items() + params.items())
+        # Updata params dict with fields.
+        self.params.update({'fl[{0}]'.format(k): v for k, v in enumerate(fields)})
+        self.encoded_params = urllib.urlencode(self.params)
+        self.url = '{0}?{1}'.format(self._base_url, self.encoded_params)
+        self.search_info = self._get_search_info()
+        self.num_found = self.search_info['response']['numFound']
+        self.results = self._iter_results()
+
+
+    # _get_search_info()
+    #_____________________________________________________________________________________
+    def _get_search_info(self):
+        info_params = self.params.copy()
+        info_params['rows'] = 0
+        encoded_info_params = urllib.urlencode(info_params)
+        f = urllib.urlopen(self._base_url, encoded_info_params)
+        results = json.loads(f.read())
+        del results['response']['docs']
+        return results
+
+        
+    # _iter_results()
+    #_____________________________________________________________________________________
+    def _iter_results(self):
+        """Generator for iterating over search results"""
+        for page in range(1, (self.num_found + 1), self.params['rows']):
+            self.params['page'] = page
+            encoded_params = urllib.urlencode(self.params)
+            f = urllib.urlopen(self._base_url, encoded_params)
+            results = json.loads(f.read())
+            for doc in results['response']['docs']:
+                yield doc
+
+
 # Catalog class
 #_________________________________________________________________________________________
 class Catalog(object):
@@ -317,9 +371,13 @@ class Catalog(object):
     #_____________________________________________________________________________________
     def __init__(self, params=None):
         url = 'http://www.us.archive.org/catalog.php'
+        self.GREEN = 0
+        self.BLUE = 1
+        self.RED = 2
+        self.BROWN = 9
 
         if not params:
-            params = {'justme': 1}
+            params = dict(justme = 1)
 
         # Add params required to retrieve JSONP from the IA catalog.
         params['json'] = 2
@@ -335,24 +393,24 @@ class Catalog(object):
         opener.addheaders.append(('Cookie', ia_cookies))
         f = opener.open(url, params)
 
-        # Hack to convert JSONP to JSON (then parse the JSON).
+        # Convert JSONP to JSON (then parse the JSON).
         jsonp_str = f.read()
         json_str = jsonp_str[(jsonp_str.index("(") + 1):jsonp_str.rindex(")")]
 
-        self.tasks_json = json.loads(json_str)
-        self.tasks = []
-        for t in self.tasks_json:
-            td = {}
-            td['identifier'] = t[0]
-            td['server'] = t[1]
-            td['command'] = t[2]
-            td['time'] = t[3]
-            td['submitter'] = t[4]
-            td['args'] = t[5]
-            td['task_id'] = t[6]
-            td['type'] = t[7]
-            self.tasks.append(td)
-        self.green_rows = [x for x in self.tasks if x['type'] == 0]
-        self.blue_rows = [x for x in self.tasks if x['type'] == 1]
-        self.red_rows = [x for x in self.tasks if x['type'] == 2]
-        self.brown_rows = [x for x in self.tasks if x['type'] == 9]
+        tasks_json = json.loads(json_str)
+        self.tasks = [dict(
+            identifier = t[0],
+            server = t[1],
+            command = t[2],
+            time = t[3],
+            submitter = t[4],
+            # Parse args into dict
+            args = dict(x for x in urllib2.urlparse.parse_qsl(t[5])),
+            task_id = t[6],
+            row_type = t[7],
+        ) for t in tasks_json]
+
+        self.green_rows = [t for t in self.tasks if t['row_type'] == self.GREEN]
+        self.blue_rows = [t for t in self.tasks if t['row_type'] == self.BLUE]
+        self.red_rows = [t for t in self.tasks if t['row_type'] == self.RED]
+        self.brown_rows = [t for t in self.tasks if t['row_type'] == self.BROWN]

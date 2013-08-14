@@ -17,4 +17,4 @@ __author__ = 'Jacob M. Johnson'
 __license__ = 'GPL'
 __copyright__ = 'Copyright 2013 Jacob M. Johnson'
 
-from .internetarchive import Item, File, Catalog
+from .internetarchive import Item, File, Catalog, Search

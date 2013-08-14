@@ -1,15 +1,18 @@
-import time
-import os
-import json
-import math
+try:
+    import ujson as json
+except ImportError:
+    import json
 import urllib
-import urllib2
+import os
 import httplib
+import time
+import math
+import urllib2
 
-import filechunkio
+import jsonpatch
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 import boto
-import jsonpatch
+import filechunkio
 
 
 
@@ -57,7 +60,7 @@ class Item(object):
     #_____________________________________________________________________________________
     def files(self):
         """Generator for iterating over files in an item"""
-        for file_dict in self.metadata['files']:
+        for file_dict in self.metadata.get('files', []):
             file = File(self, file_dict)
             yield file
 
@@ -167,12 +170,12 @@ class Item(object):
     #_____________________________________________________________________________________
     def _get_s3_bucket(self, conn, headers={}, ignore_bucket=False):
         if ignore_bucket is True:
+            headers['x-archive-ignore-preexisting-bucket'] = 1
             bucket = None
         else:
             bucket = conn.lookup(self.identifier)
         if bucket:
             return bucket
-        headers['x-archive-queue-derive'] = 0
         bucket = conn.create_bucket(self.identifier, headers=headers)
         i=0
         while i<60:
@@ -181,7 +184,7 @@ class Item(object):
                 return bucket
             time.sleep(10)
             i+=1
-        raise NameError('Could not create or lookup %s' % self.identifier)
+        raise NameError('Could not create or lookup {0}'.format(self.identifier))
 
 
     # upload()
@@ -207,18 +210,19 @@ class Item(object):
         # Convert metadata from :meta_dict: into S3 headers
         for key,v in meta_dict.iteritems():
             if type(v) == list:
-                i=1
-                for value in v:
+                for i, value in enumerate(v):
                     s3_header_key = 'x-archive-meta{0:02d}-{1}'.format(i, key)
-                    headers[s3_header_key] = value.encode('utf-8')
-                    i+=1
+                    if type(value) == str:
+                        headers[s3_header_key] = value.encode('utf-8')
+                    else:
+                        headers[s3_header_key] = value
             else:
-                s3_header_key = 'x-archive-meta-%s' % key
-                if type(v) != int:
+                s3_header_key = 'x-archive-meta-{0}'.format(key)
+                if type(v) == str:
                     headers[s3_header_key] = v.encode('utf-8')
                 else:
                     headers[s3_header_key] = v
-        headers = {k: str(v) for k,v in headers.iteritems() if v}
+        headers = dict((k, v) for k, v in headers.iteritems() if v)
 
         if dry_run:
             return headers
@@ -229,13 +233,12 @@ class Item(object):
             filename = file.split('/')[-1]
             conn = self._get_s3_conn()
             bucket = self._get_s3_bucket(conn, headers, ignore_bucket=ignore_bucket)
-            #headers['x-archive-ignore-preexisting-bucket'] = 1
-
-            if bucket.get_key(filename):
-                continue
 
             if not derive:
                 headers = {'x-archive-queue-derive': 0}
+
+            if bucket.get_key(filename) and ignore_bucket is False:
+                continue
 
             if not multipart:
                 k = boto.s3.key.Key(bucket)
@@ -272,20 +275,19 @@ class File(object):
     # init()
     #_____________________________________________________________________________________
     def __init__(self, item, file_dict):
-        def get(d, key):
-            if key in d:
-                return d[key]
-            else:
-                return None
-
         self.item = item
-        self.name = file_dict['name']
-        self.md5  = file_dict['md5']
-        self.sha1 = get(file_dict, 'sha1')
-        self.size = get(file_dict, 'size')
+        self.external_identifier = file_dict.get('external-identifier')
+        self.name = file_dict.get('name')
+        self.source = file_dict.get('source')
+        self.size = file_dict.get('size')
+        self.size = file_dict.get('size')
         if self.size is not None:
             self.size = int(self.size)
-        self.format = file_dict['format'] 
+        self.format = file_dict.get('format') 
+        self.mtime = file_dict.get('mtime')
+        self.md5  = file_dict.get('md5')
+        self.sha1 = file_dict.get('crc32')
+        self.sha1 = file_dict.get('sha1')
 
 
     # download()
@@ -295,13 +297,14 @@ class File(object):
             file_path = self.name
 
         if os.path.exists(file_path):
-            raise IOError('File already exists: %s' % file_path)
+            raise IOError('File already exists: {0}'.format(file_path))
 
         parent_dir = os.path.dirname(file_path)
         if parent_dir != '' and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
-        url = 'https://archive.org/download/%s/%s' % (self.item.identifier, self.name)
+        url = 'https://archive.org/download/{0}/{1}'.format(self.item.identifier,
+                                                            self.name)
         urllib.urlretrieve(url, file_path)
 
 
@@ -313,9 +316,13 @@ class Catalog(object):
     #_____________________________________________________________________________________
     def __init__(self, params=None):
         url = 'http://www.us.archive.org/catalog.php'
+        self.GREEN = 0
+        self.BLUE = 1
+        self.RED = 2
+        self.BROWN = 9
 
         if not params:
-            params = {'justme': 1}
+            params = dict(justme = 1)
 
         # Add params required to retrieve JSONP from the IA catalog.
         params['json'] = 2
@@ -331,24 +338,24 @@ class Catalog(object):
         opener.addheaders.append(('Cookie', ia_cookies))
         f = opener.open(url, params)
 
-        # Hack to convert JSONP to JSON (then parse the JSON).
+        # Convert JSONP to JSON (then parse the JSON).
         jsonp_str = f.read()
         json_str = jsonp_str[(jsonp_str.index("(") + 1):jsonp_str.rindex(")")]
 
-        self.tasks_json = json.loads(json_str)
-        self.tasks = []
-        for t in self.tasks_json:
-            td = {}
-            td['identifier'] = t[0]
-            td['server'] = t[1]
-            td['command'] = t[2]
-            td['time'] = t[3]
-            td['submitter'] = t[4]
-            td['args'] = t[5]
-            td['task_id'] = t[6]
-            td['type'] = t[7]
-            self.tasks.append(td)
-        self.green_rows = [x for x in self.tasks if x['type'] == 0]
-        self.blue_rows = [x for x in self.tasks if x['type'] == 1]
-        self.red_rows = [x for x in self.tasks if x['type'] == 2]
-        self.brown_rows = [x for x in self.tasks if x['type'] == 9]
+        tasks_json = json.loads(json_str)
+        self.tasks = [dict(
+            identifier = t[0],
+            server = t[1],
+            command = t[2],
+            time = t[3],
+            submitter = t[4],
+            # Parse args into dict
+            args = dict(x for x in urllib2.urlparse.parse_qsl(t[5])),
+            task_id = t[6],
+            row_type = t[7],
+        ) for t in tasks_json]
+
+        self.green_rows = [t for t in self.tasks if t['row_type'] == self.GREEN]
+        self.blue_rows = [t for t in self.tasks if t['row_type'] == self.BLUE]
+        self.red_rows = [t for t in self.tasks if t['row_type'] == self.RED]
+        self.brown_rows = [t for t in self.tasks if t['row_type'] == self.BROWN]

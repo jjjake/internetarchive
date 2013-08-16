@@ -13,7 +13,29 @@ def metadata(args):
         sys.stderr.write('error: no identifier!\n')
         sys.exit(1)
     item = internetarchive.Item(args.identifier)
-    if args.files_count:
+
+    # Modify metadata.
+    if args.modify:
+        metadata = {}
+        changes = [x.split('=') for x in args.modify]
+        for k,v in changes:
+            if not metadata.get(k):
+                metadata[k] = v
+            else:
+                if type(metadata[k]) != list:
+                    metadata[k] = [metadata[k]]
+                metadata[k].append(v)
+        response = item.modify_metadata(metadata)
+        status_code = response['status_code']
+        if not response['content']['success']:
+            error_msg = response['content']['error']
+            sys.stderr.write('error: {0} ({1})\n'.format(error_msg, status_code))
+            sys.exit(1)
+        tasklog = 'https:{0}'.format(response['content']['log'])
+        sys.stdout.write('success: https:{0}\n'.format(response['content']['log']))
+
+    # Get metadata.
+    elif args.files_count:
         sys.stdout.write(str(item.metadata.get('files_count')))
     elif args.server:
         sys.stdout.write(str(item.metadata.get('server')))
@@ -91,6 +113,7 @@ if __name__ == '__main__':
     parser_metadata.add_argument('--d1', default=False, action='store_true')
     parser_metadata.add_argument('--d2', default=False, action='store_true')
     parser_metadata.add_argument('--item_size', default=False, action='store_true')
+    parser_metadata.add_argument('--modify', nargs='*', type=str)
     parser_metadata.set_defaults(func=metadata)
 
     # Upload parser.

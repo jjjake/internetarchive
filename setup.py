@@ -10,7 +10,7 @@ setup(
     packages=['internetarchive'],
     entry_points=dict(
         console_scripts=[
-            'internetarchive = bin.internetarchive_cli:main',
+            'internetarchive = internetarchive.internetarchive_cli:main',
         ]
     ),
     url='https://github.com/jjjake/ia-wrapper',

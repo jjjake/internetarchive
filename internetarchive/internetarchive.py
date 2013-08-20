@@ -229,8 +229,10 @@ class Item(object):
 
         if type(files) != list:
             files = [files]
-        for file in files:
-            filename = file.split('/')[-1]
+        for f in files:
+            if type(f) == str:
+                f = file(f, 'rb')
+            filename = f.name.split('/')[-1]
             conn = self._get_s3_conn()
             bucket = self._get_s3_bucket(conn, headers, ignore_bucket=ignore_bucket)
 
@@ -243,10 +245,10 @@ class Item(object):
             if not multipart:
                 k = boto.s3.key.Key(bucket)
                 k.name = filename
-                k.set_contents_from_filename(file, headers=headers)
+                k.set_contents_from_file(f, headers=headers)
             else:
                 mp = bucket.initiate_multipart_upload(filename, headers=headers)
-                source_size = os.stat(file).st_size
+                source_size = os.stat(f).st_size
                 headers['x-archive-size-hint'] = source_size
                 bytes_per_chunk = (max(int(math.sqrt(5242880) *
                                            math.sqrt(source_size)), 5242880))
@@ -256,7 +258,7 @@ class Item(object):
                     remaining_bytes = source_size - offset
                     part_bytes = min([bytes_per_chunk, remaining_bytes])
                     part_num = i + 1
-                    with filechunkio.FileChunkIO(file, 'r',
+                    with filechunkio.FileChunkIO(f, 'r',
                                                  offset=offset,
                                                  bytes=part_bytes) as f:
                         mp.upload_part_from_file(fp=f, part_num=part_num)

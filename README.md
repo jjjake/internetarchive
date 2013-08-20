@@ -32,6 +32,7 @@ You can iterate over files:
 ...     print f.name, f.sha1
 ```
 
+
 ### Uploading ###
 
 You can use the IA's S3-like interface to upload files to an item.
@@ -55,7 +56,42 @@ You can upload additional files to an existing item:
 >>> item.upload('/path/to/image2.jpg')
 ```
 
-### A note about mixed-case item names ###
+
+### Modifying Metadata ###
+
+You can modify metadata for existing items, using the `item.modify_metadata()` function.
+This uses the [IA Metadata API](http://blog.archive.org/2013/07/04/metadata-api/) under the
+hood and requires your IAS3 credentials.
+
+```python
+>>> import os
+>>> os.environ['AWS_ACCESS_KEY_ID']='x'
+>>> os.environ['AWS_SECRET_ACCESS_KEY']='y'
+>>> item = internetarchive.Item('my_identifier')
+>>> md = dict(blah='one', foo=['two', 'three'])
+>>> item.modify_metadata(md)
+```
+
+
+### Searching ###
+
+You can search for items using the [archive.org advanced search engine](https://archive.org/advancedsearch.php):
+
+```python
+>>> import internetarchive
+>>> search = internetarchive.Search('collection:nasa')
+>>> print search.num_found
+186911
+```
+
+You can iterate over your results:
+```python
+>>> for result in search.results:
+...     print result['identifier']
+```
+
+
+### A note about uploading items with mixed-case names ###
 
 The Internet Archive allows mixed-case item identifiers, but Amazon S3 does not allow
 mixed-case bucket names. The `internetarchive` python module is built on top of the
@@ -74,21 +110,4 @@ the `boto.s3.connection.check_lowercase_bucketname` function:
 >>> item = internetarchive.Item('TestUpload_pythonapi_20130812')
 >>> item.upload('file.txt', dict(mediatype='texts', creator='Internet Archive'))
 True
-```
-
-### Searching ###
-
-You can search for items using the [archive.org advanced search engine](https://archive.org/advancedsearch.php):
-
-```python
->>> import internetarchive
->>> search = internetarchive.Search('collection:nasa')
->>> print search.num_found
-186911
-```
-
-You can iterate over your results:
-```python
->>> for result in search.results:
-...     print result['identifier']
 ```

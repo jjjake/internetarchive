@@ -1,2 +1,3 @@
 boto==2.9.9
 jsonpatch==1.1
+filechunkio==1.5

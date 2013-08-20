@@ -101,7 +101,7 @@ def search(args):
 # main()
 #_________________________________________________________________________________________
 def main():
-    parser = argparse.ArgumentParser(prog='archive.py')
+    parser = argparse.ArgumentParser(prog='ia')
     subparsers = parser.add_subparsers(help='sub-command help')
 
     # Metadata parser.

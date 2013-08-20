@@ -1,9 +1,13 @@
-from distutils.core import setup
+from setuptools import setup
+
+
 
 requires = [
     'boto==2.5.2',
     'jsonpatch==0.4',
+    'filechunkio==1.5',
 ]
+
 
 setup(
     name='internetarchive',
@@ -11,7 +15,11 @@ setup(
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive'],
-    #scripts=['bin/stowe-towels.py'],
+    entry_points = dict(
+        console_scripts = [
+            'internetarchive = bin.archive:main',
+        ]
+    ),
     url='https://github.com/jjjake/ia-wrapper',
     license='LICENSE.txt',
     description='A python interface to archive.org.',

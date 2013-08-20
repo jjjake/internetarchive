@@ -354,7 +354,8 @@ class Search(object):
     #_____________________________________________________________________________________
     def _iter_results(self):
         """Generator for iterating over search results"""
-        for page in range(1, (self.num_found + 1), self.params['rows']):
+        total_pages = ((self.num_found / self.params['rows']) + 2)
+        for page in range(1, total_pages):
             self.params['page'] = page
             encoded_params = urllib.urlencode(self.params)
             f = urllib.urlopen(self._base_url, encoded_params)

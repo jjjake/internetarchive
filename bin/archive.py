@@ -47,12 +47,13 @@ def metadata(args):
         sys.stdout.write(str(item.metadata.get('d2')))
     elif args.files:
         for f in item.files():
-            files_md = [f.item.identifier, f.name, f.format, f.size, f.md5]
+            files_md = [f.item.identifier, f.name, f.source, f.format, f.size, f.md5]
             sys.stdout.write('\t'.join([str(x) for x in files_md]) + '\n')
     elif args.item_size:
         sys.stdout.write(str(item.metadata.get('item_size')))
     else:
         sys.stdout.write(str(item.metadata))
+
     sys.exit(0)
 
 
@@ -67,9 +68,10 @@ def upload(args):
         sys.exit(1)
     headers = dict((h.split(':') for h in args.header))
     metadata = dict((md.split('=') for md in args.metadata))
-    item = internetarchive.Item(args.identifier[0])
+    item = internetarchive.Item(args.identifier)
+    print item.identifier
     upload_status = item.upload(args.files, meta_dict=metadata, headers=headers,
-                                dry_run=args.dry_run, derive=args.derive, 
+                                dry_run=args.dry_run, derive=args.no_derive, 
                                 multipart=args.multipart,
                                 ignore_bucket=args.ignore_bucket)
     if args.dry_run:
@@ -103,32 +105,57 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers(help='sub-command help')
 
     # Metadata parser.
-    parser_metadata = subparsers.add_parser('metadata', help='metadata help')
-    parser_metadata.add_argument('identifier', nargs='?', type=str)
+    parser_metadata = subparsers.add_parser('metadata', help='Retrive and modify '
+                                                             'metadata for items on '
+                                                             'archive.org.')
+    parser_metadata.add_argument('identifier', nargs='?', type=str, 
+                                 help='An identifier for an item on archive.org.')
+    parser_metadata.add_argument('--modify', nargs='*', type=str,
+                                 help='Modify the metadata of an item.')
+    parser_metadata.add_argument('--files', default=False, action='store_true',
+                                 help='Return select file-level metadata for an item and '
+                                      'exit.')
     parser_metadata.add_argument('--files_count', '-fc', default=False,
-                                 action='store_true')
-    parser_metadata.add_argument('--files', default=False, action='store_true')
-    parser_metadata.add_argument('--server', default=False, action='store_true')
-    parser_metadata.add_argument('--dir', default=False, action='store_true')
-    parser_metadata.add_argument('--d1', default=False, action='store_true')
-    parser_metadata.add_argument('--d2', default=False, action='store_true')
-    parser_metadata.add_argument('--item_size', default=False, action='store_true')
-    parser_metadata.add_argument('--modify', nargs='*', type=str)
+                                 action='store_true', 
+                                 help='Return the file count of an item and exit.')
+    parser_metadata.add_argument('--item_size', default=False, action='store_true',
+                                 help='Return the total size of an item in bytes and '
+                                      'exit.')
+    parser_metadata.add_argument('--server', default=False, action='store_true',
+                                 help='Return the server from which a given item is '
+                                      'currently being served from and exit.')
+    parser_metadata.add_argument('--d1', default=False, action='store_true',
+                                 help='Return the primary server for an item and exit.')
+    parser_metadata.add_argument('--d2', default=False, action='store_true',
+                                 help='Return the secondary server for an item and exit.')
+    parser_metadata.add_argument('--dir', default=False, action='store_true',
+                                 help='Return the full item directory path and exit.')
     parser_metadata.set_defaults(func=metadata)
 
     # Upload parser.
-    parser_upload = subparsers.add_parser('upload', help='upload help')
-    parser_upload.add_argument('files', nargs='*', type=str, default=None)
-    parser_upload.add_argument('--derive', default=True, action='store_false')
-    parser_upload.add_argument('--multipart', default=False, action='store_true')
-    parser_upload.add_argument('--ignore-bucket', default=False, action='store_true')
-    parser_upload.add_argument('--dry-run', default=False, action='store_true')
+    parser_upload = subparsers.add_parser('upload', help='Upload items to archive.org')
+    parser_upload.add_argument('identifier', nargs='?', type=str, 
+                               help='An identifier for an item on archive.org.')
+    parser_upload.add_argument('files', nargs='*', type=str, default=None, 
+                               help='The selected file(s) to upload to archive.org.')
+    parser_upload.add_argument('--no-derive', default=True, action='store_false', 
+                               help='Do not derive the item after files have been '
+                                    'uploaded.')
+    parser_upload.add_argument('--multipart', default=False, action='store_true',
+                               help='Upload files to archive.org in parts, using IA-S3 '
+                                    'multipart.')
+    parser_upload.add_argument('--ignore-bucket', default=False, action='store_true',
+                               help='Destroy and respecify metadata for an item.')
+    parser_upload.add_argument('--dry-run', default=False, action='store_true', 
+                               help='Return the headers to be sent to IA-S3 and exit '
+                                     'without uploading any files')
     parser_upload.add_argument('--header', '-H', type=str, default=[], action='append')
     parser_upload.add_argument('--metadata', '-md', type=str, action='append')
     parser_upload.set_defaults(func=upload)
     
     # Search parser.
-    parser_search = subparsers.add_parser('search', help='search help')
+    parser_search = subparsers.add_parser('search', help='Search for items on '
+                                                         'archive.org')
     parser_search.add_argument('query', nargs='*', type=str)
     parser_search.set_defaults(func=search)
 

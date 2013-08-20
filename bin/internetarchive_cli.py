@@ -100,7 +100,7 @@ def search(args):
 
 # main()
 #_________________________________________________________________________________________
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(prog='archive.py')
     subparsers = parser.add_subparsers(help='sub-command help')
 
@@ -161,3 +161,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     args.func(args)
+
+
+#_________________________________________________________________________________________
+if __name__ == '__main__':
+    main()

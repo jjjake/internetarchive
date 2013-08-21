@@ -373,7 +373,7 @@ class Catalog(object):
     # init()
     #_____________________________________________________________________________________
     def __init__(self, params=None):
-        url = 'http://www.us.archive.org/catalog.php'
+        url = 'http://archive.org/catalog.php'
         self.GREEN = 0
         self.BLUE = 1
         self.RED = 2

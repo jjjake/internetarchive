@@ -1,10 +1,10 @@
 from setuptools import setup
-
+import internetarchive
 
 
 setup(
     name='internetarchive',
-    version='0.24',
+    version=internetarchive.__version__,
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive'],

@@ -4,6 +4,9 @@ A python interface to archive.org
 .. image:: https://travis-ci.org/jjjake/ia-wrapper.png?branch=master
         :target: https://travis-ci.org/jjjake/ia-wrapper
 
+.. image:: https://pypip.in/d/internetarchive/badge.png
+        :target: https://pypi.python.org/pypi/internetarchive
+
 Installation
 ~~~~~~~~~~~~
 

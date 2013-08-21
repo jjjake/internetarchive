@@ -4,13 +4,13 @@ from setuptools import setup
 
 setup(
     name='internetarchive',
-    version='0.22',
+    version='0.23',
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive'],
     scripts=['bin/ia'],
     url='https://github.com/jjjake/ia-wrapper',
-    license='LICENSE.txt',
+    license='LICENSE',
     description='A python interface to archive.org.',
     long_description=open('README.rst').read(),
     install_requires=[

@@ -128,10 +128,12 @@ engine <https://archive.org/advancedsearch.php>`__:
     186911
 
 You can iterate over your results:
-``python >>> for result in search.results: ...     print result['identifier']``
+.. code:: python
+    >>> for result in search.results: ...     print result['identifier']
 
 You can also search using the provided ``ia`` command-line script:
-``bash $ ia search 'collection:usenet'``
+.. code:: bash
+    $ ia search 'collection:usenet'
 
 A note about uploading items with mixed-case names
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

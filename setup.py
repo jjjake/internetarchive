@@ -14,9 +14,10 @@ setup(
     description='A python interface to archive.org.',
     long_description=open('README.rst').read(),
     install_requires=[
-        'ujson',
         'boto==2.9.9',
         'jsonpatch==1.1',
         'filechunkio==1.5',
+        'ujson==1.33',
+        'pytest==2.3.4',
     ]
 )

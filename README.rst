@@ -128,10 +128,12 @@ engine <https://archive.org/advancedsearch.php>`__:
     186911
 
 You can iterate over your results:
+
 .. code:: python
     >>> for result in search.results: ...     print result['identifier']
 
 You can also search using the provided ``ia`` command-line script:
+
 .. code:: bash
     $ ia search 'collection:usenet'
 

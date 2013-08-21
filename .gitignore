@@ -1,5 +1,5 @@
 *pyc
-*log
 build
 dist
 *.egg-info
+stairs

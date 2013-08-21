@@ -1,6 +1,9 @@
 A python interface to archive.org
 ---------------------------------
 
+.. image:: https://travis-ci.org/jjjake/ia-wrapper.png?branch=master
+        :target: https://travis-ci.org/jjjake/ia-wrapper
+
 Installation
 ~~~~~~~~~~~~
 

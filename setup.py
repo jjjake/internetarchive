@@ -8,11 +8,7 @@ setup(
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive'],
-    entry_points=dict(
-        console_scripts=[
-            'internetarchive = internetarchive.internetarchive_cli:main',
-        ]
-    ),
+    scripts=['bin/ia'],
     url='https://github.com/jjjake/ia-wrapper',
     license='LICENSE.txt',
     description='A python interface to archive.org.',

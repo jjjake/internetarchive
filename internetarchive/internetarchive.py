@@ -332,7 +332,9 @@ class Search(object):
                 rows = 100,
         ).items() + params.items())
         # Updata params dict with fields.
-        self.params.update({'fl[{0}]'.format(k): v for k, v in enumerate(fields)})
+        for k, v in enumerate(fields):
+            key = 'fl[{0}]'.format(k)
+            self.params[key] = v
         self.encoded_params = urllib.urlencode(self.params)
         self.url = '{0}?{1}'.format(self._base_url, self.encoded_params)
         self.search_info = self._get_search_info()

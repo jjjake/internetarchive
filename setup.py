@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='internetarchive',
-    version='0.1',
+    version='0.21',
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive'],
@@ -14,8 +14,8 @@ setup(
     description='A python interface to archive.org.',
     long_description=open('README.md').read(),
     install_requires=[
-        'boto==2.5.2',
-        'jsonpatch==0.4',
+        'boto==2.9.9',
+        'jsonpatch==1.1',
         'filechunkio==1.5',
     ]
 )

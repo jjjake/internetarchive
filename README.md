@@ -1,5 +1,12 @@
 ## A python interface to archive.org ##
 
+### Installation ###
+
+You can install this module via pip:
+
+`pip install internetarchive`
+
+
 ### Downloading ###
 
 The Internet Archive stores data in [items](http://blog.archive.org/2011/03/31/how-archive-org-items-are-structured/ "How Archive.org items are structured").
@@ -33,7 +40,7 @@ You can iterate over files:
 ```
 
 
-### Uploading ###
+### Uploading from Python ###
 
 You can use the IA's S3-like interface to upload files to an item.
 You need to supply your IAS3 credentials in environment variables in order to upload.
@@ -53,7 +60,28 @@ You can upload additional files to an existing item:
 
 ```python
 >>> item = internetarchive.Item('existing_identifier')
->>> item.upload('/path/to/image2.jpg')
+>>> item.upload(['/path/to/image2.jpg', '/path/to/image3.jpg'])
+```
+
+You can also upload file-like objects:
+
+```python
+>>> import StringIO
+>>> fh = StringIO.StringIO('hello world')
+>>> fh.name = 'hello_world.txt
+>>> item.upload(fh)
+```
+
+
+### Uploading from the command-line ###
+
+You can use the provided `ia` command-line tool to upload items:
+
+```bash
+$ export AWS_ACCESS_KEY_ID='xxx'
+$ export AWS_SECRET_ACCESS_KEY='yyy'
+
+$ ia upload new_identifier file1.txt file2.txt --metadata="title=foo" --metadata="blah=arg"
 ```
 
 
@@ -72,6 +100,13 @@ hood and requires your IAS3 credentials.
 >>> item.modify_metadata(md)
 ```
 
+You can also use the provided `ia` command-line tool to modify metadata. Be sure that the
+AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables are set.
+
+```bash
+$ ia metadata my_identifier --modify foo=bar baz=foooo
+```
+
 
 ### Searching ###
 
@@ -88,6 +123,11 @@ You can iterate over your results:
 ```python
 >>> for result in search.results:
 ...     print result['identifier']
+```
+
+You can also search using the provided `ia` command-line script:
+```bash
+$ ia search 'collection:usenet'
 ```
 
 

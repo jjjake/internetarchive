@@ -42,6 +42,7 @@ class Item(object):
         self.download_url = 'https://archive.org/download/{0}'.format(identifier)
         self.metadata_url = 'https://archive.org/metadata/{0}'.format(identifier)
         self._s3_conn = None
+        self._bucket = None
         self.metadata = self._get_item_metadata()
         if self.metadata == {}:
             self.exists = False
@@ -171,44 +172,28 @@ class Item(object):
     def _get_s3_bucket(self, conn, headers={}, ignore_bucket=False):
         if ignore_bucket is True:
             headers['x-archive-ignore-preexisting-bucket'] = 1
-            bucket = None
+            self._bucket = None
         else:
-            bucket = conn.lookup(self.identifier)
-        if bucket:
-            return bucket
-        bucket = conn.create_bucket(self.identifier, headers=headers)
+            if self._bucket is None:
+                self._bucket = conn.lookup(self.identifier)
+        if self._bucket:
+            return self._bucket
+        self._bucket = conn.create_bucket(self.identifier, headers=headers)
         i=0
         while i<60:
             b = conn.lookup(self.identifier)
             if b:
-                return bucket
+                return self._bucket
             time.sleep(10)
             i+=1
         raise NameError('Could not create or lookup {0}'.format(self.identifier))
 
 
-    # upload()
+    # _get_s3_headers()
     #_____________________________________________________________________________________
-    def upload(self, files, meta_dict={}, headers={}, dry_run=False,
-               derive=True, multipart=False, ignore_bucket=False):
-        """Upload file(s) to an item. The item will be created if it does not
-        exist.
-
-        :param files: Either a list of filepaths, or a string pointing to a single file.
-        :param meta_dict: Dictionary of metadata used to create a new item.
-        :param dry_run: (optional) Boolean. Set to True to print headers to stdout -- don't upload anything.
-        :param derive: (optional) Boolean. Set to False to prevent an item from being derived after upload.
-        :param multipart: (optional) Boolean. Set to True to upload files in parts. Useful when uploading large files.
-        :param ignore_bucket: (optional) Boolean. Set to True to ignore and clobber existing files and metadata.
-
-        Usage::
-
-            >>> import internetarchive
-            >>> item = internetarchive.Item('identifier')
-            >>> item.upload('/path/to/image.jpg', dict(mediatype='image', creator='Jake Johnson'))
-        """
-        # Convert metadata from :meta_dict: into S3 headers
-        for key,v in meta_dict.iteritems():
+    def _get_s3_headers(self, headers, metadata):
+        """Convert metadata from :metadata: into S3 headers"""
+        for key,v in metadata.iteritems():
             if type(v) == list:
                 for i, value in enumerate(v):
                     s3_header_key = 'x-archive-meta{0:02d}-{1}'.format(i, key)
@@ -222,51 +207,109 @@ class Item(object):
                     headers[s3_header_key] = v.encode('utf-8')
                 else:
                     headers[s3_header_key] = v
-        headers = dict((k, v) for k, v in headers.iteritems() if v)
+        return dict((k, v) for k, v in headers.iteritems() if v)
 
-        if dry_run:
-            return headers
 
+    # upload_file()
+    #_____________________________________________________________________________________
+    def upload_file(self, _file, remote_name=None, metadata={}, headers={}, derive=True, 
+                    multipart=False, ignore_bucket=False, debug=False):
+        """Upload a single file to an item. The item will be created if it does not exist.
+
+        :param _file: String or File. Either a filepath or file-like object pointing to the data to be uploaded.
+        :param remote_name: (optional) String. Set the remote filename.
+        :param metadata: (optional) Dictionary. Metadata used to create a new item.
+        :param headers: (optional) Dictionary. Add additional IA-S3 headers to request.
+        :param derive: (optional) Boolean. Set to False to prevent an item from being derived after upload.
+        :param multipart: (optional) Boolean. Set to True to upload files in parts. Useful when uploading large files.
+        :param ignore_bucket: (optional) Boolean. Set to True to ignore and clobber existing files and metadata.
+        :param debug: (optional) Boolean. Set to True to print headers to stdout -- don't upload anything.
+
+        Usage::
+
+            >>> import internetarchive
+            >>> item = internetarchive.Item('identifier')
+            >>> item.upload_file('/path/to/image.jpg', remote_name='photos/image1.jpg')
+
+        """
+
+        headers = self._get_s3_headers(headers, metadata)
+        if type(_file) == str:
+            _file = file(_file, 'rb')
+        if remote_name is None:
+            remote_name = _file.name.split('/')[-1]
+        conn = self._get_s3_conn()
+        bucket = self._get_s3_bucket(conn, headers, ignore_bucket=ignore_bucket)
+
+        if derive is False:
+            headers['x-archive-queue-derive'] =  0
+
+        # Don't clobber existing files unless ignore_bucket is True.
+        if bucket.get_key(remote_name) and ignore_bucket is False:
+            return True
+
+        if multipart is False:
+            k = boto.s3.key.Key(bucket)
+            k.name = remote_name
+            k.set_contents_from_file(_file, headers=headers)
+        #else:
+        # TODO: Fix multipart upload support for file-like objects.
+        #    mp = bucket.initiate_multipart_upload(remote_name, headers=headers)
+        #    source_size = os.stat(_file).st_size
+        #    headers['x-archive-size-hint'] = source_size
+        #    bytes_per_chunk = (max(int(math.sqrt(5242880) *
+        #                               math.sqrt(source_size)), 5242880))
+        #    chunk_amount = (int(math.ceil(source_size/float(bytes_per_chunk))))
+        #    for i in range(chunk_amount):
+        #        offset = i * bytes_per_chunk
+        #        remaining_bytes = source_size - offset
+        #        part_bytes = min([bytes_per_chunk, remaining_bytes])
+        #        part_num = i + 1
+        #        with filechunkio.FileChunkIO(_file, 'r',
+        #                                     offset=offset,
+        #                                     bytes=part_bytes) as _file:
+        #            mp.upload_part_from_file(fp=_file, part_num=part_num)
+        #    if len(mp.get_all_parts()) == chunk_amount:
+        #        mp.complete_upload()
+        #        key = bucket.get_key(remote_name)
+        #    else:
+        #        mp.cancel_upload()
+        return True
+        
+
+    # upload()
+    #_____________________________________________________________________________________
+    def upload(self, files, metadata={}, headers={}, debug=False,
+               derive=True, multipart=False, ignore_bucket=False):
+        """Upload file(s) to an item. The item will be created if it does not
+        exist.
+
+        :param files: Either a list of filepaths, or a string pointing to a single file.
+        :param metadata: Dictionary of metadata used to create a new item.
+        :param debug: (optional) Boolean. Set to True to print headers to stdout -- don't upload anything.
+        :param derive: (optional) Boolean. Set to False to prevent an item from being derived after upload.
+        :param multipart: (optional) Boolean. Set to True to upload files in parts. Useful when uploading large files.
+        :param ignore_bucket: (optional) Boolean. Set to True to ignore and clobber existing files and metadata.
+
+        Usage::
+
+            >>> import internetarchive
+            >>> item = internetarchive.Item('identifier')
+            >>> item.upload('/path/to/image.jpg', dict(mediatype='image', creator='Jake Johnson'))
+
+        """
+
+        if debug is True:
+            return self._get_s3_headers(headers, metadata)
         if type(files) != list:
             files = [files]
-        for f in files:
-            if type(f) == str:
-                f = file(f, 'rb')
-            filename = f.name.split('/')[-1]
-            conn = self._get_s3_conn()
-            bucket = self._get_s3_bucket(conn, headers, ignore_bucket=ignore_bucket)
-
-            if not derive:
-                headers = {'x-archive-queue-derive': 0}
-
-            if bucket.get_key(filename) and ignore_bucket is False:
+        for _file in files:
+            upload_status = self.upload_file(_file, metadata, headers, derive, multipart, 
+                                             ignore_bucket)
+            if upload_status is True:
                 continue
-
-            if not multipart:
-                k = boto.s3.key.Key(bucket)
-                k.name = filename
-                k.set_contents_from_file(f, headers=headers)
             else:
-                mp = bucket.initiate_multipart_upload(filename, headers=headers)
-                source_size = os.stat(f).st_size
-                headers['x-archive-size-hint'] = source_size
-                bytes_per_chunk = (max(int(math.sqrt(5242880) *
-                                           math.sqrt(source_size)), 5242880))
-                chunk_amount = (int(math.ceil(source_size/float(bytes_per_chunk))))
-                for i in range(chunk_amount):
-                    offset = i * bytes_per_chunk
-                    remaining_bytes = source_size - offset
-                    part_bytes = min([bytes_per_chunk, remaining_bytes])
-                    part_num = i + 1
-                    with filechunkio.FileChunkIO(f, 'r',
-                                                 offset=offset,
-                                                 bytes=part_bytes) as f:
-                        mp.upload_part_from_file(fp=f, part_num=part_num)
-                if len(mp.get_all_parts()) == chunk_amount:
-                    mp.complete_upload()
-                    key = bucket.get_key(filename)
-                else:
-                    mp.cancel_upload()
+                return False
         return True
 
 
@@ -381,7 +424,7 @@ class Catalog(object):
         self.RED = 2
         self.BROWN = 9
 
-        if not params:
+        if params is None:
             params = dict(justme = 1)
 
         # Add params required to retrieve JSONP from the IA catalog.

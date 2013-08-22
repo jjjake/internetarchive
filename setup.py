@@ -19,5 +19,6 @@ setup(
         'filechunkio==1.5',
         'ujson==1.33',
         'pytest==2.3.4',
+        'argparse=1.2.1',
     ]
 )

@@ -21,7 +21,7 @@ See the README file for the full documentation, avilable at
 """
 
 __title__ = 'internetarchive'
-__version__ = '0.2.4'
+__version__ = '0.2.5'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'GPL'
 __copyright__ = 'Copyright 2013 Jacob M. Johnson'

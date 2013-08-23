@@ -258,11 +258,12 @@ class Item(object):
             #TODO: multipart is still broken, it seems we're calling complete_upload()
             #      too soon?
             mp = bucket.initiate_multipart_upload(remote_name, headers=headers)
-            def read_cunk():
+            def read_chunk():
                 return _file.read(4096)
             part = 1
-            for chunk in iter(read_cunk, ''):
-                mp.upload_part_from_file(_file, part_num=part)
+            for chunk in iter(read_chunk, ''):
+                part_fp = StringIO(chunk)
+                mp.upload_part_from_file(part_fp, part_num=part)
                 part += 1
             mp.complete_upload()
             #    mp.cancel_upload()

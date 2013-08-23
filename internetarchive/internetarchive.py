@@ -10,7 +10,6 @@ import jsonpatch
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 import boto
 from cStringIO import StringIO
-import filechunkio
 
 
 
@@ -211,7 +210,8 @@ class Item(object):
     # upload_file()
     #_____________________________________________________________________________________
     def upload_file(self, _file, remote_name=None, metadata={}, headers={}, derive=True,
-                    multipart=False, ignore_bucket=False, debug=False):
+                    ignore_bucket=False, multipart=False, bytes_per_chunk=16777216,
+                    debug=False):
         """Upload a single file to an item. The item will be created if it does not exist.
 
         :param _file: String or File. The filepath or file-like object to be uploaded.
@@ -222,6 +222,7 @@ class Item(object):
         :param multipart: (optional) Boolean. Set to True to upload files in parts. Useful when uploading large files.
         :param ignore_bucket: (optional) Boolean. Set to True to ignore and clobber existing files and metadata.
         :param debug: (optional) Boolean. Set to True to print headers to stdout -- don't upload anything.
+        :param bytes_per_chunk: (optional) Integer. Used to determine the chunk size when using multipart upload.
 
         Usage::
 
@@ -255,11 +256,9 @@ class Item(object):
             k.name = remote_name
             k.set_contents_from_file(_file, headers=headers)
         else:
-            #TODO: multipart is still broken, it seems we're calling complete_upload()
-            #      too soon?
             mp = bucket.initiate_multipart_upload(remote_name, headers=headers)
             def read_chunk():
-                return _file.read(4096)
+                return _file.read(bytes_per_chunk)
             part = 1
             for chunk in iter(read_chunk, ''):
                 part_fp = StringIO(chunk)
@@ -272,15 +271,16 @@ class Item(object):
 
     # upload()
     #_____________________________________________________________________________________
-    def upload(self, files, metadata={}, headers={}, derive=True, multipart=False,
-               ignore_bucket=False, debug=False):
+    def upload(self, files, metadata={}, headers={}, derive=True, ignore_bucket=False, 
+               multipart=False, bytes_per_chunk=16777216, debug=False):
         """Upload files to an item. The item will be created if it does not exist.
 
         :param files: List. The filepaths or file-like objects to upload.
         :param metadata: (optional) Dictionary. Metadata used to create a new item.
         :param derive: (optional) Boolean. Set to False to prevent an item from being derived after upload.
-        :param multipart: (optional) Boolean. Set to True to upload files in parts. Useful when uploading large files.
         :param ignore_bucket: (optional) Boolean. Set to True to ignore and clobber existing files and metadata.
+        :param multipart: (optional) Boolean. Set to True to upload files in parts. Useful when uploading large files.
+        :param bytes_per_chunk: (optional) Integer. Used to determine the chunk size when using multipart upload.
         :param debug: (optional) Boolean. Set to True to print headers to stdout -- don't upload anything.
 
         Usage::

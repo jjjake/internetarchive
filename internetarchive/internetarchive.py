@@ -33,11 +33,12 @@ class Item(object):
 
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, identifier):
+    def __init__(self, identifier, metadata_timeout=None):
         self.identifier = identifier
         self.details_url = 'https://archive.org/details/{0}'.format(identifier)
         self.download_url = 'https://archive.org/download/{0}'.format(identifier)
         self.metadata_url = 'https://archive.org/metadata/{0}'.format(identifier)
+        self.metadata_timeout = metadata_timeout
         self._s3_conn = None
         self._bucket = None
         self.metadata = self._get_item_metadata()
@@ -50,7 +51,7 @@ class Item(object):
     # _get_item_metadata()
     #_____________________________________________________________________________________
     def _get_item_metadata(self):
-        f = urllib.urlopen(self.metadata_url)
+        f = urllib2.urlopen(self.metadata_url, timeout=self.metadata_timeout)
         return ujson.loads(f.read())
 
 

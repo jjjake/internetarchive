@@ -210,7 +210,7 @@ class Item(object):
 
     # upload_file()
     #_____________________________________________________________________________________
-    def upload_file(self, _file, remote_name=None, metadata={}, headers={}, derive=True, 
+    def upload_file(self, _file, remote_name=None, metadata={}, headers={}, derive=True,
                     multipart=False, ignore_bucket=False, debug=False):
         """Upload a single file to an item. The item will be created if it does not exist.
 
@@ -256,22 +256,23 @@ class Item(object):
             k.set_contents_from_file(_file, headers=headers)
         else:
             #TODO: multipart is still broken, it seems we're calling complete_upload()
-            #      too soon? 
+            #      too soon?
             mp = bucket.initiate_multipart_upload(remote_name, headers=headers)
-            def read_cunk():
+            def read_chunk():
                 return _file.read(4096)
             part = 1
-            for chunk in iter(read_cunk, ''):
-                mp.upload_part_from_file(_file, part_num=part)
+            for chunk in iter(read_chunk, ''):
+                part_fp = StringIO(chunk)
+                mp.upload_part_from_file(part_fp, part_num=part)
                 part += 1
             mp.complete_upload()
             #    mp.cancel_upload()
         return True
-        
+
 
     # upload()
     #_____________________________________________________________________________________
-    def upload(self, files, metadata={}, headers={}, derive=True, multipart=False, 
+    def upload(self, files, metadata={}, headers={}, derive=True, multipart=False,
                ignore_bucket=False, debug=False):
         """Upload files to an item. The item will be created if it does not exist.
 
@@ -297,7 +298,7 @@ class Item(object):
         if type(files) != list:
             files = [files]
         for _file in files:
-            upload_status = self.upload_file(_file, metadata, headers, derive, multipart, 
+            upload_status = self.upload_file(_file, metadata, headers, derive, multipart,
                                              ignore_bucket)
             if upload_status is True:
                 continue
@@ -321,7 +322,7 @@ class File(object):
         self.size = file_dict.get('size')
         if self.size is not None:
             self.size = int(self.size)
-        self.format = file_dict.get('format') 
+        self.format = file_dict.get('format')
         self.mtime = file_dict.get('mtime')
         self.md5  = file_dict.get('md5')
         self.sha1 = file_dict.get('crc32')
@@ -353,7 +354,7 @@ class Search(object):
     for archive.org items using the advanced search engine:
         >>> import internetarchive
         >>> search = internetarchive.Search('(uploader:jake@archive.org)')
-        >>> for result in search.results: 
+        >>> for result in search.results:
         ...     print result['identifier']
     """
 
@@ -389,7 +390,7 @@ class Search(object):
         del results['response']['docs']
         return results
 
-        
+
     # _iter_results()
     #_____________________________________________________________________________________
     def _iter_results(self):

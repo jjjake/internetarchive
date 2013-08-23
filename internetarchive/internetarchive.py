@@ -1,7 +1,4 @@
-try:
-    import ujson as json
-except ImportError:
-    import json
+import ujson
 import urllib
 import os
 import httplib
@@ -12,6 +9,7 @@ import urllib2
 import jsonpatch
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 import boto
+from cStringIO import StringIO
 import filechunkio
 
 
@@ -54,7 +52,7 @@ class Item(object):
     #_____________________________________________________________________________________
     def _get_item_metadata(self):
         f = urllib.urlopen(self.metadata_url)
-        return json.loads(f.read())
+        return ujson.loads(f.read())
 
 
     # files()
@@ -133,7 +131,7 @@ class Item(object):
             patch.append(dict((k,v) for k,v in pd.items() if v))
 
         data = {
-            '-patch': json.dumps(patch),
+            '-patch': ujson.dumps(patch),
             '-target': target,
             'access': access_key,
             'secret': secret_key,
@@ -154,7 +152,7 @@ class Item(object):
         self.metadata = self._get_item_metadata()
         return dict(
             status_code = status_code,
-            content = json.loads(resp_file.read()),
+            content = ujson.loads(resp_file.read()),
         )
 
 
@@ -216,8 +214,8 @@ class Item(object):
                     multipart=False, ignore_bucket=False, debug=False):
         """Upload a single file to an item. The item will be created if it does not exist.
 
-        :param _file: String or File. Either a filepath or file-like object pointing to the data to be uploaded.
-        :param remote_name: (optional) String. Set the remote filename.
+        :param _file: String or File. The filepath or file-like object to be uploaded.
+        :param remote_name: (optional) String. Sets the remote filename.
         :param metadata: (optional) Dictionary. Metadata used to create a new item.
         :param headers: (optional) Dictionary. Add additional IA-S3 headers to request.
         :param derive: (optional) Boolean. Set to False to prevent an item from being derived after upload.
@@ -230,14 +228,18 @@ class Item(object):
             >>> import internetarchive
             >>> item = internetarchive.Item('identifier')
             >>> item.upload_file('/path/to/image.jpg', remote_name='photos/image1.jpg')
+            True
 
         """
 
         headers = self._get_s3_headers(headers, metadata)
+        headers['x-archive-size-hint'] = os.stat(_file).st_size
+
         if type(_file) == str:
             _file = file(_file, 'rb')
         if remote_name is None:
             remote_name = _file.name.split('/')[-1]
+
         conn = self._get_s3_conn()
         bucket = self._get_s3_bucket(conn, headers, ignore_bucket=ignore_bucket)
 
@@ -252,50 +254,41 @@ class Item(object):
             k = boto.s3.key.Key(bucket)
             k.name = remote_name
             k.set_contents_from_file(_file, headers=headers)
-        #else:
-        # TODO: Fix multipart upload support for file-like objects.
-        #    mp = bucket.initiate_multipart_upload(remote_name, headers=headers)
-        #    source_size = os.stat(_file).st_size
-        #    headers['x-archive-size-hint'] = source_size
-        #    bytes_per_chunk = (max(int(math.sqrt(5242880) *
-        #                               math.sqrt(source_size)), 5242880))
-        #    chunk_amount = (int(math.ceil(source_size/float(bytes_per_chunk))))
-        #    for i in range(chunk_amount):
-        #        offset = i * bytes_per_chunk
-        #        remaining_bytes = source_size - offset
-        #        part_bytes = min([bytes_per_chunk, remaining_bytes])
-        #        part_num = i + 1
-        #        with filechunkio.FileChunkIO(_file, 'r',
-        #                                     offset=offset,
-        #                                     bytes=part_bytes) as _file:
-        #            mp.upload_part_from_file(fp=_file, part_num=part_num)
-        #    if len(mp.get_all_parts()) == chunk_amount:
-        #        mp.complete_upload()
-        #        key = bucket.get_key(remote_name)
-        #    else:
-        #        mp.cancel_upload()
+        else:
+            #TODO: multipart is still broken, it seems we're calling complete_upload()
+            #      too soon? 
+            mp = bucket.initiate_multipart_upload(remote_name, headers=headers)
+            def read_cunk():
+                return _file.read(4096)
+            part = 1
+            for chunk in iter(read_cunk, ''):
+                mp.upload_part_from_file(_file, part_num=part)
+                part += 1
+            mp.complete_upload()
+            #    mp.cancel_upload()
         return True
         
 
     # upload()
     #_____________________________________________________________________________________
-    def upload(self, files, metadata={}, headers={}, debug=False,
-               derive=True, multipart=False, ignore_bucket=False):
-        """Upload file(s) to an item. The item will be created if it does not
-        exist.
+    def upload(self, files, metadata={}, headers={}, derive=True, multipart=False, 
+               ignore_bucket=False, debug=False):
+        """Upload files to an item. The item will be created if it does not exist.
 
-        :param files: Either a list of filepaths, or a string pointing to a single file.
-        :param metadata: Dictionary of metadata used to create a new item.
-        :param debug: (optional) Boolean. Set to True to print headers to stdout -- don't upload anything.
+        :param files: List. The filepaths or file-like objects to upload.
+        :param metadata: (optional) Dictionary. Metadata used to create a new item.
         :param derive: (optional) Boolean. Set to False to prevent an item from being derived after upload.
         :param multipart: (optional) Boolean. Set to True to upload files in parts. Useful when uploading large files.
         :param ignore_bucket: (optional) Boolean. Set to True to ignore and clobber existing files and metadata.
+        :param debug: (optional) Boolean. Set to True to print headers to stdout -- don't upload anything.
 
         Usage::
 
             >>> import internetarchive
             >>> item = internetarchive.Item('identifier')
-            >>> item.upload('/path/to/image.jpg', dict(mediatype='image', creator='Jake Johnson'))
+            >>> md = dict(mediatype='image', creator='Jake Johnson')
+            >>> item.upload('/path/to/image.jpg', md, derive=False)
+            True
 
         """
 
@@ -392,7 +385,7 @@ class Search(object):
         info_params['rows'] = 0
         encoded_info_params = urllib.urlencode(info_params)
         f = urllib.urlopen(self._base_url, encoded_info_params)
-        results = json.loads(f.read())
+        results = ujson.loads(f.read())
         del results['response']['docs']
         return results
 
@@ -406,7 +399,7 @@ class Search(object):
             self.params['page'] = page
             encoded_params = urllib.urlencode(self.params)
             f = urllib.urlopen(self._base_url, encoded_params)
-            results = json.loads(f.read())
+            results = ujson.loads(f.read())
             for doc in results['response']['docs']:
                 yield doc
 
@@ -445,7 +438,7 @@ class Catalog(object):
         jsonp_str = f.read()
         json_str = jsonp_str[(jsonp_str.index("(") + 1):jsonp_str.rindex(")")]
 
-        tasks_json = json.loads(json_str)
+        tasks_json = ujson.loads(json_str)
         self.tasks = [dict(
             identifier = t[0],
             server = t[1],

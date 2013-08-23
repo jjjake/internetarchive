@@ -16,7 +16,6 @@ setup(
     install_requires=[
         'boto==2.9.9',
         'jsonpatch==1.1',
-        'filechunkio==1.5',
         'ujson==1.33',
         'pytest==2.3.4',
         'argparse==1.2.1',

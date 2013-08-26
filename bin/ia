@@ -17,7 +17,7 @@ def metadata(args):
     # Modify metadata.
     if args.modify:
         metadata = {}
-        changes = [x.split('=') for x in args.modify]
+        changes = [x.split('=', 1) for x in args.modify]
         for k,v in changes:
             if not metadata.get(k):
                 metadata[k] = v

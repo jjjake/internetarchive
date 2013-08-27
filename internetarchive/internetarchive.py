@@ -299,8 +299,10 @@ class Item(object):
         if type(files) != list:
             files = [files]
         for _file in files:
-            upload_status = self.upload_file(_file, metadata, headers, derive, multipart,
-                                             ignore_bucket)
+            upload_status = self.upload_file(_file, remote_name=None, metadata=metadata, 
+                                                    headers=headers, derive=derive, 
+                                                    ignore_bucket=ignore_bucket,
+                                                    multipart=multipart) 
             if upload_status is True:
                 continue
             else:

@@ -11,6 +11,8 @@ from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 import boto
 from cStringIO import StringIO
 
+from . import __version__
+
 
 
 # Item class
@@ -236,6 +238,8 @@ class Item(object):
 
         headers = self._get_s3_headers(headers, metadata)
         headers['x-archive-size-hint'] = os.stat(_file).st_size
+        scanner = 'Internet Archive Python library {0}'.format(__version__)
+        headers['x-archive-meta-scanner'] = scanner
 
         if type(_file) == str:
             _file = file(_file, 'rb')

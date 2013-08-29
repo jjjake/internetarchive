@@ -8,7 +8,7 @@ import internetarchive
 
 # metadata()
 #_________________________________________________________________________________________
-def metadata(args):
+def ia_metadata(args):
     if not args.identifier:
         sys.stderr.write('error: no identifier!\n')
         sys.exit(1)
@@ -59,22 +59,27 @@ def metadata(args):
 
 # upload()
 #_________________________________________________________________________________________
-def upload(args):
+def ia_upload(args):
     if not args.identifier:
         sys.stderr.write('error: no identifier!\n')
         sys.exit(1)
     if not args.files:
         sys.stderr.write('error: no files!\n')
         sys.exit(1)
-    headers = dict((h.split(':') for h in args.header))
-    metadata = dict((md.split('=') for md in args.metadata))
+    if args.header:
+        headers = dict((h.split(':') for h in args.header))
+    else:
+        headers = {}
+    if args.metadata:
+        metadata = dict((md.split('=') for md in args.metadata))
+    else:
+        metadata = {}
     item = internetarchive.Item(args.identifier)
-    print item.identifier
-    upload_status = item.upload(args.files, meta_dict=metadata, headers=headers,
-                                dry_run=args.dry_run, derive=args.no_derive, 
+    upload_status = item.upload(args.files, metadata=metadata, headers=headers,
+                                debug=args.debug, derive=args.no_derive, 
                                 multipart=args.multipart,
                                 ignore_bucket=args.ignore_bucket)
-    if args.dry_run:
+    if args.debug:
         sys.stdout.write('IA-S3 Headers:\n\n{0}\n'.format(upload_status))
         sys.exit(0)
     elif upload_status is False:
@@ -87,7 +92,7 @@ def upload(args):
 
 # search()
 #_________________________________________________________________________________________
-def search(args):
+def ia_search(args):
     if not args.query:
         sys.stderr.write('error: no query!\n')
         sys.exit(1)
@@ -100,7 +105,7 @@ def search(args):
 
 # catalog()
 #_________________________________________________________________________________________
-def catalog(args):
+def ia_catalog(args):
     c = internetarchive.Catalog()
     if args.green_rows:
         tasks = c.green_rows
@@ -153,7 +158,7 @@ if __name__ == '__main__':
                                  help='Return the secondary server for an item and exit.')
     parser_metadata.add_argument('--dir', default=False, action='store_true',
                                  help='Return the full item directory path and exit.')
-    parser_metadata.set_defaults(func=metadata)
+    parser_metadata.set_defaults(func=ia_metadata)
 
 
     # Upload parser.
@@ -171,12 +176,12 @@ if __name__ == '__main__':
                                     'multipart.')
     parser_upload.add_argument('--ignore-bucket', default=False, action='store_true',
                                help='Destroy and respecify metadata for an item.')
-    parser_upload.add_argument('--dry-run', default=False, action='store_true', 
+    parser_upload.add_argument('--debug', default=False, action='store_true', 
                                help='Return the headers to be sent to IA-S3 and exit '
                                      'without uploading any files')
     parser_upload.add_argument('--header', '-H', type=str, default=[], action='append')
     parser_upload.add_argument('--metadata', '-md', type=str, action='append')
-    parser_upload.set_defaults(func=upload)
+    parser_upload.set_defaults(func=ia_upload)
     
 
     # Search parser.
@@ -184,7 +189,7 @@ if __name__ == '__main__':
     parser_search = subparsers.add_parser('search', help='Search for items on '
                                                          'archive.org')
     parser_search.add_argument('query', nargs='*', type=str)
-    parser_search.set_defaults(func=search)
+    parser_search.set_defaults(func=ia_search)
 
 
     # Catalog parser.
@@ -200,7 +205,7 @@ if __name__ == '__main__':
                                 help='Retrieve information about running tasks.')
     parser_catalog.add_argument('--red-rows', '-r', default=False, action='store_true',
                                 help='Retrieve information about tasks that have failed.')
-    parser_catalog.set_defaults(func=catalog)
+    parser_catalog.set_defaults(func=ia_catalog)
 
     args = parser.parse_args()
     args.func(args)

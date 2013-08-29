@@ -11,6 +11,8 @@ from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 import boto
 from cStringIO import StringIO
 
+from . import __version__
+
 
 
 # Item class
@@ -236,6 +238,8 @@ class Item(object):
 
         headers = self._get_s3_headers(headers, metadata)
         headers['x-archive-size-hint'] = os.stat(_file).st_size
+        scanner = 'Internet Archive Python library {0}'.format(__version__)
+        headers['x-archive-meta-scanner'] = scanner
 
         if type(_file) == str:
             _file = file(_file, 'rb')
@@ -299,8 +303,10 @@ class Item(object):
         if type(files) != list:
             files = [files]
         for _file in files:
-            upload_status = self.upload_file(_file, metadata, headers, derive, multipart,
-                                             ignore_bucket)
+            upload_status = self.upload_file(_file, remote_name=None, metadata=metadata, 
+                                                    headers=headers, derive=derive, 
+                                                    ignore_bucket=ignore_bucket,
+                                                    multipart=multipart) 
             if upload_status is True:
                 continue
             else:
@@ -409,15 +415,15 @@ class Search(object):
 # Catalog class
 #_________________________________________________________________________________________
 class Catalog(object):
+    GREEN = 0
+    BLUE = 1
+    RED = 2
+    BROWN = 9
 
     # init()
     #_____________________________________________________________________________________
     def __init__(self, params=None):
         url = 'http://archive.org/catalog.php'
-        self.GREEN = 0
-        self.BLUE = 1
-        self.RED = 2
-        self.BROWN = 9
 
         if params is None:
             params = dict(justme = 1)
@@ -441,19 +447,62 @@ class Catalog(object):
         json_str = jsonp_str[(jsonp_str.index("(") + 1):jsonp_str.rindex(")")]
 
         tasks_json = ujson.loads(json_str)
-        self.tasks = [dict(
-            identifier = t[0],
-            server = t[1],
-            command = t[2],
-            time = t[3],
-            submitter = t[4],
-            # Parse args into dict
-            args = dict(x for x in urllib2.urlparse.parse_qsl(t[5])),
-            task_id = t[6],
-            row_type = t[7],
-        ) for t in tasks_json]
+        self.tasks = [CatalogTask(t) for t in tasks_json]
+        
+    def filter_tasks(self, pred):
+        return [t for t in self.tasks if pred(t)]
 
-        self.green_rows = [t for t in self.tasks if t['row_type'] == self.GREEN]
-        self.blue_rows = [t for t in self.tasks if t['row_type'] == self.BLUE]
-        self.red_rows = [t for t in self.tasks if t['row_type'] == self.RED]
-        self.brown_rows = [t for t in self.tasks if t['row_type'] == self.BROWN]
+    def tasks_by_type(self, row_type):
+        return self.filter_tasks(lambda t: t.row_type == row_type)
+
+    @property
+    def green_rows(self):
+        return self.tasks_by_type(self.GREEN)
+    @property
+    def blue_rows(self):
+        return self.tasks_by_type(self.BLUE)
+    @property
+    def red_rows(self):
+        return self.tasks_by_type(self.RED)
+    @property
+    def brown_rows(self):
+        return self.tasks_by_type(self.BROWN)
+
+class CatalogTask(object):
+    """represents catalog task.
+    """
+    COLUMNS = ('identifier', 'server', 'command', 'time', 'submitter',
+               'args', 'task_id', 'row_type')
+
+    def __init__(self, columns):
+        """:param columns: array of values, typically returned by catalog
+        web service. see COLUMNS for the column name.
+        """
+        for a, v in map(None, self.COLUMNS, columns):
+            if a: setattr(self, a, v)
+        # special handling for 'args' - parse it into a dict if it is a string
+        if isinstance(self.args, basestring):
+            self.args = dict(x for x in urllib2.urlparse.parse_qsl(self.args))
+
+    def __repr__(self):
+        return ('CatalogTask(identifier={identifier},'
+                ' task_id={task_id!r}, server={server!r},'
+                ' command={command!r},'
+                ' submitter={submitter!r},'
+                ' row_type={row_type})'.format(**self.__dict__))
+
+    def __getitem__(self, k):
+        """dict-like access privided as backward compatibility."""
+        if k in self.COLUMNS:
+            return getattr(self, k, None)
+        else:
+            raise KeyError, k
+
+    def open_task_log(self):
+        """return file-like reading task log."""
+        if self.task_id is None:
+            raise ValueError, 'task_id is None'
+        url = 'http://catalogd.archive.org/log/{0}'.format(self.task_id)
+        return urllib2.urlopen(url)
+
+        

@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='internetarchive',
-    version="0.2.6",
+    version="0.2.7",
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive'],

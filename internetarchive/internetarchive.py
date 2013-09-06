@@ -1,10 +1,9 @@
-import sys
 import ujson
 import urllib
 import os
+import sys
 import httplib
 import time
-import math
 import urllib2
 
 import jsonpatch
@@ -19,18 +18,20 @@ from . import __version__
 # Item class
 #_________________________________________________________________________________________
 class Item(object):
-    """This class represents an archive.org item.
-    You can use this class to access item metadata:
+    """This class represents an archive.org item. You can use this 
+    class to access item metadata:
         >>> import internetarchive
         >>> item = internetarchive.Item('stairs')
         >>> print item.metadata
 
-    This class also uses IA's S3-like interface to upload files to an item. You need to
-    supply your IAS3 credentials in environment variables in order to upload. You can
-    retrieve S3 keys from https://archive.org/account/s3.php
+    This class also uses IA's S3-like interface to upload files to an 
+    item. You need to supply your IAS3 credentials in environment 
+    variables in order to upload. You can retrieve S3 keys from:
+    https://archive.org/account/s3.php
         >>> import os;
-        >>> os.environ['AWS_ACCESS_KEY_ID']='x'; os.environ['AWS_SECRET_ACCESS_KEY']='y'
-        >>> item.upload('myfile')
+        >>> os.environ['AWS_ACCESS_KEY_ID']='$access_key'
+        >>> os.environ['AWS_SECRET_ACCESS_KEY']='$secret_key'
+        >>> item.upload('myfile.tar')
         True
     """
 
@@ -85,7 +86,7 @@ class Item(object):
         """Download the entire item into the current working directory"""
         if concurrent:
             try:
-                from gevent import monkey
+                from agevent import monkey
                 monkey.patch_socket()
                 from gevent.pool import Pool
                 pool = Pool()
@@ -104,9 +105,8 @@ class Item(object):
                 formats = [formats]
             if formats is not None and f.format not in formats:
                 continue
-            sys.stdout.write('  downloading {0}\n'.format(f.name))
+            sys.stdout.write('downloading: {0}\n'.format(f.name))
             path = os.path.join(self.identifier, f.name)
-            parent_dir = os.path.dirname(path)
             if concurrent:
                 pool.spawn(f.download, path)
             else:
@@ -118,14 +118,20 @@ class Item(object):
     # modify_metadata()
     #_____________________________________________________________________________________
     def modify_metadata(self, metadata, target='metadata'):
-        """function for modifying the metadata of an existing item on archive.org.
-        Note: The Metadata Write API does not yet comply with the latest Json-Patch
-        standard. It currently complies with version 02:
+        """function for modifying the metadata of an existing item on 
+        archive.org.
+
+        Note: The Metadata Write API does not yet comply with the 
+        latest Json-Patch standard. It currently complies with version 
+        02:
 
         https://tools.ietf.org/html/draft-ietf-appsawg-json-patch-02
 
-        :param metadata: Dictionary. Metadata used to update the item.
-        :param target: (optional) String. Metadata target to update.
+        :type metadata: dict
+        :param metadata: Metadata used to update the item.
+
+        :type target: str
+        :param target: (optional) Set the metadata target to update.
 
         Usage:
 
@@ -192,7 +198,7 @@ class Item(object):
     # _get_s3_bucket()
     #_____________________________________________________________________________________
     def _get_s3_bucket(self, conn, headers={}, ignore_bucket=False):
-        if ignore_bucket is True:
+        if ignore_bucket:
             headers['x-archive-ignore-preexisting-bucket'] = 1
             self._bucket = None
         else:
@@ -237,25 +243,49 @@ class Item(object):
     def upload_file(self, _file, remote_name=None, metadata={}, headers={}, derive=True,
                     ignore_bucket=False, multipart=False, bytes_per_chunk=16777216,
                     debug=False):
-        """Upload a single file to an item. The item will be created if it does not exist.
+        """Upload a single file to an item. The item will be created 
+        if it does not exist.
 
-        :param _file: String or File. The filepath or file-like object to be uploaded.
-        :param remote_name: (optional) String. Sets the remote filename.
-        :param metadata: (optional) Dictionary. Metadata used to create a new item.
-        :param headers: (optional) Dictionary. Add additional IA-S3 headers to request.
-        :param derive: (optional) Boolean. Set to False to prevent an item from being derived after upload.
-        :param multipart: (optional) Boolean. Set to True to upload files in parts. Useful when uploading large files.
-        :param ignore_bucket: (optional) Boolean. Set to True to ignore and clobber existing files and metadata.
-        :param debug: (optional) Boolean. Set to True to print headers to stdout -- don't upload anything.
-        :param bytes_per_chunk: (optional) Integer. Used to determine the chunk size when using multipart upload.
+        :type _file: str or file
+        :param _file: The filepath or file-like object to be uploaded.
+
+        :type remote_name: str
+        :param remote_name: (optional) Sets the remote filename.
+
+        :type metadata: dict
+        :param metadata: (optional) Metadata used to create a new item.
+
+        :type headers: dict
+        :param headers: (optional) Add additional IA-S3 headers to 
+                        request.
+
+        :type derive: bool
+        :param derive: (optional) Set to False to prevent an item from 
+                       being derived after upload.
+
+        :type multipart: bool
+        :param multipart: (optional) Set to True to upload files in 
+                          parts. Useful when uploading large files.
+
+        :type ignore_bucket: bool
+        :param ignore_bucket: (optional) Set to True to ignore and 
+                              clobber existing files and metadata.
+
+        :type debug: bool
+        :param debug: (optional) Set to True to print headers to stdout,
+                      and exit without sending the upload request.
+
+        :type bytes_per_chunk: int
+        :param bytes_per_chunk: (optional) Used to determine the chunk 
+                                size when using multipart upload.
 
         Usage::
 
             >>> import internetarchive
             >>> item = internetarchive.Item('identifier')
-            >>> item.upload_file('/path/to/image.jpg', remote_name='photos/image1.jpg')
+            >>> item.upload_file('/path/to/image.jpg', 
+            ...                  remote_name='photos/image1.jpg')
             True
-
         """
 
         headers = self._get_s3_headers(headers, metadata)
@@ -271,14 +301,14 @@ class Item(object):
         conn = self._get_s3_conn()
         bucket = self._get_s3_bucket(conn, headers, ignore_bucket=ignore_bucket)
 
-        if derive is False:
+        if not derive:
             headers['x-archive-queue-derive'] =  0
 
         # Don't clobber existing files unless ignore_bucket is True.
-        if bucket.get_key(remote_name) and ignore_bucket is False:
+        if bucket.get_key(remote_name) and not ignore_bucket:
             return True
 
-        if multipart is False:
+        if not multipart:
             k = boto.s3.key.Key(bucket)
             k.name = remote_name
             k.set_contents_from_file(_file, headers=headers)
@@ -292,23 +322,21 @@ class Item(object):
                 mp.upload_part_from_file(part_fp, part_num=part)
                 part += 1
             mp.complete_upload()
-            #    mp.cancel_upload()
         return True
 
 
     # upload()
     #_____________________________________________________________________________________
-    def upload(self, files, metadata={}, headers={}, derive=True, ignore_bucket=False, 
-               multipart=False, bytes_per_chunk=16777216, debug=False):
-        """Upload files to an item. The item will be created if it does not exist.
+    def upload(self, files, **kwargs):
+        """Upload files to an item. The item will be created if it 
+        does not exist.
 
-        :param files: List. The filepaths or file-like objects to upload.
-        :param metadata: (optional) Dictionary. Metadata used to create a new item.
-        :param derive: (optional) Boolean. Set to False to prevent an item from being derived after upload.
-        :param ignore_bucket: (optional) Boolean. Set to True to ignore and clobber existing files and metadata.
-        :param multipart: (optional) Boolean. Set to True to upload files in parts. Useful when uploading large files.
-        :param bytes_per_chunk: (optional) Integer. Used to determine the chunk size when using multipart upload.
-        :param debug: (optional) Boolean. Set to True to print headers to stdout -- don't upload anything.
+        :type files: list
+        :param files: The filepaths or file-like objects to upload.
+
+        :type kwargs: dict
+        :param kwargs: The keyword arguments from the call to 
+                       upload_file().
 
         Usage::
 
@@ -317,19 +345,16 @@ class Item(object):
             >>> md = dict(mediatype='image', creator='Jake Johnson')
             >>> item.upload('/path/to/image.jpg', md, derive=False)
             True
-
         """
 
-        if debug is True:
-            return self._get_s3_headers(headers, metadata)
+        if kwargs.get('debug'):
+            return self._get_s3_headers(kwargs.get('headers', {}), 
+                                        kwargs.get('metadata', {}))
         if type(files) != list:
             files = [files]
         for _file in files:
-            upload_status = self.upload_file(_file, remote_name=None, metadata=metadata, 
-                                                    headers=headers, derive=derive, 
-                                                    ignore_bucket=ignore_bucket,
-                                                    multipart=multipart) 
-            if upload_status is True:
+            upload_status = self.upload_file(_file, **kwargs)
+            if upload_status:
                 continue
             else:
                 return False
@@ -378,8 +403,12 @@ class File(object):
 # Search class
 #_________________________________________________________________________________________
 class Search(object):
-    """This class represents an archive.org item search. You can use this class to search
-    for archive.org items using the advanced search engine:
+    """This class represents an archive.org item search. You can use 
+    this class to search for archive.org items using the advanced 
+    search engine.
+
+    Usage::
+
         >>> import internetarchive
         >>> search = internetarchive.Search('(uploader:jake@archive.org)')
         >>> for result in search.results:
@@ -489,6 +518,9 @@ class Catalog(object):
     def brown_rows(self):
         return self.tasks_by_type(self.BROWN)
 
+
+# CatalogTask class
+#_________________________________________________________________________________________
 class CatalogTask(object):
     """represents catalog task.
     """
@@ -525,5 +557,3 @@ class CatalogTask(object):
             raise ValueError, 'task_id is None'
         url = 'http://catalogd.archive.org/log/{0}'.format(self.task_id)
         return urllib2.urlopen(url)
-
-        

@@ -86,7 +86,7 @@ class Item(object):
         """Download the entire item into the current working directory"""
         if concurrent:
             try:
-                from agevent import monkey
+                from gevent import monkey
                 monkey.patch_socket()
                 from gevent.pool import Pool
                 pool = Pool()

@@ -109,7 +109,6 @@ class Item(object):
             parent_dir = os.path.dirname(path)
             if concurrent:
                 pool.spawn(f.download, path)
-                pool.spawn(f.download, path)
             else:
                 f.download(path)
         if concurrent:

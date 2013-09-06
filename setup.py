@@ -17,6 +17,6 @@ setup(
         'jsonpatch==1.1',
         'ujson==1.33',
         'pytest==2.3.4',
-        'argparse==1.2.1',
+        'docopt==0.6.1',
     ]
 )

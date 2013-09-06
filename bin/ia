@@ -135,7 +135,7 @@ def ia_upload(argv):
     if args['--debug']:
         sys.stdout.write('IA-S3 Headers:\n\n{0}\n'.format(upload_status))
         sys.exit(0)
-    elif upload_status is False:
+    elif not upload_status:
         sys.stderr.write('error: upload failed!\n')
         sys.exit(1)
     else:
@@ -189,7 +189,7 @@ def ia_search(argv):
     """
     args = docopt(ia_search.__doc__, argv=argv)
 
-    query = ' '.join(args.query)
+    query = ' '.join(args['<query>'])
     search = internetarchive.Search(query)
     for result in search.results:
         sys.stdout.write(result['identifier'] + '\n')

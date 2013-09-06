@@ -35,6 +35,7 @@ def ia_metadata(argv):
         -h, --help
         -m, --modify <key:value>   Modify the metadata of an item.
         -f, --files                Return select file-level metadata.
+        -F, --formats               
         -c, --files-count          Return the file-count of an item.
         -i, --item-size            Return the item-size.
         -s, --server               Return the server from which the given item is being 
@@ -71,6 +72,9 @@ def ia_metadata(argv):
         for f in item.files():
             files_md = [f.item.identifier, f.name, f.source, f.format, f.size, f.md5]
             sys.stdout.write('\t'.join([str(x) for x in files_md]) + '\n')
+    elif args['--formats']:
+        formats = set([f.format for f in item.files()])
+        sys.stdout.write('\n'.join(formats))
     elif args['--files-count']:
         sys.stdout.write(str(item.metadata.get('files_count')))
     elif args['--server']:
@@ -152,6 +156,12 @@ def ia_download(argv):
         -h, --help  
         --version  
         -f, --format=<format>...   Only download files of the specified format(s).
+                                   You can use the following command to retrieve
+                                   a list of file formats contained within a given 
+                                   item:
+                                    
+                                       ia metadata --formats <identifier>
+
         -g, --gevent               Download files concurrently using the Python gevent 
                                    networking library.
     """

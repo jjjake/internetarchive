@@ -29,7 +29,7 @@ def ia_metadata(argv):
     Retrieve and modify metadata for items on archive.org.
     
     usage: 
-        ia metadata [--help] <identifier> [--modify <key=value>... | options...]
+        ia metadata [--help] <identifier> [--modify <key:value>... | options...]
 
     options:
         -h, --help

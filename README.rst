@@ -93,7 +93,7 @@ You can use the provided ``ia`` command-line tool to upload items:
     $ export AWS_ACCESS_KEY_ID='xxx'
     $ export AWS_SECRET_ACCESS_KEY='yyy'
 
-    $ ia upload new_identifier file1.txt file2.txt --metadata="title=foo" --metadata="blah=arg"
+    $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
 
 Modifying Metadata
 ~~~~~~~~~~~~~~~~~~
@@ -118,7 +118,7 @@ AWS\_SECRET\_ACCESS\_KEY environment variables are set.
 
 .. code:: bash
 
-    $ ia metadata my_identifier --modify foo=bar baz=foooo
+    $ ia metadata <identifier> --modify="foo:bar" --modify="baz:foooo"
 
 Searching
 ~~~~~~~~~

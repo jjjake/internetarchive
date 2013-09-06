@@ -1,23 +1,56 @@
 #!/usr/bin/env python
-import argparse
+"""
+usage: 
+    ia [--version] [--help] <command> [<args>...]
+
+options:
+    --version  
+    -h, --help  
+
+commands:
+    metadata  Retrieve and modify metadata for items on archive.org
+    upload    Upload items to archive.org
+    search    Search archive.org
+    catalog   Retrieve information about your catalog tasks
+
+See 'ia <command> --help' for more information on a specific command.
+"""
+from docopt import docopt
 import sys
 
 import internetarchive
 
 
 
-# metadata()
+# ia_metadata()
 #_________________________________________________________________________________________
-def ia_metadata(args):
-    if not args.identifier:
-        sys.stderr.write('error: no identifier!\n')
-        sys.exit(1)
-    item = internetarchive.Item(args.identifier)
+def ia_metadata(argv):
+    """
+    Retrieve and modify metadata for items on archive.org.
+    
+    usage: 
+        ia metadata [--help] <identifier> [--modify <key=value>... | options...]
+
+    options:
+        -h, --help
+        -m, --modify <key:value>   Modify the metadata of an item.
+        -f, --files                Return select file-level metadata.
+        -c, --files-count          Return the file-count of an item.
+        -i, --item-size            Return the item-size.
+        -s, --server               Return the server from which the given item is being 
+                                   served.
+        --dir                      Return the full item-directory path.
+        --d1                       Return the primary server.
+        --d2                       Return the secondary server.
+        -t, --target <target>      Return specified target, only.
+    """
+    args = docopt(ia_metadata.__doc__, argv=argv)
+    item = internetarchive.Item(args['<identifier>'])
 
     # Modify metadata.
-    if args.modify:
+    if args['--modify']:
         metadata = {}
-        changes = [x.split('=', 1) for x in args.modify]
+        changes = [x.split(':', 1) for x in args['--modify']]
         for k,v in changes:
             if not metadata.get(k):
                 metadata[k] = v
@@ -31,55 +64,71 @@ def ia_metadata(args):
             error_msg = response['content']['error']
             sys.stderr.write('error: {0} ({1})\n'.format(error_msg, status_code))
             sys.exit(1)
-        tasklog = 'https:{0}'.format(response['content']['log'])
-        sys.stdout.write('success: https:{0}\n'.format(response['content']['log']))
+        sys.stdout.write('success: {0}\n'.format(response['content']['log']))
 
     # Get metadata.
-    elif args.files_count:
-        sys.stdout.write(str(item.metadata.get('files_count')))
-    elif args.server:
-        sys.stdout.write(str(item.metadata.get('server')))
-    elif args.dir:
-        sys.stdout.write(str(item.metadata.get('dir')))
-    elif args.d1:
-        sys.stdout.write(str(item.metadata.get('d1')))
-    elif args.d2:
-        sys.stdout.write(str(item.metadata.get('d2')))
-    elif args.files:
+    elif args['--files']:
         for f in item.files():
             files_md = [f.item.identifier, f.name, f.source, f.format, f.size, f.md5]
             sys.stdout.write('\t'.join([str(x) for x in files_md]) + '\n')
-    elif args.item_size:
+    elif args['--files-count']:
+        sys.stdout.write(str(item.metadata.get('files_count')))
+    elif args['--server']:
+        sys.stdout.write(str(item.metadata.get('server')))
+    elif args['--dir']:
+        sys.stdout.write(str(item.metadata.get('dir')))
+    elif args['--d1']:
+        sys.stdout.write(str(item.metadata.get('d1')))
+    elif args['--d2']:
+        sys.stdout.write(str(item.metadata.get('d2')))
+    elif args['--item-size']:
         sys.stdout.write(str(item.metadata.get('item_size')))
+    elif args['--target']:
+        keys = [k.strip('/') for k in args['--target'][0].split('/') if k]
+        for i, k in enumerate(keys):
+            if i == 0:
+                md = item.metadata.get(k)
+            else:
+                md = md.get(k)
+        sys.stdout.write(str(md))
     else:
         sys.stdout.write(str(item.metadata))
 
     sys.exit(0)
 
 
-# upload()
+# ia_upload()
 #_________________________________________________________________________________________
-def ia_upload(args):
-    if not args.identifier:
-        sys.stderr.write('error: no identifier!\n')
-        sys.exit(1)
-    if not args.files:
-        sys.stderr.write('error: no files!\n')
-        sys.exit(1)
-    if args.header:
-        headers = dict((h.split(':') for h in args.header))
-    else:
-        headers = {}
-    if args.metadata:
-        metadata = dict((md.split('=') for md in args.metadata))
-    else:
-        metadata = {}
-    item = internetarchive.Item(args.identifier)
-    upload_status = item.upload(args.files, metadata=metadata, headers=headers,
-                                debug=args.debug, derive=args.no_derive, 
-                                multipart=args.multipart,
-                                ignore_bucket=args.ignore_bucket)
-    if args.debug:
+def ia_upload(argv):
+    """
+    Upload items to archive.org.
+    
+    usage: 
+        ia upload <identifier> <file>... [options...]
+
+    options:
+
+     -h, --help
+     -n, --no-derive             Do not derive the item after files have been 
+                                 uploaded.
+     -d, --debug                 Return the headers to be sent to IA-S3. default: True
+     -M, --multipart             Upload files to archive.org in parts, using 
+                                 IA-S3 multipart.
+     -i, --ignore-bucket         Destroy and respecify the metadata for a 
+                                 given item.
+     -m, --metadata=<key:value>  Metadata to add to the item. default: None
+     -H, --header=<key:value>    default: None
+    """
+    args = docopt(ia_upload.__doc__, argv=argv)
+
+    s3_headers = dict(h.split(':') for h in args['--header'] if args['--header'])
+    s3_metadata = dict(md.split(':') for md in args['--metadata'] if args['--metadata'])
+    item = internetarchive.Item(args['<identifier>'])
+    upload_status = item.upload(args['<file>'], metadata=s3_metadata, headers=s3_headers,
+                                debug=args['--debug'], derive=args['--no-derive'], 
+                                multipart=args['--multipart'],
+                                ignore_bucket=args['--ignore-bucket'])
+    if args['--debug']:
         sys.stdout.write('IA-S3 Headers:\n\n{0}\n'.format(upload_status))
         sys.exit(0)
     elif upload_status is False:
@@ -90,12 +139,46 @@ def ia_upload(args):
         sys.exit(0)
 
 
-# search()
+# ia_download()
 #_________________________________________________________________________________________
-def ia_search(args):
-    if not args.query:
-        sys.stderr.write('error: no query!\n')
-        sys.exit(1)
+def ia_download(argv):
+    """
+    Download files from archive.org.
+
+    usage: 
+        ia download [--help] <identifier> [options...]  
+
+    options:
+        -h, --help  
+        --version  
+        -f, --format=<format>...   Only download files of the specified format(s).
+        -g, --gevent               Download files concurrently using the Python gevent 
+                                   networking library.
+    """
+    args = docopt(ia_download.__doc__, argv=argv)
+    item = internetarchive.Item(args['<identifier>'])
+    if args['--format']:
+        formats = args['--format']
+    else:
+        formats = None
+    if args['--gevent']:
+        item.download(formats=formats, concurrent=True)
+    else:
+        item.download(formats=formats, concurrent=False)
+    sys.exit(0)
+
+
+# ia_search()
+#_________________________________________________________________________________________
+def ia_search(argv):
+    """
+    Search archive.org.
+
+    usage: 
+        ia search [--help] <query>...
+    """
+    args = docopt(ia_search.__doc__, argv=argv)
+
     query = ' '.join(args.query)
     search = internetarchive.Search(query)
     for result in search.results:
@@ -103,109 +186,88 @@ def ia_search(args):
     sys.exit(0)
 
 
-# catalog()
+# ia_catalog()
 #_________________________________________________________________________________________
-def ia_catalog(args):
+def ia_catalog(argv):
+    """
+    Retrieve information about your catalog tasks.
+
+    usage: 
+        ia catalog [--help] [options...]
+
+    options:
+        -h, --help
+        -v, --verbose       
+        -g, --green-rows            Return information about tasks that have not run.
+        -b, --blue-rows             Return information about running tasks.
+        -r, --red-rows              Return information about tasks that have failed.
+        -f , --fields <field>...    Return only the specified fields. <field> may be one
+                                    of the following: 
+                                    
+                                    identifier, server, command, time, submitter, args, 
+                                    task_id, row_type
+    """
+    args = docopt(ia_catalog.__doc__, argv=argv)
+
     c = internetarchive.Catalog()
-    if args.green_rows:
+    row_types = {
+            c.GREEN: 'green',
+            c.BLUE: 'blue',
+            c.RED: 'red',
+            c.BROWN: 'brown',
+    }
+    if args['--green-rows']:
         tasks = c.green_rows
-    elif args.blue_rows:
+    elif args['--blue-rows']:
         tasks = c.blue_rows
-    elif args.red_rows:
+    elif args['--red-rows']:
         tasks = c.red_rows
     else:
         tasks = c.tasks
     for t in tasks:
-        task_info = [
-                t['identifier'], unicode(t['task_id']), t['submitter'], t['server'], 
-                t['time'], t['command']
-        ]
-        sys.stdout.write('\t'.join(task_info) + '\n')
+        if args['--fields']:
+            task_info = []
+            for field in args['--fields']:
+                info = eval('t.{0}'.format(field))
+                task_info.append(info)
+        else:
+            task_info = [
+                    t.identifier, t.task_id, t.server, t.time, t.command, 
+                    row_types[t.row_type]
+            ]
+            if args['--verbose']:
+                targs = '\t'.join(['{0}={1}'.format(k, v) for (k,v) in t.args.items()])
+                task_info += [t.submitter, targs]
+        sys.stdout.write('\t'.join([str(x) for x in task_info]) + '\n')
     sys.exit(0)
 
 
 # main()
 #_________________________________________________________________________________________
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog='ia')
-    subparsers = parser.add_subparsers(help='sub-command help')
+    args = docopt(__doc__, version=internetarchive.__version__, options_first=True)
+    cmd = args['<command>']
+    aliases = dict(
+            md = 'metadata',
+            up = 'upload',
+            ca = 'catalog',
+            se = 'search',
+            do = 'download',
+    )
+    if cmd in aliases:
+        cmd = aliases[cmd]
+    argv = [cmd] + args['<args>']
 
-
-    # Metadata parser.
-    #_____________________________________________________________________________________
-    parser_metadata = subparsers.add_parser('metadata', help='Retrive and modify '
-                                                             'metadata for items on '
-                                                             'archive.org.')
-    parser_metadata.add_argument('identifier', nargs='?', type=str, 
-                                 help='An identifier for an item on archive.org.')
-    parser_metadata.add_argument('--modify', nargs='*', type=str,
-                                 help='Modify the metadata of an item.')
-    parser_metadata.add_argument('--files', default=False, action='store_true',
-                                 help='Return select file-level metadata for an item and '
-                                      'exit.')
-    parser_metadata.add_argument('--files_count', '-fc', default=False,
-                                 action='store_true', 
-                                 help='Return the file count of an item and exit.')
-    parser_metadata.add_argument('--item_size', default=False, action='store_true',
-                                 help='Return the total size of an item in bytes and '
-                                      'exit.')
-    parser_metadata.add_argument('--server', default=False, action='store_true',
-                                 help='Return the server from which a given item is '
-                                      'currently being served from and exit.')
-    parser_metadata.add_argument('--d1', default=False, action='store_true',
-                                 help='Return the primary server for an item and exit.')
-    parser_metadata.add_argument('--d2', default=False, action='store_true',
-                                 help='Return the secondary server for an item and exit.')
-    parser_metadata.add_argument('--dir', default=False, action='store_true',
-                                 help='Return the full item directory path and exit.')
-    parser_metadata.set_defaults(func=ia_metadata)
-
-
-    # Upload parser.
-    #_____________________________________________________________________________________
-    parser_upload = subparsers.add_parser('upload', help='Upload items to archive.org')
-    parser_upload.add_argument('identifier', nargs='?', type=str, 
-                               help='An identifier for an item on archive.org.')
-    parser_upload.add_argument('files', nargs='*', type=str, default=None, 
-                               help='The selected file(s) to upload to archive.org.')
-    parser_upload.add_argument('--no-derive', default=True, action='store_false', 
-                               help='Do not derive the item after files have been '
-                                    'uploaded.')
-    parser_upload.add_argument('--multipart', default=False, action='store_true',
-                               help='Upload files to archive.org in parts, using IA-S3 '
-                                    'multipart.')
-    parser_upload.add_argument('--ignore-bucket', default=False, action='store_true',
-                               help='Destroy and respecify metadata for an item.')
-    parser_upload.add_argument('--debug', default=False, action='store_true', 
-                               help='Return the headers to be sent to IA-S3 and exit '
-                                     'without uploading any files')
-    parser_upload.add_argument('--header', '-H', type=str, default=[], action='append')
-    parser_upload.add_argument('--metadata', '-md', type=str, action='append')
-    parser_upload.set_defaults(func=ia_upload)
-    
-
-    # Search parser.
-    #_____________________________________________________________________________________
-    parser_search = subparsers.add_parser('search', help='Search for items on '
-                                                         'archive.org')
-    parser_search.add_argument('query', nargs='*', type=str)
-    parser_search.set_defaults(func=ia_search)
-
-
-    # Catalog parser.
-    #_____________________________________________________________________________________
-    parser_catalog = subparsers.add_parser('catalog', help='Retrieve information about '
-                                                          'your tasks from the '
-                                                          'archive.org catalog.')
-    parser_catalog.add_argument('--verbose', '-v', default=False, action='store_true')
-    parser_catalog.add_argument('--green-rows', '-g', default=False, action='store_true',
-                                help='Retrieve information about tasks that have not yet '
-                                     'run.')
-    parser_catalog.add_argument('--blue-rows', '-b', default=False, action='store_true',
-                                help='Retrieve information about running tasks.')
-    parser_catalog.add_argument('--red-rows', '-r', default=False, action='store_true',
-                                help='Retrieve information about tasks that have failed.')
-    parser_catalog.set_defaults(func=ia_catalog)
-
-    args = parser.parse_args()
-    args.func(args)
+    if cmd == 'metadata':
+        ia_metadata(argv)
+    elif cmd == 'upload':
+        ia_upload(argv)
+    elif cmd == 'download':
+        ia_download(argv)
+    elif cmd == 'search':
+        ia_search(argv)
+    elif cmd == 'catalog':
+        ia_catalog(argv)
+    else:
+        sys.stderr.write(__doc__)
+        sys.exit(1)

@@ -1,3 +1,4 @@
+import sys
 import ujson
 import urllib
 import os
@@ -80,17 +81,39 @@ class Item(object):
 
     # download()
     #_____________________________________________________________________________________
-    def download(self, formats=None):
+    def download(self, formats=None, concurrent=False):
         """Download the entire item into the current working directory"""
+        if concurrent:
+            try:
+                from gevent import monkey
+                monkey.patch_socket()
+                from gevent.pool import Pool
+                pool = Pool()
+            except ImportError:
+                raise ImportError(
+                """No module named gevent
+
+                Downloading files concurrently requires the gevent neworking library.
+                gevent and all of it's dependencies can be installed with pip:
+                
+                \tpip install cython -e git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+
+                """)
         for f in self.files():
             if type(formats) == str:
                 formats = [formats]
             if formats is not None and f.format not in formats:
                 continue
-            print '  downloading', f.name
+            sys.stdout.write('  downloading {0}\n'.format(f.name))
             path = os.path.join(self.identifier, f.name)
             parent_dir = os.path.dirname(path)
-            f.download(path)
+            if concurrent:
+                pool.spawn(f.download, path)
+                pool.spawn(f.download, path)
+            else:
+                f.download(path)
+        if concurrent:
+            pool.join()
 
 
     # modify_metadata()
@@ -349,8 +372,7 @@ class File(object):
         if parent_dir != '' and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
-        url = 'https://archive.org/download/{0}/{1}'.format(self.item.identifier,
-                                                            self.name)
+        url = '{0}/{1}'.format(self.item.download_url, self.name)
         urllib.urlretrieve(url, file_path)
 
 

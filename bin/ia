@@ -10,13 +10,16 @@ options:
 commands:
     metadata  Retrieve and modify metadata for items on archive.org
     upload    Upload items to archive.org
+    download  Download files from archive.org
     search    Search archive.org
+    mine      Download item metadata concurrently.
     catalog   Retrieve information about your catalog tasks
 
 See 'ia <command> --help' for more information on a specific command.
 """
 from docopt import docopt
 import sys
+import json
 
 import internetarchive
 
@@ -196,6 +199,35 @@ def ia_search(argv):
     sys.exit(0)
 
 
+# ia_mine()
+#_________________________________________________________________________________________
+def ia_mine(argv):
+    """
+    usage:
+        ia mine <itemlist.txt> [options...]
+
+    options:
+        -h, --help  
+        -v, --verbose  
+        -f, --files  
+        -w, --workers=<count>  [default: 20]
+        -c, --cache            
+
+    """
+    args = docopt(ia_mine.__doc__, argv=argv)
+
+    items = [i.strip() for i in open(args['<itemlist.txt>'])]
+    workers = int(args.get('--workers', 20)[0])
+    miner = internetarchive.Mine(items, workers=workers)
+    for i, item in miner.items():
+        if args['--cache']:
+            sys.stdout.write('saving metadata for: {0}\n'.format(item.identifier))
+            with open('{0}_meta.json'.format(item.identifier), 'w') as fp:
+                json.dump(item.metadata, fp)
+        else:
+            sys.stdout.write(item.metadata)
+
+
 # ia_catalog()
 #_________________________________________________________________________________________
 def ia_catalog(argv):
@@ -262,6 +294,7 @@ if __name__ == '__main__':
             up = 'upload',
             ca = 'catalog',
             se = 'search',
+            mi = 'mine',
             do = 'download',
     )
     if cmd in aliases:
@@ -276,6 +309,8 @@ if __name__ == '__main__':
         ia_download(argv)
     elif cmd == 'search':
         ia_search(argv)
+    elif cmd == 'mine':
+        ia_mine(argv)
     elif cmd == 'catalog':
         ia_catalog(argv)
     else:

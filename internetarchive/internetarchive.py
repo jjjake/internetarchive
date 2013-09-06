@@ -37,12 +37,16 @@ class Item(object):
 
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, identifier, metadata_timeout=None):
+    def __init__(self, identifier, metadata_timeout=None, host=None):
         self.identifier = identifier
-        self.details_url = 'https://archive.org/details/{0}'.format(identifier)
+        if host:
+            _url_prefix = 'https://{0}.'.format(host)
+        else:
+            _url_prefix = 'https://'
+        self.details_url = '{0}archive.org/details/{1}'.format(_url_prefix, identifier)
         # TODO: https is not working with gevent
-        self.download_url = 'http://archive.org/download/{0}'.format(identifier)
-        self.metadata_url = 'https://archive.org/metadata/{0}'.format(identifier)
+        self.download_url = '{0}archive.org/download/{1}'.format(_url_prefix, identifier)
+        self.metadata_url = '{0}archive.org/metadata/{1}'.format(_url_prefix, identifier)
         self.metadata_timeout = metadata_timeout
         self._s3_conn = None
         self._bucket = None
@@ -421,7 +425,7 @@ class Search(object):
     # init()
     #_____________________________________________________________________________________
     def __init__(self, query, fields=['identifier'], params={}):
-        self._base_url = 'https://archive.org/advancedsearch.php'
+        self._base_url = 'http://archive.org/advancedsearch.php'
         self.query = query
         self.params = dict(dict(
                 q = self.query,
@@ -465,7 +469,97 @@ class Search(object):
                 yield doc
 
 
-# Catalog class
+# Mine class
+#_________________________________________________________________________________________
+class Mine(object):
+    """
+    Usage::
+        >>> miner = internetarchive.Mine('itemlist.txt', workers=50)
+        >>> for md in miner:
+        ...     print md
+    """
+    # __init__()
+    #_____________________________________________________________________________________
+    def __init__(self, identifiers, workers=20):
+        try:
+            from gevent import monkey, queue
+            monkey.patch_all()
+            #monkey.patch_socket()
+        except ImportError:
+            raise ImportError(
+            """No module named gevent
+
+            Downloading files concurrently requires the gevent neworking library.
+            gevent and all of it's dependencies can be installed with pip:
+            
+            \tpip install cython -e git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+
+            """)
+
+        self.hosts = None
+        self.skips = []
+        self.queue = queue
+        self.workers = workers
+        self.done_queueing_input = False
+        self.queued_count = 0
+        self.identifiers = identifiers
+        self.input_queue = self.queue.JoinableQueue(1000)
+        self.json_queue = self.queue.Queue(1000)
+
+
+    # _metadata_getter()
+    #_____________________________________________________________________________________
+    def _metadata_getter(self):
+        import random
+        while True:
+            i, identifier = self.input_queue.get()
+            if self.hosts:
+                host = self.hosts[random.randrange(len(self.hosts))]
+                while host in self.skips:
+                    host = hosts[random.randrange(len(self.hosts))]
+            else:
+                host = None
+            try:
+                item = Item(identifier, host=host)
+                self.json_queue.put((i, item))
+            except:
+                if host:
+                    sys.stderr.write('host failed: {0}\n'.format(host))
+                    self.skips.append(host)
+                self.input_queue.put((i, identifier))
+            finally:
+                self.input_queue.task_done()
+
+
+    # _queue_input()
+    #_____________________________________________________________________________________
+    def _queue_input(self):
+        for i, identifier in enumerate(self.identifiers):
+            self.input_queue.put((i, identifier))
+            self.queued_count += 1
+        self.done_queueing_input = True
+
+
+    # items()
+    #_____________________________________________________________________________________
+    def items(self):
+        import gevent
+        gevent.spawn(self._queue_input)
+        for i in range(self.workers):
+            gevent.spawn(self._metadata_getter)
+
+        def metadata_iterator_helper():
+            got_count = 0
+            while True:
+                if self.done_queueing_input and got_count == self.queued_count:
+                    break
+                yield self.json_queue.get()
+                got_count += 1
+
+        return metadata_iterator_helper()
+
+
+
 #_________________________________________________________________________________________
 class Catalog(object):
     GREEN = 0

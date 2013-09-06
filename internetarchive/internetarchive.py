@@ -40,7 +40,8 @@ class Item(object):
     def __init__(self, identifier, metadata_timeout=None):
         self.identifier = identifier
         self.details_url = 'https://archive.org/details/{0}'.format(identifier)
-        self.download_url = 'https://archive.org/download/{0}'.format(identifier)
+        # TODO: https is not working with gevent
+        self.download_url = 'http://archive.org/download/{0}'.format(identifier)
         self.metadata_url = 'https://archive.org/metadata/{0}'.format(identifier)
         self.metadata_timeout = metadata_timeout
         self._s3_conn = None

@@ -110,8 +110,9 @@ class Item(object):
                 formats = [formats]
             if formats is not None and f.format not in formats:
                 continue
-            sys.stdout.write('downloading: {0}\n'.format(f.name))
-            path = os.path.join(self.identifier, f.name)
+            fname = f.name.encode('utf-8')
+            path = os.path.join(self.identifier, fname)
+            sys.stdout.write('downloading: {0}\n'.format(fname))
             if concurrent:
                 pool.spawn(f.download, path)
             else:
@@ -403,7 +404,8 @@ class File(object):
         if parent_dir != '' and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
-        url = '{0}/{1}'.format(self.item.download_url, self.name)
+        fname = self.name.encode('utf-8')
+        url = '{0}/{1}'.format(self.item.download_url, fname)
         urllib.urlretrieve(url, file_path)
 
 

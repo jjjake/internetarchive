@@ -486,13 +486,12 @@ class Mine(object):
         try:
             from gevent import monkey, queue
             monkey.patch_all()
-            #monkey.patch_socket()
         except ImportError:
             raise ImportError(
             """No module named gevent
 
-            Downloading files concurrently requires the gevent neworking library.
-            gevent and all of it's dependencies can be installed with pip:
+            This feature requires the gevent neworking library.  gevent 
+            and all of it's dependencies can be installed with pip:
             
             \tpip install cython -e git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
 

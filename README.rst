@@ -7,6 +7,8 @@ A python interface to archive.org
 .. image:: https://pypip.in/d/internetarchive/badge.png
         :target: https://pypi.python.org/pypi/internetarchive
 
+Please report all bugs and issues on `Github <https://github.com/jjjake/ia-wrapper/issues>`__.
+
 Installation
 ~~~~~~~~~~~~
 

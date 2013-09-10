@@ -216,6 +216,7 @@ def ia_download(argv):
     options:
         -h, --help  
         --version  
+        -i, --ignore-existing      Clobber files already downloaded.
         -f, --format=<format>...   Only download files of the specified format(s).
                                    You can use the following command to retrieve
                                    a list of file formats contained within a given 
@@ -233,9 +234,11 @@ def ia_download(argv):
     else:
         formats = None
     if args['--concurrent']:
-        item.download(formats=formats, concurrent=True)
+        item.download(formats=formats, concurrent=True, 
+                      ignore_existing=args['--ignore-existing'])
     else:
-        item.download(formats=formats, concurrent=False)
+        item.download(formats=formats, concurrent=False,
+                      ignore_existing=args['--ignore-existing'])
     sys.exit(0)
 
 

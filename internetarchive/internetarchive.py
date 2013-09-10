@@ -114,7 +114,7 @@ class Item(object):
 
     # download()
     #_____________________________________________________________________________________
-    def download(self, formats=None, concurrent=False):
+    def download(self, formats=None, concurrent=False, ignore_existing=False):
         """Download the entire item into the current working directory"""
         if concurrent:
             try:
@@ -143,7 +143,7 @@ class Item(object):
             if concurrent:
                 pool.spawn(f.download, path)
             else:
-                f.download(path)
+                f.download(path, ignore_existing=ignore_existing)
         if concurrent:
             pool.join()
 
@@ -424,11 +424,11 @@ class File(object):
 
     # download()
     #_____________________________________________________________________________________
-    def download(self, file_path=None):
+    def download(self, file_path=None, ignore_existing=False):
         if file_path is None:
             file_path = self.name
 
-        if os.path.exists(file_path):
+        if os.path.exists(file_path) and not ignore_existing:
             raise IOError('File already exists: {0}'.format(file_path))
 
         parent_dir = os.path.dirname(file_path)

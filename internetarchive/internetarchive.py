@@ -1,3 +1,4 @@
+import yaml
 import ujson
 import urllib
 import os
@@ -28,7 +29,7 @@ class Item(object):
     item. You need to supply your IAS3 credentials in environment 
     variables in order to upload. You can retrieve S3 keys from:
     https://archive.org/account/s3.php
-        >>> import os;
+        >>> import os
         >>> os.environ['AWS_ACCESS_KEY_ID']='$access_key'
         >>> os.environ['AWS_SECRET_ACCESS_KEY']='$secret_key'
         >>> item.upload('myfile.tar')
@@ -37,7 +38,11 @@ class Item(object):
 
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, identifier, metadata_timeout=None, host=None):
+    def __init__(self, identifier, metadata_timeout=None, host=None, s3_keys=None,
+                 config=None, config_file=None):
+        self.config = config
+        self.config_file = config_file
+        self.s3_keys = s3_keys
         self.identifier = identifier
         if host:
             _url_prefix = 'https://{0}.'.format(host)
@@ -55,6 +60,28 @@ class Item(object):
             self.exists = False
         else:
             self.exists = True
+
+
+    # _configure()
+    #_____________________________________________________________________________________
+    def _configure(self):
+        if not self.s3_keys:
+            config_file = os.path.join(os.environ['HOME'], '.config', 
+                                       'internetarchive.yml')
+            if os.path.exists(config_file):
+                self.config_file = config_file
+            else:
+                config_file = os.path.join(os.environ['HOME'], '.internetarchive.yml')
+                self.config_file = config_file
+            if self.config_file:
+                self.config = yaml.load(open(self.config_file))
+                if self.config:
+                    self.s3_keys = self.config.get('s3') 
+            if not self.s3_keys:
+                self.s3_keys = dict(
+                        access_key = os.environ['AWS_ACCESS_KEY_ID'],
+                        secret_key = os.environ['AWS_SECRET_ACCESS_KEY'],
+                )
 
 
     # _get_item_metadata()
@@ -102,7 +129,7 @@ class Item(object):
                 Downloading files concurrently requires the gevent neworking library.
                 gevent and all of it's dependencies can be installed with pip:
                 
-                \tpip install cython -e git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+                \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
 
                 """)
         for f in self.files():
@@ -147,8 +174,8 @@ class Item(object):
         >>> item.modify_metadata(md)
 
         """
-        access_key = os.environ['AWS_ACCESS_KEY_ID']
-        secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
+        if not self.s3_keys:
+            self._configure()
         src = self.metadata.get(target, {})
         dest = dict((src.items() + metadata.items()))
 
@@ -169,8 +196,8 @@ class Item(object):
         data = {
             '-patch': ujson.dumps(patch),
             '-target': target,
-            'access': access_key,
-            'secret': secret_key,
+            'access': self.s3_keys['access_key'],
+            'secret': self.s3_keys['secret_key'],
         }
 
         host = 'archive.org'
@@ -196,7 +223,11 @@ class Item(object):
     #_____________________________________________________________________________________
     def _get_s3_conn(self):
         if self._s3_conn is None:
-            self._s3_conn = S3Connection(host='s3.us.archive.org', is_secure=False,
+            if not self.s3_keys:
+                self._configure()
+            self._s3_conn = S3Connection(self.s3_keys['access_key'], 
+                                         self.s3_keys['secret_key'],
+                                         host='s3.us.archive.org', 
                                          calling_format=OrdinaryCallingFormat())
         return self._s3_conn
 
@@ -493,7 +524,7 @@ class Mine(object):
             This feature requires the gevent neworking library.  gevent 
             and all of it's dependencies can be installed with pip:
             
-            \tpip install cython -e git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+            \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
 
             """)
 
@@ -570,7 +601,10 @@ class Catalog(object):
 
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, params=None):
+    def __init__(self, params=None, cookies=None):
+        self.cookies = cookies
+        if not self.cookies:
+            self.config = self._configure()
         url = 'http://archive.org/catalog.php'
 
         if params is None:
@@ -582,9 +616,9 @@ class Catalog(object):
         params['callback'] = 'foo'
         params = urllib.urlencode(params)
 
-        ia_cookies = ('logged-in-sig={LOGGED_IN_SIG}; '
-                      'logged-in-user={LOGGED_IN_USER}; '
-                      'verbose=1'.format(**os.environ))
+        ia_cookies = ('logged-in-sig={logged-in-sig}; '
+                      'logged-in-user={logged-in-user}; '
+                      'verbose=1'.format(**self.cookies))
 
         opener = urllib2.build_opener()
         opener.addheaders.append(('Cookie', ia_cookies))
@@ -597,21 +631,62 @@ class Catalog(object):
         tasks_json = ujson.loads(json_str)
         self.tasks = [CatalogTask(t) for t in tasks_json]
         
+
+    # _configure()
+    #_____________________________________________________________________________________
+    def _configure(self):
+        config_file = os.path.join(os.environ['HOME'], '.config', 
+                                   'internetarchive.yml')
+        if os.path.exists(config_file):
+            self.config_file = config_file
+        else:
+            config_file = os.path.join(os.environ['HOME'], '.internetarchive.yml')
+            self.config_file = config_file
+        if self.config_file:
+            self.config = yaml.load(open(self.config_file))
+            if self.config:
+                self.cookies = self.config.get('cookies') 
+        if not self.cookies:
+            self.cookies = {
+                    'logged-in-user': os.environ['LOGGED_IN_USER'],
+                    'logged-in-sig': os.environ['LOGGED_IN_sig'],
+            }
+
+
+    # filter_tasks()
+    #_____________________________________________________________________________________
     def filter_tasks(self, pred):
         return [t for t in self.tasks if pred(t)]
 
+
+    # tasks_by_type()
+    #_____________________________________________________________________________________
     def tasks_by_type(self, row_type):
         return self.filter_tasks(lambda t: t.row_type == row_type)
 
+    # green_rows()
+    #_____________________________________________________________________________________
     @property
     def green_rows(self):
         return self.tasks_by_type(self.GREEN)
+
+
+    # blue_rows()
+    #_____________________________________________________________________________________
     @property
     def blue_rows(self):
         return self.tasks_by_type(self.BLUE)
+
+
+    # red_rows()
+    #_____________________________________________________________________________________
     @property
     def red_rows(self):
         return self.tasks_by_type(self.RED)
+
+
+    # brown_rows()
+    #_____________________________________________________________________________________
     @property
     def brown_rows(self):
         return self.tasks_by_type(self.BROWN)

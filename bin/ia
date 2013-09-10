@@ -211,7 +211,7 @@ def ia_download(argv):
     Download files from archive.org.
 
     usage: 
-        ia download [--help] <identifier> [options...]  
+        ia download [--help] <identifier> [<file>...] [options...]  
 
     options:
         -h, --help  
@@ -239,12 +239,18 @@ def ia_download(argv):
         identifier = args['<identifier>']
     item = internetarchive.Item(identifier)
 
-    if '/' in args['<identifier>']:
-        fname = args['<identifier>'].split('/')[-1].encode('utf-8')
-        path = os.path.join(identifier, fname)
-        sys.stdout.write('downloading: {0}\n'.format(fname))
-        f = item.file(fname)
-        f.download(file_path=path, ignore_existing=args['--ignore-existing'])
+    if '/' in args['<identifier>'] or args['<file>']:
+        if not args['<file>']:
+            fname = args['<identifier>'].split('/')[-1]
+            files = [fname]
+        else:
+            files = args['<file>']
+        for f in files:
+            fname = f.encode('utf-8')
+            path = os.path.join(identifier, fname)
+            sys.stdout.write('downloading: {0}\n'.format(fname))
+            f = item.file(fname)
+            f.download(file_path=path, ignore_existing=args['--ignore-existing'])
         sys.exit(0)
 
     if args['--format']:

@@ -6,6 +6,7 @@ import sys
 import httplib
 import time
 import urllib2
+import fnmatch
 
 import jsonpatch
 from boto.s3.connection import S3Connection, OrdinaryCallingFormat
@@ -114,7 +115,8 @@ class Item(object):
 
     # download()
     #_____________________________________________________________________________________
-    def download(self, formats=None, concurrent=False, ignore_existing=False):
+    def download(self, source=None, formats=None, concurrent=False, glob_pattern=None, 
+                 ignore_existing=False):
         """Download the entire item into the current working directory"""
         if concurrent:
             try:
@@ -132,16 +134,25 @@ class Item(object):
                 \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
 
                 """)
-        for f in self.files():
+
+        files = self.files()
+        if source:
+            if type(source) == str:
+                source = [source]
+            files = [f for f in files if f.source in source]
+        if formats:
             if type(formats) == str:
                 formats = [formats]
-            if formats is not None and f.format not in formats:
-                continue
+            files = [f for f in files if f.format in formats]
+        if glob_pattern:
+            files = [f for f in files if fnmatch.fnmatch(f.name, glob_pattern)]
+
+        for f in files:
             fname = f.name.encode('utf-8')
             path = os.path.join(self.identifier, fname)
             sys.stdout.write('downloading: {0}\n'.format(fname))
             if concurrent:
-                pool.spawn(f.download, path)
+                pool.spawn(f.download, path, ignore_existing=ignore_existing)
             else:
                 f.download(path, ignore_existing=ignore_existing)
         if concurrent:

@@ -23,6 +23,7 @@ import sys
 import json
 import os
 import yaml
+import urlparse
 
 import internetarchive
 
@@ -95,6 +96,7 @@ def ia_metadata(argv):
     options:
         -h, --help
         -m, --modify <key:value>   Modify the metadata of an item.
+        -e, --exists               Check if an item exists.
         -f, --files                Return select file-level metadata.
         -F, --formats               
         -c, --files-count          Return the file-count of an item.
@@ -109,8 +111,17 @@ def ia_metadata(argv):
     args = docopt(ia_metadata.__doc__, argv=argv)
     item = internetarchive.Item(args['<identifier>'])
 
+    # Check existence of item.
+    if args['--exists']:
+        if item.exists:
+            sys.stdout.write('{0} exists\n'.format(item.identifier))
+            sys.exit(0)
+        else:
+            sys.stderr.write('{0} does not exist\n'.format(item.identifier))
+            sys.exit(1)
+
     # Modify metadata.
-    if args['--modify']:
+    elif args['--modify']:
         metadata = {}
         changes = [x.split(':', 1) for x in args['--modify']]
         for k,v in changes:
@@ -334,6 +345,7 @@ def ia_catalog(argv):
     options:
         -h, --help
         -v, --verbose       
+        -u, --url=<url>             ...
         -g, --green-rows            Return information about tasks that have not run.
         -b, --blue-rows             Return information about running tasks.
         -r, --red-rows              Return information about tasks that have failed.
@@ -345,7 +357,12 @@ def ia_catalog(argv):
     """
     args = docopt(ia_catalog.__doc__, argv=argv)
 
-    c = internetarchive.Catalog()
+    if args['--url']:
+        parsed_url = urlparse.urlparse(args['--url'][0])
+        params = urlparse.parse_qs(parsed_url.query)
+        c = internetarchive.Catalog(params=params)
+    else:
+        c = internetarchive.Catalog()
     row_types = {
             c.GREEN: 'green',
             c.BLUE: 'blue',

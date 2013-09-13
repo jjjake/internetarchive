@@ -96,7 +96,8 @@ def ia_metadata(argv):
     options:
         -h, --help
         -m, --modify <key:value>   Modify the metadata of an item.
-        -e, --exists               Check if an item exists.
+        -e, --exists               Check if an item exists. Exit status is 0 if the item
+                                   exists, and 1 if it does not.
         -f, --files                Return select file-level metadata.
         -F, --formats               
         -c, --files-count          Return the file-count of an item.

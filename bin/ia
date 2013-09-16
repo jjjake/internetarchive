@@ -199,7 +199,16 @@ def ia_upload(argv):
     args = docopt(ia_upload.__doc__, argv=argv)
 
     s3_headers = dict(h.split(':') for h in args['--header'] if args['--header'])
-    s3_metadata = dict(md.split(':') for md in args['--metadata'] if args['--metadata'])
+    s3_metadata = {}
+    changes = [x.split(':', 1) for x in args['--metadata']]
+    for k,v in changes:
+        if not s3_metadata.get(k):
+            s3_metadata[k] = v
+        else:
+            if type(s3_metadata[k]) != list:
+                s3_metadata[k] = [s3_metadata[k]]
+            s3_metadata[k].append(v)
+
     item = internetarchive.Item(args['<identifier>'])
     upload_status = item.upload(args['<file>'], metadata=s3_metadata, headers=s3_headers,
                                 debug=args['--debug'], derive=args['--no-derive'], 

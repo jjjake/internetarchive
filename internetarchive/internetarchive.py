@@ -1,5 +1,8 @@
 import yaml
-import ujson
+try:
+    import ujson as json
+except ImportError:
+    import json
 import urllib
 import os
 import sys
@@ -89,7 +92,7 @@ class Item(object):
     #_____________________________________________________________________________________
     def _get_item_metadata(self):
         f = urllib2.urlopen(self.metadata_url, timeout=self.metadata_timeout)
-        return ujson.loads(f.read())
+        return json.loads(f.read())
 
 
     # files()
@@ -205,7 +208,7 @@ class Item(object):
             patch.append(dict((k,v) for k,v in pd.items() if v))
 
         data = {
-            '-patch': ujson.dumps(patch),
+            '-patch': json.dumps(patch),
             '-target': target,
             'access': self.s3_keys['access_key'],
             'secret': self.s3_keys['secret_key'],
@@ -226,7 +229,7 @@ class Item(object):
         self.metadata = self._get_item_metadata()
         return dict(
             status_code = status_code,
-            content = ujson.loads(resp_file.read()),
+            content = json.loads(resp_file.read()),
         )
 
 
@@ -494,7 +497,7 @@ class Search(object):
         info_params['rows'] = 0
         encoded_info_params = urllib.urlencode(info_params)
         f = urllib.urlopen(self._base_url, encoded_info_params)
-        results = ujson.loads(f.read())
+        results = json.loads(f.read())
         del results['response']['docs']
         return results
 
@@ -508,7 +511,7 @@ class Search(object):
             self.params['page'] = page
             encoded_params = urllib.urlencode(self.params)
             f = urllib.urlopen(self._base_url, encoded_params)
-            results = ujson.loads(f.read())
+            results = json.loads(f.read())
             for doc in results['response']['docs']:
                 yield doc
 
@@ -639,7 +642,7 @@ class Catalog(object):
         jsonp_str = f.read()
         json_str = jsonp_str[(jsonp_str.index("(") + 1):jsonp_str.rindex(")")]
 
-        tasks_json = ujson.loads(json_str)
+        tasks_json = json.loads(json_str)
         self.tasks = [CatalogTask(t) for t in tasks_json]
         
 

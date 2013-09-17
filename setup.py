@@ -15,7 +15,6 @@ setup(
     install_requires=[
         'boto==2.9.9',
         'jsonpatch==1.1',
-        'ujson==1.33',
         'pytest==2.3.4',
         'docopt==0.6.1',
         'PyYAML==3.10',

@@ -21,13 +21,13 @@ setup(
         'PyYAML==3.10',
     ],
     dependency_links=[
-        'git://github.com/surfly/gevent.git@1.0rc2#egg=gevent',
+        'https://github.com/downloads/surfly/gevent/gevent-1.0rc2.tar.gz#egg=gevent-1.0.rc2',
     ],
     extras_require = {
         'speedups': [
             'ujson==1.33',
             'Cython==0.18',
-            'gevent',
+            'gevent==1.0rc2',
         ],
     },
 )

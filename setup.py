@@ -1,9 +1,10 @@
+import sys
 from setuptools import setup
 
 
 setup(
     name='internetarchive',
-    version="0.2.9",
+    version="0.3.0",
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive'],
@@ -18,5 +19,15 @@ setup(
         'pytest==2.3.4',
         'docopt==0.6.1',
         'PyYAML==3.10',
-    ]
+    ],
+    dependency_links=[
+        'git://github.com/surfly/gevent.git@1.0rc2#egg=gevent',
+    ],
+    extras_require = {
+        'speedups': [
+            'ujson==1.33',
+            'Cython==0.18',
+            'gevent',
+        ],
+    },
 )

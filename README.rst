@@ -16,12 +16,12 @@ You can install this module via pip:
 
 ``pip install internetarchive``
 
-Optionally, you can install a few extra dependencies to help speed things up a bit:
+Alternatively, you can install a few extra dependencies to help speed things up a bit:
 
 ``pip install "internetarchive[speedups]"``
 
-This will install `ujson <https://pypi.python.org/pypi/ujson>`__, for faster JSON parsing.
-And, `gevent <https://pypi.python.org/pypi/gevent>`__ for concurrent downloads.
+This will install `ujson <https://pypi.python.org/pypi/ujson>`__ for faster JSON parsing,
+and `gevent <https://pypi.python.org/pypi/gevent>`__ for concurrent downloads.
 
 Downloading
 ~~~~~~~~~~~

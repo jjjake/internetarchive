@@ -6,10 +6,10 @@ import yaml
 
 # _get_config()
 #_____________________________________________________________________________________
-def _get_config(config=None):
+def _get_config(config={}):
     home_dir = os.environ.get('HOME')
     if not home_dir:
-        return None
+        return config
     config_file = os.path.join(home_dir, '.config', 'internetarchive.yml')
     try:
         config = yaml.load(open(config_file));
@@ -18,7 +18,7 @@ def _get_config(config=None):
         try:
             config = yaml.load(open(config_file))
         except IOError:
-            return None
+            return config
     return config
 
 

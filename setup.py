@@ -1,14 +1,18 @@
-import sys
 from setuptools import setup
+
 
 
 setup(
     name='internetarchive',
-    version="0.3.1",
+    version="0.3.3",
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
-    packages=['internetarchive'],
-    scripts=['bin/ia'],
+    packages=['internetarchive', 'iacli'],
+    entry_points = {
+        'console_scripts': [
+            'ia = iacli.ia:main',
+        ],
+    },
     url='https://github.com/jjjake/ia-wrapper',
     license='LICENSE',
     description='A python interface to archive.org.',

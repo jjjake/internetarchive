@@ -24,20 +24,23 @@ from . import __version__
 #_________________________________________________________________________________________
 class Item(object):
     """This class represents an archive.org item. You can use this 
-    class to access item metadata:
-        >>> import internetarchive
-        >>> item = internetarchive.Item('stairs')
-        >>> print item.metadata
+    class to access item metadata:   
+
+    >>> import internetarchive
+    >>> item = internetarchive.Item('stairs')
+    >>> print item.metadata
 
     This class also uses IA's S3-like interface to upload files to an 
     item. You need to supply your IAS3 credentials in environment 
     variables in order to upload. You can retrieve S3 keys from:
     https://archive.org/account/s3.php
-        >>> import os
-        >>> os.environ['AWS_ACCESS_KEY_ID']='$access_key'
-        >>> os.environ['AWS_SECRET_ACCESS_KEY']='$secret_key'
-        >>> item.upload('myfile.tar')
-        True
+
+    >>> import os
+    >>> os.environ['AWS_ACCESS_KEY_ID']='$access_key'
+    >>> os.environ['AWS_SECRET_ACCESS_KEY']='$secret_key'
+    >>> item.upload('myfile.tar')
+    True
+
     """
 
     # init()

@@ -1,4 +1,3 @@
-import yaml
 try:
     import ujson as json
 except ImportError:
@@ -7,16 +6,14 @@ import urllib
 import os
 import sys
 import httplib
-import time
 import urllib2
 import fnmatch
 
 import jsonpatch
-from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 import boto
 from cStringIO import StringIO
 
-from . import __version__
+from . import __version__, ias3, config
 
 
 
@@ -45,50 +42,23 @@ class Item(object):
 
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, identifier, metadata_timeout=None, host=None, s3_keys=None,
-                 config=None, config_file=None):
-        self.config = config
-        self.config_file = config_file
-        self.s3_keys = s3_keys
+    def __init__(self, identifier, metadata_timeout=None, host=None):
         self.identifier = identifier
         if host:
             _url_prefix = 'https://{0}.'.format(host)
         else:
             _url_prefix = 'https://'
         self.details_url = '{0}archive.org/details/{1}'.format(_url_prefix, identifier)
-        # TODO: https is not working with gevent
         self.download_url = '{0}archive.org/download/{1}'.format(_url_prefix, identifier)
         self.metadata_url = '{0}archive.org/metadata/{1}'.format(_url_prefix, identifier)
         self.metadata_timeout = metadata_timeout
-        self._s3_conn = None
-        self._bucket = None
+        self.s3_connection = None
+        self.bucket = None
         self.metadata = self._get_item_metadata()
         if self.metadata == {}:
             self.exists = False
         else:
             self.exists = True
-
-
-    # _configure()
-    #_____________________________________________________________________________________
-    def _configure(self):
-        if not self.s3_keys:
-            config_file = os.path.join(os.environ['HOME'], '.config', 
-                                       'internetarchive.yml')
-            if os.path.exists(config_file):
-                self.config_file = config_file
-            else:
-                config_file = os.path.join(os.environ['HOME'], '.internetarchive.yml')
-                self.config_file = config_file
-            if self.config_file:
-                self.config = yaml.load(open(self.config_file))
-                if self.config:
-                    self.s3_keys = self.config.get('s3') 
-            if not self.s3_keys:
-                self.s3_keys = dict(
-                        access_key = os.environ['AWS_ACCESS_KEY_ID'],
-                        secret_key = os.environ['AWS_SECRET_ACCESS_KEY'],
-                )
 
 
     # _get_item_metadata()
@@ -191,8 +161,7 @@ class Item(object):
         >>> item.modify_metadata(md)
 
         """
-        if not self.s3_keys:
-            self._configure()
+        access_key, secret_key = config.get_s3_keys()
         src = self.metadata.get(target, {})
         dest = dict((src.items() + metadata.items()))
 
@@ -213,8 +182,8 @@ class Item(object):
         data = {
             '-patch': json.dumps(patch),
             '-target': target,
-            'access': self.s3_keys['access_key'],
-            'secret': self.s3_keys['secret_key'],
+            'access': access_key,
+            'secret': secret_key,
         }
 
         host = 'archive.org'
@@ -236,72 +205,16 @@ class Item(object):
         )
 
 
-    # _get_s3_conn()
-    #_____________________________________________________________________________________
-    def _get_s3_conn(self):
-        if self._s3_conn is None:
-            if not self.s3_keys:
-                self._configure()
-            self._s3_conn = S3Connection(self.s3_keys['access_key'], 
-                                         self.s3_keys['secret_key'],
-                                         host='s3.us.archive.org', 
-                                         calling_format=OrdinaryCallingFormat())
-        return self._s3_conn
-
-
-    # _get_s3_bucket()
-    #_____________________________________________________________________________________
-    def _get_s3_bucket(self, conn, headers={}, ignore_bucket=False):
-        if ignore_bucket:
-            headers['x-archive-ignore-preexisting-bucket'] = 1
-            self._bucket = None
-        else:
-            if self._bucket is None:
-                self._bucket = conn.lookup(self.identifier)
-        if self._bucket:
-            return self._bucket
-        self._bucket = conn.create_bucket(self.identifier, headers=headers)
-        i=0
-        while i<60:
-            b = conn.lookup(self.identifier)
-            if b:
-                return self._bucket
-            time.sleep(10)
-            i+=1
-        raise NameError('Could not create or lookup {0}'.format(self.identifier))
-
-
-    # _get_s3_headers()
-    #_____________________________________________________________________________________
-    def _get_s3_headers(self, headers, metadata):
-        """Convert metadata from :metadata: into S3 headers"""
-        for key,v in metadata.iteritems():
-            if type(v) == list:
-                for i, value in enumerate(v):
-                    s3_header_key = 'x-archive-meta{0:02d}-{1}'.format(i, key)
-                    if type(value) == str:
-                        headers[s3_header_key] = value.encode('utf-8')
-                    else:
-                        headers[s3_header_key] = value
-            else:
-                s3_header_key = 'x-archive-meta-{0}'.format(key)
-                if type(v) == str:
-                    headers[s3_header_key] = v.encode('utf-8')
-                else:
-                    headers[s3_header_key] = v
-        return dict((k, v) for k, v in headers.iteritems() if v)
-
-
     # upload_file()
     #_____________________________________________________________________________________
-    def upload_file(self, _file, remote_name=None, metadata={}, headers={}, derive=True,
-                    ignore_bucket=False, multipart=False, bytes_per_chunk=16777216,
-                    debug=False):
+    def upload_file(self, local_file, remote_name=None, metadata={}, headers={}, 
+                    derive=True, ignore_bucket=False, multipart=False, 
+                    bytes_per_chunk=16777216, debug=False):
         """Upload a single file to an item. The item will be created 
         if it does not exist.
 
-        :type _file: str or file
-        :param _file: The filepath or file-like object to be uploaded.
+        :type local_file: str or file
+        :param local_file: The filepath or file-like object to be uploaded.
 
         :type remote_name: str
         :param remote_name: (optional) Sets the remote filename.
@@ -342,36 +255,41 @@ class Item(object):
             True
         """
 
-        headers = self._get_s3_headers(headers, metadata)
+        headers = ias3.get_headers(headers, metadata)
         header_names = [header_name.lower() for header_name in headers.keys()]
         if 'x-archive-size-hint' not in header_names:
-            headers['x-archive-size-hint'] = os.stat(_file).st_size
+            headers['x-archive-size-hint'] = os.stat(local_file).st_size
         scanner = 'Internet Archive Python library {0}'.format(__version__)
         headers['x-archive-meta-scanner'] = scanner
 
-        if type(_file) == str:
-            _file = file(_file, 'rb')
-        if remote_name is None:
-            remote_name = _file.name.split('/')[-1]
+        if not hasattr(local_file, 'read'):
+            local_file = open(local_file, 'rb')
+        if not remote_name:
+            remote_name = local_file.name.split('/')[-1]
 
-        conn = self._get_s3_conn()
-        bucket = self._get_s3_bucket(conn, headers, ignore_bucket=ignore_bucket)
+        if not self.s3_connection:
+            self.s3_connection = ias3.connect()
+        if not self.bucket:
+            self.bucket = ias3.get_bucket(self.identifier, 
+                                          s3_connection=self.s3_connection, 
+                                          headers=headers, 
+                                          ignore_bucket=ignore_bucket)
 
         if not derive:
             headers['x-archive-queue-derive'] =  0
 
         # Don't clobber existing files unless ignore_bucket is True.
-        if bucket.get_key(remote_name) and not ignore_bucket:
+        if self.bucket.get_key(remote_name) and not ignore_bucket:
             return True
 
         if not multipart:
-            k = boto.s3.key.Key(bucket)
+            k = boto.s3.key.Key(self.bucket)
             k.name = remote_name
-            k.set_contents_from_file(_file, headers=headers)
+            k.set_contents_from_file(local_file, headers=headers)
         else:
-            mp = bucket.initiate_multipart_upload(remote_name, headers=headers)
+            mp = self.bucket.initiate_multipart_upload(remote_name, headers=headers)
             def read_chunk():
-                return _file.read(bytes_per_chunk)
+                return local_file.read(bytes_per_chunk)
             part = 1
             for chunk in iter(read_chunk, ''):
                 part_fp = StringIO(chunk)
@@ -404,15 +322,12 @@ class Item(object):
         """
 
         if kwargs.get('debug'):
-            return self._get_s3_headers(kwargs.get('headers', {}), 
-                                        kwargs.get('metadata', {}))
-        if type(files) != list:
+            return ias3.get_headers(kwargs.get('metadata', {}), kwargs.get('headers', {}))
+        if not hasattr(files, '__iter__'):
             files = [files]
-        for _file in files:
-            upload_status = self.upload_file(_file, **kwargs)
-            if upload_status:
-                continue
-            else:
+        for local_file in files:
+            response = self.upload_file(local_file, **kwargs)
+            if not response:
                 return False
         return True
 
@@ -487,7 +402,6 @@ class Search(object):
             key = 'fl[{0}]'.format(k)
             self.params[key] = v
         self.encoded_params = urllib.urlencode(self.params)
-        self.url = '{0}?{1}'.format(self._base_url, self.encoded_params)
         self.search_info = self._get_search_info()
         self.num_found = self.search_info['response']['numFound']
         self.results = self._iter_results()
@@ -565,7 +479,7 @@ class Mine(object):
             if self.hosts:
                 host = self.hosts[random.randrange(len(self.hosts))]
                 while host in self.skips:
-                    host = hosts[random.randrange(len(self.hosts))]
+                    host = self.hosts[random.randrange(len(self.hosts))]
             else:
                 host = None
             try:
@@ -618,12 +532,8 @@ class Catalog(object):
 
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, params=None, cookies=None):
-        self.cookies = cookies
-        if not self.cookies:
-            self.config = self._configure()
+    def __init__(self, params=None):
         url = 'http://archive.org/catalog.php'
-
         if params is None:
             params = dict(justme = 1)
 
@@ -633,12 +543,13 @@ class Catalog(object):
         params['callback'] = 'foo'
         params = urllib.urlencode(params)
 
-        ia_cookies = ('logged-in-sig={logged-in-sig}; '
-                      'logged-in-user={logged-in-user}; '
-                      'verbose=1'.format(**self.cookies))
+        logged_in_user, logged_in_sig = config.get_cookies()
+        cookies = ('logged-in-user={0}; '
+                   'logged-in-sig={1}; '
+                   'verbose=1'.format(logged_in_user, logged_in_sig))
 
         opener = urllib2.build_opener()
-        opener.addheaders.append(('Cookie', ia_cookies))
+        opener.addheaders.append(('Cookie', cookies))
         f = opener.open(url, params)
 
         # Convert JSONP to JSON (then parse the JSON).
@@ -648,27 +559,6 @@ class Catalog(object):
         tasks_json = json.loads(json_str)
         self.tasks = [CatalogTask(t) for t in tasks_json]
         
-
-    # _configure()
-    #_____________________________________________________________________________________
-    def _configure(self):
-        config_file = os.path.join(os.environ['HOME'], '.config', 
-                                   'internetarchive.yml')
-        if os.path.exists(config_file):
-            self.config_file = config_file
-        else:
-            config_file = os.path.join(os.environ['HOME'], '.internetarchive.yml')
-            self.config_file = config_file
-        if self.config_file:
-            self.config = yaml.load(open(self.config_file))
-            if self.config:
-                self.cookies = self.config.get('cookies') 
-        if not self.cookies:
-            self.cookies = {
-                    'logged-in-user': os.environ['LOGGED_IN_USER'],
-                    'logged-in-sig': os.environ['LOGGED_IN_sig'],
-            }
-
 
     # filter_tasks()
     #_____________________________________________________________________________________

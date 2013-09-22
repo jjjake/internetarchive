@@ -399,7 +399,6 @@ class Search(object):
             key = 'fl[{0}]'.format(k)
             self.params[key] = v
         self.encoded_params = urllib.urlencode(self.params)
-        self.url = '{0}?{1}'.format(self._base_url, self.encoded_params)
         self.search_info = self._get_search_info()
         self.num_found = self.search_info['response']['numFound']
         self.results = self._iter_results()

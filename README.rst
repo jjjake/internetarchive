@@ -38,6 +38,7 @@ Command-Line Usage
 Help is available by typing ``ia --help``. You can also get help on a command: ``ia <command> --help``.
 Available subcommands are ``configure``, ``metadata``, ``upload``, ``download``, ``search``, ``mine``, and ``catalog``.
 
+
 Downloading
 ~~~~~~~~~~~
 
@@ -83,11 +84,16 @@ You can use the provided ``ia`` command-line tool to upload items:
     $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
 
 
-Modifying Metadata
-~~~~~~~~~~~~~~~~~~
+Metadata
+~~~~~~~~
 
-You can use the provided ``ia`` command-line tool to modify
-metadata. Be sure that the AWS\_ACCESS\_KEY\_ID and
+You can use the ``ia`` command-line tool down to download item metadata in JSON format:
+
+.. code:: bash
+
+    $ia metadata TripDown1905
+
+You can also modify metadata. Be sure that the AWS\_ACCESS\_KEY\_ID and
 AWS\_SECRET\_ACCESS\_KEY environment variables are set.
 
 .. code:: bash
@@ -102,7 +108,18 @@ You can search using the provided ``ia`` command-line script:
 
 .. code:: bash
 
-    $ ia search 'collection:usenet'
+    $ ia search 'subject:"market street" collection:prelinger'
+
+
+Parallel Downloading
+~~~~~~~~~~~~~~~~~~~~
+
+If you have the GNU ``parallel`` tool intalled, then you can combine ``ia search`` and ``ia metadata`` to quickly retrieve data for many items in parallel:
+
+.. code:: bash
+
+    $ia search 'subject:"market street" collection:prelinger' | parallel -j40 'ia metadata {} > {}_meta.json'
+
 
 
 Python module usage

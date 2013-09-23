@@ -42,7 +42,7 @@ Available subcommands are ``configure``, ``metadata``, ``upload``, ``download``,
 Downloading
 ~~~~~~~~~~~
 
-To download the entire `TripDown1905 https://archive.org/details/TripDown1905`__ item:
+To download the entire `TripDown1905 <https://archive.org/details/TripDown1905>`__ item:
 
 .. code:: bash
 

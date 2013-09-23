@@ -7,7 +7,12 @@ A python interface to archive.org
 .. image:: https://pypip.in/d/internetarchive/badge.png
         :target: https://pypi.python.org/pypi/internetarchive
 
+This package installs a CLI tool named ``ia`` for using archive.org from the command-line.
+It also installs the ``internetarchive`` python module for programatic access to archive.org.
 Please report all bugs and issues on `Github <https://github.com/jjjake/ia-wrapper/issues>`__.
+
+.. contents:: Table of Contents:
+
 
 Installation
 ~~~~~~~~~~~~
@@ -22,6 +27,103 @@ Alternatively, you can install a few extra dependencies to help speed things up 
 
 This will install `ujson <https://pypi.python.org/pypi/ujson>`__ for faster JSON parsing,
 and `gevent <https://pypi.python.org/pypi/gevent>`__ for concurrent downloads.
+
+If you want to install this module globally on your system instead of inside a ``virtualenv``, use sudo:
+
+``sudo pip install internetarchive``
+
+
+Command-Line Usage
+------------------
+Help is available by typing ``ia --help``. You can also get help on a command: ``ia <command> --help``.
+Available subcommands are ``configure``, ``metadata``, ``upload``, ``download``, ``search``, ``mine``, and ``catalog``.
+
+
+Downloading
+~~~~~~~~~~~
+
+To download the entire `TripDown1905 https://archive.org/details/TripDown1905`__ item:
+
+.. code:: bash
+
+    $ ia download TripDown1905
+
+``ia download`` usage examples:
+
+.. code:: bash
+
+    #download just the mp4 files using ``--glob``
+    $ ia download TripDown1905 --glob='*.mp4'
+
+    #download all the mp4 files using ``--formats``:
+    $ ia download TripDown1905 --format='512Kb MPEG4'
+
+    #download multiple formats from an item:
+    $ ia download TripDown1905 --format='512Kb MPEG4' --format='Ogg Video'
+
+    #list all the formats in an item:
+    $ ia metadata --formats TripDown1905
+
+    #download a single file from an item:
+    $ ia download TripDown1905 TripDown1905_512kb.mp4
+
+    #download multiple files from an item:
+    $ ia download TripDown1905 TripDown1905_512kb.mp4 TripDown1905.ogv
+
+
+Uploading
+~~~~~~~~~
+
+You can use the provided ``ia`` command-line tool to upload items:
+
+.. code:: bash
+
+    $ export AWS_ACCESS_KEY_ID='xxx'
+    $ export AWS_SECRET_ACCESS_KEY='yyy'
+
+    $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
+
+
+Metadata
+~~~~~~~~
+
+You can use the ``ia`` command-line tool down to download item metadata in JSON format:
+
+.. code:: bash
+
+    $ia metadata TripDown1905
+
+You can also modify metadata. Be sure that the AWS\_ACCESS\_KEY\_ID and
+AWS\_SECRET\_ACCESS\_KEY environment variables are set.
+
+.. code:: bash
+
+    $ ia metadata <identifier> --modify="foo:bar" --modify="baz:foooo"
+
+
+Searching
+~~~~~~~~~
+
+You can search using the provided ``ia`` command-line script:
+
+.. code:: bash
+
+    $ ia search 'subject:"market street" collection:prelinger'
+
+
+Parallel Downloading
+~~~~~~~~~~~~~~~~~~~~
+
+If you have the GNU ``parallel`` tool intalled, then you can combine ``ia search`` and ``ia metadata`` to quickly retrieve data for many items in parallel:
+
+.. code:: bash
+
+    $ia search 'subject:"market street" collection:prelinger' | parallel -j40 'ia metadata {} > {}_meta.json'
+
+
+
+Python module usage
+-------------------
 
 Downloading
 ~~~~~~~~~~~
@@ -57,8 +159,8 @@ You can iterate over files:
     >>> for f in item.files():
     ...     print f.name, f.sha1
 
-Uploading from Python
-~~~~~~~~~~~~~~~~~~~~~
+Uploading
+~~~~~~~~~
 
 You can use the IA's S3-like interface to upload files to an item. You
 need to supply your IAS3 credentials in environment variables in order
@@ -92,17 +194,6 @@ You can also upload file-like objects:
     >>> fh.name = 'hello_world.txt
     >>> item.upload(fh)
 
-Uploading from the command-line
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You can use the provided ``ia`` command-line tool to upload items:
-
-.. code:: bash
-
-    $ export AWS_ACCESS_KEY_ID='xxx'
-    $ export AWS_SECRET_ACCESS_KEY='yyy'
-
-    $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
 
 Modifying Metadata
 ~~~~~~~~~~~~~~~~~~
@@ -121,13 +212,6 @@ and requires your IAS3 credentials.
     >>> md = dict(blah='one', foo=['two', 'three'])
     >>> item.modify_metadata(md)
 
-You can also use the provided ``ia`` command-line tool to modify
-metadata. Be sure that the AWS\_ACCESS\_KEY\_ID and
-AWS\_SECRET\_ACCESS\_KEY environment variables are set.
-
-.. code:: bash
-
-    $ ia metadata <identifier> --modify="foo:bar" --modify="baz:foooo"
 
 Searching
 ~~~~~~~~~
@@ -149,11 +233,6 @@ You can iterate over your results:
     >>> for result in search.results: 
     ...     print result['identifier']
 
-You can also search using the provided ``ia`` command-line script:
-
-.. code:: bash
-
-    $ ia search 'collection:usenet'
 
 A note about uploading items with mixed-case names
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

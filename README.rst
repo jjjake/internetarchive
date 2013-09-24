@@ -125,6 +125,9 @@ If you have the GNU ``parallel`` tool intalled, then you can combine ``ia search
 Python module usage
 -------------------
 
+Below is brief overview of the ``internetarchive`` Python library.
+Please refer to the `API documentation <http://ia-wrapper.readthedocs.org/en/latest/>`__ for more specific details.
+
 Downloading
 ~~~~~~~~~~~
 

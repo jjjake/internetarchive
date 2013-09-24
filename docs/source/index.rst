@@ -6,7 +6,8 @@
 Welcome to internetarchive's documentation!
 ===========================================
 
-Contents:
+This documentation is a work in progress. 
+Please report any issues on `Github <https://github.com/jjjake/ia-wrapper/issues>`__.
 
 .. toctree::
    :maxdepth: 2

@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='internetarchive',
-    version="0.3.3",
+    version="0.3.5",
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive', 'iacli'],

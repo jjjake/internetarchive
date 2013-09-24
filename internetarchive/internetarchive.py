@@ -21,28 +21,50 @@ from . import __version__, ias3, config
 #_________________________________________________________________________________________
 class Item(object):
     """This class represents an archive.org item. You can use this 
-    class to access item metadata:   
+    class to access item metadata::
 
-    >>> import internetarchive
-    >>> item = internetarchive.Item('stairs')
-    >>> print item.metadata
+        >>> import internetarchive
+        >>> item = internetarchive.Item('stairs')
+        >>> print item.metadata
+
+    Or to modify the metadata for an item::
+
+        >>> metadata = dict(title='The Stairs'))
+        >>> item.modify(metadata)
+        >>> print item.metadata['metadata']['title']
+        u'The Stairs'
 
     This class also uses IA's S3-like interface to upload files to an 
     item. You need to supply your IAS3 credentials in environment 
-    variables in order to upload. You can retrieve S3 keys from:
-    https://archive.org/account/s3.php
+    variables in order to upload::
 
-    >>> import os
-    >>> os.environ['AWS_ACCESS_KEY_ID']='$access_key'
-    >>> os.environ['AWS_SECRET_ACCESS_KEY']='$secret_key'
-    >>> item.upload('myfile.tar')
-    True
+        >>> import os
+        >>> os.environ['AWS_ACCESS_KEY_ID'] = 'Y6oUrAcCEs4sK8ey'
+        >>> os.environ['AWS_SECRET_ACCESS_KEY'] = 'youRSECRETKEYzZzZ'
+        >>> item.upload('myfile.tar')
+        True
+
+    You can retrieve S3 keys here: `https://archive.org/account/s3.php 
+    <https://archive.org/account/s3.php>`__
 
     """
 
     # init()
     #_____________________________________________________________________________________
     def __init__(self, identifier, metadata_timeout=None, host=None):
+        """
+        :type identifier: str
+        :param identifier: The globally unique Archive.org identifier
+                           for a given item.
+
+        :type metadata_timeout: int
+        :param metadata_timeout: (optional) Set a timeout for 
+                                 retrieving an item's metadata.
+
+        :type host: str
+        :param host: (optional) 
+
+        """
         self.identifier = identifier
         if host:
             _url_prefix = 'https://{0}.'.format(host)
@@ -61,9 +83,31 @@ class Item(object):
             self.exists = True
 
 
+    # __repr__()
+    #_____________________________________________________________________________________
+    def __repr__(self):
+        item_description = dict(
+                    identifier = self.identifier,
+                    exists = self.exists,
+                    item_size = self.metadata.get('item_size'),
+                    files_count = self.metadata.get('files_count'),
+        )
+        return ('Item(identifier={identifier!r}, '
+                'exists={exists!r}, '
+                'item_size={item_size!r}, '
+                'files_count={files_count!r})'.format(**item_description))
+
+
     # _get_item_metadata()
     #_____________________________________________________________________________________
     def _get_item_metadata(self):
+        """Get an item's metadata from the `Metadata API 
+        <http://blog.archive.org/2013/07/04/metadata-api/>`__
+
+        :rtype: dict
+        :returns: Metadat API response.
+
+        """
         f = urllib2.urlopen(self.metadata_url, timeout=self.metadata_timeout)
         return json.loads(f.read())
 
@@ -71,7 +115,13 @@ class Item(object):
     # files()
     #_____________________________________________________________________________________
     def files(self):
-        """Generator for iterating over files in an item"""
+        """Generator for iterating over files in an item.
+
+        :rtype: generator
+        :returns: A generator that yields :class:`internetarchive.File 
+                  <File>` objects.
+
+        """
         for file_dict in self.metadata.get('files', []):
             file = File(self, file_dict)
             yield file
@@ -80,20 +130,44 @@ class Item(object):
     # file()
     #_____________________________________________________________________________________
     def file(self, name):
-        """Return an archive.org File object for the named file.
-        If the specified file was not found in the item, return None
+        """Get a :class:`File <File>` object for the named file.
+
+        :rtype: :class:`internetarchive.File <File>`
+        :returns: An :class:`internetarchive.File <File>` object.
+
         """
         for file_dict in self.metadata['files']:
             if file_dict['name'] == name:
                 return File(self, file_dict)
-        return None
 
 
     # download()
     #_____________________________________________________________________________________
-    def download(self, source=None, formats=None, concurrent=False, glob_pattern=None, 
+    def download(self, concurrent=False, source=None, formats=None, glob_pattern=None, 
                  ignore_existing=False):
-        """Download the entire item into the current working directory"""
+        """Download the entire item into the current working directory.
+
+        :type concurrent: bool
+        :param concurrent: Download files concurrently if ``True``.
+
+        :type source: str
+        :param source: Only download files matching given source.
+
+        :type formats: str
+        :param formats: Only download files matching the given Formats.
+
+        :type glob_pattern: str
+        :param glob_pattern: Only download files matching the given glob
+                             pattern
+
+        :type ignore_existing: bool
+        :param ignore_existing: Overwrite local files if they already 
+                                exist.
+
+        :rtype: bool
+        :returns: True if if files have been downloaded successfully.
+
+        """
         if concurrent:
             try:
                 from gevent import monkey
@@ -133,19 +207,17 @@ class Item(object):
                 f.download(path, ignore_existing=ignore_existing)
         if concurrent:
             pool.join()
+        return True
 
 
     # modify_metadata()
     #_____________________________________________________________________________________
     def modify_metadata(self, metadata, target='metadata'):
-        """function for modifying the metadata of an existing item on 
-        archive.org.
+        """Modify the metadata of an existing item on Archive.org.
 
         Note: The Metadata Write API does not yet comply with the 
-        latest Json-Patch standard. It currently complies with version 
-        02:
-
-        https://tools.ietf.org/html/draft-ietf-appsawg-json-patch-02
+        latest Json-Patch standard. It currently complies with `version 02 
+        <https://tools.ietf.org/html/draft-ietf-appsawg-json-patch-02>`__.
 
         :type metadata: dict
         :param metadata: Metadata used to update the item.
@@ -153,12 +225,16 @@ class Item(object):
         :type target: str
         :param target: (optional) Set the metadata target to update.
 
-        Usage:
+        Usage::
 
-        >>> import internetarchive
-        >>> item = internetarchive.Item('mapi_test_item1')
-        >>> md = dict(new_key='new_value', foo=['bar', 'bar2'])
-        >>> item.modify_metadata(md)
+            >>> import internetarchive
+            >>> item = internetarchive.Item('mapi_test_item1')
+            >>> md = dict(new_key='new_value', foo=['bar', 'bar2'])
+            >>> item.modify_metadata(md)
+
+        :rtype: dict
+        :returns: A dictionary containing the status_code and response
+                  returned from the Metadata API.
 
         """
         access_key, secret_key = config.get_s3_keys()
@@ -253,6 +329,11 @@ class Item(object):
             >>> item.upload_file('/path/to/image.jpg', 
             ...                  remote_name='photos/image1.jpg')
             True
+
+        :rtype: bool
+        :returns: True if the request was successful and file was 
+                  uploaded, False otherwise.
+
         """
 
         headers = ias3.get_headers(headers, metadata)
@@ -319,6 +400,12 @@ class Item(object):
             >>> md = dict(mediatype='image', creator='Jake Johnson')
             >>> item.upload('/path/to/image.jpg', md, derive=False)
             True
+        
+        :rtype: bool
+        :returns: True if the request was successful and all files were
+                  uploaded, False otherwise.
+
+        
         """
 
         if kwargs.get('debug'):
@@ -335,6 +422,7 @@ class Item(object):
 # File class
 #_________________________________________________________________________________________
 class File(object):
+    """:todo: document File class."""
 
     # init()
     #_____________________________________________________________________________________
@@ -385,6 +473,7 @@ class Search(object):
         >>> search = internetarchive.Search('(uploader:jake@archive.org)')
         >>> for result in search.results:
         ...     print result['identifier']
+
     """
 
     # init()
@@ -436,11 +525,16 @@ class Search(object):
 # Mine class
 #_________________________________________________________________________________________
 class Mine(object):
-    """
+    """This class is for concurrently retrieving metadata for items on
+    Archive.org.
+
     Usage::
+
+        >>> import internetarchive
         >>> miner = internetarchive.Mine('itemlist.txt', workers=50)
         >>> for md in miner:
         ...     print md
+
     """
     # __init__()
     #_____________________________________________________________________________________
@@ -525,6 +619,7 @@ class Mine(object):
 
 #_________________________________________________________________________________________
 class Catalog(object):
+    """:todo: Document Catalog Class."""
     GREEN = 0
     BLUE = 1
     RED = 2

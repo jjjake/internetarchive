@@ -74,7 +74,10 @@ To download the entire `TripDown1905 <https://archive.org/details/TripDown1905>`
 Uploading
 ~~~~~~~~~
 
-You can use the provided ``ia`` command-line tool to upload items:
+You can use the provided ``ia`` command-line tool to upload items. You
+need to supply your IAS3 credentials in environment variables in order
+to upload. You can retrieve S3 keys from
+https://archive.org/account/s3.php
 
 .. code:: bash
 
@@ -233,7 +236,7 @@ You can iterate over your results:
 
 .. code:: python
 
-    >>> for result in search.results: 
+    >>> for result in search.results:
     ...     print result['identifier']
 
 

@@ -73,6 +73,8 @@ def get_headers(metadata, headers={}):
             # Convert metadata items into multiple header fields if
             # the item's value is iterable, and append to the
             # headers dict.
+            if isinstance(meta_value, basestring):
+                meta_value=[meta_value]
             for i, value in enumerate(meta_value):
                 s3_header_key = 'x-archive-meta{0:02d}-{1}'.format(i, meta_key)
                 encoded_header = encode_s3_header(s3_header_key, value)

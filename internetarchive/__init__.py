@@ -23,5 +23,6 @@ __license__ = 'GPL'
 __copyright__ = 'Copyright 2013 Jacob M. Johnson'
 
 from .item import Item, File
-from .service import Search, Catalog, Mine
+from .service import Search, Catalog
+from .mine import Mine
 from .api import *

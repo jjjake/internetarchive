@@ -2,7 +2,7 @@ import random
 
 try:
     from gevent import monkey, queue, spawn
-    monkey.patch_all()
+    monkey.patch_all(thread=False)
 except ImportError:
     raise ImportError(
     """No module named gevent

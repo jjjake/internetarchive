@@ -11,7 +11,7 @@ from . import config
 def connect(access_key=None, secret_key=None):
     if not access_key or not secret_key:
         access_key, secret_key = config.get_s3_keys()
-    s3_connection = S3Connection(access_key, secret_key, 
+    s3_connection = S3Connection(access_key, secret_key,
                                  host='s3.us.archive.org',
                                  calling_format=OrdinaryCallingFormat())
     return s3_connection
@@ -19,7 +19,7 @@ def connect(access_key=None, secret_key=None):
 
 # get_bucket()
 #_____________________________________________________________________________________
-def get_bucket(identifier, s3_connection=None, bucket=None, headers={}, 
+def get_bucket(identifier, s3_connection=None, bucket=None, headers={},
                ignore_bucket=False):
     if not s3_connection:
         s3_connection = connect()

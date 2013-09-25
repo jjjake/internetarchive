@@ -31,7 +31,7 @@ def get_s3_keys():
         config = _get_config()
         s3_config = config.get('s3', {})
         access_key = s3_config.get('access_key')
-        access_key = s3_config.get('secret_key')
+        secret_key = s3_config.get('secret_key')
     return (access_key, secret_key)
 
 

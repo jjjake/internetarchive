@@ -87,11 +87,11 @@ You can use the provided ``ia`` command-line tool to upload items:
 Metadata
 ~~~~~~~~
 
-You can use the ``ia`` command-line tool down to download item metadata in JSON format:
+You can use the ``ia`` command-line tool to download item metadata in JSON format:
 
 .. code:: bash
 
-    $ia metadata TripDown1905
+    $ ia metadata TripDown1905
 
 You can also modify metadata. Be sure that the AWS\_ACCESS\_KEY\_ID and
 AWS\_SECRET\_ACCESS\_KEY environment variables are set.

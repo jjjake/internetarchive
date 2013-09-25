@@ -1,8 +1,17 @@
 import random
 
-from gevent import monkey, queue, spawn
-#monkey.patch_all(thread=False)
-monkey.patch_all()
+try:
+    from gevent import monkey, queue, spawn
+    monkey.patch_all()
+except ImportError:
+    raise ImportError(
+    """No module named gevent
+
+    This feature requires the gevent neworking library. gevent
+    and all of it's dependencies can be installed with pip:
+    \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+
+    """)
 
 from internetarchive import Item
 
@@ -25,7 +34,6 @@ class Mine(object):
     # __init__()
     #_____________________________________________________________________________________
     def __init__(self, identifiers, workers=20):
-        self.hosts = None
         self.skips = []
         self.queue = queue
         self.workers = workers
@@ -41,19 +49,10 @@ class Mine(object):
     def _metadata_getter(self):
         while True:
             i, identifier = self.input_queue.get()
-            if self.hosts:
-                host = self.hosts[random.randrange(len(self.hosts))]
-                while host in self.skips:
-                    host = self.hosts[random.randrange(len(self.hosts))]
-            else:
-                host = None
             try:
-                item = Item(identifier, host=host)
+                item = Item(identifier)
                 self.json_queue.put((i, item))
             except:
-                if host:
-                    sys.stderr.write('host failed: {0}\n'.format(host))
-                    self.skips.append(host)
                 self.input_queue.put((i, identifier))
             finally:
                 self.input_queue.task_done()

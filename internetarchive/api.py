@@ -1,4 +1,4 @@
-from . import item, service, ias3, utils
+from . import item, service, ias3, utils, mine
 
 
 
@@ -126,5 +126,6 @@ def search(query, **kwargs):
 
 # mine()
 #_________________________________________________________________________________________
-def mine(identifiers, **kwargs): 
-    return service.Mine(identifiers, **kwargs)
+def get_data_miner(identifiers, **kwargs): 
+    miner = mine.Mine(identifiers, **kwargs)
+    return miner

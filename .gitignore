@@ -4,3 +4,4 @@ dist
 *.egg-info
 stairs
 _*
+itemlist.txt

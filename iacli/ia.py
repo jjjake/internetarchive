@@ -2,11 +2,12 @@
 """A command line interface for Archive.org.
 
 usage: 
-    ia [--version] [--help] <command> [<args>...]
+    ia [--version|--help|--debug] <command> [<args>...]
 
 options:
     --version  
     -h, --help  
+    -d, --debug  [default: True]
 
 commands:
     configure Configure `ia`.
@@ -20,6 +21,9 @@ commands:
 See 'ia <command> --help' for more information on a specific command.
 
 """
+from sys import exit
+from subprocess import call
+
 from docopt import docopt
 
 from internetarchive import __version__
@@ -58,7 +62,15 @@ def main():
     # command line.
     module = 'iacli.ia_{0}'.format(cmd) 
     globals()['ia_module'] = __import__(module, fromlist=['iacli'])
-    ia_module.main(argv)
+
+    # Exit with ``ia <command> --help`` if anything goes wrong.
+    try:
+        ia_module.main(argv)
+    except Exception, exception:
+        if not args.get('--debug'):
+            call(['ia', cmd, '--help'])
+            exit(1)
+        raise exception
 
 
 if __name__ == '__main__':

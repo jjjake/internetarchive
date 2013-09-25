@@ -454,4 +454,16 @@ class File(object):
 
         fname = self.name.encode('utf-8')
         url = '{0}/{1}'.format(self.item.download_url, fname)
-        urllib.urlretrieve(url, file_path)
+        #urllib.urlretrieve(url, file_path)
+
+        # Add cookies to request when downloading to allow privileged 
+        # users the ability to download access-restricted files.
+        logged_in_user, logged_in_sig = config.get_cookies()
+        cookies = ('logged-in-user={0}; '
+                   'logged-in-sig={1}'.format(logged_in_user, logged_in_sig))
+
+        opener = urllib2.build_opener()
+        opener.addheaders.append(('Cookie', cookies))
+        data = opener.open(url)
+        with open(file_path, 'wb') as fp:
+            fp.write(data.read())

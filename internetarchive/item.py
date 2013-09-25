@@ -324,7 +324,7 @@ class Item(object):
 
         """
 
-        headers = ias3.get_headers(headers, metadata)
+        headers = ias3.get_headers(metadata, headers)
         header_names = [header_name.lower() for header_name in headers.keys()]
         if 'x-archive-size-hint' not in header_names:
             headers['x-archive-size-hint'] = os.stat(local_file).st_size

@@ -31,8 +31,8 @@ def main(argv):
 
     s3_headers = dict(h.split(':') for h in args['--header'] if args['--header'])
     s3_metadata = {}
-    changes = [x.split(':', 1) for x in args['--metadata']]
-    for k,v in changes:
+    metadata = [x.split(':', 1) for x in args['--metadata']]
+    for k,v in metadata:
         if not s3_metadata.get(k):
             s3_metadata[k] = v
         else:

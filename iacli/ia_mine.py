@@ -14,7 +14,7 @@ from docopt import docopt
 import sys
 import json
 
-import internetarchive
+from internetarchive import Mine
 
 
 
@@ -25,11 +25,12 @@ def main(argv):
 
     items = [i.strip() for i in open(args['<itemlist.txt>'])]
     workers = int(args.get('--workers', 20)[0])
-    miner = internetarchive.Mine(items, workers=workers)
+    miner = Mine(items, workers=workers)
     for i, item in miner.items():
         if args['--cache']:
             sys.stdout.write('saving metadata for: {0}\n'.format(item.identifier))
             with open('{0}_meta.json'.format(item.identifier), 'w') as fp:
                 json.dump(item.metadata, fp)
         else:
-            sys.stdout.write(item.metadata)
+            str_metadata = json.dumps(item.metadata)
+            sys.stdout.write(str_metadata)

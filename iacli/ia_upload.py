@@ -1,4 +1,6 @@
-"""Upload items to archive.org.
+"""Upload files to Archive.org via the Internet Archive's S3 like server API. 
+
+IA-S3 Documentation: https://archive.org/help/abouts3.txt
 
 usage: 
     ia upload <identifier> <file>... [options...]
@@ -6,15 +8,12 @@ usage:
 options:
 
  -h, --help
- -n, --no-derive             Do not derive the item after files have been 
-                             uploaded.
- -d, --debug                 Return the headers to be sent to IA-S3. default: True
- -M, --multipart             Upload files to archive.org in parts, using 
-                             IA-S3 multipart.
- -i, --ignore-bucket         Destroy and respecify the metadata for a 
-                             given item.
- -m, --metadata=<key:value>  Metadata to add to the item. default: None
- -H, --header=<key:value>    default: None
+ -d, --debug                    Return the headers to be sent to IA-S3. [default: True]
+ -m, --metadata=<key:value>...  Metadata fort your item.
+ -H, --header=<key:value>...    Valid S3 HTTP headers to send with your request.
+ -n, --no-derive                Do not derive uploaded files.
+ -M, --multipart                Upload files to archive.org in parts, using multipart.
+ -i, --ignore-bucket            Destroy and respecify all metadata. [default: True]
 
 """
 from docopt import docopt
@@ -29,8 +28,8 @@ from internetarchive import upload
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
-    s3_headers = dict(h.split(':') for h in args['--header'])
     metadata = dict(md.split(':', 1) for md in args['--metadata'])
+    s3_headers = dict(h.split(':') for h in args['--header'])
 
     upload_status = upload(args['<identifier>'], 
                            args['<file>'], 

@@ -16,11 +16,27 @@ options:
  -i, --ignore-bucket            Destroy and respecify all metadata. [default: True]
 
 """
-from docopt import docopt
 import sys
+from collections import defaultdict
+
+from docopt import docopt
 
 from internetarchive import upload
 
+
+
+# get_args_dict()
+#_________________________________________________________________________________________
+def get_args_dict(args):
+    metadata = defaultdict(list)
+    for md in args:
+        key, value = md.split(':')
+        metadata[key].append(value)
+    # Flatten single item lists.
+    for key, value in metadata.items():
+        if len(value) <= 1:
+            metadata[key] = value[0]
+    return metadata
 
 
 # main()
@@ -28,8 +44,8 @@ from internetarchive import upload
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
-    metadata = dict(md.split(':', 1) for md in args['--metadata'])
-    s3_headers = dict(h.split(':') for h in args['--header'])
+    metadata = get_args_dict(args['--metadata'])
+    s3_headers = get_args_dict(args['--header'])
 
     upload_status = upload(args['<identifier>'], 
                            args['<file>'], 
@@ -41,7 +57,8 @@ def main(argv):
                            ignore_bucket=args['--ignore-bucket'])
 
     if args['--debug']:
-        sys.stdout.write('IA-S3 Headers:\n\n{0}\n'.format(upload_status))
+        headers_str = '\n'.join([': '.join(h) for h in upload_status.items()])
+        sys.stdout.write('IA-S3 Headers:\n\n{0}\n'.format(headers_str))
         sys.exit(0)
     elif not upload_status:
         sys.stderr.write('error: upload failed!\n')

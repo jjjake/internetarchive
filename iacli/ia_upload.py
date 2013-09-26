@@ -29,8 +29,8 @@ from internetarchive import upload
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
-    s3_headers = dict(h.split(':') for h in args['--header'] if args['--header'])
-    metadata = dict(md.split(':', 1) for md in args['--metadata'] if args['--metadata'])
+    s3_headers = dict(h.split(':') for h in args['--header'])
+    metadata = dict(md.split(':', 1) for md in args['--metadata'])
 
     upload_status = upload(args['<identifier>'], 
                            args['<file>'], 

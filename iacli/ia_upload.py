@@ -20,7 +20,7 @@ options:
 from docopt import docopt
 import sys
 
-import internetarchive
+from internetarchive import upload
 
 
 
@@ -30,21 +30,17 @@ def main(argv):
     args = docopt(__doc__, argv=argv)
 
     s3_headers = dict(h.split(':') for h in args['--header'] if args['--header'])
-    s3_metadata = {}
-    metadata = [x.split(':', 1) for x in args['--metadata']]
-    for k,v in metadata:
-        if not s3_metadata.get(k):
-            s3_metadata[k] = v
-        else:
-            if type(s3_metadata[k]) != list:
-                s3_metadata[k] = [s3_metadata[k]]
-            s3_metadata[k].append(v)
+    metadata = dict(md.split(':', 1) for md in args['--metadata'] if args['--metadata'])
 
-    item = internetarchive.Item(args['<identifier>'])
-    upload_status = item.upload(args['<file>'], metadata=s3_metadata, headers=s3_headers,
-                                debug=args['--debug'], derive=args['--no-derive'], 
-                                multipart=args['--multipart'],
-                                ignore_bucket=args['--ignore-bucket'])
+    upload_status = upload(args['<identifier>'], 
+                           args['<file>'], 
+                           metadata=metadata, 
+                           headers=s3_headers, 
+                           debug=args['--debug'], 
+                           derive=args['--no-derive'], 
+                           multipart=args['--multipart'],
+                           ignore_bucket=args['--ignore-bucket'])
+
     if args['--debug']:
         sys.stdout.write('IA-S3 Headers:\n\n{0}\n'.format(upload_status))
         sys.exit(0)
@@ -52,5 +48,6 @@ def main(argv):
         sys.stderr.write('error: upload failed!\n')
         sys.exit(1)
     else:
-        sys.stdout.write('uploaded:\t{0}\n'.format(item.details_url))
+        details_url = 'https://archive.org/details/{0}'.format(args['<identifier>'])
+        sys.stdout.write('uploaded:\t{0}\n'.format(details_url))
         sys.exit(0)

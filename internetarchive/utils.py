@@ -1,8 +1,4 @@
-try:
-    import ujson as json
-except ImportError:
-    import json
-import urllib2
+import requests
 
 
 
@@ -17,8 +13,8 @@ def get_item_metadata(identifier, target=None, timeout=None):
 
     """
     url = 'https://archive.org/metadata/{0}'.format(identifier)
-    api_response = urllib2.urlopen(url, timeout=timeout)
-    metadata = json.loads(api_response.read())
+    r = requests.get(url, timeout=timeout)
+    metadata = r.json()
     if target:
         metadata = metadata.get(target, {})
     return metadata

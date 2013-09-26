@@ -16,27 +16,14 @@ options:
  -i, --ignore-bucket            Destroy and respecify all metadata. [default: True]
 
 """
-import sys
+from sys import stdout, stderr, exit
 from collections import defaultdict
 
 from docopt import docopt
 
 from internetarchive import upload
+from iacli.argparser import get_args_dict
 
-
-
-# get_args_dict()
-#_________________________________________________________________________________________
-def get_args_dict(args):
-    metadata = defaultdict(list)
-    for md in args:
-        key, value = md.split(':')
-        metadata[key].append(value)
-    # Flatten single item lists.
-    for key, value in metadata.items():
-        if len(value) <= 1:
-            metadata[key] = value[0]
-    return metadata
 
 
 # main()
@@ -58,12 +45,12 @@ def main(argv):
 
     if args['--debug']:
         headers_str = '\n'.join([': '.join(h) for h in upload_status.items()])
-        sys.stdout.write('IA-S3 Headers:\n\n{0}\n'.format(headers_str))
-        sys.exit(0)
+        stdout.write('IA-S3 Headers:\n\n{0}\n'.format(headers_str))
+        exit(0)
     elif not upload_status:
-        sys.stderr.write('error: upload failed!\n')
-        sys.exit(1)
+        stderr.write('error: upload failed!\n')
+        exit(1)
     else:
         details_url = 'https://archive.org/details/{0}'.format(args['<identifier>'])
-        sys.stdout.write('uploaded:\t{0}\n'.format(details_url))
-        sys.exit(0)
+        stdout.write('uploaded:\t{0}\n'.format(details_url))
+        exit(0)

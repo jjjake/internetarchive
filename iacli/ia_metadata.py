@@ -24,6 +24,8 @@ from docopt import docopt
 import sys
 
 import internetarchive
+from internetarchive import get_item, modify_metadata
+from iacli.argparser import get_args_dict
 
 
 
@@ -44,16 +46,8 @@ def main(argv):
 
     # Modify metadata.
     elif args['--modify']:
-        metadata = {}
-        changes = [x.split(':', 1) for x in args['--modify']]
-        for k,v in changes:
-            if not metadata.get(k):
-                metadata[k] = v
-            else:
-                if type(metadata[k]) != list:
-                    metadata[k] = [metadata[k]]
-                metadata[k].append(v)
-        response = item.modify_metadata(metadata)
+        metadata = get_args_dict(args['--modify'])
+        response = modify_metadata(args['<identifier>'], metadata)
         status_code = response['status_code']
         if not response['content']['success']:
             error_msg = response['content']['error']

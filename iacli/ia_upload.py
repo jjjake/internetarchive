@@ -3,12 +3,14 @@
 IA-S3 Documentation: https://archive.org/help/abouts3.txt
 
 usage: 
-    ia upload <identifier> <file>... [options...]
+    ia upload <identifier> [<file>...|-] [options...]
 
 options:
 
  -h, --help
  -d, --debug                    Return the headers to be sent to IA-S3. [default: True]
+ -r, --remote-name=<name>       When uploading data from stdin, this option sets the
+                                remote filename.
  -m, --metadata=<key:value>...  Metadata fort your item.
  -H, --header=<key:value>...    Valid S3 HTTP headers to send with your request.
  -n, --no-derive                Do not derive uploaded files.
@@ -16,12 +18,13 @@ options:
  -i, --ignore-bucket            Destroy and respecify all metadata. [default: True]
 
 """
-from sys import stdout, stderr, exit
+from sys import stdin, stdout, stderr, exit
 from collections import defaultdict
+from tempfile import TemporaryFile
 
 from docopt import docopt
 
-from internetarchive import upload
+from internetarchive import upload, upload_file
 from iacli.argparser import get_args_dict
 
 
@@ -34,14 +37,22 @@ def main(argv):
     metadata = get_args_dict(args['--metadata'])
     s3_headers = get_args_dict(args['--header'])
 
-    upload_status = upload(args['<identifier>'], 
-                           args['<file>'], 
-                           metadata=metadata, 
-                           headers=s3_headers, 
-                           debug=args['--debug'], 
-                           derive=args['--no-derive'], 
-                           multipart=args['--multipart'],
-                           ignore_bucket=args['--ignore-bucket'])
+    upload_kwargs = dict(
+            metadata=metadata, 
+            headers=s3_headers, 
+            debug=args['--debug'], 
+            derive=args['--no-derive'], 
+            multipart=args['--multipart'],
+            ignore_bucket=args['--ignore-bucket'])
+
+    if args['<file>'] == ['-']:
+        local_file = TemporaryFile()
+        local_file.write(stdin.read())
+        local_file.seek(0)
+        upload_kwargs['remote_name'] = args['--remote-name'][0]
+        upload_status = upload_file(args['<identifier>'], local_file, **upload_kwargs)
+    else:
+        upload_status = upload(args['<identifier>'], args['<file>'], **upload_kwargs)
 
     if args['--debug']:
         headers_str = '\n'.join([': '.join(h) for h in upload_status.items()])

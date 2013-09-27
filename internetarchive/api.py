@@ -34,6 +34,13 @@ def modify_metadata(identifier, metadata, target='metadata'):
     return _item.modify_metadata(metadata, target)
 
 
+# upload_file()
+#_________________________________________________________________________________________
+def upload_file(identifier, local_file, **kwargs):
+    _item = item.Item(identifier)
+    return _item.upload_file(local_file, **kwargs)
+
+
 # upload()
 #_________________________________________________________________________________________
 def upload(identifier, files, **kwargs):

@@ -53,7 +53,7 @@ To download the entire `TripDown1905 <https://archive.org/details/TripDown1905>`
 .. code:: bash
 
     #download just the mp4 files using ``--glob``
-    $ ia download TripDown1905 --glob='*.mp4'
+    $ ia download TripDown1905 --glob='\*.mp4'
 
     #download all the mp4 files using ``--formats``:
     $ ia download TripDown1905 --format='512Kb MPEG4'
@@ -84,8 +84,12 @@ https://archive.org/account/s3.php
     $ export AWS_ACCESS_KEY_ID='xxx'
     $ export AWS_SECRET_ACCESS_KEY='yyy'
 
+    #upload files:
     $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
 
+    #upload files:
+    $ curl http://dumps.wikimedia.org/kywiki/20130927/kywiki-20130927-pages-logging.xml.gz | 
+      ia upload <identifier> - --remote-name=kywiki-20130927-pages-logging.xml.gz --metadata="title:Uploaded from stdin."
 
 Metadata
 ~~~~~~~~

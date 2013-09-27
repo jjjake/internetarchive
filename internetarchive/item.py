@@ -388,7 +388,7 @@ class Item(object):
             >>> import internetarchive
             >>> item = internetarchive.Item('identifier')
             >>> md = dict(mediatype='image', creator='Jake Johnson')
-            >>> item.upload('/path/to/image.jpg', md, derive=False)
+            >>> item.upload('/path/to/image.jpg', metadata=md, derive=False)
             True
 
         :rtype: bool

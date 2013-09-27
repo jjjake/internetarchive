@@ -23,6 +23,7 @@ from collections import defaultdict
 from tempfile import TemporaryFile
 
 from docopt import docopt
+from boto.exception import NoAuthHandlerFound
 
 from internetarchive import upload, upload_file
 from iacli.argparser import get_args_dict
@@ -45,14 +46,19 @@ def main(argv):
             multipart=args['--multipart'],
             ignore_bucket=args['--ignore-bucket'])
 
-    if args['<file>'] == ['-']:
-        local_file = TemporaryFile()
-        local_file.write(stdin.read())
-        local_file.seek(0)
-        upload_kwargs['remote_name'] = args['--remote-name'][0]
-        upload_status = upload_file(args['<identifier>'], local_file, **upload_kwargs)
-    else:
-        upload_status = upload(args['<identifier>'], args['<file>'], **upload_kwargs)
+    try:
+        if args['<file>'] == ['-']:
+            local_file = TemporaryFile()
+            local_file.write(stdin.read())
+            local_file.seek(0)
+            upload_kwargs['remote_name'] = args['--remote-name'][0]
+            upload_status = upload_file(args['<identifier>'], local_file, **upload_kwargs)
+        else:
+            upload_status = upload(args['<identifier>'], args['<file>'], **upload_kwargs)
+    except NoAuthHandlerFound:
+        stdout.write('Unable to find your S3 keys! You can set your '
+                     'S3 keys using `ia configure`.\n')
+        exit(1)
 
     if args['--debug']:
         headers_str = '\n'.join([': '.join(h) for h in upload_status.items()])

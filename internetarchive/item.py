@@ -20,7 +20,7 @@ from . import __version__, ias3, config, utils
 # Item class
 #_________________________________________________________________________________________
 class Item(object):
-    """This class represents an archive.org item. You can use this 
+    """This class represents an archive.org item. You can use this
     class to access item metadata::
 
         >>> import internetarchive
@@ -34,8 +34,8 @@ class Item(object):
         >>> print item.metadata['metadata']['title']
         u'The Stairs'
 
-    This class also uses IA's S3-like interface to upload files to an 
-    item. You need to supply your IAS3 credentials in environment 
+    This class also uses IA's S3-like interface to upload files to an
+    item. You need to supply your IAS3 credentials in environment
     variables in order to upload::
 
         >>> import os
@@ -44,7 +44,7 @@ class Item(object):
         >>> item.upload('myfile.tar')
         True
 
-    You can retrieve S3 keys here: `https://archive.org/account/s3.php 
+    You can retrieve S3 keys here: `https://archive.org/account/s3.php
     <https://archive.org/account/s3.php>`__
 
     """
@@ -58,11 +58,11 @@ class Item(object):
                            for a given item.
 
         :type metadata_timeout: int
-        :param metadata_timeout: (optional) Set a timeout for 
+        :param metadata_timeout: (optional) Set a timeout for
                                  retrieving an item's metadata.
 
         :type secure: bool
-        :param secure: (optional) 
+        :param secure: (optional)
 
         """
         self.identifier = identifier
@@ -105,7 +105,7 @@ class Item(object):
         """Generator for iterating over files in an item.
 
         :rtype: generator
-        :returns: A generator that yields :class:`internetarchive.File 
+        :returns: A generator that yields :class:`internetarchive.File
                   <File>` objects.
 
         """
@@ -130,7 +130,7 @@ class Item(object):
 
     # download()
     #_____________________________________________________________________________________
-    def download(self, concurrent=False, source=None, formats=None, glob_pattern=None, 
+    def download(self, concurrent=False, source=None, formats=None, glob_pattern=None,
                  ignore_existing=False):
         """Download the entire item into the current working directory.
 
@@ -148,7 +148,7 @@ class Item(object):
                              pattern
 
         :type ignore_existing: bool
-        :param ignore_existing: Overwrite local files if they already 
+        :param ignore_existing: Overwrite local files if they already
                                 exist.
 
         :rtype: bool
@@ -167,7 +167,7 @@ class Item(object):
 
                 Downloading files concurrently requires the gevent neworking library.
                 gevent and all of it's dependencies can be installed with pip:
-                
+
                 \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
 
                 """)
@@ -202,8 +202,8 @@ class Item(object):
     def modify_metadata(self, metadata, target='metadata'):
         """Modify the metadata of an existing item on Archive.org.
 
-        Note: The Metadata Write API does not yet comply with the 
-        latest Json-Patch standard. It currently complies with `version 02 
+        Note: The Metadata Write API does not yet comply with the
+        latest Json-Patch standard. It currently complies with `version 02
         <https://tools.ietf.org/html/draft-ietf-appsawg-json-patch-02>`__.
 
         :type metadata: dict
@@ -261,7 +261,7 @@ class Item(object):
         http.send(data)
         status_code, error_message, headers = http.getreply()
         resp_file = http.getfile()
-        self.metadata = utils.get_item_metadata(self.identifier, self.metadata_timeout, 
+        self.metadata = utils.get_item_metadata(self.identifier, self.metadata_timeout,
                                                 self.secure)
         return dict(
             status_code = status_code,
@@ -271,10 +271,10 @@ class Item(object):
 
     # upload_file()
     #_____________________________________________________________________________________
-    def upload_file(self, local_file, remote_name=None, metadata={}, headers={}, 
-                    derive=True, ignore_bucket=False, multipart=False, 
+    def upload_file(self, local_file, remote_name=None, metadata={}, headers={},
+                    derive=True, ignore_bucket=False, multipart=False,
                     bytes_per_chunk=16777216, debug=False):
-        """Upload a single file to an item. The item will be created 
+        """Upload a single file to an item. The item will be created
         if it does not exist.
 
         :type local_file: str or file
@@ -287,19 +287,19 @@ class Item(object):
         :param metadata: (optional) Metadata used to create a new item.
 
         :type headers: dict
-        :param headers: (optional) Add additional IA-S3 headers to 
+        :param headers: (optional) Add additional IA-S3 headers to
                         request.
 
         :type derive: bool
-        :param derive: (optional) Set to False to prevent an item from 
+        :param derive: (optional) Set to False to prevent an item from
                        being derived after upload.
 
         :type multipart: bool
-        :param multipart: (optional) Set to True to upload files in 
+        :param multipart: (optional) Set to True to upload files in
                           parts. Useful when uploading large files.
 
         :type ignore_bucket: bool
-        :param ignore_bucket: (optional) Set to True to ignore and 
+        :param ignore_bucket: (optional) Set to True to ignore and
                               clobber existing files and metadata.
 
         :type debug: bool
@@ -307,19 +307,19 @@ class Item(object):
                       and exit without sending the upload request.
 
         :type bytes_per_chunk: int
-        :param bytes_per_chunk: (optional) Used to determine the chunk 
+        :param bytes_per_chunk: (optional) Used to determine the chunk
                                 size when using multipart upload.
 
         Usage::
 
             >>> import internetarchive
             >>> item = internetarchive.Item('identifier')
-            >>> item.upload_file('/path/to/image.jpg', 
+            >>> item.upload_file('/path/to/image.jpg',
             ...                  remote_name='photos/image1.jpg')
             True
 
         :rtype: bool
-        :returns: True if the request was successful and file was 
+        :returns: True if the request was successful and file was
                   uploaded, False otherwise.
 
         """
@@ -341,9 +341,9 @@ class Item(object):
         if not self.s3_connection:
             self.s3_connection = ias3.connect()
         if not self.bucket:
-            self.bucket = ias3.get_bucket(self.identifier, 
-                                          s3_connection=self.s3_connection, 
-                                          headers=headers, 
+            self.bucket = ias3.get_bucket(self.identifier,
+                                          s3_connection=self.s3_connection,
+                                          headers=headers,
                                           ignore_bucket=ignore_bucket)
 
         if not derive:
@@ -373,14 +373,14 @@ class Item(object):
     # upload()
     #_____________________________________________________________________________________
     def upload(self, files, **kwargs):
-        """Upload files to an item. The item will be created if it 
+        """Upload files to an item. The item will be created if it
         does not exist.
 
         :type files: list
         :param files: The filepaths or file-like objects to upload.
 
         :type kwargs: dict
-        :param kwargs: The keyword arguments from the call to 
+        :param kwargs: The keyword arguments from the call to
                        upload_file().
 
         Usage::
@@ -390,11 +390,11 @@ class Item(object):
             >>> md = dict(mediatype='image', creator='Jake Johnson')
             >>> item.upload('/path/to/image.jpg', md, derive=False)
             True
-        
+
         :rtype: bool
         :returns: True if the request was successful and all files were
                   uploaded, False otherwise.
-        
+
         """
 
         if kwargs.get('debug'):
@@ -458,7 +458,7 @@ class File(object):
         url = '{0}/{1}'.format(self.item.download_url, fname)
         #urllib.urlretrieve(url, file_path)
 
-        # Add cookies to request when downloading to allow privileged 
+        # Add cookies to request when downloading to allow privileged
         # users the ability to download access-restricted files.
         logged_in_user, logged_in_sig = config.get_cookies()
         cookies = ('logged-in-user={0}; '

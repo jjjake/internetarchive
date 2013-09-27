@@ -7,7 +7,7 @@ from collections import defaultdict
 def get_args_dict(args):
     metadata = defaultdict(list)
     for md in args:
-        key, value = md.split(':')
+        key, value = md.split(':', 1)
         metadata[key].append(value)
     # Flatten single item lists.
     for key, value in metadata.items():

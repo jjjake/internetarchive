@@ -51,18 +51,19 @@ class Item(object):
 
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, identifier, metadata_timeout=None, secure=True):
+    def __init__(self, identifier, metadata_timeout=None, secure=False):
         """
         :type identifier: str
         :param identifier: The globally unique Archive.org identifier
                            for a given item.
 
         :type metadata_timeout: int
-        :param metadata_timeout: (optional) Set a timeout for
-                                 retrieving an item's metadata.
+        :param metadata_timeout: (optional) Set a timeout for retrieving 
+                                 an item's metadata.
 
         :type secure: bool
-        :param secure: (optional)
+        :param secure: (optional) If secure is True, use HTTPS protocol, 
+                       otherwise use HTTP.
 
         """
         self.identifier = identifier
@@ -334,9 +335,12 @@ class Item(object):
         headers['x-archive-meta-scanner'] = scanner
         header_names = [header_name.lower() for header_name in headers.keys()]
         if 'x-archive-size-hint' not in header_names:
-            local_file.seek(0, os.SEEK_END)
-            headers['x-archive-size-hint'] = local_file.tell()
-            local_file.seek(0, os.SEEK_SET)
+            try:
+                local_file.seek(0, os.SEEK_END)
+                headers['x-archive-size-hint'] = local_file.tell()
+                local_file.seek(0, os.SEEK_SET)
+            except IOError:
+                pass
 
         if not self.s3_connection:
             self.s3_connection = ias3.connect()

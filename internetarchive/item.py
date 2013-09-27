@@ -399,7 +399,7 @@ class Item(object):
 
         if kwargs.get('debug'):
             return ias3.get_headers(kwargs.get('metadata', {}), kwargs.get('headers', {}))
-        if not hasattr(files, '__iter__'):
+        if not isinstance(files, (list, tuple)):
             files = [files]
         for local_file in files:
             response = self.upload_file(local_file, **kwargs)

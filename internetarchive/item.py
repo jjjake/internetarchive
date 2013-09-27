@@ -324,17 +324,17 @@ class Item(object):
 
         """
 
-        headers = ias3.get_headers(metadata, headers)
-        header_names = [header_name.lower() for header_name in headers.keys()]
-        if 'x-archive-size-hint' not in header_names:
-            headers['x-archive-size-hint'] = os.stat(local_file).st_size
-        scanner = 'Internet Archive Python library {0}'.format(__version__)
-        headers['x-archive-meta-scanner'] = scanner
-
         if not hasattr(local_file, 'read'):
             local_file = open(local_file, 'rb')
         if not remote_name:
             remote_name = local_file.name.split('/')[-1]
+
+        headers = ias3.get_headers(metadata, headers)
+        scanner = 'Internet Archive Python library {0}'.format(__version__)
+        headers['x-archive-meta-scanner'] = scanner
+        header_names = [header_name.lower() for header_name in headers.keys()]
+        if 'x-archive-size-hint' not in header_names:
+            headers['x-archive-size-hint'] = os.fstat(local_file.fileno()).st_size
 
         if not self.s3_connection:
             self.s3_connection = ias3.connect()

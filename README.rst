@@ -179,7 +179,7 @@ https://archive.org/account/s3.php
     >>> os.environ['AWS_ACCESS_KEY_ID']='x'
     >>> os.environ['AWS_SECRET_ACCESS_KEY']='y'
     >>> item = internetarchive.Item('new_identifier')
-    >>> item.upload('/path/to/image.jpg', dict(mediatype='image', creator='Jake Johnson'))
+    >>> item.upload('/path/to/image.jpg', metadata=dict(mediatype='image', creator='Jake Johnson'))
 
 Item-level metadata must be supplied with the first file uploaded to an
 item.

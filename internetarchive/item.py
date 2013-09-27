@@ -334,7 +334,9 @@ class Item(object):
         headers['x-archive-meta-scanner'] = scanner
         header_names = [header_name.lower() for header_name in headers.keys()]
         if 'x-archive-size-hint' not in header_names:
-            headers['x-archive-size-hint'] = os.fstat(local_file.fileno()).st_size
+            local_file.seek(0, os.SEEK_END)
+            headers['x-archive-size-hint'] = local_file.tell()
+            local_file.seek(0, os.SEEK_SET)
 
         if not self.s3_connection:
             self.s3_connection = ias3.connect()

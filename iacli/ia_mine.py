@@ -5,17 +5,13 @@ usage:
 
 options:
     -h, --help  
-    -v, --verbose  
-    -t, --target=<target>...    Metadata target to retrieve. This option will output 
-                                metadata as tab-separated fields instead of JSON.
     -c, --cache                 Write item metadta to a file called <identifier>_meta.json
     -o, --output=<output.json>  Write all metadata to a single output file <itemlist>.json
     -w, --workers=<count>       The number requests to run concurrently [default: 20].
 
 """
-import os
-from sys import stdout, stderr, exit
-from json import dump, dumps
+from sys import stdout, exit
+from json import dumps
 
 from docopt import docopt
 
@@ -38,23 +34,7 @@ def main(argv):
         open(args['--output'][0], 'w').close()
 
     for i, item in miner.items():
-
-        # Filter metadta.
-        if args['--target']:
-            metadata = []
-            for target in args['--target']:
-                for i, t in enumerate(target.split('/')):
-                    if i == 0:
-                        md = item.metadata.get(t)
-                    else:
-                        md = md.get(t)
-                if md:
-                    metadata.append(md)
-            metadata = '\t'.join(metadata)
-        else:
-            metadata = dumps(item.metadata)
-
-        # Output/cache metadata.
+        metadata = dumps(item.metadata)
         if args['--cache']:
             stdout.write('saving metadata for: {0}\n'.format(item.identifier))
             with open('{0}_meta.json'.format(item.identifier), 'w') as fp:
@@ -65,5 +45,4 @@ def main(argv):
                 fp.write(metadata + '\n')
         else:
             stdout.write(metadata + '\n')
-
     exit(0)

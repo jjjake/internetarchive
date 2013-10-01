@@ -17,7 +17,7 @@ options:
 from docopt import docopt
 import sys
 
-import internetarchive
+from internetarchive import search
 
 
 
@@ -35,8 +35,8 @@ def main(argv):
     fields = ['identifier'] + args['--field']
 
     query = ' '.join(args['<query>'])
-    search = internetarchive.Search(query, fields=fields, params=params)
-    for result in search.results:
+    search_resp = search(query, fields=fields, params=params)
+    for result in search_resp.results():
         output = '\t'.join([result[f] for f in fields]).encode('utf-8')
         sys.stdout.write(output + '\n')
     sys.exit(0)

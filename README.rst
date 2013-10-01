@@ -129,7 +129,7 @@ You can also install ``gevent`` like so:
     $ ia mine itemlist.txt --cache
 
     # Download all metadata for each item into a single file (each items metadata is separated by a "\n" character).
-    $ ia mine <itemlist.txt> --output irs990_metadata.json
+    $ ia mine itemlist.txt --output irs990_metadata.json
 
 ``ia mine`` can be a very powerful command when used with `jq <http://stedolan.github.io/jq/>`__, a command-line JSON processor.
 For instance, items in the `IRS990 collection <https://archive.org/details/IRS990>`__ have extra metadata that does not get

@@ -125,6 +125,9 @@ You can also install ``gevent`` like so:
     # Create an itemlist to be used as input for your ``ia mine`` command.
     $ ia search 'collection:IRS990' > itemlist.txt
 
+    # Print metadata to stdout (each items metadata is separated by a "\n" character).
+    $ ia mine itemlist.txt
+    
     # Download all metadata for each item contained in itemlist.txt.
     $ ia mine itemlist.txt --cache
 

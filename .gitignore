@@ -1,5 +1,7 @@
 *pyc
-*log
 build
 dist
 *.egg-info
+stairs
+_*
+itemlist.txt

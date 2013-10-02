@@ -37,6 +37,6 @@ def main(argv):
     query = ' '.join(args['<query>'])
     search_resp = search(query, fields=fields, params=params)
     for result in search_resp.results():
-        output = '\t'.join([result[f] for f in fields]).encode('utf-8')
+        output = '\t'.join([result.get(f, '') for f in fields]).encode('utf-8')
         sys.stdout.write(output + '\n')
     sys.exit(0)

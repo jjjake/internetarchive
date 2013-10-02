@@ -406,7 +406,17 @@ class Item(object):
         if not isinstance(files, (list, tuple)):
             files = [files]
         for local_file in files:
-            response = self.upload_file(local_file, **kwargs)
+            # Directory support.
+            if isinstance(local_file, basestring) and os.path.isdir(local_file):
+                for path, dir, files in os.walk(local_file):
+                    for f in files:
+                        remote_name = os.path.join(path, f)
+                        local_file = os.path.relpath(remote_name, local_file)
+                        response = self.upload_file(remote_name, 
+                                                    remote_name=remote_name, 
+                                                    **kwargs)
+            else:
+                response = self.upload_file(local_file, **kwargs)
             if not response:
                 return False
         return True

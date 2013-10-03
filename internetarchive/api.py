@@ -1,4 +1,7 @@
-from . import item, service, ias3, utils
+import os
+from sys import stdout
+
+from . import item, service, utils
 
 
 
@@ -34,31 +37,48 @@ def modify_metadata(identifier, metadata, target='metadata'):
     return _item.modify_metadata(metadata, target)
 
 
-# upload_file()
-#_________________________________________________________________________________________
-def upload_file(identifier, local_file, **kwargs):
-    _item = item.Item(identifier)
-    return _item.upload_file(local_file, **kwargs)
-
-
 # upload()
-#_________________________________________________________________________________________
+#_____________________________________________________________________________________
 def upload(identifier, files, **kwargs):
     """Upload files to an item. The item will be created if it
     does not exist.
 
+    :type files: list
+    :param files: The filepaths or file-like objects to upload.
+
+    :type kwargs: dict
+    :param kwargs: The keyword arguments from the call to
+                   upload_file().
+
     Usage::
 
         >>> import internetarchive
+        >>> item = internetarchive.Item('identifier')
         >>> md = dict(mediatype='image', creator='Jake Johnson')
-        >>> files = ['/path/to/image1.jpg', 'image2.jpg']
-        >>> item = internetarchive.upload('identifier', files, md)
+        >>> item.upload('/path/to/image.jpg', metadata=md, queue_derive=False)
         True
 
-    """
+    :rtype: bool
+    :returns: True if the request was successful and all files were
+              uploaded, False otherwise.
 
+    """
     _item = item.Item(identifier)
-    return _item.upload(files, **kwargs)
+    if not isinstance(files, (list, tuple)):
+        files = [files]
+    responses = []
+    for local_file in files:
+        # Directory support.
+        if isinstance(local_file, basestring) and os.path.isdir(local_file):
+            for path, dir, files in os.walk(local_file):
+                for f in files:
+                    kwargs['remote_name'] = os.path.join(path, f)
+                    local_file = os.path.relpath(kwargs['remote_name'], local_file)
+                    response = _item.upload_file(local_file, **kwargs)
+        else:
+            response = _item.upload_file(local_file, **kwargs)
+        responses.append(response)
+    return responses
 
 
 # download()
@@ -110,7 +130,7 @@ def download_file(identifier, filename, **kwargs):
     """
     _item = item.Item(identifier)
     remote_file = _item.file(filename)
-    sys.stdout.write('downloading: {0}\n'.format(fname))
+    stdout.write('downloading: {0}\n'.format(filename))
     remote_file.download(**kwargs)
 
 

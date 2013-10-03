@@ -4,16 +4,15 @@ except ImportError:
     import json
 import urllib
 import os
-import sys
+from sys import stdout
 import httplib
 import urllib2
 import fnmatch
+from requests import Session
 
 import jsonpatch
-import boto
-from cStringIO import StringIO
 
-from . import __version__, ias3, config, utils
+from . import ias3, config, utils
 
 
 
@@ -76,7 +75,7 @@ class Item(object):
         self.download_url = '{0}://archive.org/download/{1}'.format(protocol, identifier)
         self.metadata_url = '{0}://archive.org/metadata/{1}'.format(protocol, identifier)
         self.metadata_timeout = metadata_timeout
-        self.s3_connection = None
+        self.session = None
         self.bucket = None
         self.metadata = utils.get_item_metadata(identifier, metadata_timeout, secure)
         if self.metadata == {}:
@@ -188,7 +187,7 @@ class Item(object):
         for f in files:
             fname = f.name.encode('utf-8')
             path = os.path.join(self.identifier, fname)
-            sys.stdout.write('downloading: {0}\n'.format(fname))
+            stdout.write('downloading: {0}\n'.format(fname))
             if concurrent:
                 pool.spawn(f.download, path, ignore_existing=ignore_existing)
             else:
@@ -273,8 +272,7 @@ class Item(object):
     # upload_file()
     #_____________________________________________________________________________________
     def upload_file(self, local_file, remote_name=None, metadata={}, headers={},
-                    derive=True, ignore_bucket=False, multipart=False,
-                    bytes_per_chunk=16777216, debug=False):
+                    queue_derive=True, ignore_bucket=False, debug=False):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -291,13 +289,9 @@ class Item(object):
         :param headers: (optional) Add additional IA-S3 headers to
                         request.
 
-        :type derive: bool
-        :param derive: (optional) Set to False to prevent an item from
-                       being derived after upload.
-
-        :type multipart: bool
-        :param multipart: (optional) Set to True to upload files in
-                          parts. Useful when uploading large files.
+        :type queue_derive: bool
+        :param queue_derive: (optional) Set to False to prevent an item from
+                             being derived after upload.
 
         :type ignore_bucket: bool
         :param ignore_bucket: (optional) Set to True to ignore and
@@ -306,10 +300,6 @@ class Item(object):
         :type debug: bool
         :param debug: (optional) Set to True to print headers to stdout,
                       and exit without sending the upload request.
-
-        :type bytes_per_chunk: int
-        :param bytes_per_chunk: (optional) Used to determine the chunk
-                                size when using multipart upload.
 
         Usage::
 
@@ -324,17 +314,17 @@ class Item(object):
                   uploaded, False otherwise.
 
         """
+        if not self.session:
+            self.session = Session()
 
         if not hasattr(local_file, 'read'):
             local_file = open(local_file, 'rb')
         if not remote_name:
             remote_name = local_file.name.split('/')[-1]
 
-        headers = ias3.get_headers(metadata, headers)
-        scanner = 'Internet Archive Python library {0}'.format(__version__)
-        headers['x-archive-meta-scanner'] = scanner
-        header_names = [header_name.lower() for header_name in headers.keys()]
-        if 'x-archive-size-hint' not in header_names:
+        # Attempt to add size-hint header.    
+        # TODO: Move this into ``internetarchive.ias3``?
+        if not headers.get('x-archive-size-hint'):
             try:
                 local_file.seek(0, os.SEEK_END)
                 headers['x-archive-size-hint'] = local_file.tell()
@@ -342,84 +332,21 @@ class Item(object):
             except IOError:
                 pass
 
-        if not self.s3_connection:
-            self.s3_connection = ias3.connect()
-        if not self.bucket:
-            self.bucket = ias3.get_bucket(self.identifier,
-                                          s3_connection=self.s3_connection,
-                                          headers=headers,
-                                          ignore_bucket=ignore_bucket)
+        endpoint = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, remote_name)
+        request = ias3.prepare_request(endpoint, 
+                                       metadata=metadata, 
+                                       queue_derive=queue_derive, 
+                                       ignore_bucket=ignore_bucket,
+                                       headers=headers)
 
-        if not derive:
-            headers['x-archive-queue-derive'] =  0
-
-        # Don't clobber existing files unless ignore_bucket is True.
-        if self.bucket.get_key(remote_name) and not ignore_bucket:
-            return True
-
-        if not multipart:
-            k = boto.s3.key.Key(self.bucket)
-            k.name = remote_name
-            k.set_contents_from_file(local_file, headers=headers)
+        # TODO: Add support for multipart.
+        with local_file as data:
+            request.data = data.read()
+        if debug:
+            return request
         else:
-            mp = self.bucket.initiate_multipart_upload(remote_name, headers=headers)
-            def read_chunk():
-                return local_file.read(bytes_per_chunk)
-            part = 1
-            for chunk in iter(read_chunk, ''):
-                part_fp = StringIO(chunk)
-                mp.upload_part_from_file(part_fp, part_num=part)
-                part += 1
-            mp.complete_upload()
-        return True
-
-
-    # upload()
-    #_____________________________________________________________________________________
-    def upload(self, files, **kwargs):
-        """Upload files to an item. The item will be created if it
-        does not exist.
-
-        :type files: list
-        :param files: The filepaths or file-like objects to upload.
-
-        :type kwargs: dict
-        :param kwargs: The keyword arguments from the call to
-                       upload_file().
-
-        Usage::
-
-            >>> import internetarchive
-            >>> item = internetarchive.Item('identifier')
-            >>> md = dict(mediatype='image', creator='Jake Johnson')
-            >>> item.upload('/path/to/image.jpg', metadata=md, derive=False)
-            True
-
-        :rtype: bool
-        :returns: True if the request was successful and all files were
-                  uploaded, False otherwise.
-
-        """
-
-        if kwargs.get('debug'):
-            return ias3.get_headers(kwargs.get('metadata', {}), kwargs.get('headers', {}))
-        if not isinstance(files, (list, tuple)):
-            files = [files]
-        for local_file in files:
-            # Directory support.
-            if isinstance(local_file, basestring) and os.path.isdir(local_file):
-                for path, dir, files in os.walk(local_file):
-                    for f in files:
-                        remote_name = os.path.join(path, f)
-                        local_file = os.path.relpath(remote_name, local_file)
-                        response = self.upload_file(remote_name, 
-                                                    remote_name=remote_name, 
-                                                    **kwargs)
-            else:
-                response = self.upload_file(local_file, **kwargs)
-            if not response:
-                return False
-        return True
+            response = self.session.send(request)
+            return response
 
 
 # File class

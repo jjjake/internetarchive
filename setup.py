@@ -19,7 +19,6 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=[
         'requests==2.0.0',
-        'boto==2.9.9',
         'jsonpatch==1.1',
         'pytest==2.3.4',
         'docopt==0.6.1',

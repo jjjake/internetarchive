@@ -8,7 +8,7 @@ from sys import stdout
 import httplib
 import urllib2
 import fnmatch
-from requests import Session
+from requests import Request, Session
 
 import jsonpatch
 
@@ -272,7 +272,7 @@ class Item(object):
     # upload_file()
     #_____________________________________________________________________________________
     def upload_file(self, local_file, remote_name=None, metadata={}, headers={},
-                    queue_derive=True, ignore_bucket=False, debug=False):
+                    queue_derive=True, ignore_bucket=False, verbose=False, debug=False):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -323,7 +323,6 @@ class Item(object):
             remote_name = local_file.name.split('/')[-1]
 
         # Attempt to add size-hint header.    
-        # TODO: Move this into ``internetarchive.ias3``?
         if not headers.get('x-archive-size-hint'):
             try:
                 local_file.seek(0, os.SEEK_END)
@@ -333,11 +332,9 @@ class Item(object):
                 pass
 
         endpoint = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, remote_name)
-        request = ias3.prepare_request(endpoint, 
-                                       metadata=metadata, 
-                                       queue_derive=queue_derive, 
-                                       ignore_bucket=ignore_bucket,
-                                       headers=headers)
+        headers = ias3.build_headers(metadata, headers, queue_derive=queue_derive,
+                                     ignore_bucket=ignore_bucket)
+        request = Request('PUT', endpoint, headers=headers).prepare()
 
         # TODO: Add support for multipart.
         with local_file as data:
@@ -345,8 +342,56 @@ class Item(object):
         if debug:
             return request
         else:
-            response = self.session.send(request)
-            return response
+            if verbose:
+                stdout.write(' uploading file: {0}\n'.format(remote_name))
+            return self.session.send(request)
+
+    # upload()
+    #_____________________________________________________________________________________
+    def upload(self, files, **kwargs):
+        """Upload files to an item. The item will be created if it
+        does not exist.
+
+        :type files: list
+        :param files: The filepaths or file-like objects to upload.
+
+        :type kwargs: dict
+        :param kwargs: The keyword arguments from the call to
+                       upload_file().
+
+        Usage::
+
+            >>> import internetarchive
+            >>> item = internetarchive.Item('identifier')
+            >>> md = dict(mediatype='image', creator='Jake Johnson')
+            >>> item.upload('/path/to/image.jpg', metadata=md, queue_derive=False)
+            True
+
+        :rtype: bool
+        :returns: True if the request was successful and all files were
+                  uploaded, False otherwise.
+
+        """
+        def iter_directory(directory):
+            for path, dir, files in os.walk(directory):
+                for f in files:
+                    filepath = os.path.join(path, f)
+                    remote_name = os.path.relpath(filepath, directory)
+                    yield (filepath, remote_name)
+
+        if not isinstance(files, (list, tuple)):
+            files = [files]
+
+        responses = []
+        for local_file in files:
+            if isinstance(local_file, basestring) and os.path.isdir(local_file):
+                for local_file, remote_name in iter_directory(local_file):
+                    resp = self.upload_file(local_file, remote_name=remote_name, **kwargs)
+                    responses.append(resp)
+            else:
+                resp = self.upload_file(local_file, **kwargs)
+                responses.append(resp)
+        return responses
 
 
 # File class

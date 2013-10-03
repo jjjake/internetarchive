@@ -1,28 +1,12 @@
 import json
 
-from requests import Request
-
 from . import __version__, config
 
 
 
-# prepare_s3_request()
-#_________________________________________________________________________________________
-def prepare_request(url, method='PUT', **kwargs):
-    if not kwargs.get('access_key') or not kwargs.get('secret_key'):
-        access_key, secret_key = config.get_s3_keys()
-    headers = build_headers(access_key, secret_key, 
-                            metadata=kwargs.get('metadata', {}), 
-                            headers=kwargs.get('headers', {}),
-                            queue_derive=kwargs.get('queue_derive'))
-    if method == 'PUT':
-        headers['x-archive-auto-make-bucket'] = 1
-    return Request(method, url, headers=headers).prepare()
-
-
 # get_headers()
 #_________________________________________________________________________________________
-def build_headers(access_key, secret_key, metadata={}, headers={}, queue_derive=True):
+def build_headers(metadata={}, headers={}, auto_make_bucket=True, **kwargs):
     """Convert a dictionary of metadata into S3 compatible HTTP
     headers, and append headers to ``headers``.
 
@@ -34,11 +18,15 @@ def build_headers(access_key, secret_key, metadata={}, headers={}, queue_derive=
     :param headers: (optional) S3 compatible HTTP headers.
 
     """
-    if not queue_derive:
-        headers['x-archive-queue-derive'] = 0
+    if not kwargs.get('access_key') or not kwargs.get('secret_key'):
+        access_key, secret_key = config.get_s3_keys()
     headers['Authorization'] = 'LOW {0}:{1}'.format(access_key, secret_key)
+    if auto_make_bucket:
+        headers['x-archive-auto-make-bucket'] = 1
     scanner = 'Internet Archive Python library {0}'.format(__version__)
     headers['x-archive-meta-scanner'] = scanner
+    if not kwargs.get('queue_derive', True):
+        headers['x-archive-queue-derive'] = 0
 
     for meta_key, meta_value in metadata.iteritems():
 

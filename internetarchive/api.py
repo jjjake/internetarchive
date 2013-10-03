@@ -64,21 +64,7 @@ def upload(identifier, files, **kwargs):
 
     """
     _item = item.Item(identifier)
-    if not isinstance(files, (list, tuple)):
-        files = [files]
-    responses = []
-    for local_file in files:
-        # Directory support.
-        if isinstance(local_file, basestring) and os.path.isdir(local_file):
-            for path, dir, files in os.walk(local_file):
-                for f in files:
-                    kwargs['remote_name'] = os.path.join(path, f)
-                    local_file = os.path.relpath(kwargs['remote_name'], local_file)
-                    response = _item.upload_file(local_file, **kwargs)
-        else:
-            response = _item.upload_file(local_file, **kwargs)
-        responses.append(response)
-    return responses
+    return _item.upload(files, **kwargs)
 
 
 # download()

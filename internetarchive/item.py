@@ -7,10 +7,11 @@ import os
 from sys import stdout
 import httplib
 import urllib2
-import fnmatch
+from fnmatch import fnmatch
 from requests import Request, Session
+from contextlib import closing
 
-import jsonpatch
+from jsonpatch import make_patch
 
 from . import ias3, config, utils
 
@@ -122,8 +123,8 @@ class Item(object):
         :returns: An :class:`internetarchive.File <File>` object.
 
         """
-        for file_dict in self.metadata['files']:
-            if file_dict['name'] == name:
+        for file_dict in self.metadata.get('files', []):
+            if file_dict.get('name') == name:
                 return File(self, file_dict)
 
 
@@ -181,7 +182,7 @@ class Item(object):
                 formats = [formats]
             files = [f for f in files if f.format in formats]
         if glob_pattern:
-            files = [f for f in files if fnmatch.fnmatch(f.name, glob_pattern)]
+            files = [f for f in files if fnmatch(f.name, glob_pattern)]
 
         for f in files:
             fname = f.name.encode('utf-8')
@@ -232,7 +233,7 @@ class Item(object):
             if v == 'REMOVE_TAG' or not v:
                 del dest[k]
 
-        json_patch = jsonpatch.make_patch(src, dest).patch
+        json_patch = make_patch(src, dest).patch
         # Reformat patch to be compliant with version 02 of the Json-Patch standard.
         patch = []
         for p in json_patch:
@@ -336,7 +337,7 @@ class Item(object):
                                      ignore_bucket=ignore_bucket)
         request = Request('PUT', endpoint, headers=headers)
         # TODO: Add support for multipart.
-        with local_file as data:
+        with closing(local_file) as data:
             request.data = data.read()
         prepped_request = request.prepare()
 

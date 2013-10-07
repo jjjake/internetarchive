@@ -469,8 +469,7 @@ class File(object):
             os.makedirs(parent_dir)
 
         fname = self.name.encode('utf-8')
-        url = '{0}/{1}'.format(self.item.download_url, fname)
-        #urllib.urlretrieve(url, file_path)
+        url = '{0}/{1}'.format(self.item.download_url, urllib.quote(fname, safe=''))
 
         # Add cookies to request when downloading to allow privileged
         # users the ability to download access-restricted files.

@@ -47,7 +47,6 @@ class Item(object):
     <https://archive.org/account/s3.php>`__
 
     """
-
     # init()
     #_____________________________________________________________________________________
     def __init__(self, identifier, metadata_timeout=None, secure=False):
@@ -400,8 +399,7 @@ class Item(object):
 # File class
 #_________________________________________________________________________________________
 class File(object):
-    """:todo: document File class."""
-
+    """:todo: document ``internetarchive.File`` class."""
     # init()
     #_____________________________________________________________________________________
     def __init__(self, item, file_dict):
@@ -433,6 +431,7 @@ class File(object):
     # download()
     #_____________________________________________________________________________________
     def download(self, file_path=None, ignore_existing=False):
+        """:todo: document ``internetarchive.File.download()`` method"""
         if file_path is None:
             file_path = self.name
 
@@ -444,8 +443,7 @@ class File(object):
             os.makedirs(parent_dir)
 
         fname = self.name.encode('utf-8')
-        url = '{0}/{1}'.format(self.item.download_url, fname)
-        #urllib.urlretrieve(url, file_path)
+        url = '{0}/{1}'.format(self.item.download_url, urllib.quote(fname, safe=''))
 
         # Add cookies to request when downloading to allow privileged
         # users the ability to download access-restricted files.

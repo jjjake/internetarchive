@@ -1,6 +1,14 @@
 from setuptools import setup
+from sys import version_info, stderr, exit
 
 
+
+extra = {}
+if version_info >= (3,):
+    stderr.write('Python3 is not yet supported.\n')
+    exit(1)
+    #extra['use_2to3'] = True
+    #extra['use_2to3_fixers'] = ['your.fixers']
 
 setup(
     name='internetarchive',
@@ -34,4 +42,5 @@ setup(
             'gevent==1.0rc2',
         ],
     },
+    **extra
 )

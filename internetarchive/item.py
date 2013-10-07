@@ -337,6 +337,8 @@ class Item(object):
                                      ignore_bucket=ignore_bucket)
         request = Request('PUT', endpoint, headers=headers)
         # TODO: Add support for multipart.
+        # `contextlib.closing()` is used to make StringIO work with 
+        # `with` statement.
         with closing(local_file) as data:
             request.data = data.read()
         prepped_request = request.prepare()

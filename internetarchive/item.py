@@ -331,20 +331,23 @@ class Item(object):
             except IOError:
                 pass
 
+        # Prepare Request.
         endpoint = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, remote_name)
         headers = ias3.build_headers(metadata, headers, queue_derive=queue_derive,
                                      ignore_bucket=ignore_bucket)
-        request = Request('PUT', endpoint, headers=headers).prepare()
-
+        request = Request('PUT', endpoint, headers=headers)
         # TODO: Add support for multipart.
         with local_file as data:
             request.data = data.read()
+        prepped_request = request.prepare()
+
         if debug:
-            return request
+            return prepped_request 
         else:
             if verbose:
                 stdout.write(' uploading file: {0}\n'.format(remote_name))
-            return self.session.send(request)
+            return self.session.send(prepped_request)
+
 
     # upload()
     #_____________________________________________________________________________________

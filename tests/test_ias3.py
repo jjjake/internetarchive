@@ -51,7 +51,8 @@ def test_build_headers():
             'x-archive-test-header': 'test value',
 
             # Automatically added.
-            'x-archive-meta-scanner': 'Internet Archive Python library {0}'.format(internetarchive.__version__)
+            'x-archive-meta-scanner': 'Internet Archive Python library {0}'.format(internetarchive.__version__),
+            'x-archive-auto-make-bucket': 1,
     }
 
     for key, value in ias3_headers.items():

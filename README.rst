@@ -279,27 +279,3 @@ You can iterate over your results:
 
     >>> for result in search.results:
     ...     print result['identifier']
-
-
-A note about uploading items with mixed-case names
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The Internet Archive allows mixed-case item identifiers, but Amazon S3
-does not allow mixed-case bucket names. The ``internetarchive`` python
-module is built on top of the ``boto`` S3 module. ``boto`` disallows
-creation of mixed-case buckets, but allows you to download from existing
-mixed-case buckets. If you wish to upload a new item to the Internet
-Archive with a mixed-case item identifier, you will need to monkey-patch
-the ``boto.s3.connection.check_lowercase_bucketname`` function:
-
-.. code:: python
-
-    >>> import boto
-    >>> def check_lowercase_bucketname(n):
-    ...     return True
-
-    >>> boto.s3.connection.check_lowercase_bucketname = check_lowercase_bucketname
-
-    >>> item = internetarchive.Item('TestUpload_pythonapi_20130812')
-    >>> item.upload('file.txt', dict(mediatype='texts', creator='Internet Archive'))
-    True

@@ -9,10 +9,9 @@ options:
 
  -h, --help
  -v, --verbose                  Print upload status to stdout.
- -d, --debug                    Return the headers to be sent to IA-S3. [default: True]
- -r, --remote-name=<name>       When uploading data from stdin, this option sets the
-                                remote filename.
- -m, --metadata=<key:value>...  Metadata fort your item.
+ -d, --debug                    Print S3 request parameters to stdout and exit. [default: True]
+ -r, --remote-name=<name>       When uploading data from stdin, this option sets the remote filename.
+ -m, --metadata=<key:value>...  Metadata to add to your item.
  -H, --header=<key:value>...    Valid S3 HTTP headers to send with your request.
  -n, --no-derive                Do not derive uploaded files.
  -M, --multipart                Upload files to archive.org in parts, using multipart.

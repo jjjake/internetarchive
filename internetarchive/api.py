@@ -1,4 +1,6 @@
-from . import item, service, ias3, utils
+from sys import stdout
+
+from . import item, service, utils
 
 
 
@@ -35,28 +37,38 @@ def modify_metadata(identifier, metadata, target='metadata'):
 
 
 # upload_file()
-#_________________________________________________________________________________________
+#_____________________________________________________________________________________
 def upload_file(identifier, local_file, **kwargs):
     _item = item.Item(identifier)
-    return _item.upload_file(local_file, **kwargs)
-
+    return _item.upload_file(identifier, local_file, **kwargs)
+    
 
 # upload()
-#_________________________________________________________________________________________
+#_____________________________________________________________________________________
 def upload(identifier, files, **kwargs):
     """Upload files to an item. The item will be created if it
     does not exist.
 
+    :type files: list
+    :param files: The filepaths or file-like objects to upload.
+
+    :type kwargs: dict
+    :param kwargs: The keyword arguments from the call to
+                   upload_file().
+
     Usage::
 
         >>> import internetarchive
+        >>> item = internetarchive.Item('identifier')
         >>> md = dict(mediatype='image', creator='Jake Johnson')
-        >>> files = ['/path/to/image1.jpg', 'image2.jpg']
-        >>> item = internetarchive.upload('identifier', files, md)
+        >>> item.upload('/path/to/image.jpg', metadata=md, queue_derive=False)
         True
 
-    """
+    :rtype: bool
+    :returns: True if the request was successful and all files were
+              uploaded, False otherwise.
 
+    """
     _item = item.Item(identifier)
     return _item.upload(files, **kwargs)
 
@@ -110,7 +122,7 @@ def download_file(identifier, filename, **kwargs):
     """
     _item = item.Item(identifier)
     remote_file = _item.file(filename)
-    sys.stdout.write('downloading: {0}\n'.format(fname))
+    stdout.write('downloading: {0}\n'.format(filename))
     remote_file.download(**kwargs)
 
 

@@ -10,6 +10,7 @@ options:
     -d, --debug  [default: True]
 
 commands:
+    help      Retrieve help for subcommands.
     configure Configure `ia`.
     metadata  Retrieve and modify metadata for items on archive.org
     upload    Upload items to archive.org
@@ -18,10 +19,10 @@ commands:
     mine      Download item metadata concurrently.
     catalog   Retrieve information about your catalog tasks
 
-See 'ia <command> --help' for more information on a specific command.
+See 'ia help <command>' for more information on a specific command.
 
 """
-from sys import exit
+from sys import stderr, exit
 from subprocess import call
 
 from docopt import docopt
@@ -61,17 +62,18 @@ def main():
     # Dynamically import and call subcommand module specified on the 
     # command line.
     module = 'iacli.ia_{0}'.format(cmd) 
-    globals()['ia_module'] = __import__(module, fromlist=['iacli'])
-
-    # Exit with ``ia <command> --help`` if anything goes wrong.
     try:
+        globals()['ia_module'] = __import__(module, fromlist=['iacli'])
+    except ImportError:
+        stderr.write('"{0}" is not an `ia` command!\n'.format(cmd))
+        exit(1)
+    if cmd == 'help':
+        if not args['<args>']:
+            call(['ia', '--help'])
+        else:
+            call(['ia', args['<args>'][0], '--help'])
+    else:
         ia_module.main(argv)
-    except Exception, exception:
-        if not args.get('--debug'):
-            call(['ia', cmd, '--help'])
-            exit(1)
-        raise exception
-
 
 if __name__ == '__main__':
     main()

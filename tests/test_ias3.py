@@ -5,7 +5,8 @@ sys.path.insert(0, inc_path)
 
 import internetarchive
 
-def test_get_headers():
+def test_build_headers():
+
     metadata = {
             'collection': 'test_collection',
             'foo': u'தமிழ்',
@@ -21,7 +22,7 @@ def test_get_headers():
             'x-archive-test-header': 'test value',
     }
 
-    ias3_headers = internetarchive.ias3.get_headers(metadata, headers)
+    ias3_headers = internetarchive.ias3.build_headers(metadata, headers)
 
     test_output = {
             # str test.
@@ -48,7 +49,13 @@ def test_get_headers():
             # prepared HTTP headers test.
             'x-archive-size-hint': 19327352832,
             'x-archive-test-header': 'test value',
+
+            # Automatically added.
+            'x-archive-meta-scanner': 'Internet Archive Python library {0}'.format(internetarchive.__version__),
+            'x-archive-auto-make-bucket': 1,
     }
 
     for key, value in ias3_headers.items():
+        if key == 'Authorization':
+            continue
         assert test_output[key] == value

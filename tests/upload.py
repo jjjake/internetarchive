@@ -19,14 +19,11 @@ import time
 #_________________________________________________________________________________________
 def get_new_item():
     """return an ia item object for an item that does not yet exist"""
-
-    for i in range(5):
-        now = datetime.datetime.utcnow()
-        item_name = 'test_upload_iawrapper_' + now.strftime('%Y_%m_%d_%H%M%S')
-        item = ia.Item(item_name)
-        if item.exists is False:
-            return item
-        time.sleep(5)
+    now = datetime.datetime.utcnow()
+    item_name = 'test_upload_iawrapper_' + now.strftime('%Y_%m_%d_%H%M%S')
+    item = ia.Item(item_name)
+    if item.exists is False:
+        return item
 
     raise KeyError, 'Could not find a unique item name after 5 tries'
 

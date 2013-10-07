@@ -1,5 +1,3 @@
-import random
-
 try:
     from gevent import monkey, queue, spawn
     monkey.patch_all(thread=False)

@@ -1,10 +1,18 @@
 from setuptools import setup
+from sys import version_info, stderr, exit
 
 
+
+extra = {}
+if version_info >= (3,):
+    stderr.write('Python3 is not yet supported.\n')
+    exit(1)
+    #extra['use_2to3'] = True
+    #extra['use_2to3_fixers'] = ['your.fixers']
 
 setup(
     name='internetarchive',
-    version="0.3.7",
+    version="0.3.9",
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive', 'iacli'],
@@ -19,7 +27,6 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=[
         'requests==2.0.0',
-        'boto==2.9.9',
         'jsonpatch==1.1',
         'pytest==2.3.4',
         'docopt==0.6.1',
@@ -35,4 +42,5 @@ setup(
             'gevent==1.0rc2',
         ],
     },
+    **extra
 )

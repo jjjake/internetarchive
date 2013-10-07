@@ -3,10 +3,8 @@ try:
 except ImportError:
     import json
 import urllib
-import sys
 import urllib2
 
-from . import Item
 from . import config
 
 

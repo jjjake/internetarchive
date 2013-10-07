@@ -1,4 +1,3 @@
-import os
 from sys import stdout
 
 from . import item, service, utils
@@ -39,7 +38,7 @@ def modify_metadata(identifier, metadata, target='metadata'):
 
 # upload_file()
 #_____________________________________________________________________________________
-def upload_file(identifier, files, **kwargs):
+def upload_file(identifier, local_file, **kwargs):
     _item = item.Item(identifier)
     return _item.upload_file(identifier, local_file, **kwargs)
     

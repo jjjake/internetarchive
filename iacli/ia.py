@@ -73,7 +73,10 @@ def main():
         else:
             call(['ia', args['<args>'][0], '--help'])
     else:
-        ia_module.main(argv)
+        try:
+            ia_module.main(argv)
+        except KeyboardInterrupt:
+            exit(1)
 
 if __name__ == '__main__':
     main()

@@ -38,6 +38,7 @@ def main(argv):
     configfile = yaml.dump(config, default_flow_style=False)
     configdir = os.path.join(os.environ['HOME'], '.config')
 
+    filename = None
     if not os.path.isdir(configdir) and not os.path.isfile(configdir):
         os.mkdir(configdir)
     elif os.path.isdir(configdir):

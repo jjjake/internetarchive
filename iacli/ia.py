@@ -58,6 +58,13 @@ def main():
         cmd = aliases[cmd]
 
     argv = [cmd] + args['<args>']
+
+    if cmd == 'help':
+        if not args['<args>']:
+            call(['ia', '--help'])
+        else:
+            call(['ia', args['<args>'][0], '--help'])
+        exit(0)
     
     if cmd == 'help':
         if not args['<args>']:
@@ -72,7 +79,11 @@ def main():
     try:
         globals()['ia_module'] = __import__(module, fromlist=['iacli'])
     except ImportError:
-        stderr.write('"{0}" is not an `ia` command!\n'.format(cmd))
+        stderr.write('error: "{0}" is not an `ia` command!\n'.format(cmd))
+        exit(1)
+    try:
+        ia_module.main(argv)
+    except KeyboardInterrupt:
         exit(1)
     try:
         ia_module.main(argv)

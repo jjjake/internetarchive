@@ -22,6 +22,7 @@ options:
     -i, --ignore-bucket            Destroy and respecify all metadata.
 
 """
+import os
 from sys import stdin, stdout, stderr, exit
 from tempfile import TemporaryFile
 from xml.dom.minidom import parseString
@@ -38,6 +39,18 @@ from iacli.argparser import get_args_dict, get_xml_text
 #_________________________________________________________________________________________
 def main(argv):
     args = docopt(__doc__, argv=argv)
+
+    # Make sure command is properly formatted, and files exist.
+    if not args['<file>']:
+        if not os.path.exists(args['<identifier>']):
+            stderr.write('error: missing <file> argument!\n')
+        else:
+            stderr.write('error: missing <identifier> argument!\n')
+        exit(1)
+    for file in args['<file>']:
+        if not os.path.exists(file):
+            stderr.write('error: "{0}" doesn\'t exist!\n'.format(file))
+            exit(1)
 
     if args['--verbose'] and not args['--debug']:
         stdout.write('getting item: {0}\n'.format(args['<identifier>']))

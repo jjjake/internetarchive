@@ -2,8 +2,8 @@
 
 usage: 
     ia download [--ignore-existing] [--source=<source>... | --original] 
-                [--glob=<pattern> | --format=<format>...] <identifier> 
-                [<file>...]
+                [--glob=<pattern> | --format=<format>...] [--concurrent]
+                <identifier> [<file>...]
     ia download --help
 
 options:

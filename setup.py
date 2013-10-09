@@ -12,7 +12,7 @@ if version_info >= (3,):
 
 setup(
     name='internetarchive',
-    version=pkg_resources.require("internetarchive")[0].version
+    version=pkg_resources.require("internetarchive")[0].version,
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive', 'iacli'],

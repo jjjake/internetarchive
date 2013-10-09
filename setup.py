@@ -1,6 +1,5 @@
 from setuptools import setup
 from sys import version_info, stderr, exit
-import pkg_resources
 
 
 
@@ -12,7 +11,7 @@ if version_info >= (3,):
 
 setup(
     name='internetarchive',
-    version=pkg_resources.require("internetarchive")[0].version,
+    version='0.4.1',
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive', 'iacli'],

@@ -1,5 +1,6 @@
 from setuptools import setup
 from sys import version_info, stderr, exit
+import pkg_resources
 
 
 
@@ -8,11 +9,10 @@ if version_info >= (3,):
     stderr.write('Python3 is not yet supported.\n')
     exit(1)
     #extra['use_2to3'] = True
-    #extra['use_2to3_fixers'] = ['your.fixers']
 
 setup(
     name='internetarchive',
-    version="0.3.9",
+    version=pkg_resources.require("internetarchive")[0].version
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive', 'iacli'],

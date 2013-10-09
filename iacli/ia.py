@@ -2,11 +2,13 @@
 """A command line interface for Archive.org.
 
 usage: 
-    ia [--version|--help|--debug] <command> [<args>...]
+    ia [--debug] <command> [<args>...]
+    ia --help
+    ia --version
 
 options:
-    --version  
     -h, --help  
+    -v, --version  
     -d, --debug  [default: True]
 
 commands:

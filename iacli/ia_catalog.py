@@ -13,9 +13,10 @@ options:
     -r, --red-rows    Return information about tasks that have failed.
 
 """
-from docopt import docopt
 from sys import stdout, exit
 from urlparse import urlparse, parse_qs
+
+from docopt import docopt
 
 from internetarchive import Catalog, get_tasks
 

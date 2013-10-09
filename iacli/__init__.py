@@ -1,6 +1,6 @@
 """
-iacli library
-~~~~~~~~~~~~~~~~~~~~~~~
+Iacli library
+~~~~~~~~~~~~~
 
 Iacli is the CLI driver for the internetarchive python library:
 
@@ -10,13 +10,12 @@ Iacli is the CLI driver for the internetarchive python library:
 :license: GPL, see LICENSE for more details.
 
 """
-
-from internetarchive import __version__
+from internetarchive import __version__, __author__, __license__, __copyright__
 
 
 
 __title__ = 'iacli'
 __version__ = __version__
-__author__ = 'Jacob M. Johnson'
-__license__ = 'GPL'
-__copyright__ = 'Copyright 2013 Jacob M. Johnson'
+__author__ = __author__
+__license__ = __license__
+__copyright__ = __copyright__

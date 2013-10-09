@@ -86,3 +86,4 @@ def main(argv):
     else:
         metadata = dumps(item.metadata)
         stdout.write(metadata + '\n')
+    exit(0)

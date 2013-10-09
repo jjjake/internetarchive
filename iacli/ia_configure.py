@@ -1,16 +1,20 @@
 """Configure the `ia` CLI and internetarchive Python library.
 
 usage:
-    ia configure [--help] [options...]
+    ia configure [--cookies]
+    ia configure --help
 
 options:
     -h, --help
-    -c, --cookies  Add your IA cookies to your configuration file.
+    -c, --cookies  Add your IA cookies to configuration file.
+
 """
-from docopt import docopt
-import sys
 import os
-import yaml
+from sys import stdout, exit
+
+from docopt import docopt
+
+from yaml import dump
 
 
 
@@ -18,14 +22,14 @@ import yaml
 #_________________________________________________________________________________________
 def main(argv):
     args = docopt(__doc__, argv=argv)
-    sys.stdout.write(
+
+    stdout.write(
         'Please visit https://archive.org/account/s3.php to retrieve your S3 keys\n\n')
-    access_key = raw_input('Please enter your IA S3 access key: ')
-    secret_key = raw_input('Please enter your IA S3 secret key: ')
+
     config = {
             's3': {
-                'access_key': access_key,
-                'secret_key': secret_key
+                'access_key': raw_input('Please enter your IA S3 access key: '),
+                'secret_key': raw_input('Please enter your IA S3 secret key: '),
             }
     }
 
@@ -35,26 +39,27 @@ def main(argv):
             'logged-in-sig': raw_input('Please Enter your logged-in-sig cookie: ')
     }
 
-    configfile = yaml.dump(config, default_flow_style=False)
+    configfile = dump(config, default_flow_style=False)
     configdir = os.path.join(os.environ['HOME'], '.config')
-
-    filename = None
     if not os.path.isdir(configdir) and not os.path.isfile(configdir):
         os.mkdir(configdir)
-    elif os.path.isdir(configdir):
+
+    filename = ''
+    if os.path.isdir(configdir):
         filename = os.path.join(configdir, 'internetarchive.yml')
     else:
         filename = os.path.join(os.environ['HOME'], '.internetarchive.yml')
+
     if os.path.exists(filename):
         overwrite = raw_input('\nYou already have an ia config file: '
                               '{0} \n\nWould you like to overwrite it?'
                               '[y/n] '.format(filename).lower())
         if overwrite not in ['y', 'yes']:
-            sys.stdout.write('\nExiting without overwriting config file!\n')
-            sys.exit(1)
+            stdout.write('\nExiting without overwriting config file!\n')
+            exit(1)
+
     with open(filename, 'wb') as fp:
         os.chmod(filename, 0o700)
         fp.write(configfile)
 
-    sys.stdout.write('\nSuccessfully saved your new config to: {0}\n'.format(filename))
-    sys.exit(0)
+    stdout.write('\nSuccessfully saved your new config to: {0}\n'.format(filename))

@@ -1,14 +1,14 @@
 """Concurrently download metadata for items on Archive.org.
 
 usage:
-    ia mine [--cache | --output=<output.json>] [--workers] <itemlist.txt>
+    ia mine [--cache | --output=<output.json>] [--workers=<count>] <itemlist.txt>
     ia mine --help
 
 options:
     -h, --help  
-    -c, --cache                 Write item metadta to a file called <identifier>_meta.json
+    -c, --cache                 Write item metadata to a file called <identifier>_meta.json
     -o, --output=<output.json>  Write all metadata to a single output file <itemlist>.json
-    -w, --workers=<count>       The number requests to run concurrently [default: 20].
+    -w, --workers=<count>       The number of requests to run concurrently [default: 20]
 
 """
 from sys import stdout, exit

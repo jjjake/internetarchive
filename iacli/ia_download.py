@@ -1,30 +1,34 @@
 """Download files from archive.org.
 
 usage: 
-    ia download [--help] <identifier> [<file>...] [options...]  
+    ia download [--ignore-existing] [--source=<source>... | --original] 
+                [--glob=<pattern> | --format=<format>...] [--concurrent]
+                <identifier> [<file>...]
+    ia download --help
 
 options:
     -h, --help  
-    --version  
-    -i, --ignore-existing      Clobber files already downloaded.
-    -s, --source=<source>...   Only Download files matching given sources.
-    -o, --original             Download only files with source=original.
-    -g, --glob=<pattern>       Only download files whose filename matches the 
-                               given glob pattern.
-    -f, --format=<format>...   Only download files of the specified format(s).
-                               You can use the following command to retrieve
-                               a list of file formats contained within a given 
-                               item:
-                                
-                                   ia metadata --formats <identifier>
+    -i, --ignore-existing     Clobber files already downloaded.
+    -s, --source=<source>...  Only download files matching the given source.
+    -o, --original            Only download files with source=original.
+    -g, --glob=<pattern>      Only download files whose filename matches the 
+                              given glob pattern.
+    -f, --format=<format>...  Only download files of the specified format(s).
+                              You can use the following command to retrieve
+                              a list of file formats contained within a given 
+                              item:
+                               
+                                  ia metadata --formats <identifier>
 
-    -c, --concurrent           Download files concurrently using the Python 
-                               gevent networking library.
+    -c, --concurrent          Download files concurrently using the Python 
+                              gevent networking library (gevent must be 
+                              installed).
 
 """
-from docopt import docopt
-import sys
 import os
+from sys import stdout, exit
+
+from docopt import docopt
 
 import internetarchive
 
@@ -35,36 +39,29 @@ import internetarchive
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
+    # Download specific files.
     if '/' in args['<identifier>']:
         identifier = args['<identifier>'].split('/')[0]
+        files = [identifier.split('/')[1:]] 
     else:
         identifier = args['<identifier>']
+        files = args['<file>']
+
+    # Initialize item only after "identifier" has been defined. We do 
+    # this incase the <identifier> arg contains a "/" in it (if it
+    # contains a file in it).
     item = internetarchive.Item(identifier)
 
-    if '/' in args['<identifier>'] or args['<file>']:
-        if not args['<file>']:
-            fname = args['<identifier>'].split('/')[-1]
-            files = [fname]
-        else:
-            files = args['<file>']
+    if files:
         for f in files:
             fname = f.encode('utf-8')
             path = os.path.join(identifier, fname)
-            sys.stdout.write('downloading: {0}\n'.format(fname))
+            stdout.write('downloading: {0}\n'.format(fname))
             f = item.file(fname)
             f.download(file_path=path, ignore_existing=args['--ignore-existing'])
-        sys.exit(0)
+        exit(0)
 
-    if args['--format']:
-        formats = args['--format']
-    else:
-        formats = None
-
-    if args['--glob']:
-        glob = args['--glob'][0]
-    else:
-        glob = None
-
+    # Otherwise, download the entire item.
     if args['--source']:
         ia_source = args['--source']
     elif args['--original']:
@@ -72,6 +69,6 @@ def main(argv):
     else:
         ia_source = None
 
-    item.download(formats=formats, source=ia_source, concurrent=args['--concurrent'], 
-                  glob_pattern=glob, ignore_existing=args['--ignore-existing'])
-    sys.exit(0)
+    item.download(formats=args['--format'], source=ia_source, 
+                  concurrent=args['--concurrent'], glob_pattern=args['--glob'], 
+                  ignore_existing=args['--ignore-existing'])

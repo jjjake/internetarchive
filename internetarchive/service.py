@@ -3,10 +3,8 @@ try:
 except ImportError:
     import json
 import urllib
-import sys
 import urllib2
 
-from . import Item
 from . import config
 
 
@@ -186,11 +184,11 @@ class CatalogTask(object):
         if k in self.COLUMNS:
             return getattr(self, k, None)
         else:
-            raise KeyError, k
+            raise KeyError(k)
 
     def open_task_log(self):
         """return file-like reading task log."""
         if self.task_id is None:
-            raise ValueError, 'task_id is None'
+            raise ValueError('task_id is None')
         url = 'http://catalogd.archive.org/log/{0}'.format(self.task_id)
         return urllib2.urlopen(url)

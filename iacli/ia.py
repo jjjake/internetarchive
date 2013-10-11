@@ -2,26 +2,29 @@
 """A command line interface for Archive.org.
 
 usage: 
-    ia [--version|--help|--debug] <command> [<args>...]
+    ia [--debug] <command> [<args>...]
+    ia --help
+    ia --version
 
 options:
-    --version  
     -h, --help  
+    -v, --version  
     -d, --debug  [default: True]
 
 commands:
+    help      Retrieve help for subcommands.
     configure Configure `ia`.
-    metadata  Retrieve and modify metadata for items on archive.org
-    upload    Upload items to archive.org
-    download  Download files from archive.org
-    search    Search archive.org
-    mine      Download item metadata concurrently.
-    catalog   Retrieve information about your catalog tasks
+    metadata  Retrieve and modify metadata for items on Archive.org.
+    upload    Upload items to Archive.org.
+    download  Download files from Archive.org.
+    search    Search Archive.org.
+    mine      Download item metadata from Archive.org concurrently.
+    catalog   Retrieve information about your Archive.org catalog tasks.
 
-See 'ia <command> --help' for more information on a specific command.
+See 'ia help <command>' for more information on a specific command.
 
 """
-from sys import exit
+from sys import stderr, exit
 from subprocess import call
 
 from docopt import docopt
@@ -48,30 +51,46 @@ def main():
     aliases = dict(
             md = 'metadata',
             up = 'upload',
-            ca = 'catalog',
+            do = 'download',
             se = 'search',
             mi = 'mine',
-            do = 'download',
+            ca = 'catalog',
     )
     if cmd in aliases:
         cmd = aliases[cmd]
 
     argv = [cmd] + args['<args>']
+
+    if cmd == 'help':
+        if not args['<args>']:
+            call(['ia', '--help'])
+        else:
+            call(['ia', args['<args>'][0], '--help'])
+        exit(0)
     
+    if cmd == 'help':
+        if not args['<args>']:
+            call(['ia', '--help'])
+        else:
+            call(['ia', args['<args>'][0], '--help'])
+        exit(0)
+
     # Dynamically import and call subcommand module specified on the 
     # command line.
     module = 'iacli.ia_{0}'.format(cmd) 
-    globals()['ia_module'] = __import__(module, fromlist=['iacli'])
-
-    # Exit with ``ia <command> --help`` if anything goes wrong.
+    try:
+        globals()['ia_module'] = __import__(module, fromlist=['iacli'])
+    except ImportError:
+        stderr.write('error: "{0}" is not an `ia` command!\n'.format(cmd))
+        exit(1)
     try:
         ia_module.main(argv)
-    except Exception, exception:
-        if not args.get('--debug'):
-            call(['ia', cmd, '--help'])
-            exit(1)
-        raise exception
-
+    except KeyboardInterrupt:
+        exit(1)
+    try:
+        ia_module.main(argv)
+    except KeyboardInterrupt:
+        exit(1)
 
 if __name__ == '__main__':
     main()

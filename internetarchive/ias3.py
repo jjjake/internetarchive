@@ -1,51 +1,12 @@
-import time
 import json
 
-from boto.s3.connection import S3Connection, OrdinaryCallingFormat
+from . import __version__, config
 
-from . import config
-
-
-
-# connect()
-#_____________________________________________________________________________________
-def connect(access_key=None, secret_key=None):
-    if not access_key or not secret_key:
-        access_key, secret_key = config.get_s3_keys()
-    s3_connection = S3Connection(access_key, secret_key,
-                                 host='s3.us.archive.org',
-                                 calling_format=OrdinaryCallingFormat())
-    return s3_connection
-
-
-# get_bucket()
-#_____________________________________________________________________________________
-def get_bucket(identifier, s3_connection=None, bucket=None, headers={},
-               ignore_bucket=False):
-    if not s3_connection:
-        s3_connection = connect()
-    if ignore_bucket:
-        headers['x-archive-ignore-preexisting-bucket'] = 1
-        bucket = None
-    else:
-        if bucket is None:
-            bucket = s3_connection.lookup(identifier)
-    if bucket:
-        return bucket
-    bucket = s3_connection.create_bucket(identifier, headers=headers)
-    i=0
-    while i<60:
-        b = s3_connection.lookup(identifier)
-        if b:
-            return bucket
-        time.sleep(10)
-        i+=1
-    raise NameError('Could not create or lookup {0}'.format(identifier))
 
 
 # get_headers()
-#_____________________________________________________________________________________
-def get_headers(metadata, headers={}):
+#_________________________________________________________________________________________
+def build_headers(metadata={}, headers={}, auto_make_bucket=True, **kwargs):
     """Convert a dictionary of metadata into S3 compatible HTTP
     headers, and append headers to ``headers``.
 
@@ -55,7 +16,17 @@ def get_headers(metadata, headers={}):
 
     :type headers: dict
     :param headers: (optional) S3 compatible HTTP headers.
+
     """
+    if not kwargs.get('access_key') or not kwargs.get('secret_key'):
+        access_key, secret_key = config.get_s3_keys()
+    headers['Authorization'] = 'LOW {0}:{1}'.format(access_key, secret_key)
+    if auto_make_bucket:
+        headers['x-archive-auto-make-bucket'] = 1
+    scanner = 'Internet Archive Python library {0}'.format(__version__)
+    headers['x-archive-meta-scanner'] = scanner
+    if not kwargs.get('queue_derive', True):
+        headers['x-archive-queue-derive'] = 0
 
     for meta_key, meta_value in metadata.iteritems():
 

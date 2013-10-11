@@ -4,16 +4,16 @@ except ImportError:
     import json
 import urllib
 import os
-import sys
+from sys import stdout
 import httplib
 import urllib2
-import fnmatch
+from fnmatch import fnmatch
+from requests import Request, Session
+from contextlib import closing
 
-import jsonpatch
-import boto
-from cStringIO import StringIO
+from jsonpatch import make_patch
 
-from . import __version__, ias3, config, utils
+from . import ias3, config, utils
 
 
 
@@ -48,7 +48,6 @@ class Item(object):
     <https://archive.org/account/s3.php>`__
 
     """
-
     # init()
     #_____________________________________________________________________________________
     def __init__(self, identifier, metadata_timeout=None, secure=False):
@@ -76,7 +75,7 @@ class Item(object):
         self.download_url = '{0}://archive.org/download/{1}'.format(protocol, identifier)
         self.metadata_url = '{0}://archive.org/metadata/{1}'.format(protocol, identifier)
         self.metadata_timeout = metadata_timeout
-        self.s3_connection = None
+        self.session = None
         self.bucket = None
         self.metadata = utils.get_item_metadata(identifier, metadata_timeout, secure)
         if self.metadata == {}:
@@ -124,8 +123,8 @@ class Item(object):
         :returns: An :class:`internetarchive.File <File>` object.
 
         """
-        for file_dict in self.metadata['files']:
-            if file_dict['name'] == name:
+        for file_dict in self.metadata.get('files', []):
+            if file_dict.get('name') == name:
                 return File(self, file_dict)
 
 
@@ -183,12 +182,12 @@ class Item(object):
                 formats = [formats]
             files = [f for f in files if f.format in formats]
         if glob_pattern:
-            files = [f for f in files if fnmatch.fnmatch(f.name, glob_pattern)]
+            files = [f for f in files if fnmatch(f.name, glob_pattern)]
 
         for f in files:
             fname = f.name.encode('utf-8')
             path = os.path.join(self.identifier, fname)
-            sys.stdout.write('downloading: {0}\n'.format(fname))
+            stdout.write('downloading: {0}\n'.format(fname))
             if concurrent:
                 pool.spawn(f.download, path, ignore_existing=ignore_existing)
             else:
@@ -234,7 +233,7 @@ class Item(object):
             if v == 'REMOVE_TAG' or not v:
                 del dest[k]
 
-        json_patch = jsonpatch.make_patch(src, dest).patch
+        json_patch = make_patch(src, dest).patch
         # Reformat patch to be compliant with version 02 of the Json-Patch standard.
         patch = []
         for p in json_patch:
@@ -273,8 +272,7 @@ class Item(object):
     # upload_file()
     #_____________________________________________________________________________________
     def upload_file(self, local_file, remote_name=None, metadata={}, headers={},
-                    derive=True, ignore_bucket=False, multipart=False,
-                    bytes_per_chunk=16777216, debug=False):
+                    queue_derive=True, ignore_bucket=False, verbose=False, debug=False):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -291,13 +289,9 @@ class Item(object):
         :param headers: (optional) Add additional IA-S3 headers to
                         request.
 
-        :type derive: bool
-        :param derive: (optional) Set to False to prevent an item from
-                       being derived after upload.
-
-        :type multipart: bool
-        :param multipart: (optional) Set to True to upload files in
-                          parts. Useful when uploading large files.
+        :type queue_derive: bool
+        :param queue_derive: (optional) Set to False to prevent an item from
+                             being derived after upload.
 
         :type ignore_bucket: bool
         :param ignore_bucket: (optional) Set to True to ignore and
@@ -306,10 +300,6 @@ class Item(object):
         :type debug: bool
         :param debug: (optional) Set to True to print headers to stdout,
                       and exit without sending the upload request.
-
-        :type bytes_per_chunk: int
-        :param bytes_per_chunk: (optional) Used to determine the chunk
-                                size when using multipart upload.
 
         Usage::
 
@@ -324,17 +314,16 @@ class Item(object):
                   uploaded, False otherwise.
 
         """
+        if not self.session:
+            self.session = Session()
 
         if not hasattr(local_file, 'read'):
             local_file = open(local_file, 'rb')
         if not remote_name:
             remote_name = local_file.name.split('/')[-1]
 
-        headers = ias3.get_headers(metadata, headers)
-        scanner = 'Internet Archive Python library {0}'.format(__version__)
-        headers['x-archive-meta-scanner'] = scanner
-        header_names = [header_name.lower() for header_name in headers.keys()]
-        if 'x-archive-size-hint' not in header_names:
+        # Attempt to add size-hint header.    
+        if not headers.get('x-archive-size-hint'):
             try:
                 local_file.seek(0, os.SEEK_END)
                 headers['x-archive-size-hint'] = local_file.tell()
@@ -342,36 +331,24 @@ class Item(object):
             except IOError:
                 pass
 
-        if not self.s3_connection:
-            self.s3_connection = ias3.connect()
-        if not self.bucket:
-            self.bucket = ias3.get_bucket(self.identifier,
-                                          s3_connection=self.s3_connection,
-                                          headers=headers,
-                                          ignore_bucket=ignore_bucket)
+        # Prepare Request.
+        endpoint = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, remote_name)
+        headers = ias3.build_headers(metadata, headers, queue_derive=queue_derive,
+                                     ignore_bucket=ignore_bucket)
+        request = Request('PUT', endpoint, headers=headers)
+        # TODO: Add support for multipart.
+        # `contextlib.closing()` is used to make StringIO work with 
+        # `with` statement.
+        with closing(local_file) as data:
+            request.data = data.read()
+        prepped_request = request.prepare()
 
-        if not derive:
-            headers['x-archive-queue-derive'] =  0
-
-        # Don't clobber existing files unless ignore_bucket is True.
-        if self.bucket.get_key(remote_name) and not ignore_bucket:
-            return True
-
-        if not multipart:
-            k = boto.s3.key.Key(self.bucket)
-            k.name = remote_name
-            k.set_contents_from_file(local_file, headers=headers)
+        if debug:
+            return prepped_request 
         else:
-            mp = self.bucket.initiate_multipart_upload(remote_name, headers=headers)
-            def read_chunk():
-                return local_file.read(bytes_per_chunk)
-            part = 1
-            for chunk in iter(read_chunk, ''):
-                part_fp = StringIO(chunk)
-                mp.upload_part_from_file(part_fp, part_num=part)
-                part += 1
-            mp.complete_upload()
-        return True
+            if verbose:
+                stdout.write(' uploading file: {0}\n'.format(remote_name))
+            return self.session.send(prepped_request)
 
 
     # upload()
@@ -392,7 +369,7 @@ class Item(object):
             >>> import internetarchive
             >>> item = internetarchive.Item('identifier')
             >>> md = dict(mediatype='image', creator='Jake Johnson')
-            >>> item.upload('/path/to/image.jpg', metadata=md, derive=False)
+            >>> item.upload('/path/to/image.jpg', metadata=md, queue_derive=False)
             True
 
         :rtype: bool
@@ -400,23 +377,32 @@ class Item(object):
                   uploaded, False otherwise.
 
         """
+        def iter_directory(directory):
+            for path, dir, files in os.walk(directory):
+                for f in files:
+                    filepath = os.path.join(path, f)
+                    remote_name = os.path.relpath(filepath, directory)
+                    yield (filepath, remote_name)
 
-        if kwargs.get('debug'):
-            return ias3.get_headers(kwargs.get('metadata', {}), kwargs.get('headers', {}))
         if not isinstance(files, (list, tuple)):
             files = [files]
+
+        responses = []
         for local_file in files:
-            response = self.upload_file(local_file, **kwargs)
-            if not response:
-                return False
-        return True
+            if isinstance(local_file, basestring) and os.path.isdir(local_file):
+                for local_file, remote_name in iter_directory(local_file):
+                    resp = self.upload_file(local_file, remote_name=remote_name, **kwargs)
+                    responses.append(resp)
+            else:
+                resp = self.upload_file(local_file, **kwargs)
+                responses.append(resp)
+        return responses
 
 
 # File class
 #_________________________________________________________________________________________
 class File(object):
-    """:todo: document File class."""
-
+    """:todo: document ``internetarchive.File`` class."""
     # init()
     #_____________________________________________________________________________________
     def __init__(self, item, file_dict):
@@ -448,6 +434,7 @@ class File(object):
     # download()
     #_____________________________________________________________________________________
     def download(self, file_path=None, ignore_existing=False):
+        """:todo: document ``internetarchive.File.download()`` method"""
         if file_path is None:
             file_path = self.name
 
@@ -459,8 +446,7 @@ class File(object):
             os.makedirs(parent_dir)
 
         fname = self.name.encode('utf-8')
-        url = '{0}/{1}'.format(self.item.download_url, fname)
-        #urllib.urlretrieve(url, file_path)
+        url = '{0}/{1}'.format(self.item.download_url, urllib.quote(fname, safe=''))
 
         # Add cookies to request when downloading to allow privileged
         # users the ability to download access-restricted files.

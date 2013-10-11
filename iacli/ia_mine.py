@@ -1,20 +1,22 @@
 """Concurrently download metadata for items on Archive.org.
 
 usage:
-    ia mine <itemlist.txt> [options...]
+    ia mine [--cache | --output=<output.json>] [--workers] <itemlist.txt>
+    ia mine --help
 
 options:
     -h, --help  
-    -v, --verbose  
-    -w, --workers=<count>  The number requests to run concurrently 
-                           [default: 20].
+    -c, --cache                 Write item metadta to a file called <identifier>_meta.json
+    -o, --output=<output.json>  Write all metadata to a single output file <itemlist>.json
+    -w, --workers=<count>       The number requests to run concurrently [default: 20].
 
 """
-from docopt import docopt
-import sys
-import json
+from sys import stdout, exit
+from json import dumps
 
-import internetarchive
+from docopt import docopt
+
+from internetarchive import get_data_miner
 
 
 
@@ -25,8 +27,23 @@ def main(argv):
 
     identifiers = [i.strip() for i in open(args['<itemlist.txt>'])]
     workers = int(args.get('--workers', 20)[0])
-    miner = internetarchive.get_data_miner(identifiers, workers=workers)
+    miner = get_data_miner(identifiers, workers=workers)
+
+    # If writing all metadata to a single output file, make sure that 
+    # file is empty.
+    if args['--output']:
+        open(args['--output'][0], 'w').close()
+
     for i, item in miner.items():
-        sys.stdout.write('saving metadata for: {0}\n'.format(item.identifier))
-        with open('{0}_meta.json'.format(item.identifier), 'w') as fp:
-            json.dump(item.metadata, fp)
+        metadata = dumps(item.metadata)
+        if args['--cache']:
+            stdout.write('saving metadata for: {0}\n'.format(item.identifier))
+            with open('{0}_meta.json'.format(item.identifier), 'w') as fp:
+                fp.write(metadata)
+        elif args['--output']:
+            stdout.write('saving metadata for: {0}\n'.format(item.identifier))
+            with open(args['--output'][0], 'a+') as fp:
+                fp.write(metadata + '\n')
+        else:
+            stdout.write(metadata + '\n')
+    exit(0)

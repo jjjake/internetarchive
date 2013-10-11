@@ -3,30 +3,35 @@
 IA-S3 Documentation: https://archive.org/help/abouts3.txt
 
 usage: 
-    ia upload <identifier> [<file>...|-] [options...]
+    ia upload [--verbose] [--debug] <identifier> 
+              (<file>... | - --remote-name=<name>)
+              [--metadata=<key:value>...] [--header=<key:value>...]
+              [--no-derive] [--ignore-bucket]
+    ia upload --help
 
 options:
-
- -h, --help
- -d, --debug                    Return the headers to be sent to IA-S3. [default: True]
- -r, --remote-name=<name>       When uploading data from stdin, this option sets the
-                                remote filename.
- -m, --metadata=<key:value>...  Metadata fort your item.
- -H, --header=<key:value>...    Valid S3 HTTP headers to send with your request.
- -n, --no-derive                Do not derive uploaded files.
- -M, --multipart                Upload files to archive.org in parts, using multipart.
- -i, --ignore-bucket            Destroy and respecify all metadata. [default: True]
+    -h, --help
+    -v, --verbose                  Print upload status to stdout.
+    -d, --debug                    Print S3 request parameters to stdout and 
+                                   exit without sending request.
+    -r, --remote-name=<name>       When uploading data from stdin, this option 
+                                   sets the remote filename.
+    -m, --metadata=<key:value>...  Metadata to add to your item.
+    -H, --header=<key:value>...    S3 HTTP headers to send with your request.
+    -n, --no-derive                Do not derive uploaded files.
+    -i, --ignore-bucket            Destroy and respecify all metadata.
 
 """
+import os
 from sys import stdin, stdout, stderr, exit
-from collections import defaultdict
 from tempfile import TemporaryFile
+from xml.dom.minidom import parseString
+from subprocess import call
 
 from docopt import docopt
-from boto.exception import NoAuthHandlerFound
 
-from internetarchive import upload, upload_file
-from iacli.argparser import get_args_dict
+from internetarchive import upload
+from iacli.argparser import get_args_dict, get_xml_text
 
 
 
@@ -35,39 +40,46 @@ from iacli.argparser import get_args_dict
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
-    metadata = get_args_dict(args['--metadata'])
-    s3_headers = get_args_dict(args['--header'])
+    if args['--verbose'] and not args['--debug']:
+        stdout.write('getting item: {0}\n'.format(args['<identifier>']))
 
     upload_kwargs = dict(
-            metadata=metadata, 
-            headers=s3_headers, 
+            metadata=get_args_dict(args['--metadata']), 
+            headers=get_args_dict(args['--header']), 
             debug=args['--debug'], 
-            derive=args['--no-derive'], 
-            multipart=args['--multipart'],
-            ignore_bucket=args['--ignore-bucket'])
+            queue_derive=args['--no-derive'], 
+            ignore_bucket=args['--ignore-bucket'],
+            verbose=args['--verbose'])
 
-    try:
-        if args['<file>'] == ['-']:
-            local_file = TemporaryFile()
-            local_file.write(stdin.read())
-            local_file.seek(0)
-            upload_kwargs['remote_name'] = args['--remote-name'][0]
-            upload_status = upload_file(args['<identifier>'], local_file, **upload_kwargs)
-        else:
-            upload_status = upload(args['<identifier>'], args['<file>'], **upload_kwargs)
-    except NoAuthHandlerFound:
-        stdout.write('Unable to find your S3 keys! You can set your '
-                     'S3 keys using `ia configure`.\n')
+    # Upload stdin.
+    if args['<file>'] == ['-'] and not args['-']:
+        stderr.write('--remote-name is required when uploading from stdin.\n')
+        call(['ia', 'upload', '--help'])
         exit(1)
+    if args['-']:
+        local_file = TemporaryFile()
+        local_file.write(stdin.read())
+        local_file.seek(0)
+        upload_kwargs['remote_name'] = args['--remote-name']
+    # Upload files.
+    else:
+        local_file = args['<file>']
+
+    response = upload(args['<identifier>'], local_file, **upload_kwargs)
 
     if args['--debug']:
-        headers_str = '\n'.join([': '.join(h) for h in upload_status.items()])
-        stdout.write('IA-S3 Headers:\n\n{0}\n'.format(headers_str))
-        exit(0)
-    elif not upload_status:
-        stderr.write('error: upload failed!\n')
-        exit(1)
+        for i, r in enumerate(response):
+            if i != 0:
+                stdout.write('---\n')
+            headers = '\n'.join([' {0}: {1}'.format(k,v) for (k,v) in r.headers.items()])
+            stdout.write('Endpoint:\n {0}\n\n'.format(r.url))
+            stdout.write('HTTP Headers:\n{0}\n'.format(headers))
     else:
-        details_url = 'https://archive.org/details/{0}'.format(args['<identifier>'])
-        stdout.write('uploaded:\t{0}\n'.format(details_url))
-        exit(0)
+        for resp in response:
+            if resp.status_code == 200:
+                continue
+            error = parseString(resp.content)
+            code = get_xml_text(error.getElementsByTagName('Code'))
+            msg = get_xml_text(error.getElementsByTagName('Message'))
+            stderr.write('error "{0}" ({1}): {2}\n'.format(code, resp.status_code, msg))
+            exit(1)

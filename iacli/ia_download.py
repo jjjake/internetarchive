@@ -1,27 +1,27 @@
 """Download files from archive.org.
 
-usage: 
-    ia download [--ignore-existing] [--source=<source>... | --original] 
+usage:
+    ia download [--ignore-existing] [--source=<source>... | --original]
                 [--glob=<pattern> | --format=<format>...] [--concurrent]
                 <identifier> [<file>...]
     ia download --help
 
 options:
-    -h, --help  
+    -h, --help
     -i, --ignore-existing     Clobber files already downloaded.
     -s, --source=<source>...  Only download files matching the given source.
     -o, --original            Only download files with source=original.
-    -g, --glob=<pattern>      Only download files whose filename matches the 
+    -g, --glob=<pattern>      Only download files whose filename matches the
                               given glob pattern.
     -f, --format=<format>...  Only download files of the specified format(s).
                               You can use the following command to retrieve
-                              a list of file formats contained within a given 
+                              a list of file formats contained within a given
                               item:
-                               
+
                                   ia metadata --formats <identifier>
 
-    -c, --concurrent          Download files concurrently using the Python 
-                              gevent networking library (gevent must be 
+    -c, --concurrent          Download files concurrently using the Python
+                              gevent networking library (gevent must be
                               installed).
 
 """
@@ -42,12 +42,12 @@ def main(argv):
     # Download specific files.
     if '/' in args['<identifier>']:
         identifier = args['<identifier>'].split('/')[0]
-        files = [identifier.split('/')[1:]] 
+        files = [identifier.split('/')[1:]]
     else:
         identifier = args['<identifier>']
         files = args['<file>']
 
-    # Initialize item only after "identifier" has been defined. We do 
+    # Initialize item only after "identifier" has been defined. We do
     # this incase the <identifier> arg contains a "/" in it (if it
     # contains a file in it).
     item = internetarchive.Item(identifier)
@@ -69,6 +69,6 @@ def main(argv):
     else:
         ia_source = None
 
-    item.download(formats=args['--format'], source=ia_source, 
-                  concurrent=args['--concurrent'], glob_pattern=args['--glob'], 
+    item.download(formats=args['--format'], source=ia_source,
+                  concurrent=args['--concurrent'], glob_pattern=args['--glob'],
                   ignore_existing=args['--ignore-existing'])

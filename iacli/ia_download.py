@@ -72,3 +72,4 @@ def main(argv):
     item.download(formats=args['--format'], source=ia_source,
                   concurrent=args['--concurrent'], glob_pattern=args['--glob'],
                   ignore_existing=args['--ignore-existing'])
+    exit(0)

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 """A command line interface for Archive.org.
 
-usage: 
+usage:
     ia [--debug] <command> [<args>...]
     ia --help
     ia --version
 
 options:
-    -h, --help  
-    -v, --version  
+    -h, --help
+    -v, --version
     -d, --debug  [default: True]
 
 commands:
@@ -37,10 +37,10 @@ from internetarchive import __version__
 #_________________________________________________________________________________________
 def main():
     """This script is the CLI driver for ia-wrapper. It dynamically
-    imports and calls the subcommand specified on the command line. It 
+    imports and calls the subcommand specified on the command line. It
     depends on the ``internetarchive`` and ``iacli`` packages.
 
-    Subcommands can be arbitrarily added to the ``iacli`` package as 
+    Subcommands can be arbitrarily added to the ``iacli`` package as
     modules, and can be dynamically executed via this script, ``ia``.
 
     """
@@ -67,7 +67,7 @@ def main():
         else:
             call(['ia', args['<args>'][0], '--help'])
         exit(0)
-    
+
     if cmd == 'help':
         if not args['<args>']:
             call(['ia', '--help'])
@@ -75,17 +75,13 @@ def main():
             call(['ia', args['<args>'][0], '--help'])
         exit(0)
 
-    # Dynamically import and call subcommand module specified on the 
+    # Dynamically import and call subcommand module specified on the
     # command line.
-    module = 'iacli.ia_{0}'.format(cmd) 
+    module = 'iacli.ia_{0}'.format(cmd)
     try:
         globals()['ia_module'] = __import__(module, fromlist=['iacli'])
     except ImportError:
         stderr.write('error: "{0}" is not an `ia` command!\n'.format(cmd))
-        exit(1)
-    try:
-        ia_module.main(argv)
-    except KeyboardInterrupt:
         exit(1)
     try:
         ia_module.main(argv)

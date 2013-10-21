@@ -464,7 +464,7 @@ class File(object):
             fp.write(data.read())
 
              
-    # download()
+    # delete()
     #_____________________________________________________________________________________
     def delete(self, debug=False, verbose=False):
         headers = ias3.build_headers()

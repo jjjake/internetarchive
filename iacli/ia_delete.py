@@ -3,12 +3,17 @@
 IA-S3 Documentation: https://archive.org/help/abouts3.txt
 
 usage: 
-    ia delete [--verbose] [--debug] <identifier> <file>...
+    ia delete [--verbose] [--debug] [--cascade] <identifier> <file>...
+    ia delete [--verbose] [--debug] --all <identifier>
     ia delete --help
 
 options:
     -h, --help
-    -v, --verbose                  Print upload status to stdout.
+    -v, --verbose  Print status to stdout.
+    -c, --cascade  Delete all derivative files associated with the given file.
+    -a, --all      Delete all files in the given item (Note: Some files, such 
+                   as <identifier>_meta.xml and <identifier>_files.xml, cannot 
+                   be deleted)
 
 """
 from sys import stdout, stderr, exit
@@ -28,16 +33,26 @@ def main(argv):
     verbose = args['--verbose']
     item = Item(args['<identifier>'])
 
+    # Files that cannot be deleted via S3.
+    no_delete = ['_meta.xml', '_files.xml', '_meta.sqlite']
+
     if verbose:
         stdout.write('Deleting files from {0}\n'.format(item.identifier))
 
-    for f in args['<file>']:
-        file = item.file(f)
-        if not file:
+    if args['--all']:
+        files = [f for f in item.files()]
+        args['--cacade'] = True
+    else:
+        files = [item.file(f) for f in args['<file>']]
+
+    for f in files:
+        if not f:
             if verbose:
-                stderr.write(' error: "{0}" does not exist\n'.format(f))
+                stderr.write(' error: "{0}" does not exist\n'.format(f.name))
             exit(1)
-        resp = file.delete(verbose=args['--verbose'])
+        if any(f.name.endswith(s) for s in no_delete):
+            continue
+        resp = f.delete(verbose=args['--verbose'], cascade_delete=args['--cascade'])
         if resp.status_code != 204:
             error = parseString(resp.content)
             msg = get_xml_text(error.getElementsByTagName('Message'))

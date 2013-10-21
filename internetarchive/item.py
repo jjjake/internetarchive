@@ -466,8 +466,11 @@ class File(object):
              
     # delete()
     #_____________________________________________________________________________________
-    def delete(self, debug=False, verbose=False):
-        headers = ias3.build_headers()
+    def delete(self, debug=False, verbose=False, cascade_delete=False):
+        if cascade_delete:
+            headers = ias3.build_headers(headers={'x-archive-cascade-delete': 1})
+        else:
+            headers = ias3.build_headers()
         endpoint = '{0}/{1}'.format(self.item.s3_endpoint, self.fname)
         prepped_request = Request('DELETE', endpoint, headers=headers).prepare()
         if debug:

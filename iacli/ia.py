@@ -17,6 +17,7 @@ commands:
     metadata  Retrieve and modify metadata for items on Archive.org.
     upload    Upload items to Archive.org.
     download  Download files from Archive.org.
+    delete    Delete files from Archive.org.
     search    Search Archive.org.
     mine      Download item metadata from Archive.org concurrently.
     catalog   Retrieve information about your Archive.org catalog tasks.
@@ -52,6 +53,7 @@ def main():
             md = 'metadata',
             up = 'upload',
             do = 'download',
+            rm = 'delete',
             se = 'search',
             mi = 'mine',
             ca = 'catalog',

@@ -74,6 +74,7 @@ class Item(object):
         self.details_url = '{0}://archive.org/details/{1}'.format(protocol, identifier)
         self.download_url = '{0}://archive.org/download/{1}'.format(protocol, identifier)
         self.metadata_url = '{0}://archive.org/metadata/{1}'.format(protocol, identifier)
+        self.s3_endpoint = '{0}://s3.us.archive.org/{1}'.format(protocol, identifier)
         self.metadata_timeout = metadata_timeout
         self.session = None
         self.bucket = None
@@ -419,6 +420,11 @@ class File(object):
         self.md5  = file_dict.get('md5')
         self.sha1 = file_dict.get('crc32')
         self.sha1 = file_dict.get('sha1')
+        self.fname = self.name.encode('utf-8')
+        self.download_url = '{0}/{1}'.format(self.item.download_url, 
+                                             urllib.quote(self.fname, safe=''))
+        if not self.item.session:
+            self.item.session = Session()
 
 
     # __repr__()
@@ -445,9 +451,6 @@ class File(object):
         if parent_dir != '' and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
-        fname = self.name.encode('utf-8')
-        url = '{0}/{1}'.format(self.item.download_url, urllib.quote(fname, safe=''))
-
         # Add cookies to request when downloading to allow privileged
         # users the ability to download access-restricted files.
         logged_in_user, logged_in_sig = config.get_cookies()
@@ -456,6 +459,20 @@ class File(object):
 
         opener = urllib2.build_opener()
         opener.addheaders.append(('Cookie', cookies))
-        data = opener.open(url)
+        data = opener.open(self.download_url)
         with open(file_path, 'wb') as fp:
             fp.write(data.read())
+
+             
+    # download()
+    #_____________________________________________________________________________________
+    def delete(self, debug=False, verbose=False):
+        headers = ias3.build_headers()
+        endpoint = '{0}/{1}'.format(self.item.s3_endpoint, self.fname)
+        prepped_request = Request('DELETE', endpoint, headers=headers).prepare()
+        if debug:
+            return prepped_request 
+        else:
+            if verbose:
+                stdout.write(' deleting file: {0}\n'.format(self.name))
+            return self.item.session.send(prepped_request)

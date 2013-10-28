@@ -3,7 +3,7 @@ API <https://archive.org/advancedsearch.php#raw>.
 
 usage: 
     ia search [--parameters=<key:value>...] [--sort=<field:order>] 
-              [--field=<field>...] <query>...
+              [--field=<field>...] [--number-found] <query>...
     ia search --help
 
 options:
@@ -13,9 +13,10 @@ options:
                                      <order> can be either "asc" for ascending 
                                      and "desc" for descending.
     -f, --field=<field>...           Metadata fields to return.
+    -n, --number-found               Print the number of results to stdout. 
 
 """
-from sys import stdout
+from sys import stdout, exit
 
 from docopt import docopt
 
@@ -39,6 +40,9 @@ def main(argv):
 
     query = ' '.join(args['<query>'])
     search_resp = search(query, fields=fields, params=params)
+    if args['--number-found']:
+        stdout.write('{0}\n'.format(search_resp.num_found))
+        exit(0)
     for result in search_resp.results():
         output = '\t'.join([result.get(f, '') for f in fields]).encode('utf-8')
         stdout.write(output + '\n')

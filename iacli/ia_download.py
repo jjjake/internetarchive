@@ -1,13 +1,14 @@
 """Download files from archive.org.
 
 usage:
-    ia download [--ignore-existing] [--source=<source>... | --original]
+    ia download [--dry-run] [--ignore-existing] [--source=<source>... | --original]
                 [--glob=<pattern> | --format=<format>...] [--concurrent]
                 <identifier> [<file>...]
     ia download --help
 
 options:
     -h, --help
+    -d, --dry-run             Print URLs to stdout and exit.
     -i, --ignore-existing     Clobber files already downloaded.
     -s, --source=<source>...  Only download files matching the given source.
     -o, --original            Only download files with source=original.
@@ -39,6 +40,10 @@ import internetarchive
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
+    verbose = True
+    if args['--dry-run']:
+        verbose = False
+
     # Download specific files.
     if '/' in args['<identifier>']:
         identifier = args['<identifier>'].split('/')[0]
@@ -58,7 +63,8 @@ def main(argv):
             path = os.path.join(identifier, fname)
             stdout.write('downloading: {0}\n'.format(fname))
             f = item.file(fname)
-            f.download(file_path=path, ignore_existing=args['--ignore-existing'])
+            f.download(file_path=path, dry_run=args['--dry-run'], 
+                       verbose=verbose, ignore_existing=args['--ignore-existing'])
         exit(0)
 
     # Otherwise, download the entire item.
@@ -71,5 +77,6 @@ def main(argv):
 
     item.download(formats=args['--format'], source=ia_source,
                   concurrent=args['--concurrent'], glob_pattern=args['--glob'],
+                  dry_run=args['--dry-run'], verbose=verbose, 
                   ignore_existing=args['--ignore-existing'])
     exit(0)

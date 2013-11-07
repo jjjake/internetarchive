@@ -132,7 +132,7 @@ class Item(object):
     # download()
     #_____________________________________________________________________________________
     def download(self, concurrent=False, source=None, formats=None, glob_pattern=None,
-                 ignore_existing=False):
+                 dry_run=False, verbose=False, ignore_existing=False):
         """Download the entire item into the current working directory.
 
         :type concurrent: bool
@@ -188,8 +188,11 @@ class Item(object):
         for f in files:
             fname = f.name.encode('utf-8')
             path = os.path.join(self.identifier, fname)
-            stdout.write('downloading: {0}\n'.format(fname))
-            if concurrent:
+            if verbose:
+                stdout.write('downloading: {0}\n'.format(fname))
+            if dry_run:
+                stdout.write('{0}\n'.format(f.download_url))
+            elif concurrent:
                 pool.spawn(f.download, path, ignore_existing=ignore_existing)
             else:
                 f.download(path, ignore_existing=ignore_existing)

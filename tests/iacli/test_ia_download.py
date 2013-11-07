@@ -35,7 +35,7 @@ def test_ia_download():
         'nasa_reviews.xml', 
         'NASAarchiveLogo.jpg',
     ]
-    assert os.listdir('nasa') == test_output
+    assert sorted(os.listdir('nasa')) == sorted(test_output)
     shutil.rmtree('nasa')
 
     cmd = 'ia download --ignore-existing --glob="*jpg" nasa'
@@ -45,7 +45,7 @@ def test_ia_download():
         'globe_west_540.jpg', 
         'NASAarchiveLogo.jpg',
     ]
-    assert os.listdir('nasa') == test_output
+    assert sorted(os.listdir('nasa')) == sorted(test_output)
     shutil.rmtree('nasa')
 
     cmd = 'ia download --ignore-existing --source=metadata nasa'
@@ -57,7 +57,7 @@ def test_ia_download():
         'nasa_meta.xml', 
         'nasa_reviews.xml', 
     ]
-    assert os.listdir('nasa') == test_output
+    assert sorted(os.listdir('nasa')) == sorted(test_output)
     shutil.rmtree('nasa')
 
     cmd = 'ia download --ignore-existing --format="Archive BitTorrent" nasa'
@@ -66,5 +66,5 @@ def test_ia_download():
     test_output = [
         'nasa_archive.torrent', 
     ]
-    assert os.listdir('nasa') == test_output
+    assert sorted(os.listdir('nasa')) == sorted(test_output)
     shutil.rmtree('nasa')

@@ -32,7 +32,7 @@ def main(argv):
     # If writing all metadata to a single output file, make sure that 
     # file is empty.
     if args['--output']:
-        open(args['--output'][0], 'w').close()
+        open(args['--output'], 'w').close()
 
     for i, item in miner.items():
         metadata = dumps(item.metadata)
@@ -42,7 +42,7 @@ def main(argv):
                 fp.write(metadata)
         elif args['--output']:
             stdout.write('saving metadata for: {0}\n'.format(item.identifier))
-            with open(args['--output'][0], 'a+') as fp:
+            with open(args['--output'], 'a+') as fp:
                 fp.write(metadata + '\n')
         else:
             stdout.write(metadata + '\n')

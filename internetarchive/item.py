@@ -344,15 +344,14 @@ class Item(object):
         # `contextlib.closing()` is used to make StringIO work with 
         # `with` statement.
         with closing(local_file) as data:
-            request.data = data.read()
-        prepped_request = request.prepare()
-
-        if debug:
-            return prepped_request 
-        else:
-            if verbose:
-                stdout.write(' uploading file: {0}\n'.format(remote_name))
-            return self.session.send(prepped_request)
+            request.data = data
+            prepped_request = request.prepare()
+            if debug:
+                return prepped_request 
+            else:
+                if verbose:
+                    stdout.write(' uploading file: {0}\n'.format(remote_name))
+                return self.session.send(prepped_request, stream=True)
 
 
     # upload()

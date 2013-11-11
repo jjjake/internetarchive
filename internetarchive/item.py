@@ -78,7 +78,8 @@ class Item(object):
         self.metadata_timeout = metadata_timeout
         self.session = None
         self.bucket = None
-        self.metadata = utils.get_item_metadata(identifier, metadata_timeout, secure)
+        self.metadata = utils.get_item_metadata(identifier, timeout=self.metadata_timeout, 
+                                                            secure=self.secure)
         if self.metadata == {}:
             self.exists = False
         else:

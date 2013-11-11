@@ -32,7 +32,7 @@ def get_item_metadata(identifier, target=None, timeout=None, secure=False):
     url = 'http://archive.org/metadata/{0}'.format(identifier)
     if secure:
         url = url.replace('http', 'https')
-    r = requests.get(url)
+    r = requests.get(url, timeout=timeout)
     if r.status_code != 200:
         raise ConnectionError("Unable connect to Archive.org "
                               "({0})".format(r.status_code))

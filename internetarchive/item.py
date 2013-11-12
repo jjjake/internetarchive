@@ -322,38 +322,24 @@ class Item(object):
         """
         if not self.session:
             self.session = Session()
-
         if not hasattr(local_file, 'read'):
             local_file = open(local_file, 'rb')
-        if not remote_name:
-            remote_name = local_file.name.split('/')[-1]
 
-        # Attempt to add size-hint header.    
-        if not headers.get('x-archive-size-hint'):
-            try:
-                local_file.seek(0, os.SEEK_END)
-                headers['x-archive-size-hint'] = local_file.tell()
-                local_file.seek(0, os.SEEK_SET)
-            except IOError:
-                pass
-
-        # Prepare Request.
-        endpoint = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, remote_name)
-        headers = ias3.build_headers(metadata, headers, queue_derive=queue_derive,
-                                     ignore_bucket=ignore_bucket)
-        request = Request('PUT', endpoint, headers=headers)
-        # TODO: Add support for multipart.
-        # `contextlib.closing()` is used to make StringIO work with 
-        # `with` statement.
-        with closing(local_file) as data:
-            request.data = data
+        request = ias3.S3Request(self.identifier, local_file=local_file, 
+                                                  remote_name=remote_name,
+                                                  metadata=metadata, 
+                                                  headers=headers, 
+                                                  queue_derive=queue_derive,
+                                                  ignore_bucket=ignore_bucket,
+                                                  verbose=verbose)
+        if debug:
+            return request
+        else:
             prepped_request = request.prepare()
-            if debug:
-                return prepped_request 
-            else:
-                if verbose:
-                    stdout.write(' uploading file: {0}\n'.format(remote_name))
-                return self.session.send(prepped_request, stream=True)
+            #response = self.session.send(prepped_request, stream=True)
+            response = self.session.send(prepped_request)
+            content = response.content
+            return response
 
 
     # upload()

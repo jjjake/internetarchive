@@ -11,7 +11,7 @@ if version_info >= (3,):
 
 setup(
     name='internetarchive',
-    version='0.4.6',
+    version='0.4.7',
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive', 'iacli'],

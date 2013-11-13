@@ -13,7 +13,7 @@ from contextlib import closing
 
 from jsonpatch import make_patch
 
-from . import ias3, config, utils
+from . import s3, config, utils, __version__
 
 
 
@@ -74,10 +74,8 @@ class Item(object):
         self.details_url = '{0}://archive.org/details/{1}'.format(protocol, identifier)
         self.download_url = '{0}://archive.org/download/{1}'.format(protocol, identifier)
         self.metadata_url = '{0}://archive.org/metadata/{1}'.format(protocol, identifier)
-        self.s3_endpoint = '{0}://s3.us.archive.org/{1}'.format(protocol, identifier)
         self.metadata_timeout = metadata_timeout
         self.session = None
-        self.bucket = None
         self.metadata = utils.get_item_metadata(identifier, timeout=self.metadata_timeout, 
                                                             secure=self.secure)
         if self.metadata == {}:
@@ -277,69 +275,86 @@ class Item(object):
 
     # upload_file()
     #_____________________________________________________________________________________
-    def upload_file(self, local_file, remote_name=None, metadata={}, headers={},
-                    queue_derive=True, ignore_bucket=False, verbose=False, debug=False):
+    def upload_file(self, body, key=None, metadata={}, headers={},
+                    access_key=None, secret_key=None, queue_derive=True, 
+                    ignore_preexisting_bucket=False, verbose=False, debug=False):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
-        :type local_file: str or file
-        :param local_file: The filepath or file-like object to be uploaded.
+        :type body: Filepath or file-like object.
+        :param body: File or data to be uploaded.
 
-        :type remote_name: str
-        :param remote_name: (optional) Sets the remote filename.
+        :type key: str
+        :param key: (optional) Remote filename.
 
         :type metadata: dict
         :param metadata: (optional) Metadata used to create a new item.
 
         :type headers: dict
-        :param headers: (optional) Add additional IA-S3 headers to
-                        request.
+        :param headers: (optional) Add additional IA-S3 headers to request.
 
         :type queue_derive: bool
         :param queue_derive: (optional) Set to False to prevent an item from
                              being derived after upload.
 
-        :type ignore_bucket: bool
-        :param ignore_bucket: (optional) Set to True to ignore and
-                              clobber existing files and metadata.
+        :type ignore_preexisting_bucket: bool
+        :param ignore_preexisting_bucket: (optional) Destroy and respecify the 
+                                          metadata for an item
+
+        :type verbose: bool
+        :param verbose: (optional) Print progress to stdout.
 
         :type debug: bool
-        :param debug: (optional) Set to True to print headers to stdout,
-                      and exit without sending the upload request.
+        :param debug: (optional) Set to True to print headers to stdout, and 
+                      exit without sending the upload request.
 
         Usage::
 
             >>> import internetarchive
             >>> item = internetarchive.Item('identifier')
             >>> item.upload_file('/path/to/image.jpg',
-            ...                  remote_name='photos/image1.jpg')
+            ...                  key='photos/image1.jpg')
             True
 
-        :rtype: bool
-        :returns: True if the request was successful and file was
-                  uploaded, False otherwise.
-
         """
-        if not self.session:
-            self.session = Session()
-        if not hasattr(local_file, 'read'):
-            local_file = open(local_file, 'rb')
+        if not hasattr(body, 'read'):
+            body = open(body, 'rb')
+        if not metadata.get('scanner'):
+            scanner = 'Internet Archive Python library {0}'.format(__version__)
+            metadata['scanner'] = scanner
+        try:
+            body.seek(0, os.SEEK_END)
+            size = body.tell()
+            body.seek(0, os.SEEK_SET)
+        except IOError:
+            size = None
 
-        request = ias3.S3Request(self.identifier, local_file=local_file, 
-                                                  remote_name=remote_name,
-                                                  metadata=metadata, 
-                                                  headers=headers, 
-                                                  queue_derive=queue_derive,
-                                                  ignore_bucket=ignore_bucket,
-                                                  verbose=verbose)
+        key = body.name.split('/')[-1] if key is None else key
+        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, key) 
+        chunks = s3.Chunks(body, file_size=size, verbose=verbose)
+        headers = s3.build_headers(metadata=metadata, 
+                                   headers=headers, 
+                                   access_key=access_key, 
+                                   secret_key=secret_key, 
+                                   queue_derive=queue_derive,
+                                   auto_make_bucket=True,
+                                   size_hint=size,
+                                   ignore_preexisting_bucket=ignore_preexisting_bucket)
+
+        request = Request(
+            method='PUT',
+            url=url,
+            headers=headers,
+            data=s3.IterableToFileAdapter(chunks),
+        )
+        
         if debug:
             return request
         else:
-            prepped_request = request.prepare()
-            #response = self.session.send(prepped_request, stream=True)
-            response = self.session.send(prepped_request)
-            content = response.content
-            return response
+            if not self.session:
+                self.session = Session()
+            prepared_request = request.prepare()
+            return self.session.send(prepared_request, stream=True)
 
 
     # upload()
@@ -372,20 +387,21 @@ class Item(object):
             for path, dir, files in os.walk(directory):
                 for f in files:
                     filepath = os.path.join(path, f)
-                    remote_name = os.path.relpath(filepath, directory)
-                    yield (filepath, remote_name)
+                    key = os.path.relpath(filepath, directory)
+                    yield (filepath, key)
 
         if not isinstance(files, (list, tuple)):
             files = [files]
 
         responses = []
-        for local_file in files:
-            if isinstance(local_file, basestring) and os.path.isdir(local_file):
-                for local_file, remote_name in iter_directory(local_file):
-                    resp = self.upload_file(local_file, remote_name=remote_name, **kwargs)
+        for f in files:
+            key = None
+            if isinstance(f, basestring) and os.path.isdir(f):
+                for filepath, key in iter_directory(f):
+                    resp = self.upload_file(filepath, key=key, **kwargs)
                     responses.append(resp)
             else:
-                resp = self.upload_file(local_file, **kwargs)
+                resp = self.upload_file(f, **kwargs)
                 responses.append(resp)
         return responses
 
@@ -455,15 +471,17 @@ class File(object):
     # delete()
     #_____________________________________________________________________________________
     def delete(self, debug=False, verbose=False, cascade_delete=False):
-        if cascade_delete:
-            headers = ias3.build_headers(headers={'x-archive-cascade-delete': 1})
-        else:
-            headers = ias3.build_headers()
-        endpoint = '{0}/{1}'.format(self.item.s3_endpoint, self.fname)
-        prepped_request = Request('DELETE', endpoint, headers=headers).prepare()
+        headers = s3.build_headers(cascade_delete=cascade_delete)
+        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.item.identifier, self.fname)
+        request = Request(
+            method='DELETE', 
+            url=url, 
+            headers=headers,
+        )
         if debug:
-            return prepped_request 
+            return request 
         else:
             if verbose:
                 stdout.write(' deleting file: {0}\n'.format(self.name))
-            return self.item.session.send(prepped_request)
+            prepared_request = request.prepare()
+            return self.item.session.send(prepared_request)

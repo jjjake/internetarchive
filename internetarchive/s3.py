@@ -55,7 +55,7 @@ class IterableToFileAdapter(object):
 
 # build_headers()
 #_________________________________________________________________________________________
-def build_headers(metadata, headers, **kwargs):
+def build_headers(**kwargs):
     """Convert a dictionary of metadata into S3 compatible HTTP
     headers, and append headers to ``headers``.
 
@@ -67,6 +67,9 @@ def build_headers(metadata, headers, **kwargs):
     :param headers: (optional) S3 compatible HTTP headers.
 
     """
+    metadata = {} if not kwargs.get('metadata') else kwargs.get('metadata')
+    headers = {} if not kwargs.get('headers') else kwargs.get('headers')
+
     access_key, secret_key = (kwargs.get('access_key'), kwargs.get('secret_key'))
     if not access_key or not secret_key:
         access_key, secret_key = config.get_s3_keys()

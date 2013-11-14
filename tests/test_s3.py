@@ -22,7 +22,7 @@ def test_build_headers():
             'x-archive-test-header': 'test value',
     }
 
-    ias3_headers = internetarchive.ias3.build_headers(metadata, headers)
+    s3_headers = internetarchive.s3.build_headers(metadata=metadata, headers=headers)
 
     test_output = {
             # str test.
@@ -55,7 +55,7 @@ def test_build_headers():
             'x-archive-auto-make-bucket': 1,
     }
 
-    for key, value in ias3_headers.items():
+    for key, value in s3_headers.items():
         if key == 'Authorization':
             continue
         assert test_output[key] == value

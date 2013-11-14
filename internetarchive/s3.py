@@ -77,7 +77,7 @@ def build_headers(**kwargs):
 
     # Convert kwargs into S3 Headers.
     for key, value in kwargs.items():
-        if key in ['access_key', 'secret_key']:
+        if key in ['metadata', 'headers', 'access_key', 'secret_key']:
             continue
         if value is True:
             value = 1

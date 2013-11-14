@@ -47,7 +47,7 @@ def main(argv):
             metadata=get_args_dict(args['--metadata']), 
             headers=get_args_dict(args['--header']), 
             debug=args['--debug'], 
-            queue_derive=args['--no-derive'], 
+            queue_derive=True if args['--no-derive'] is False else False,
             ignore_bucket=args['--ignore-bucket'],
             verbose=args['--verbose'])
 

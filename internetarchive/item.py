@@ -14,7 +14,7 @@ from contextlib import closing
 
 from jsonpatch import make_patch
 
-from . import s3, config, utils, __version__
+from . import s3, config, __version__
 
 
 

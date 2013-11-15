@@ -1,6 +1,6 @@
 from sys import stdout
 
-from . import item, service, utils
+from . import item, service
 
 
 
@@ -12,35 +12,36 @@ def get_item(identifier, **kwargs):
 
 # get_metadata()
 #_________________________________________________________________________________________
-def get_metadata(identifier, timeout=None): 
-    return utils.get_item_metadata(identifier, target='metadata', timeout=timeout)
+def get_metadata(identifier, target=None, timeout=None): 
+    item = get_item(identifier, metadata_timeout=timeout)
+    return item.metadata.get(target, {}) if target else item.metadata
 
 
 # get_files()
 #_________________________________________________________________________________________
 def get_files(identifier, timeout=None): 
-    return utils.get_item_metadata(identifier, target='files', timeout=timeout)
+    return get_metadata(identifier, target='files', timeout=timeout)
 
 
 # iter_files()
 #_________________________________________________________________________________________
-def iter_files(identifier): 
-    _item = item.Item(identifier)
-    return _item.files()
+def iter_files(identifier, timeout=None):
+    item = get_item(identifier, metadata_timeout=timeout)
+    return item.files()
 
 
 # modify_metadata()
 #_________________________________________________________________________________________
 def modify_metadata(identifier, metadata, target='metadata'):
-    _item = item.Item(identifier)
-    return _item.modify_metadata(metadata, target)
+    item = get_item(identifier, metadata_timeout=timeout)
+    return item.modify_metadata(metadata, target)
 
 
 # upload_file()
 #_____________________________________________________________________________________
 def upload_file(identifier, local_file, **kwargs):
-    _item = item.Item(identifier)
-    return _item.upload_file(identifier, local_file, **kwargs)
+    item = get_item(identifier)
+    return item.upload_file(identifier, local_file, **kwargs)
     
 
 # upload()
@@ -69,8 +70,8 @@ def upload(identifier, files, **kwargs):
               uploaded, False otherwise.
 
     """
-    _item = item.Item(identifier)
-    return _item.upload(files, **kwargs)
+    item = get_item(identifier)
+    return item.upload(files, **kwargs)
 
 
 # download()
@@ -104,9 +105,8 @@ def download(identifier, **kwargs):
         >>> internetarchive.download('stairs', source=['metadata', 'original'])
 
     """
-    
-    _item = item.Item(identifier)
-    _item.download(**kwargs)
+    item = get_item(identifier)
+    item.download(**kwargs)
 
 
 # download_file()
@@ -120,8 +120,8 @@ def download_file(identifier, filename, **kwargs):
         >>> internetarchive.download_file('stairs', 'stairs.avi')
 
     """
-    _item = item.Item(identifier)
-    remote_file = _item.file(filename)
+    item = get_item(identifier)
+    remote_file = item.file(filename)
     stdout.write('downloading: {0}\n'.format(filename))
     remote_file.download(**kwargs)
 
@@ -147,5 +147,4 @@ def search(query, **kwargs):
 #_________________________________________________________________________________________
 def get_data_miner(identifiers, **kwargs): 
     from . import mine
-    miner = mine.Mine(identifiers, **kwargs)
-    return miner
+    return mine.Mine(identifiers, **kwargs)

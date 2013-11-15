@@ -1,8 +1,7 @@
 """Retrieve and modify metadata for items on archive.org.
 
 usage: 
-    ia metadata [--modify=<key:value>... | --exists | --formats | --files | --target=<target>...] <identifier>
-    ia metadata [--modify=<key:value>... | --exists | --formats | --files] [--target=<target>...] <identifier>
+    ia metadata [--modify=<key:value>... | --exists | --formats ] [--files] [--target=<target>...] <identifier>
     ia metadata --help
 
 options:

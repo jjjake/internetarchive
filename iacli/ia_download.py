@@ -56,7 +56,7 @@ def main(argv):
             path = os.path.join(identifier, fname)
             f = item.file(fname)
             if args['--dry-run']:
-                stdout.write(f.download_url + '\n')
+                stdout.write(f.url + '\n')
             else:
                 stdout.write('downloading: {0}\n'.format(fname))
                 f.download(file_path=path, ignore_existing=args['--ignore-existing'])

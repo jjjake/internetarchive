@@ -212,7 +212,7 @@ class Item(object):
             fname = f.name.encode('utf-8')
             path = os.path.join(self.identifier, fname)
             if dry_run:
-                stdout.write(f.download_url + '\n')
+                stdout.write(f.url + '\n')
                 continue
             if verbose:
                 stdout.write('downloading: {0}\n'.format(fname))

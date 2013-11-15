@@ -419,7 +419,7 @@ class File(object):
         self.format = file_dict.get('format')
         self.mtime = file_dict.get('mtime')
         self.md5  = file_dict.get('md5')
-        self.sha1 = file_dict.get('crc32')
+        self.crc32 = file_dict.get('crc32')
         self.sha1 = file_dict.get('sha1')
         self.fname = self.name.encode('utf-8')
         self.download_url = '{0}/{1}'.format(self.item.download_url, 

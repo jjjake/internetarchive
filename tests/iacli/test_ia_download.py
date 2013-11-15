@@ -68,3 +68,9 @@ def test_ia_download():
     ]
     assert sorted(os.listdir('nasa')) == sorted(test_output)
     shutil.rmtree('nasa')
+
+    cmd = 'ia download nasa nasa_meta.xml'
+    proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = proc.communicate()
+    assert proc.returncode == 0
+    shutil.rmtree('nasa')

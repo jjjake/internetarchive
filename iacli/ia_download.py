@@ -40,10 +40,6 @@ import internetarchive
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
-    verbose = True
-    if args['--dry-run']:
-        verbose = False
-
     # Download specific files.
     if '/' in args['<identifier>']:
         identifier = args['<identifier>'].split('/')[0]
@@ -52,19 +48,18 @@ def main(argv):
         identifier = args['<identifier>']
         files = args['<file>']
 
-    # Initialize item only after "identifier" has been defined. We do
-    # this incase the <identifier> arg contains a "/" in it (if it
-    # contains a file in it).
     item = internetarchive.Item(identifier)
 
     if files:
         for f in files:
             fname = f.encode('utf-8')
             path = os.path.join(identifier, fname)
-            stdout.write('downloading: {0}\n'.format(fname))
             f = item.file(fname)
-            f.download(file_path=path, dry_run=args['--dry-run'], 
-                       verbose=verbose, ignore_existing=args['--ignore-existing'])
+            if args['--dry-run']:
+                stdout.write(f.download_url + '\n')
+            else:
+                stdout.write('downloading: {0}\n'.format(fname))
+                f.download(file_path=path, ignore_existing=args['--ignore-existing'])
         exit(0)
 
     # Otherwise, download the entire item.
@@ -77,6 +72,5 @@ def main(argv):
 
     item.download(formats=args['--format'], source=ia_source,
                   concurrent=args['--concurrent'], glob_pattern=args['--glob'],
-                  dry_run=args['--dry-run'], verbose=verbose, 
-                  ignore_existing=args['--ignore-existing'])
+                  dry_run=args['--dry-run'], ignore_existing=args['--ignore-existing'])
     exit(0)

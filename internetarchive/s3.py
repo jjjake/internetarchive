@@ -1,56 +1,29 @@
-from sys import stderr
 import json
-from contextlib import closing
+
+from requests.auth import AuthBase
+from requests.adapters import HTTPAdapter
 
 from . import config
 
 
 
-# Chunks class
-#_____________________________________________________________________________________________
-class Chunks(object):
-    def __init__(self, fileobj, key=None, file_size=0, chunk_size=1024, verbose=False):
-        self.fileobj = fileobj
-        self.total_size = file_size
-        self.chunk_size = chunk_size
-        self.key = fileobj.name.split('/')[-1] if key is None else key
-        self.readsofar = 0
-        self.verbose = verbose
+class BasicAuth(AuthBase):
+    """Attaches S3 Basic Authentication to the given Request object."""
+    def __init__(self, access_key=None, secret_key=None):
+        if not access_key or not secret_key:
+            access_key, secret_key = config.get_s3_keys()
+        self.access_key = access_key
+        self.secret_key = secret_key
 
-    def __iter__(self):
-        # `contextlib.closing()` is used to make StringIO work with
-        # `with` statement.
-        with closing(self.fileobj) as file:
-            while True:
-                data = file.read(self.chunk_size)
-                if not data:
-                    if self.verbose:
-                        stderr.write("\r uploading file: {0} (100%)\n".format(self.key))
-                    break
-                self.readsofar += len(data)
-                percent = self.readsofar * 1e2 / self.total_size
-                if self.verbose:
-                    stderr.write( 
-                        "\r uploading file: {0} ({1:3.0f}%)".format(self.key, percent)
-                    )
-                yield data
+    def __call__(self, r):
+        r.headers['Authorization'] = 'LOW {0}:{1}'.format(self.access_key, 
+                                                          self.secret_key)
+        return r
 
-    def __len__(self):
-        return self.total_size
+class S3Adapter(HTTPAdapter):
+    def __init__(self):
+        super(S3AuthAdapter, self).__init__()
 
-
-# IterableToFileAdapter class
-#_____________________________________________________________________________________________
-class IterableToFileAdapter(object):
-    def __init__(self, iterable):
-        self.iterator = iter(iterable)
-        self.length = len(iterable)
-
-    def read(self, size=-1): # TBD: add buffer for `len(data) > size` case
-        return next(self.iterator, b'')
-
-    def __len__(self):
-        return self.length
 
 
 # build_headers()
@@ -70,14 +43,9 @@ def build_headers(**kwargs):
     metadata = {} if not kwargs.get('metadata') else kwargs.get('metadata')
     headers = {} if not kwargs.get('headers') else kwargs.get('headers')
 
-    access_key, secret_key = (kwargs.get('access_key'), kwargs.get('secret_key'))
-    if not access_key or not secret_key:
-        access_key, secret_key = config.get_s3_keys()
-    headers['Authorization'] = 'LOW {0}:{1}'.format(access_key, secret_key)
-
     # Convert kwargs into S3 Headers.
     for key, value in kwargs.items():
-        if key in ['metadata', 'headers', 'access_key', 'secret_key']:
+        if key in ['metadata', 'headers']:
             continue
         if value is True:
             value = 1

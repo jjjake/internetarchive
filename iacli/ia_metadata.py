@@ -19,26 +19,16 @@ from json import dumps
 
 from docopt import docopt
 
-import internetarchive
 from internetarchive import get_item, modify_metadata
 from iacli.argparser import get_args_dict
 
 
 
-def find_key(d,key):
-    for k,v in d.items():
-        if isinstance(v,dict):
-            p = find_key(v,key)
-            if p:
-                return [k] + p
-        elif v == key:
-            return [k]
-
 # main()
 #_________________________________________________________________________________________
 def main(argv):
     args = docopt(__doc__, argv=argv)
-    item = internetarchive.Item(args['<identifier>'])
+    item = get_item(args['<identifier>'])
 
     # Check existence of item.
     if args['--exists']:

@@ -1,7 +1,8 @@
 """Retrieve and modify metadata for items on archive.org.
 
 usage: 
-    ia metadata [--modify=<key:value>... | --exists | --files | --formats | --target=<target>...] <identifier>
+    ia metadata [--modify=<key:value>... | --exists | --formats | --files | --target=<target>...] <identifier>
+    ia metadata [--modify=<key:value>... | --exists | --formats | --files] [--target=<target>...] <identifier>
     ia metadata --help
 
 options:
@@ -62,8 +63,11 @@ def main(argv):
 
     # Get metadata.
     elif args['--files']:
-        for f in item.files():
-            files_md = [f.item.identifier, f.name, f.source, f.format, f.size, f.md5]
+        for i, f in enumerate(item.files()):
+            if not args['--target']:
+                files_md = [f.item.identifier, f.name, f.source, f.format, f.size, f.md5]
+            else:
+                files_md = [f.__dict__.get(k) for k in args['--target']]
             stdout.write('\t'.join([str(x) for x in files_md]) + '\n')
     elif args['--formats']:
         formats = set([f.format for f in item.files()])

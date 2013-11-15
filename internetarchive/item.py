@@ -415,10 +415,7 @@ class File(object):
         self.external_identifier = file_dict.get('external-identifier')
         self.name = file_dict.get('name')
         self.source = file_dict.get('source')
-        self.size = file_dict.get('size')
-        self.size = file_dict.get('size')
-        if self.size is not None:
-            self.size = int(self.size)
+        self.size = int(file_dict.get('size')) if file_dict.get('size') else None
         self.format = file_dict.get('format')
         self.mtime = file_dict.get('mtime')
         self.md5  = file_dict.get('md5')
@@ -427,6 +424,7 @@ class File(object):
         self.fname = self.name.encode('utf-8')
         self.download_url = '{0}/{1}'.format(self.item.download_url, 
                                              urllib.quote(self.fname, safe=''))
+        self.length = float(file_dict.get('length')) if file_dict.get('length') else None
         if not self.item.session:
             self.item.session = Session()
 

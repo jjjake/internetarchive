@@ -9,6 +9,7 @@ import httplib
 import urllib2
 from fnmatch import fnmatch
 from requests import Request, Session
+from requests.exceptions import ConnectionError
 from contextlib import closing
 
 from jsonpatch import make_patch
@@ -65,23 +66,18 @@ class Item(object):
                        otherwise use HTTP.
 
         """
-        self.identifier = identifier
         self.secure = secure
-        if secure:
-            protocol = 'https'
-        else:
-            protocol = 'http'
-        self.details_url = '{0}://archive.org/details/{1}'.format(protocol, identifier)
-        self.download_url = '{0}://archive.org/download/{1}'.format(protocol, identifier)
-        self.metadata_url = '{0}://archive.org/metadata/{1}'.format(protocol, identifier)
+        protocol = 'https://' if secure else 'http://'
+        self.host = protocol + 'archive.org'
+        self.identifier = identifier
+        self.details_url = self.host + '/details/' + self.identifier
+        self.download_url = self.host + '/download/' + self.identifier
+        self.metadata_url = self.host + '/metadata/' + self.identifier
+        self.s3_endpoint = protocol + 's3.us.archive.org' + self.identifier
         self.metadata_timeout = metadata_timeout
         self.session = None
-        self.metadata = utils.get_item_metadata(identifier, timeout=self.metadata_timeout, 
-                                                            secure=self.secure)
-        if self.metadata == {}:
-            self.exists = False
-        else:
-            self.exists = True
+        self.metadata = self.get_metadata()
+        self.exists = False if self.metadata == {} else True
 
 
     # __repr__()
@@ -97,6 +93,34 @@ class Item(object):
                 'exists={exists!r}, '
                 'item_size={item_size!r}, '
                 'files_count={files_count!r})'.format(**item_description))
+
+
+    # get_metadata()
+    #_____________________________________________________________________________________
+    def get_metadata(self, target=None):
+        """Get an item's metadata from the `Metadata API 
+        <http://blog.archive.org/2013/07/04/metadata-api/>`__
+
+        :type identifier: str
+        :param identifier: Globally unique Archive.org identifier.
+
+        :type target: bool
+        :param target: (optional) Metadata target to retrieve.
+
+        :rtype: dict
+        :returns: Metadat API response.
+
+        """
+        if not self.session:
+            self.session = Session()
+        response = self.session.get(self.metadata_url, timeout=self.metadata_timeout)
+        if response.status_code != 200:
+            raise ConnectionError("Unable connect to Archive.org "
+                                  "({0})".format(response.status_code))
+        metadata = response.json()
+        if target:
+            metadata = metadata.get(target, {})
+        return metadata
 
 
     # files()
@@ -265,8 +289,7 @@ class Item(object):
         http.send(data)
         status_code, error_message, headers = http.getreply()
         resp_file = http.getfile()
-        self.metadata = utils.get_item_metadata(self.identifier, self.metadata_timeout,
-                                                self.secure)
+        self.metadata = self.get_metadata()
         return dict(
             status_code = status_code,
             content = json.loads(resp_file.read()),
@@ -331,21 +354,18 @@ class Item(object):
 
         key = body.name.split('/')[-1] if key is None else key
         url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, key) 
-        chunks = s3.Chunks(body, file_size=size, verbose=verbose)
         headers = s3.build_headers(metadata=metadata, 
                                    headers=headers, 
-                                   access_key=access_key, 
-                                   secret_key=secret_key, 
                                    queue_derive=queue_derive,
                                    auto_make_bucket=True,
                                    size_hint=size,
                                    ignore_preexisting_bucket=ignore_preexisting_bucket)
-
         request = Request(
             method='PUT',
             url=url,
             headers=headers,
-            data=s3.IterableToFileAdapter(chunks),
+            data=body,
+            auth=s3.BasicAuth(access_key, secret_key),
         )
         
         if debug:
@@ -424,11 +444,9 @@ class File(object):
         self.crc32 = file_dict.get('crc32')
         self.sha1 = file_dict.get('sha1')
         self.fname = self.name.encode('utf-8')
-        self.download_url = '{0}/{1}'.format(self.item.download_url, 
-                                             urllib.quote(self.fname, safe=''))
         self.length = float(file_dict.get('length')) if file_dict.get('length') else None
-        if not self.item.session:
-            self.item.session = Session()
+        self.url = self.item.download_url + '/' + urllib.quote(self.fname, safe='')
+        self.session = self.item.session if self.item.session else Session()
 
 
     # __repr__()
@@ -445,9 +463,7 @@ class File(object):
     #_____________________________________________________________________________________
     def download(self, file_path=None, ignore_existing=False):
         """:todo: document ``internetarchive.File.download()`` method"""
-        if file_path is None:
-            file_path = self.name
-
+        file_path = self.name if not file_path else file_path
         if os.path.exists(file_path) and not ignore_existing:
             raise IOError('File already exists: {0}'.format(file_path))
 
@@ -463,7 +479,7 @@ class File(object):
 
         opener = urllib2.build_opener()
         opener.addheaders.append(('Cookie', cookies))
-        data = opener.open(self.download_url)
+        data = opener.open(self.url)
         with open(file_path, 'wb') as fp:
             fp.write(data.read())
 

@@ -48,7 +48,7 @@ def main(argv):
             headers=get_args_dict(args['--header']), 
             debug=args['--debug'], 
             queue_derive=True if args['--no-derive'] is False else False,
-            ignore_bucket=args['--ignore-bucket'],
+            ignore_preexisting_bucket=args['--ignore-bucket'],
             verbose=args['--verbose'])
 
     # Upload stdin.

@@ -41,7 +41,7 @@ def main(argv):
     elif args['--red-rows']:
         tasks = get_tasks(task_type='red')
     else:
-        tasks = c.tasks
+        tasks = get_tasks()
     for t in tasks:
         task_info = [
             t.identifier, t.task_id, t.server, t.time, t.command, row_types[t.row_type],

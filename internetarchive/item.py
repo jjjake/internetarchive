@@ -215,8 +215,8 @@ class Item(object):
                 stdout.write(f.url + '\n')
                 continue
             if verbose:
-                stdout.write('downloading: {0}\n'.format(fname))
-            elif concurrent:
+                stdout.write(' downloading: {0}\n'.format(fname))
+            if concurrent:
                 pool.spawn(f.download, path, ignore_existing=ignore_existing)
             else:
                 f.download(path, ignore_existing=ignore_existing)

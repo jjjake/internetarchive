@@ -5,6 +5,8 @@ except ImportError:
 import urllib
 import urllib2
 
+from requests import Session
+
 from . import config
 
 
@@ -87,33 +89,28 @@ class Catalog(object):
 
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, params=None):
-        url = 'http://archive.org/catalog.php'
-        if params is None:
-            params = dict(justme = 1)
-
-        # Add params required to retrieve JSONP from the IA catalog.
+    def __init__(self, params={}):
+        params = {'justme': 1} if not params else params
+        # Params required to retrieve JSONP from the IA catalog.
         params['json'] = 2
         params['output'] = 'json'
         params['callback'] = 'foo'
-        params = urllib.urlencode(params)
 
-        logged_in_user, logged_in_sig = config.get_cookies()
-        cookies = ('logged-in-user={0}; '
-                   'logged-in-sig={1}; '
-                   'verbose=1'.format(logged_in_user, logged_in_sig))
-
-        opener = urllib2.build_opener()
-        opener.addheaders.append(('Cookie', cookies))
-        f = opener.open(url, params)
-
-        # Convert JSONP to JSON (then parse the JSON).
-        jsonp_str = f.read()
-        json_str = jsonp_str[(jsonp_str.index("(") + 1):jsonp_str.rindex(")")]
-
-        tasks_json = json.loads(json_str)
-        self.tasks = [CatalogTask(t) for t in tasks_json]
+        self.session = Session()
+        self.url = 'http://archive.org/catalog.php'
+        self.params = params
+        self.session. cookies = config.get_cookies()
+        self.tasks = self.get_tasks()
         
+
+    # get_tasks()
+    #_____________________________________________________________________________________
+    def get_tasks(self):
+        r = self.session.get(self.url, params=self.params)
+        # Convert JSONP to JSON (then parse the JSON).
+        json_str = r.content[(r.content.index("(") + 1):r.content.rindex(")")]
+        return [CatalogTask(t) for t in json.loads(json_str)]
+
 
     # filter_tasks()
     #_____________________________________________________________________________________

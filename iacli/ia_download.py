@@ -1,13 +1,15 @@
 """Download files from archive.org.
 
 usage:
-    ia download [--dry-run] [--ignore-existing] [--source=<source>... | --original]
-                [--glob=<pattern> | --format=<format>...] [--concurrent]
-                <identifier> [<file>...]
+    ia download [--verbose] [--dry-run] [--ignore-existing] 
+                [--source=<source>... | --original] 
+                [--glob=<pattern> | --format=<format>...] [--concurrent] <identifier> 
+                [<file>...]
     ia download --help
 
 options:
     -h, --help
+    -v, --verbose             Print download progress to stdout.
     -d, --dry-run             Print URLs to stdout and exit.
     -i, --ignore-existing     Clobber files already downloaded.
     -s, --source=<source>...  Only download files matching the given source.
@@ -58,7 +60,7 @@ def main(argv):
             if args['--dry-run']:
                 stdout.write(f.url + '\n')
             else:
-                stdout.write('downloading: {0}\n'.format(fname))
+                stdout.write(' downloading: {0}\n'.format(fname))
                 f.download(file_path=path, ignore_existing=args['--ignore-existing'])
         exit(0)
 
@@ -70,7 +72,13 @@ def main(argv):
     else:
         ia_source = None
 
-    item.download(formats=args['--format'], source=ia_source,
-                  concurrent=args['--concurrent'], glob_pattern=args['--glob'],
-                  dry_run=args['--dry-run'], ignore_existing=args['--ignore-existing'])
+    item.download(
+        concurrent=args['--concurrent'], 
+        source=ia_source, 
+        formats=args['--format'],
+        glob_pattern=args['--glob'],
+        dry_run=args['--dry-run'],
+        verbose=args['--verbose'], 
+        ignore_existing=args['--ignore-existing'],
+    )
     exit(0)

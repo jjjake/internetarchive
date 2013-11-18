@@ -54,7 +54,7 @@ def main(argv):
     elif args['--files']:
         for i, f in enumerate(item.files()):
             if not args['--target']:
-                files_md = [f.item.identifier, f.name, f.source, f.format, f.size, f.md5]
+                files_md = [f.identifier, f.name, f.source, f.format, f.size, f.md5]
             else:
                 files_md = [f.__dict__.get(k) for k in args['--target']]
             stdout.write('\t'.join([str(x) for x in files_md]) + '\n')

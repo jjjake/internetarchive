@@ -17,7 +17,7 @@ def test_file():
     assert not os.path.exists(filename)
     file.download()
 
-    assert os.stat(filename).st_size == file.size
+    assert unicode(os.stat(filename).st_size) == file.size
     os.unlink(filename)
 
 

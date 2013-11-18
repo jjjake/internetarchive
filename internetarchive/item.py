@@ -434,17 +434,18 @@ class File(object):
     #_____________________________________________________________________________________
     def __init__(self, item, file_dict):
         self.item = item
+        self.identifier = item.identifier
         self.external_identifier = file_dict.get('external-identifier')
         self.name = file_dict.get('name')
         self.source = file_dict.get('source')
-        self.size = int(file_dict.get('size')) if file_dict.get('size') else None
+        self.size = file_dict.get('size')
         self.format = file_dict.get('format')
         self.mtime = file_dict.get('mtime')
         self.md5  = file_dict.get('md5')
         self.crc32 = file_dict.get('crc32')
         self.sha1 = file_dict.get('sha1')
         self.fname = self.name.encode('utf-8')
-        self.length = float(file_dict.get('length')) if file_dict.get('length') else None
+        self.length = file_dict.get('length')
         self.url = self.item.download_url + '/' + urllib.quote(self.fname, safe='')
         self.session = self.item.session if self.item.session else Session()
 

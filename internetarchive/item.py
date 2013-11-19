@@ -6,11 +6,9 @@ import urllib
 import os
 from sys import stdout
 import httplib
-import urllib2
 from fnmatch import fnmatch
 from requests import Request, Session
-from requests.exceptions import ConnectionError
-from contextlib import closing
+from requests.exceptions import ConnectionError, HTTPError
 
 from jsonpatch import make_patch
 
@@ -30,7 +28,7 @@ class Item(object):
 
     Or to modify the metadata for an item::
 
-        >>> metadata = dict(title='The Stairs'))
+        >>> metadata = dict(title='The Stairs')
         >>> item.modify(metadata)
         >>> print item.metadata['metadata']['title']
         u'The Stairs'
@@ -134,7 +132,7 @@ class Item(object):
 
         """
         for file_dict in self.metadata.get('files', []):
-            file = File(self, file_dict)
+            file = File(self.__dict__, file_dict)
             yield file
 
 
@@ -149,7 +147,7 @@ class Item(object):
         """
         for file_dict in self.metadata.get('files', []):
             if file_dict.get('name') == name:
-                return File(self, file_dict)
+                return File(self.__dict__, file_dict)
 
 
     # download()
@@ -432,9 +430,8 @@ class File(object):
     """:todo: document ``internetarchive.File`` class."""
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, item, file_dict):
-        self.item = item
-        self.identifier = item.identifier
+    def __init__(self, item_dict, file_dict):
+        self.identifier = item_dict['identifier']
         self.external_identifier = file_dict.get('external-identifier')
         self.name = file_dict.get('name')
         self.source = file_dict.get('source')
@@ -446,8 +443,8 @@ class File(object):
         self.sha1 = file_dict.get('sha1')
         self.fname = self.name.encode('utf-8')
         self.length = file_dict.get('length')
-        self.url = self.item.download_url + '/' + urllib.quote(self.fname, safe='')
-        self.session = self.item.session if self.item.session else Session()
+        self.url = item_dict.get('download_url') + '/' + urllib.quote(self.fname, safe='')
+        self.session = item_dict.get('session') if item_dict.get('session') else Session()
 
 
     # __repr__()
@@ -472,24 +469,27 @@ class File(object):
         if parent_dir != '' and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
-        # Add cookies to request when downloading to allow privileged
-        # users the ability to download access-restricted files.
-        logged_in_user, logged_in_sig = config.get_cookies()
-        cookies = ('logged-in-user={0}; '
-                   'logged-in-sig={1}'.format(logged_in_user, logged_in_sig))
+        if not self.session:
+            self.session = Session()
+        self.session.cookies = config.get_cookies()
 
-        opener = urllib2.build_opener()
-        opener.addheaders.append(('Cookie', cookies))
-        data = opener.open(self.url)
-        with open(file_path, 'wb') as fp:
-            fp.write(data.read())
+        try:
+            response = self.session.get(self.url, stream=True)
+            response.raise_for_status()
+        except HTTPError as e:
+            raise HTTPError('Error downloading {0}, {1}'.format(self.url, e))
+        with open(file_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
 
              
     # delete()
     #_____________________________________________________________________________________
     def delete(self, debug=False, verbose=False, cascade_delete=False):
         headers = s3.build_headers(cascade_delete=cascade_delete)
-        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.item.identifier, self.fname)
+        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, self.fname)
         request = Request(
             method='DELETE', 
             url=url, 
@@ -501,4 +501,4 @@ class File(object):
             if verbose:
                 stdout.write(' deleting file: {0}\n'.format(self.name))
             prepared_request = request.prepare()
-            return self.item.session.send(prepared_request)
+            return self.session.send(prepared_request)

@@ -45,7 +45,7 @@ def test_ia_metadata_target():
     test_output = "iacli_test_item\n"
     assert stdout == test_output
 
-@pytest.mark.skipif('internetarchive.config.get_cookies() == (None, None)',
+@pytest.mark.skipif('len(internetarchive.config.get_cookies()) == 0',
                     reason='requires authorization.')
 def test_ia_metadata_modify():
     # Modify test item.

@@ -20,11 +20,6 @@ class BasicAuth(AuthBase):
                                                           self.secret_key)
         return r
 
-class S3Adapter(HTTPAdapter):
-    def __init__(self):
-        super(S3AuthAdapter, self).__init__()
-
-
 
 # build_headers()
 #_________________________________________________________________________________________

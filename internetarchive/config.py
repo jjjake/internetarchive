@@ -1,6 +1,7 @@
 import os
 
 import yaml
+from requests.cookies import cookiejar_from_dict
 
 
 
@@ -45,4 +46,8 @@ def get_cookies():
         cookie_config = config.get('cookies', {})
         logged_in_user = cookie_config.get('logged-in-user')
         logged_in_sig = cookie_config.get('logged-in-sig')
-    return (logged_in_user, logged_in_sig)
+    cookiejar = cookiejar_from_dict({
+        'logged-in-user': logged_in_user,
+        'logged-in-sig': logged_in_sig,
+    })
+    return cookiejar

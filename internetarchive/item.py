@@ -471,7 +471,7 @@ class File(object):
 
         if not self.session:
             self.session = Session()
-        self.session.cookies = config.get_cookies()
+        self.session.cookies = config.get_cookiejar()
 
         try:
             response = self.session.get(self.url, stream=True)

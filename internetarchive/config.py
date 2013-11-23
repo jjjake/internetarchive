@@ -36,9 +36,9 @@ def get_s3_keys():
     return (access_key, secret_key)
 
 
-# get_cookies()
+# get_cookiejar()
 #_____________________________________________________________________________________
-def get_cookies():
+def get_cookiejar():
     logged_in_user = os.environ.get('IA_LOGGED_IN_USER')
     logged_in_sig = os.environ.get('IA_LOGGED_IN_SIG')
     if not logged_in_user or not logged_in_sig:

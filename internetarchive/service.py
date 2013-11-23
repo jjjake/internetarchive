@@ -99,7 +99,7 @@ class Catalog(object):
         self.session = Session()
         self.url = 'http://archive.org/catalog.php'
         self.params = params
-        self.session. cookies = config.get_cookies()
+        self.session. cookies = config.get_cookiejar()
         self.tasks = self.get_tasks()
         
 

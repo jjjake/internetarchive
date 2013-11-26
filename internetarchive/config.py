@@ -44,10 +44,4 @@ def get_cookiejar():
     if not logged_in_user or not logged_in_sig:
         config = _get_config()
         cookie_config = config.get('cookies', {})
-        logged_in_user = cookie_config.get('logged-in-user')
-        logged_in_sig = cookie_config.get('logged-in-sig')
-    cookiejar = cookiejar_from_dict({
-        'logged-in-user': logged_in_user,
-        'logged-in-sig': logged_in_sig,
-    })
-    return cookiejar
+    return cookiejar_from_dict(cookie_config)

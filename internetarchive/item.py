@@ -371,6 +371,8 @@ class Item(object):
         else:
             if not self.session:
                 self.session = Session()
+            if verbose:
+                stdout.write(' uploading: {id}\n'.format(id=key))
             prepared_request = request.prepare()
             return self.session.send(prepared_request, stream=True)
 

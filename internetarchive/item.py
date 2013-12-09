@@ -260,16 +260,9 @@ class Item(object):
                 del dest[k]
 
         json_patch = make_patch(src, dest).patch
-        # Reformat patch to be compliant with version 02 of the Json-Patch standard.
-        patch = []
-        for p in json_patch:
-            pd = {p['op']: p['path']}
-            if p['op'] != 'remove':
-                pd['value'] = p['value']
-            patch.append(dict((k,v) for k,v in pd.items() if v))
 
         data = {
-            '-patch': json.dumps(patch),
+            '-patch': json.dumps(json_patch),
             '-target': target,
             'access': access_key,
             'secret': secret_key,

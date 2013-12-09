@@ -252,7 +252,8 @@ class Item(object):
         """
         access_key, secret_key = config.get_s3_keys()
         src = self.metadata.get(target, {})
-        dest = dict((src.items() + metadata.items()))
+        dest = src.copy()
+        dest.update(metadata)
 
         # Prepare patch to remove metadata elements with the value: "REMOVE_TAG".
         for k,v in metadata.items():

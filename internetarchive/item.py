@@ -225,7 +225,7 @@ class Item(object):
 
     # modify_metadata()
     #_____________________________________________________________________________________
-    def modify_metadata(self, metadata, target='metadata'):
+    def modify_metadata(self, metadata, target='metadata', append=False):
         """Modify the metadata of an existing item on Archive.org.
 
         Note: The Metadata Write API does not yet comply with the
@@ -256,9 +256,11 @@ class Item(object):
         dest.update(metadata)
 
         # Prepare patch to remove metadata elements with the value: "REMOVE_TAG".
-        for k,v in metadata.items():
-            if v == 'REMOVE_TAG' or not v:
-                del dest[k]
+        for key, val in metadata.items():
+            if val == 'REMOVE_TAG' or not val:
+                del dest[key]
+            if append:
+                dest[key] = '{0} {1}'.format(src[key], val)
 
         json_patch = make_patch(src, dest).patch
 

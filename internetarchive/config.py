@@ -38,10 +38,12 @@ def get_s3_keys():
 
 # get_cookiejar()
 #_____________________________________________________________________________________
-def get_cookiejar():
-    logged_in_user = os.environ.get('IA_LOGGED_IN_USER')
-    logged_in_sig = os.environ.get('IA_LOGGED_IN_SIG')
-    if not logged_in_user or not logged_in_sig:
-        config = _get_config()
-        cookie_config = config.get('cookies', {})
-    return cookiejar_from_dict(cookie_config)
+def get_cookiejar(cookies={}):
+    config = _get_config()
+    _cookies = config.get('cookies', {})
+    _cookies.update(cookies)
+    if not 'logged-in-user' in _cookies:
+        _cookies['logged-in-user'] = os.environ.get('IA_LOGGED_IN_USER')
+    if not 'logged-in-sig' in _cookies:
+        _cookies['logged-in-sig'] = os.environ.get('IA_LOGGED_IN_SIG')
+    return cookiejar_from_dict(_cookies)

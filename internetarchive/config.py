@@ -43,7 +43,11 @@ def get_cookiejar(cookies={}):
     _cookies = config.get('cookies', {})
     _cookies.update(cookies)
     if not 'logged-in-user' in _cookies:
-        _cookies['logged-in-user'] = os.environ.get('IA_LOGGED_IN_USER')
+        logged_in_user = os.environ.get('IA_LOGGED_IN_USER')
+        if logged_in_user:
+            _cookies['logged-in-user'] = logged_in_user 
     if not 'logged-in-sig' in _cookies:
-        _cookies['logged-in-sig'] = os.environ.get('IA_LOGGED_IN_SIG')
+        logged_in_sig = os.environ.get('IA_LOGGED_IN_SIG')
+        if logged_in_sig:
+            _cookies['logged-in-sig'] = logged_in_sig
     return cookiejar_from_dict(_cookies)

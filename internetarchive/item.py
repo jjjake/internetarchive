@@ -448,7 +448,7 @@ class File(object):
     # __repr__()
     #_____________________________________________________________________________________
     def __repr__(self):
-        return ('File(identifier={item.identifier!r}, '
+        return ('File(identifier={identifier!r}, '
                 'filename={name!r}, '
                 'size={size!r}, '
                 'source={source!r}, '

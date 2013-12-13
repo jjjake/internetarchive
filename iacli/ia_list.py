@@ -1,13 +1,14 @@
 """List files in a given item.
 
 usage:
-    ia list [-v] [--glob=<pattern>] [--columns <column1,column2> | --all] <identifier>
+    ia list [-v] [--glob=<pattern>|--location] [--columns <column1,column2> | --all] <identifier>
     ia metadata --help
 
 options:
     -h, --help
     -v, --verbose               Print column headers. [default: False]
     -a, --all                   List all information available for files.
+    -l, --location              Print full URL for each file.
     -c, --columns=<name,size>   List specified file information. [default: name]
     -g, --glob=<pattern>        Only return patterns match the given pattern.
 
@@ -49,7 +50,11 @@ def main(argv):
         file_dict = {}
         for key, val in f.items():
             if key in columns:
-                file_dict[key] = val
+                if key == 'name' and args.get('--location'):
+                    file_dict[key] = ('https://archive.org/download/'
+                                      '{id}/{f}'.format(id=item.identifier, f=val))
+                else:
+                    file_dict[key] = val
         output.append(file_dict)
 
     if args['--verbose']:

@@ -21,6 +21,7 @@ commands:
     search    Search Archive.org.
     mine      Download item metadata from Archive.org concurrently.
     catalog   Retrieve information about your Archive.org catalog tasks.
+    list      List files in a given item.
 
 See 'ia help <command>' for more information on a specific command.
 

@@ -57,6 +57,7 @@ def main():
             se = 'search',
             mi = 'mine',
             ca = 'catalog',
+            ls = 'list',
     )
     if cmd in aliases:
         cmd = aliases[cmd]

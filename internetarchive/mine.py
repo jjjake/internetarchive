@@ -24,8 +24,8 @@ class Mine(object):
     Usage::
 
         >>> import internetarchive
-        >>> miner = internetarchive.Mine('itemlist.txt', workers=50)
-        >>> for md in miner:
+        >>> miner = internetarchive.get_data_miner(['identifier1', 'identifier2'], workers=50)
+        >>> for md in miner.items():
         ...     print md
 
     """

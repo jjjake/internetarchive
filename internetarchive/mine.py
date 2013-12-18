@@ -35,7 +35,6 @@ class Mine(object):
         self.skips = []
         self.queue = queue
         self.workers = workers
-        self.done_queueing_input = False
         self.queued_count = 0
         self.identifiers = identifiers
         self.input_queue = self.queue.JoinableQueue(1000)
@@ -62,12 +61,12 @@ class Mine(object):
         for i, identifier in enumerate(self.identifiers):
             self.input_queue.put((i, identifier))
             self.queued_count += 1
-        self.done_queueing_input = True
 
 
     # items()
     #_____________________________________________________________________________________
     def items(self):
+        if 
         spawn(self._queue_input)
         for i in range(self.workers):
             spawn(self._metadata_getter)
@@ -75,7 +74,7 @@ class Mine(object):
         def metadata_iterator_helper():
             got_count = 0
             while True:
-                if self.done_queueing_input and got_count == self.queued_count:
+                if self.queued_count == len(self.identifiers) and got_count == self.queued_count:
                     break
                 yield self.json_queue.get()
                 got_count += 1

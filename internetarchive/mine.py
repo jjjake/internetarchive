@@ -12,6 +12,7 @@ except ImportError:
     """)
 
 from internetarchive import Item
+from requests.exceptions import ConnectionError
 
 
 
@@ -35,8 +36,10 @@ class Mine(object):
         self.skips = []
         self.queue = queue
         self.workers = workers
-        self.queued_count = 0
         self.identifiers = identifiers
+        self.item_count = len(identifiers)
+        self.queued_count = 0
+        self.got_count = 0
         self.input_queue = self.queue.JoinableQueue(1000)
         self.json_queue = self.queue.Queue(1000)
 
@@ -49,8 +52,13 @@ class Mine(object):
             try:
                 item = Item(identifier)
                 self.json_queue.put((i, item))
-            except:
+            except ConnectionError:
                 self.input_queue.put((i, identifier))
+            except:
+                self.skips.append(identifier)
+                self.item_count -= 1
+                self.queued_count -= 1
+                raise
             finally:
                 self.input_queue.task_done()
 
@@ -66,17 +74,15 @@ class Mine(object):
     # items()
     #_____________________________________________________________________________________
     def items(self):
-        if 
+        self.queued_count = 0
+        self.got_count = 0
         spawn(self._queue_input)
         for i in range(self.workers):
             spawn(self._metadata_getter)
 
         def metadata_iterator_helper():
-            got_count = 0
-            while True:
-                if self.queued_count == len(self.identifiers) and got_count == self.queued_count:
-                    break
+            while self.queued_count < self.item_count or self.got_count < self.queued_count:
+                self.got_count += 1
                 yield self.json_queue.get()
-                got_count += 1
 
         return metadata_iterator_helper()

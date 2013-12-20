@@ -34,7 +34,7 @@ def main(argv):
     if args['--output']:
         open(args['--output'], 'w').close()
 
-    for i, item in miner.items():
+    for i, item in miner:
         metadata = dumps(item.metadata)
         if args['--cache']:
             stdout.write('saving metadata for: {0}\n'.format(item.identifier))

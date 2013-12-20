@@ -7,11 +7,12 @@ except ImportError:
 
     This feature requires the gevent neworking library. gevent
     and all of it's dependencies can be installed with pip:
-    \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+    \tpip install cython gevent
 
     """)
 
 from internetarchive import Item
+from requests.exceptions import ConnectionError
 
 
 
@@ -24,20 +25,38 @@ class Mine(object):
     Usage::
 
         >>> import internetarchive
-        >>> miner = internetarchive.Mine('itemlist.txt', workers=50)
+        >>> miner = internetarchive.Mine(['identifier1', 'identifier2'], workers=50)
         >>> for md in miner:
         ...     print md
 
-    """
+        """
     # __init__()
     #_____________________________________________________________________________________
-    def __init__(self, identifiers, workers=20):
+    def __init__(self, identifiers, workers=20, max_requests=10):
+        """Makes a generator for an list of `(index, item)` where `item`
+        is an instance of `Item` containing metadata, and index is the index,
+        for each id in `identifiers`. Note: this does not return the
+        items in the same order as given in the identifiers list
+        
+        :type identifiers: list
+        :param identifiers: a list of identifiers to get the metadata of
+        :type workers: int
+        :param workers: the number of concurrent workers to have fecthing the metadata
+        :type max_requests: int or None
+        :param max_requests: the number of times to try fetching the metadata,
+        in case there is something wrong with requesting it
+
+        :rtype: Mine
+        
+        """
         self.skips = []
         self.queue = queue
         self.workers = workers
-        self.done_queueing_input = False
-        self.queued_count = 0
         self.identifiers = identifiers
+        self.item_count = len(identifiers)
+        self.max_requests = max_requests
+        self.queued_count = 0
+        self.got_count = 0
         self.input_queue = self.queue.JoinableQueue(1000)
         self.json_queue = self.queue.Queue(1000)
 
@@ -46,12 +65,25 @@ class Mine(object):
     #_____________________________________________________________________________________
     def _metadata_getter(self):
         while True:
-            i, identifier = self.input_queue.get()
+            i, identifier, num_requests = self.input_queue.get()
             try:
                 item = Item(identifier)
                 self.json_queue.put((i, item))
+            except ConnectionError:
+                if self.max_requests is None or num_requests < self.max_requests:
+                    self.input_queue.put((i, identifier, num_requests+1))
+                else:
+                    if identifier not in self.skips:
+                        self.skips.append(identifier)
+                    self.item_count -= 1
+                    self.queued_count -= 1
+                    raise
             except:
-                self.input_queue.put((i, identifier))
+                if identifier not in self.skips:
+                    self.skips.append(identifier)
+                self.item_count -= 1
+                self.queued_count -= 1
+                raise
             finally:
                 self.input_queue.task_done()
 
@@ -60,24 +92,22 @@ class Mine(object):
     #_____________________________________________________________________________________
     def _queue_input(self):
         for i, identifier in enumerate(self.identifiers):
-            self.input_queue.put((i, identifier))
+            self.input_queue.put((i, identifier, 0))
             self.queued_count += 1
-        self.done_queueing_input = True
 
 
     # items()
     #_____________________________________________________________________________________
-    def items(self):
+    def __iter__(self):
+        self.queued_count = 0
+        self.got_count = 0
         spawn(self._queue_input)
         for i in range(self.workers):
             spawn(self._metadata_getter)
 
         def metadata_iterator_helper():
-            got_count = 0
-            while True:
-                if self.done_queueing_input and got_count == self.queued_count:
-                    break
+            while self.queued_count < self.item_count or self.got_count < self.queued_count:
+                self.got_count += 1
                 yield self.json_queue.get()
-                got_count += 1
 
         return metadata_iterator_helper()

@@ -1,6 +1,7 @@
 import os
 
 import yaml
+from requests.cookies import cookiejar_from_dict
 
 
 
@@ -35,14 +36,18 @@ def get_s3_keys():
     return (access_key, secret_key)
 
 
-# get_cookies()
+# get_cookiejar()
 #_____________________________________________________________________________________
-def get_cookies():
-    logged_in_user = os.environ.get('IA_LOGGED_IN_USER')
-    logged_in_sig = os.environ.get('IA_LOGGED_IN_SIG')
-    if not logged_in_user or not logged_in_sig:
-        config = _get_config()
-        cookie_config = config.get('cookies', {})
-        logged_in_user = cookie_config.get('logged-in-user')
-        logged_in_sig = cookie_config.get('logged-in-sig')
-    return (logged_in_user, logged_in_sig)
+def get_cookiejar(cookies={}):
+    config = _get_config()
+    _cookies = config.get('cookies', {})
+    _cookies.update(cookies)
+    if not 'logged-in-user' in _cookies:
+        logged_in_user = os.environ.get('IA_LOGGED_IN_USER')
+        if logged_in_user:
+            _cookies['logged-in-user'] = logged_in_user 
+    if not 'logged-in-sig' in _cookies:
+        logged_in_sig = os.environ.get('IA_LOGGED_IN_SIG')
+        if logged_in_sig:
+            _cookies['logged-in-sig'] = logged_in_sig
+    return cookiejar_from_dict(_cookies)

@@ -11,7 +11,7 @@ if version_info >= (3,):
 
 setup(
     name='internetarchive',
-    version='0.4.7',
+    version='0.4.9',
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive', 'iacli'],
@@ -26,7 +26,7 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=[
         'requests==2.0.0',
-        'jsonpatch==1.1',
+        'jsonpatch==0.4',
         'pytest==2.3.4',
         'docopt==0.6.1',
         'PyYAML==3.10',

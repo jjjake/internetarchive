@@ -32,9 +32,9 @@ def iter_files(identifier, timeout=None):
 
 # modify_metadata()
 #_________________________________________________________________________________________
-def modify_metadata(identifier, metadata, timeout=None, target='metadata'):
+def modify_metadata(identifier, metadata, timeout=None, target='metadata', append=False):
     item = get_item(identifier, metadata_timeout=timeout)
-    return item.modify_metadata(metadata, target)
+    return item.modify_metadata(metadata, target, append=append)
 
 
 # upload_file()

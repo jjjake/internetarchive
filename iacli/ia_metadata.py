@@ -1,12 +1,15 @@
 """Retrieve and modify metadata for items on archive.org.
 
 usage: 
-    ia metadata [--modify=<key:value>... | --exists | --formats ] [--files] [--target=<target>...] <identifier>
+    ia metadata [--modify=<key:value>... ] [--target=<target>] <identifier>
+    ia metadata [--append=<key:value>... ] [--target=<target>] <identifier>
+    ia metadata [--exists | --formats | --files | --target=<target>...] <identifier>
     ia metadata --help
 
 options:
     -h, --help
     -m, --modify=<key:value>   Modify the metadata of an item.
+    -a, --append=<key:value>   Append metadata to an element.
     -e, --exists               Check if an item exists.  exists, and 1 if it 
                                does not.
     -f, --files                Return select file-level metadata.
@@ -40,9 +43,11 @@ def main(argv):
             exit(1)
 
     # Modify metadata.
-    elif args['--modify']:
-        metadata = get_args_dict(args['--modify'])
-        response = modify_metadata(args['<identifier>'], metadata)
+    elif args['--modify'] or args['--append']:
+        append = True if args['--append'] else False
+        metadata_args = args['--modify'] if args['--modify'] else args['--append']
+        metadata = get_args_dict(metadata_args)
+        response = modify_metadata(args['<identifier>'], metadata, append=append)
         status_code = response['status_code']
         if not response['content']['success']:
             error_msg = response['content']['error']
@@ -54,7 +59,7 @@ def main(argv):
     elif args['--files']:
         for i, f in enumerate(item.files()):
             if not args['--target']:
-                files_md = [f.item.identifier, f.name, f.source, f.format, f.size, f.md5]
+                files_md = [f.identifier, f.name, f.source, f.format, f.size, f.md5]
             else:
                 files_md = [f.__dict__.get(k) for k in args['--target']]
             stdout.write('\t'.join([str(x) for x in files_md]) + '\n')

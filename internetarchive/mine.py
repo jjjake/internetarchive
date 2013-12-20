@@ -7,7 +7,7 @@ except ImportError:
 
     This feature requires the gevent neworking library. gevent
     and all of it's dependencies can be installed with pip:
-    \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+    \tpip install cython gevent
 
     """)
 
@@ -55,7 +55,8 @@ class Mine(object):
             except ConnectionError:
                 self.input_queue.put((i, identifier))
             except:
-                self.skips.append(identifier)
+                if identifiers not in skips:
+                    self.skips.append(identifier)
                 self.item_count -= 1
                 self.queued_count -= 1
                 raise

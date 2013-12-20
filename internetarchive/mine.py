@@ -26,7 +26,7 @@ class Mine(object):
 
         >>> import internetarchive
         >>> miner = internetarchive.get_data_miner(['identifier1', 'identifier2'], workers=50)
-        >>> for md in miner.items():
+        >>> for md in miner:
         ...     print md
 
     """
@@ -73,7 +73,7 @@ class Mine(object):
 
     # items()
     #_____________________________________________________________________________________
-    def items(self):
+    def __iter__(self):
         self.queued_count = 0
         self.got_count = 0
         spawn(self._queue_input)

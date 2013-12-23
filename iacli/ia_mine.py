@@ -11,7 +11,7 @@ options:
     -w, --workers=<count>       The number of requests to run concurrently [default: 20]
 
 """
-from sys import stdout, exit
+from sys import stdin, stdout, exit
 from json import dumps
 
 from docopt import docopt
@@ -25,7 +25,13 @@ from internetarchive import get_data_miner
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
-    identifiers = [i.strip() for i in open(args['<itemlist.txt>'])]
+    if args['<itemlist.txt>'] == '-':
+        itemfile = stdin
+    else:
+        itemfile = open(args['<itemlist.txt>'])
+    with itemfile:
+        identifiers = [i.strip() for i in itemfile]
+
     workers = int(args.get('--workers', 20)[0])
     miner = get_data_miner(identifiers, workers=workers)
 

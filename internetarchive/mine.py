@@ -1,5 +1,6 @@
 try:
     from gevent import monkey, queue, spawn
+    from gevent.hub import LoopExit
     monkey.patch_all(thread=False)
 except ImportError:
     raise ImportError(
@@ -69,21 +70,20 @@ class Mine(object):
             try:
                 item = Item(identifier)
                 self.json_queue.put((i, item))
-            except ConnectionError:
-                if self.max_requests is None or num_requests < self.max_requests:
+            except Exception as e:
+                if (type(e) == ConnectionError and
+                       (self.max_requests is None or num_requests < self.max_requests)):
                     self.input_queue.put((i, identifier, num_requests+1))
                 else:
                     if identifier not in self.skips:
                         self.skips.append(identifier)
+                    self.identifiers.remove(identifier)
                     self.item_count -= 1
                     self.queued_count -= 1
+                    if e.args is not None and len(e.args) > 0 and type(e.args[0]) == str:
+                        e.args = ((e.args[0]+' when processing id '+repr(identifier),) +
+                                  e.args[1:])
                     raise
-            except:
-                if identifier not in self.skips:
-                    self.skips.append(identifier)
-                self.item_count -= 1
-                self.queued_count -= 1
-                raise
             finally:
                 self.input_queue.task_done()
 
@@ -108,6 +108,9 @@ class Mine(object):
         def metadata_iterator_helper():
             while self.queued_count < self.item_count or self.got_count < self.queued_count:
                 self.got_count += 1
-                yield self.json_queue.get()
+                try:
+                    yield self.json_queue.get()
+                except LoopExit:
+                    raise StopIteration
 
         return metadata_iterator_helper()

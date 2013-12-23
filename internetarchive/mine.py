@@ -13,7 +13,7 @@ except ImportError:
     """)
 
 from internetarchive import Item
-from requests.exceptions import ConnectionError
+from requests.exceptions import RequestException
 
 
 
@@ -71,13 +71,12 @@ class Mine(object):
                 item = Item(identifier)
                 self.json_queue.put((i, item))
             except Exception as e:
-                if (type(e) == ConnectionError and
+                if (type(e) == RequestException and
                        (self.max_requests is None or num_requests < self.max_requests)):
                     self.input_queue.put((i, identifier, num_requests+1))
                 else:
                     if identifier not in self.skips:
                         self.skips.append(identifier)
-                    self.identifiers.remove(identifier)
                     self.item_count -= 1
                     self.queued_count -= 1
                     if e.args is not None and len(e.args) > 0 and type(e.args[0]) == str:
@@ -92,11 +91,12 @@ class Mine(object):
     #_____________________________________________________________________________________
     def _queue_input(self):
         for i, identifier in enumerate(self.identifiers):
-            self.input_queue.put((i, identifier, 0))
-            self.queued_count += 1
+            if not identifier in self.skips:
+                self.input_queue.put((i, identifier, 0))
+                self.queued_count += 1
 
 
-    # items()
+    # __iter__()
     #_____________________________________________________________________________________
     def __iter__(self):
         self.queued_count = 0

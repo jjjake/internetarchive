@@ -51,5 +51,8 @@ def main(argv):
             with open(args['--output'], 'a+') as fp:
                 fp.write(metadata + '\n')
         else:
-            stdout.write(metadata + '\n')
+            try:
+                stdout.write(metadata + '\n')
+            except IOError:
+                break
     exit(0)

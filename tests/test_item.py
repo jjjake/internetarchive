@@ -5,13 +5,13 @@ sys.path.insert(0, inc_path)
 import internetarchive
 
 def test_item():
-    item = internetarchive.Item('stairs')
-    assert item.metadata['metadata']['identifier'] == 'stairs'
+    item = internetarchive.Item('nasa')
+    assert item.metadata['metadata']['identifier'] == 'nasa'
 
 
 def test_file():
-    item = internetarchive.Item('stairs')
-    filename = 'glogo.png'
+    item = internetarchive.Item('nasa')
+    filename = 'nasa_meta.xml'
     file = item.file(filename)
 
     assert not os.path.exists(filename)
@@ -22,7 +22,7 @@ def test_file():
 
 
 def test_download():
-    item = internetarchive.Item('stairs')
+    item = internetarchive.Item('nasa')
     item_dir = item.identifier
     assert not os.path.exists(item_dir)
     item.download()

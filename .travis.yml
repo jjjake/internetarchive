@@ -6,3 +6,6 @@ install:
   - 'pip install -e . --use-mirrors'
   - 'pip install -e ".[speedups]" --use-mirrors'
 script: "py.test"
+branches:
+  only:
+      - master  

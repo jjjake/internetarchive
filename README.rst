@@ -88,7 +88,7 @@ https://archive.org/account/s3.php
     $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
 
     #upload from `stdin`:
-    $ curl http://dumps.wikimedia.org/kywiki/20130927/kywiki-20130927-pages-logging.xml.gz | 
+    $ curl http://dumps.wikimedia.org/kywiki/20130927/kywiki-20130927-pages-logging.xml.gz |
       ia upload <identifier> - --remote-name=kywiki-20130927-pages-logging.xml.gz --metadata="title:Uploaded from stdin."
 
 Metadata
@@ -121,13 +121,13 @@ You can also install ``gevent`` like so:
 ``ia mine`` can be used to concurrently retrieve metadata for items via the `IA Metadata API <http://blog.archive.org/2013/07/04/metadata-api/>`__.
 
 .. code:: bash
-    
+
     # Create an itemlist to be used as input for your ``ia mine`` command.
     $ ia search 'collection:IRS990' > itemlist.txt
 
     # Print metadata to stdout (each items metadata is separated by a "\n" character).
     $ ia mine itemlist.txt
-    
+
     # Download all metadata for each item contained in itemlist.txt.
     $ ia mine itemlist.txt --cache
 

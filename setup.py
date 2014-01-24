@@ -30,15 +30,13 @@ setup(
         'pytest==2.3.4',
         'docopt==0.6.1',
         'PyYAML==3.10',
-    ],
-    dependency_links=[
-        'https://github.com/downloads/surfly/gevent/gevent-1.0rc2.tar.gz#egg=gevent-1.0.rc2',
+        'clint==0.3.3',
     ],
     extras_require = {
         'speedups': [
             'ujson==1.33',
             'Cython==0.18',
-            'gevent==1.0rc2',
+            'gevent==1.0',
         ],
     },
     **extra

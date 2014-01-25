@@ -60,7 +60,7 @@ def main(argv):
         local_file = TemporaryFile()
         local_file.write(stdin.read())
         local_file.seek(0)
-        upload_kwargs['remote_name'] = args['--remote-name']
+        upload_kwargs['key'] = args['--remote-name']
     # Upload files.
     else:
         local_file = args['<file>']

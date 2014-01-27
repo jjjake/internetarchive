@@ -347,17 +347,19 @@ class Item(object):
         except IOError:
             size = None
 
+        if not headers.get('x-archive-size-hint'):
+            headers['x-archive-size-hint'] = size
+
         key = body.name.split('/')[-1] if key is None else key
         url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, key) 
         headers = s3.build_headers(metadata=metadata, 
                                    headers=headers, 
                                    queue_derive=queue_derive,
                                    auto_make_bucket=True,
-                                   size_hint=size,
                                    ignore_preexisting_bucket=ignore_preexisting_bucket)
         if verbose:
             try:
-                chunk_size = 1024
+                chunk_size = 1048576
                 expected_size = size/chunk_size + 1
                 chunks = utils.chunk_generator(body, chunk_size)
                 progress_generator = progress.bar(chunks, expected_size=expected_size, 

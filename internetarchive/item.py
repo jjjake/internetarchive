@@ -359,7 +359,7 @@ class Item(object):
                                    auto_make_bucket=True,
                                    ignore_preexisting_bucket=ignore_preexisting_bucket)
         if verify:
-            headers['Content-MD5'] = utils.get_md5(test)
+            headers['Content-MD5'] = utils.get_md5(body)
         if verbose:
             try:
                 chunk_size = 1048576

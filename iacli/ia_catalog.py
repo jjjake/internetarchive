@@ -3,7 +3,7 @@
 usage: 
     ia catalog [--verbose] [--url=<url>] [--green-rows] [--blue-rows]
                [--red-rows]
-    ia catalog <identifier>
+    ia catalog [--verbose] <identifier>
     ia catalog --help
 
 options:

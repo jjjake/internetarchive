@@ -1,3 +1,17 @@
+import hashlib
+import os
+
+
+def get_md5(file_object):
+    m = hashlib.md5()
+    while True:
+        data = file_object.read(8192)
+        if not data:
+            break
+        m.update(data)
+    file_object.seek(0, os.SEEK_SET) 
+    return m.hexdigest()
+
 def chunk_generator(fp, chunk_size):
     while True:
         chunk = fp.read(chunk_size)

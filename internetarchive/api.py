@@ -129,7 +129,8 @@ def download_file(identifier, filename, **kwargs):
 # get_tasks()
 #_________________________________________________________________________________________
 def get_tasks(**kwargs): 
-    catalog = service.Catalog(kwargs.get('params'))
+    catalog = service.Catalog(identifier=kwargs.get('identifier'), 
+                              params=kwargs.get('params'))
     task_type = kwargs.get('task_type')
     if task_type:
         return eval('catalog.{0}_rows'.format(task_type.lower()))

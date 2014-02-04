@@ -277,5 +277,5 @@ You can iterate over your results:
 
 .. code:: python
 
-    >>> for result in search.results:
+    >>> for result in search.results():
     ...     print result['identifier']

@@ -24,5 +24,4 @@ __copyright__ = 'Copyright 2013 Jacob M. Johnson'
 
 from .item import Item, File
 from .service import Search, Catalog
-#from .mine import Mine
 from .api import *

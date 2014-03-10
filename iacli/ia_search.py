@@ -17,7 +17,6 @@ options:
 
 """
 from sys import stdout, exit
-import json
 
 from docopt import docopt
 
@@ -45,8 +44,5 @@ def main(argv):
         stdout.write('{0}\n'.format(search_resp.num_found))
         exit(0)
     for result in search_resp.results():
-        try:
-            output = '\t'.join([json.dumps(result.get(f, '')) for f in fields]).encode('utf-8')
-            stdout.write(output + '\n')
-        except IOError:
-            break
+        output = '\t'.join([result.get(f, '') for f in fields]).encode('utf-8')
+        stdout.write(output + '\n')

@@ -226,7 +226,7 @@ class Item(object):
 
     # modify_metadata()
     #_____________________________________________________________________________________
-    def modify_metadata(self, metadata, target='metadata', append=False):
+    def modify_metadata(self, metadata, target='metadata', append=False, priority=0):
         """Modify the metadata of an existing item on Archive.org.
 
         Note: The Metadata Write API does not yet comply with the
@@ -238,6 +238,9 @@ class Item(object):
 
         :type target: str
         :param target: (optional) Set the metadata target to update.
+
+        :type priority: int
+        :param priority: (optional) Set task priority.
 
         Usage::
 
@@ -270,6 +273,7 @@ class Item(object):
             '-target': target,
             'access': access_key,
             'secret': secret_key,
+            'priority': priority,
         }
 
         host = 'archive.org'

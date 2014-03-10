@@ -9,10 +9,11 @@ import httplib
 from fnmatch import fnmatch
 from requests import Request, Session
 from requests.exceptions import ConnectionError, HTTPError
+from clint.textui import progress
 
 from jsonpatch import make_patch
 
-from . import s3, config, __version__
+from . import s3, config, __version__, utils
 
 
 
@@ -294,7 +295,8 @@ class Item(object):
     #_____________________________________________________________________________________
     def upload_file(self, body, key=None, metadata={}, headers={},
                     access_key=None, secret_key=None, queue_derive=True, 
-                    ignore_preexisting_bucket=False, verbose=False, debug=False):
+                    ignore_preexisting_bucket=False, verify=True, verbose=False,
+                    debug=False):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -346,19 +348,37 @@ class Item(object):
         except IOError:
             size = None
 
+        if not headers.get('x-archive-size-hint'):
+            headers['x-archive-size-hint'] = size
+
         key = body.name.split('/')[-1] if key is None else key
         url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, key) 
         headers = s3.build_headers(metadata=metadata, 
                                    headers=headers, 
                                    queue_derive=queue_derive,
                                    auto_make_bucket=True,
-                                   size_hint=size,
                                    ignore_preexisting_bucket=ignore_preexisting_bucket)
+        if verify:
+            headers['Content-MD5'] = utils.get_md5(body)
+        if verbose:
+            try:
+                chunk_size = 1048576
+                expected_size = size/chunk_size + 1
+                chunks = utils.chunk_generator(body, chunk_size)
+                progress_generator = progress.bar(chunks, expected_size=expected_size, 
+                                                  label=' uploading {f}: '.format(f=key))
+                data = utils.IterableToFileAdapter(progress_generator, size)
+            except:
+                sys.stdout.write(' uploading {f}: '.format(f=key))
+                data = body
+        else:
+            data = body 
+
         request = Request(
             method='PUT',
             url=url,
             headers=headers,
-            data=body,
+            data=data,
             auth=s3.BasicAuth(access_key, secret_key),
         )
         
@@ -367,8 +387,6 @@ class Item(object):
         else:
             if not self.session:
                 self.session = Session()
-            if verbose:
-                stdout.write(' uploading: {id}\n'.format(id=key))
             prepared_request = request.prepare()
             return self.session.send(prepared_request, stream=True)
 
@@ -488,10 +506,12 @@ class File(object):
     def delete(self, debug=False, verbose=False, cascade_delete=False):
         headers = s3.build_headers(cascade_delete=cascade_delete)
         url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, self.fname)
+        access_key, secret_key = config.get_s3_keys()
         request = Request(
             method='DELETE', 
             url=url, 
             headers=headers,
+            auth=s3.BasicAuth(access_key, secret_key),
         )
         if debug:
             return request 

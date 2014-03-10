@@ -89,7 +89,8 @@ class Catalog(object):
 
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, params={}):
+    def __init__(self, identifier=None, params={}, verbose=True):
+        verbose = '1' if verbose else '0'
         params = {'justme': 1} if not params else params
         # Params required to retrieve JSONP from the IA catalog.
         params['json'] = 2
@@ -97,9 +98,12 @@ class Catalog(object):
         params['callback'] = 'foo'
 
         self.session = Session()
-        self.url = 'http://archive.org/catalog.php'
+        if identifier:
+            self.url = 'http://archive.org/history/{id}'.format(id=identifier)
+        else:
+            self.url = 'http://archive.org/catalog.php'
         self.params = params
-        self.session. cookies = config.get_cookiejar()
+        self.session. cookies = config.get_cookiejar({'verbose': verbose})
         self.tasks = self.get_tasks()
         
 

@@ -11,8 +11,8 @@ options:
     -w, --workers=<count>       The number of requests to run concurrently [default: 20]
 
 """
-from sys import stdin, stdout, exit
-from json import dumps
+import sys
+import json
 
 from docopt import docopt
 
@@ -26,7 +26,7 @@ def main(argv):
     args = docopt(__doc__, argv=argv)
 
     if args['<itemlist.txt>'] == '-':
-        itemfile = stdin
+        itemfile = sys.stdin
     else:
         itemfile = open(args['<itemlist.txt>'])
     with itemfile:
@@ -41,18 +41,18 @@ def main(argv):
         open(args['--output'], 'w').close()
 
     for i, item in miner:
-        metadata = dumps(item.metadata)
+        metadata = json.dumps(item.metadata)
         if args['--cache']:
-            stdout.write('saving metadata for: {0}\n'.format(item.identifier))
+            sys.stdout.write('saving metadata for: {0}\n'.format(item.identifier))
             with open('{0}_meta.json'.format(item.identifier), 'w') as fp:
                 fp.write(metadata)
         elif args['--output']:
-            stdout.write('saving metadata for: {0}\n'.format(item.identifier))
+            sys.stdout.write('saving metadata for: {0}\n'.format(item.identifier))
             with open(args['--output'], 'a+') as fp:
                 fp.write(metadata + '\n')
         else:
             try:
-                stdout.write(metadata + '\n')
+                sys.stdout.write(metadata + '\n')
             except IOError:
                 break
-    exit(0)
+    sys.exit(0)

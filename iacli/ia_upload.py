@@ -3,15 +3,15 @@
 IA-S3 Documentation: https://archive.org/help/abouts3.txt
 
 usage: 
-    ia upload [--verbose] [--debug] <identifier> 
+    ia upload [--quiet] [--debug] <identifier> 
               (<file>... | - --remote-name=<name>)
               [--metadata=<key:value>...] [--header=<key:value>...]
-              [--no-derive] [--ignore-bucket]
+              [--no-derive] [--ignore-bucket] [--size-hint=<size>]
     ia upload --help
 
 options:
     -h, --help
-    -v, --verbose                  Print upload status to stdout.
+    -q, --quiet                    Turn off ia's output [default: False].
     -d, --debug                    Print S3 request parameters to stdout and 
                                    exit without sending request.
     -r, --remote-name=<name>       When uploading data from stdin, this option 
@@ -20,6 +20,7 @@ options:
     -H, --header=<key:value>...    S3 HTTP headers to send with your request.
     -n, --no-derive                Do not derive uploaded files.
     -i, --ignore-bucket            Destroy and respecify all metadata.
+    -s, --size-hint=<size>         Specify a size-hint for your item.
 
 """
 import os
@@ -34,22 +35,26 @@ from internetarchive import upload
 from iacli.argparser import get_args_dict, get_xml_text
 
 
-
 # main()
 #_________________________________________________________________________________________
 def main(argv):
     args = docopt(__doc__, argv=argv)
+    verbose = True if args['--quiet'] == False else False
 
-    if args['--verbose'] and not args['--debug']:
+    if verbose != False:
         stdout.write('getting item: {0}\n'.format(args['<identifier>']))
+
+    headers = get_args_dict(args['--header'])
+    if args['--size-hint']:
+        headers['x-archive-size-hint'] = args['--size-hint']
 
     upload_kwargs = dict(
             metadata=get_args_dict(args['--metadata']), 
-            headers=get_args_dict(args['--header']), 
+            headers=headers, 
             debug=args['--debug'], 
             queue_derive=True if args['--no-derive'] is False else False,
             ignore_preexisting_bucket=args['--ignore-bucket'],
-            verbose=args['--verbose'])
+            verbose=verbose)
 
     # Upload stdin.
     if args['<file>'] == ['-'] and not args['-']:
@@ -60,7 +65,7 @@ def main(argv):
         local_file = TemporaryFile()
         local_file.write(stdin.read())
         local_file.seek(0)
-        upload_kwargs['remote_name'] = args['--remote-name']
+        upload_kwargs['key'] = args['--remote-name']
     # Upload files.
     else:
         local_file = args['<file>']

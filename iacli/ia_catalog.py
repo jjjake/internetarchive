@@ -3,6 +3,7 @@
 usage: 
     ia catalog [--verbose] [--url=<url>] [--green-rows] [--blue-rows]
                [--red-rows]
+    ia catalog [--verbose] <identifier>
     ia catalog --help
 
 options:
@@ -28,13 +29,16 @@ def main(argv):
     args = docopt(__doc__, argv=argv)
 
     row_types = {
+            -1: 'done',
             0: 'green',
             1: 'blue',
             2: 'red',
             9: 'brown',
     }
 
-    if args['--green-rows']:
+    if args['<identifier>']:
+        tasks = get_tasks(identifier=args['<identifier>'])
+    elif args['--green-rows']:
         tasks = get_tasks(task_type='green')
     elif args['--blue-rows']:
         tasks = get_tasks(task_type='blue')

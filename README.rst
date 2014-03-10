@@ -88,7 +88,7 @@ https://archive.org/account/s3.php
     $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
 
     #upload from `stdin`:
-    $ curl http://dumps.wikimedia.org/kywiki/20130927/kywiki-20130927-pages-logging.xml.gz | 
+    $ curl http://dumps.wikimedia.org/kywiki/20130927/kywiki-20130927-pages-logging.xml.gz |
       ia upload <identifier> - --remote-name=kywiki-20130927-pages-logging.xml.gz --metadata="title:Uploaded from stdin."
 
 Metadata
@@ -121,13 +121,13 @@ You can also install ``gevent`` like so:
 ``ia mine`` can be used to concurrently retrieve metadata for items via the `IA Metadata API <http://blog.archive.org/2013/07/04/metadata-api/>`__.
 
 .. code:: bash
-    
+
     # Create an itemlist to be used as input for your ``ia mine`` command.
     $ ia search 'collection:IRS990' > itemlist.txt
 
     # Print metadata to stdout (each items metadata is separated by a "\n" character).
     $ ia mine itemlist.txt
-    
+
     # Download all metadata for each item contained in itemlist.txt.
     $ ia mine itemlist.txt --cache
 
@@ -172,8 +172,8 @@ Python module usage
 Below is brief overview of the ``internetarchive`` Python library.
 Please refer to the `API documentation <http://ia-wrapper.readthedocs.org/en/latest/>`__ for more specific details.
 
-Downloading
-~~~~~~~~~~~
+Downloading from Python
+~~~~~~~~~~~~~~~~~~~~~~~
 
 The Internet Archive stores data in
 `items <http://blog.archive.org/2011/03/31/how-archive-org-items-are-structured/>`__.
@@ -206,8 +206,8 @@ You can iterate over files:
     >>> for f in item.files():
     ...     print f.name, f.sha1
 
-Uploading
-~~~~~~~~~
+Uploading from Python
+~~~~~~~~~~~~~~~~~~~~~
 
 You can use the IA's S3-like interface to upload files to an item. You
 need to supply your IAS3 credentials in environment variables in order
@@ -242,8 +242,8 @@ You can also upload file-like objects:
     >>> item.upload(fh)
 
 
-Modifying Metadata
-~~~~~~~~~~~~~~~~~~
+Modifying Metadata from Python
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can modify metadata for existing items, using the
 ``item.modify_metadata()`` function. This uses the `IA Metadata
@@ -260,8 +260,8 @@ and requires your IAS3 credentials.
     >>> item.modify_metadata(md)
 
 
-Searching
-~~~~~~~~~
+Searching from Python
+~~~~~~~~~~~~~~~~~~~~~
 
 You can search for items using the `archive.org advanced search
 engine <https://archive.org/advancedsearch.php>`__:
@@ -277,5 +277,5 @@ You can iterate over your results:
 
 .. code:: python
 
-    >>> for result in search.results:
+    >>> for result in search.results():
     ...     print result['identifier']

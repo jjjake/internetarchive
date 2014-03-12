@@ -10,7 +10,9 @@ import internetarchive.config
 
 
 
-def test_ia_download():
+def test_ia_download(tmpdir):
+    os.chdir(str(tmpdir))
+
     cmd = 'ia download --dry-run nasa'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()

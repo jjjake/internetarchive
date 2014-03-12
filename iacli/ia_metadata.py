@@ -52,7 +52,11 @@ def main(argv):
             sys.stderr.write('error: -m, --modify args must be a key/value pair!\n\n')
             sys.stderr.write(__doc__)
             sys.exit(1)
-        response = modify_metadata(args['<identifier>'], metadata, append=append)
+        try:
+            response = modify_metadata(args['<identifier>'], md, append=append)
+        except TypeError:
+            sys.stderr.write('error: Cannot append to a non-string value')
+            sys.exit(1)
         status_code = response['status_code']
         if not response['content']['success']:
             error_msg = response['content']['error']

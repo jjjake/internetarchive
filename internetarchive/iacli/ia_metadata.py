@@ -1,6 +1,6 @@
 """Retrieve and modify metadata for items on archive.org.
 
-usage: 
+usage:
     ia metadata [--modify=<key:value>... ] [--target=<target>] <identifier>
     ia metadata [--append=<key:value>... ] [--target=<target>] <identifier>
     ia metadata [--exists | --formats | --files | --target=<target>...] <identifier>
@@ -10,7 +10,7 @@ options:
     -h, --help
     -m, --modify=<key:value>   Modify the metadata of an item.
     -a, --append=<key:value>   Append metadata to an element.
-    -e, --exists               Check if an item exists.  exists, and 1 if it 
+    -e, --exists               Check if an item exists.  exists, and 1 if it
                                does not.
     -f, --files                Return select file-level metadata.
     -F, --formats              Return the file-formats the given item contains.
@@ -23,8 +23,7 @@ import json
 from docopt import docopt
 
 from internetarchive import get_item, modify_metadata
-from iacli.argparser import get_args_dict
-
+from internetarchive.iacli.argparser import get_args_dict
 
 
 # main()
@@ -52,7 +51,7 @@ def main(argv):
             sys.stderr.write('error: -m, --modify args must be a key/value pair!\n\n')
             sys.stderr.write(__doc__)
             sys.exit(1)
-        response = modify_metadata(args['<identifier>'], metadata, append=append)
+        response = modify_metadata(args['<identifier>'], md, append=append)
         status_code = response['status_code']
         if not response['content']['success']:
             error_msg = response['content']['error']
@@ -79,7 +78,7 @@ def main(argv):
                     if i == 0:
                         md = item.metadata.get(k)
                     else:
-                        if md:    
+                        if md:
                             md = md.get(k)
             else:
                 md = item.metadata.get(key)

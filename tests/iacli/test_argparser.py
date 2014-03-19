@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from iacli.argparser import get_args_dict
+from internetarchive.iacli.argparser import get_args_dict
 
 
 def test_get_args_dict():

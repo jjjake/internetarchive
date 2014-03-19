@@ -1,6 +1,6 @@
 """Retrieve information about your catalog tasks.
 
-usage: 
+usage:
     ia catalog [--verbose] [--url=<url>] [--green-rows] [--blue-rows]
                [--red-rows]
     ia catalog [--verbose] <identifier>
@@ -14,13 +14,11 @@ options:
     -r, --red-rows    Return information about tasks that have failed.
 
 """
-from sys import stdout, exit
-from urlparse import urlparse, parse_qs
+import sys
 
 from docopt import docopt
 
 from internetarchive import Catalog, get_tasks
-
 
 
 # ia_catalog()
@@ -29,11 +27,11 @@ def main(argv):
     args = docopt(__doc__, argv=argv)
 
     row_types = {
-            -1: 'done',
-            0: 'green',
-            1: 'blue',
-            2: 'red',
-            9: 'brown',
+        -1: 'done',
+        0: 'green',
+        1: 'blue',
+        2: 'red',
+        9: 'brown',
     }
 
     if args['<identifier>']:
@@ -52,6 +50,6 @@ def main(argv):
         ]
         if args['--verbose']:
             # parse task args and append to task_info list.
-            targs = '\t'.join(['{0}={1}'.format(k, v) for (k,v) in t.args.items()])
+            targs = '\t'.join(['{0}={1}'.format(k, v) for (k, v) in t.args.items()])
             task_info += [t.submitter, targs]
-        stdout.write('\t'.join([str(x) for x in task_info]) + '\n')
+        sys.stdout.write('\t'.join([str(x) for x in task_info]) + '\n')

@@ -1,12 +1,11 @@
 from setuptools import setup
-from sys import version_info, stderr, exit
-
+import sys
 
 
 extra = {}
-if version_info >= (3,):
-    stderr.write('Python3 is not yet supported.\n')
-    exit(1)
+if sys.version_info >= (3,):
+    sys.stderr.write('Python3 is not yet supported.\n')
+    sys.exit(1)
     #extra['use_2to3'] = True
 
 setup(
@@ -14,10 +13,10 @@ setup(
     version='0.5.1',
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
-    packages=['internetarchive', 'iacli'],
+    packages=['internetarchive'],
     entry_points = {
         'console_scripts': [
-            'ia = iacli.ia:main',
+            'ia = internetarchive.iacli.ia:main',
         ],
     },
     url='https://github.com/jjjake/ia-wrapper',

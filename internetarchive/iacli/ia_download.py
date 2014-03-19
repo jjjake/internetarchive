@@ -1,9 +1,9 @@
 """Download files from archive.org.
 
 usage:
-    ia download [--verbose] [--dry-run] [--ignore-existing] 
-                [--source=<source>... | --original] 
-                [--glob=<pattern> | --format=<format>...] [--concurrent] <identifier> 
+    ia download [--verbose] [--dry-run] [--ignore-existing]
+                [--source=<source>... | --original]
+                [--glob=<pattern> | --format=<format>...] [--concurrent] <identifier>
                 [<file>...]
     ia download --help
 
@@ -29,12 +29,11 @@ options:
 
 """
 import os
-from sys import stdout, exit
+import sys
 
 from docopt import docopt
 
-import internetarchive
-
+from internetarchive import get_item
 
 
 # ia_download()
@@ -50,7 +49,7 @@ def main(argv):
         identifier = args['<identifier>']
         files = args['<file>']
 
-    item = internetarchive.Item(identifier)
+    item = get_item(identifier)
 
     if files:
         for f in files:
@@ -58,11 +57,11 @@ def main(argv):
             path = os.path.join(identifier, fname)
             f = item.file(fname)
             if args['--dry-run']:
-                stdout.write(f.url + '\n')
+                sys.stdout.write(f.url + '\n')
             else:
-                stdout.write(' downloading: {0}\n'.format(fname))
+                sys.stdout.write(' downloading: {0}\n'.format(fname))
                 f.download(file_path=path, ignore_existing=args['--ignore-existing'])
-        exit(0)
+        sys.exit(0)
 
     # Otherwise, download the entire item.
     if args['--source']:
@@ -73,12 +72,12 @@ def main(argv):
         ia_source = None
 
     item.download(
-        concurrent=args['--concurrent'], 
-        source=ia_source, 
+        concurrent=args['--concurrent'],
+        source=ia_source,
         formats=args['--format'],
         glob_pattern=args['--glob'],
         dry_run=args['--dry-run'],
-        verbose=args['--verbose'], 
+        verbose=args['--verbose'],
         ignore_existing=args['--ignore-existing'],
     )
-    exit(0)
+    sys.exit(0)

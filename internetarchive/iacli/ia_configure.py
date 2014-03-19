@@ -10,12 +10,10 @@ options:
 
 """
 import os
-from sys import stdout, exit
+import sys
 
 from docopt import docopt
-
-from yaml import dump
-
+import yaml
 
 
 # ia_configure()
@@ -23,7 +21,7 @@ from yaml import dump
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
-    stdout.write(
+    sys.stdout.write(
         'Please visit https://archive.org/account/s3.php to retrieve your S3 keys\n\n')
 
     config = {
@@ -39,7 +37,7 @@ def main(argv):
             'logged-in-sig': raw_input('Please Enter your logged-in-sig cookie: ')
     }
 
-    configfile = dump(config, default_flow_style=False)
+    configfile = yaml.dump(config, default_flow_style=False)
     configdir = os.path.join(os.environ['HOME'], '.config')
     if not os.path.isdir(configdir) and not os.path.isfile(configdir):
         os.mkdir(configdir)
@@ -55,11 +53,11 @@ def main(argv):
                               '{0} \n\nWould you like to overwrite it?'
                               '[y/n] '.format(filename).lower())
         if overwrite not in ['y', 'yes']:
-            stdout.write('\nExiting without overwriting config file!\n')
-            exit(1)
+            sys.stdout.write('\nExiting without overwriting config file!\n')
+            sys.exit(1)
 
     with open(filename, 'wb') as fp:
         os.chmod(filename, 0o700)
         fp.write(configfile)
 
-    stdout.write('\nSuccessfully saved your new config to: {0}\n'.format(filename))
+    sys.stdout.write('\nSuccessfully saved your new config to: {0}\n'.format(filename))

@@ -10,11 +10,19 @@ from fnmatch import fnmatch
 from requests import Request, Session
 from requests.exceptions import ConnectionError, HTTPError
 from clint.textui import progress
+import logging
 
 from jsonpatch import make_patch
 
 from . import s3, config, __version__, utils
 
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+fh = logging.FileHandler('test.log')
+formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+fh.setFormatter(formatter)
+log.addHandler(fh)
 
 
 # Item class
@@ -112,10 +120,13 @@ class Item(object):
         """
         if not self.session:
             self.session = Session()
-        response = self.session.get(self.metadata_url, timeout=self.metadata_timeout)
-        if response.status_code != 200:
-            raise ConnectionError("Unable connect to Archive.org "
-                                  "({0})".format(response.status_code))
+        try:
+            response = self.session.get(self.metadata_url, timeout=self.metadata_timeout)
+            response.raise_for_status()
+        except HTTPError as e:
+            error_msg = 'Error retrieving metadata from {0}, {1}'.format(response.url, e)
+            log.error(error_msg)
+            raise HTTPError(error_msg)
         metadata = response.json()
         if target:
             metadata = metadata.get(target, {})
@@ -392,7 +403,15 @@ class Item(object):
             if not self.session:
                 self.session = Session()
             prepared_request = request.prepare()
-            return self.session.send(prepared_request, stream=True)
+            try:
+                response = self.session.send(prepared_request, stream=True)
+                response.raise_for_status()
+                log.info('uploaded {f} to {u}'.format(f=key, u=url))
+                return response
+            except HTTPError as e:
+                error_msg = 'Error uploading {0}, {1}'.format(key, e)
+                log.error(error_msg)
+                raise HTTPError(error_msg)
 
 
     # upload()

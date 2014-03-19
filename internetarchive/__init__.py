@@ -25,3 +25,15 @@ __copyright__ = 'Copyright 2013 Jacob M. Johnson'
 from .item import Item, File
 from .service import Search, Catalog
 from .api import *
+
+
+# Set default logging handler to avoid "No handler found" warnings.
+import logging
+try: # Python 2.7+
+    from logging import NullHandler
+except ImportError:
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
+
+logging.getLogger(__name__).addHandler(NullHandler())

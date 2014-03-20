@@ -9,7 +9,6 @@ sys.path.insert(0, inc_path)
 import internetarchive.config
 
 
-
 def test_ia_metadata_exists():
     cmd = 'ia metadata --exists iacli_test-doesnotexist'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
@@ -31,7 +30,7 @@ def test_ia_metadata_formats():
     ])
     assert stdout == test_output
 
-@pytest.mark.skipif('len(internetarchive.config.get_config().get("cookies")) == None',
+@pytest.mark.skipif('internetarchive.config.get_config().get("cookies") == None',
                     reason='requires authorization.')
 def test_ia_metadata_modify():
     # Modify test item.

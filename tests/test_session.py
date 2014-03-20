@@ -7,3 +7,4 @@ from internetarchive.session import get_session
 def test_session():
     s = get_session()
     s.set_file_logger(0, 'test.log')
+    os.remove('test.log')

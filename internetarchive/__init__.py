@@ -17,7 +17,7 @@ usage:
 """
 
 __title__ = 'internetarchive'
-__version__ = '0.5.1'
+__version__ = '0.5.2'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'GPL'
 __copyright__ = 'Copyright 2013 Jacob M. Johnson'
@@ -36,4 +36,6 @@ except ImportError:
         def emit(self, record):
             pass
 
-logging.getLogger(__name__).addHandler(NullHandler())
+
+log = logging.getLogger('internetarchive')
+log.addHandler(NullHandler())

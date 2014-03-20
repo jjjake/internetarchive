@@ -31,6 +31,8 @@ def main(argv):
     params = dict(p.split(':') for p in args['--parameters'])
 
     if args['--sort']:
+        if not isinstance(args['--sort'], list):
+            args['--sort'] = [args['--sort']]
         for i, field in enumerate(args['--sort']):
             key = 'sort[{0}]'.format(i)
             params[key] = field.strip().replace(':', ' ')

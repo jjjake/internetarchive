@@ -55,7 +55,7 @@ def main(argv):
         for f in files:
             fname = f.encode('utf-8')
             path = os.path.join(identifier, fname)
-            f = item.file(fname)
+            f = item.get_file(fname)
             if args['--dry-run']:
                 sys.stdout.write(f.url + '\n')
             else:

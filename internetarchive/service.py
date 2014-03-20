@@ -6,6 +6,7 @@ import urllib
 import urllib2
 
 from requests import Session
+import requests.cookies
 
 from . import config
 
@@ -103,7 +104,9 @@ class Catalog(object):
         else:
             self.url = 'http://archive.org/catalog.php'
         self.params = params
-        self.session. cookies = config.get_cookiejar({'verbose': verbose})
+        cookies = requests.cookies.cookiejar_from_dict(config.get_config().get('cookies', {}))
+        cookies['verbose'] = verbose
+        self.session.cookies = cookies
         self.tasks = self.get_tasks()
         
 

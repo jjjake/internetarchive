@@ -34,11 +34,6 @@ def main(argv):
     workers = int(args.get('--workers', 20)[0])
     miner = get_data_miner(identifiers, workers=workers)
 
-    # If writing all metadata to a single output file, make sure that
-    # file is empty.
-    if args['--output']:
-        open(args['--output'], 'w').close()
-
     for i, item in miner:
         metadata = json.dumps(item.metadata)
         if args['--cache']:

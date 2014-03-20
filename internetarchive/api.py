@@ -3,46 +3,29 @@ from sys import stdout
 from . import item, service
 
 
-
 # get_item()
 #_________________________________________________________________________________________
-def get_item(identifier, **kwargs): 
-    return item.Item(identifier, **kwargs)
-
-
-# get_metadata()
-#_________________________________________________________________________________________
-def get_metadata(identifier, target=None, timeout=None): 
-    item = get_item(identifier, metadata_timeout=timeout)
-    return item.metadata.get(target, {}) if target else item.metadata
-
+def get_item(identifier, metadata_timeout=None, config=None):
+    return item.Item(identifier, metadata_timeout, config)
 
 # get_files()
 #_________________________________________________________________________________________
-def get_files(identifier, timeout=None): 
-    return get_metadata(identifier, target='files', timeout=timeout)
-
+def get_files(identifier, files=None, source=None, formats=None, glob_pattern=None,
+              metadata_timeout=None, config=None):
+    item = get_item(identifier, metadata_timeout, config)
+    return item.get_files(files, source, formats, glob_pattern)
 
 # iter_files()
 #_________________________________________________________________________________________
-def iter_files(identifier, timeout=None):
-    item = get_item(identifier, metadata_timeout=timeout)
-    return item.files()
-
+def iter_files(identifier, metadata_timeout=None, config=None):
+    item = get_item(identifier, metadata_timeout, config)
+    return item.iter_files()
 
 # modify_metadata()
 #_________________________________________________________________________________________
 def modify_metadata(identifier, metadata, timeout=None, target='metadata', append=False):
     item = get_item(identifier, metadata_timeout=timeout)
     return item.modify_metadata(metadata, target, append=append)
-
-
-# upload_file()
-#_____________________________________________________________________________________
-def upload_file(identifier, local_file, **kwargs):
-    item = get_item(identifier)
-    return item.upload_file(identifier, local_file, **kwargs)
-    
 
 # upload()
 #_____________________________________________________________________________________
@@ -73,7 +56,6 @@ def upload(identifier, files, **kwargs):
     item = get_item(identifier)
     return item.upload(files, **kwargs)
 
-
 # download()
 #_________________________________________________________________________________________
 def download(identifier, **kwargs):
@@ -93,7 +75,7 @@ def download(identifier, **kwargs):
                          pattern
 
     :type ignore_existing: bool
-    :param ignore_existing: Overwrite local files if they already 
+    :param ignore_existing: Overwrite local files if they already
                             exist.
 
     :rtype: bool
@@ -108,7 +90,6 @@ def download(identifier, **kwargs):
     item = get_item(identifier)
     item.download(**kwargs)
 
-
 # download_file()
 #_________________________________________________________________________________________
 def download_file(identifier, filename, **kwargs):
@@ -121,15 +102,14 @@ def download_file(identifier, filename, **kwargs):
 
     """
     item = get_item(identifier)
-    remote_file = item.file(filename)
+    remote_file = item.get_file(filename)
     stdout.write('downloading: {0}\n'.format(filename))
     remote_file.download(**kwargs)
 
-
 # get_tasks()
 #_________________________________________________________________________________________
-def get_tasks(**kwargs): 
-    catalog = service.Catalog(identifier=kwargs.get('identifier'), 
+def get_tasks(**kwargs):
+    catalog = service.Catalog(identifier=kwargs.get('identifier'),
                               params=kwargs.get('params'))
     task_type = kwargs.get('task_type')
     if task_type:
@@ -137,15 +117,13 @@ def get_tasks(**kwargs):
     else:
         return catalog.tasks
 
-
 # search()
 #_________________________________________________________________________________________
-def search(query, **kwargs): 
+def search(query, **kwargs):
     return service.Search(query, **kwargs)
-
 
 # mine()
 #_________________________________________________________________________________________
-def get_data_miner(identifiers, **kwargs): 
+def get_data_miner(identifiers, **kwargs):
     from . import mine
     return mine.Mine(identifiers, **kwargs)

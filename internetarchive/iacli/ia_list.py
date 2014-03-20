@@ -29,7 +29,7 @@ def main(argv):
     args = docopt(__doc__, argv=argv)
     item = get_item(args['<identifier>'])
 
-    files = item.metadata.get('files')
+    files = item.files
     if args.get('--all'):
         columns = list(set(chain.from_iterable(k for k in files)))
     else:

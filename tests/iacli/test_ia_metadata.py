@@ -21,12 +21,6 @@ def test_ia_metadata_exists():
     stdout, stderr = proc.communicate()
     assert proc.returncode == 0
 
-def test_ia_metadata_files():
-    cmd = 'ia metadata --files iacli_test_item'
-    proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = proc.communicate()
-    assert proc.returncode == 0
-
 def test_ia_metadata_formats():
     cmd = 'ia metadata --formats iacli_test_item'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
@@ -37,14 +31,7 @@ def test_ia_metadata_formats():
     ])
     assert stdout == test_output
 
-def test_ia_metadata_target():
-    cmd = 'ia metadata --target="metadata/identifier" iacli_test_item'
-    proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = proc.communicate()
-    test_output = "iacli_test_item\n"
-    assert stdout == test_output
-
-@pytest.mark.skipif('len(internetarchive.config.get_cookiejar()) == 0',
+@pytest.mark.skipif('len(internetarchive.config.get_config().get("cookies")) == None',
                     reason='requires authorization.')
 def test_ia_metadata_modify():
     # Modify test item.
@@ -53,13 +40,6 @@ def test_ia_metadata_modify():
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
     assert proc.returncode == 0
-
-    # Assert that the changes are now represented in the Metadata Read API.
-    cmd = 'ia metadata --target="metadata/{k}" iacli_test_item'.format(k=valid_key)
-    proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = proc.communicate()
-    assert proc.returncode == 0
-    assert stdout == 'test_value\n'
 
     # Submit illegal modification.
     cmd = 'ia metadata --modify="-foo:test_value" iacli_test_item'

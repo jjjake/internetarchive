@@ -35,7 +35,7 @@ def test_good_ids():
     miner = internetarchive.mine.Mine(ids)
     results = [result for i, result in sorted(miner, key=lambda x: x[0])]
     for item, ident in zip(results, ids):
-        assert item.metadata['metadata']['identifier'] == ident
+        assert item.metadata['identifier'] == ident
 
 
 @pytest.mark.skipif('test == False', reason='requires gevent.')

@@ -6,13 +6,13 @@ import internetarchive
 
 def test_item():
     item = internetarchive.Item('nasa')
-    assert item.metadata['metadata']['identifier'] == 'nasa'
+    assert item.metadata['identifier'] == 'nasa'
 
 
 def test_file():
     item = internetarchive.Item('nasa')
     filename = 'nasa_meta.xml'
-    file = item.file(filename)
+    file = item.get_file(filename)
 
     assert not os.path.exists(filename)
     file.download()

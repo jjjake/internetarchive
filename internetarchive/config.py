@@ -5,7 +5,8 @@ import yaml
 
 # get_config()
 #_____________________________________________________________________________________
-def get_config(config_file=None, config={}):
+def get_config(config=None, config_file=None):
+    config = {} if not config else config
     if not config_file:
         home_dir = os.environ.get('HOME')
         if not home_dir:

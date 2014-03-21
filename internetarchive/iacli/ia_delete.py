@@ -39,10 +39,10 @@ def main(argv):
         sys.stdout.write('Deleting files from {0}\n'.format(item.identifier))
 
     if args['--all']:
-        files = [f for f in item.files()]
+        files = [f for f in item.iter_files()]
         args['--cacade'] = True
     else:
-        files = [item.file(f) for f in args['<file>']]
+        files = [item.get_file(f) for f in args['<file>']]
 
     for f in files:
         if not f:

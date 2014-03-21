@@ -54,7 +54,7 @@ def test_api():
     shutil.rmtree('iacli-test-item')
 
     # download_file()
-    r = download_file('nasa', 'nasa_meta.xml')
+    r = download('nasa', 'nasa_meta.xml')
     os.remove('nasa_meta.xml')
 
     # search()
@@ -84,6 +84,8 @@ def test_functions_needing_cookies():
                     reason='requires authorization.')
 def test_funtions_needing_s3_keys():
     r = upload('iacli-test-item', 'setup.py', key='testsetup.py')
+
+
 
 @pytest.mark.skipif('test_mine == False', reason='needs `internetarchive.mine` installed')
 def test_mine():

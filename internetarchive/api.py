@@ -58,8 +58,11 @@ def upload(identifier, files, **kwargs):
 
 # download()
 #_________________________________________________________________________________________
-def download(identifier, **kwargs):
+def download(identifier, filenames=None, **kwargs):
     """Download an item into the current working directory.
+
+    :type filenames: str, list, set
+    :param filenames: The filename(s) of the given file(s) to download.
 
     :type concurrent: bool
     :param concurrent: Download files concurrently if ``True``.
@@ -88,23 +91,26 @@ def download(identifier, **kwargs):
 
     """
     item = get_item(identifier)
-    item.download(**kwargs)
+    if filenames:
+        if not isinstance(filenames, (set, list)):
+            filenames = [filenames]
+        for fname in filenames:
+            f = item.get_file(fname)
+            f.download(**kwargs)
+    else:
+        item.download(**kwargs)
 
-# download_file()
+# delete()
 #_________________________________________________________________________________________
-def download_file(identifier, filename, **kwargs):
-    """
-
-    Usage::
-
-        >>> import internetarchive
-        >>> internetarchive.download_file('stairs', 'stairs.avi')
-
-    """
+def delete(identifier, filenames=None, **kwargs):
     item = get_item(identifier)
-    remote_file = item.get_file(filename)
-    stdout.write('downloading: {0}\n'.format(filename))
-    remote_file.download(**kwargs)
+    if filenames:
+        if not isinstance(filenames, (set, list)):
+            filenames = [filenames]
+        for f in item.iter_files():
+            if not f.name in filenames:
+                continue
+            f.delete(**kwargs)
 
 # get_tasks()
 #_________________________________________________________________________________________

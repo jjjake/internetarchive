@@ -10,13 +10,22 @@ import internetarchive.item
 
 class ArchiveSession(object):
 
+    log_level = {
+        'CRITICAL': 50,
+        'ERROR':    40,
+        'WARNING':  30,
+        'INFO':     20,
+        'DEBUG':    10,
+        'NOTSET':   0,
+    }
+
     FmtString = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
     # __init__()
     #_____________________________________________________________________________________
     def __init__(self, config=None):
         super(ArchiveSession, self).__init__()
-        config = config if config else internetarchive.config.get_config()
+        config = internetarchive.config.get_config(config)
         self.cookies = requests.cookies.cookiejar_from_dict(config.get('cookies', {}))
         if not 'logged-in-user' in self.cookies:
             self.cookies['logged-in-user'] = os.environ.get('IA_LOGGED_IN_USER')
@@ -29,6 +38,12 @@ class ArchiveSession(object):
         s3_config = self.config.get('s3', {})
         self.access_key = s3_config.get(('access_key'), os.environ.get('IA_S3_ACCESS_KEY'))
         self.secret_key = s3_config.get(('secret_key'), os.environ.get('IA_S3_ACCESS_KEY'))
+
+        self.logging_config = config.get('logging', {})
+        if self.logging_config:
+            _level = self.log_level[self.logging_config.get('level', 'NOTSET')]
+            log_file = 'internetarchive.log'
+            self.set_file_logger(_level, log_file)
 
     # __init__()
     #_____________________________________________________________________________________

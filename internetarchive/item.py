@@ -60,9 +60,8 @@ class Item(object):
         :param metadata_timeout: (optional) Set a timeout for retrieving
                                  an item's metadata.
 
-        :type secure: bool
-        :param secure: (optional) If secure is True, use HTTPS protocol,
-                       otherwise use HTTP.
+        :type config: dict
+        :param secure: (optional) Configuration options for session.
 
         """
         self.session = session.ArchiveSession(config)
@@ -399,7 +398,7 @@ class Item(object):
                 log.info('uploaded {f} to {u}'.format(f=key, u=url))
                 return response
             except HTTPError as e:
-                error_msg = 'Error uploading {0}, {1}'.format(key, e)
+                error_msg = 'error uploading {0}, {1}'.format(key, e)
                 log.error(error_msg)
                 return response
                 #raise HTTPError(error_msg)
@@ -511,14 +510,15 @@ class File(object):
 
     # delete()
     #_____________________________________________________________________________________
-    def delete(self, debug=False, verbose=False, cascade_delete=False):
-        headers = s3.build_headers(cascade_delete=cascade_delete)
-        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, self.fname)
-        access_key, secret_key = config.get_s3_keys()
+    def delete(self, debug=False, verbose=False, cascade_delete=False, access_key=None,
+               secret_key=None):
+        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, self.name)
+        access_key = self._item.session.access_key if not access_key else access_key
+        secret_key = self._item.session.secret_key if not secret_key else secret_key
         request = iarequest.S3Request(
             method='DELETE',
             url=url,
-            headers=headers,
+            headers={'cascade_delete': cascade_delete},
             access_key=access_key,
             secret_key=secret_key
         )

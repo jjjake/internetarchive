@@ -7,6 +7,7 @@ usage:
               (<file>... | - --remote-name=<name>)
               [--metadata=<key:value>...] [--header=<key:value>...]
               [--no-derive] [--ignore-bucket] [--size-hint=<size>]
+              [--log]
     ia upload --help
 
 options:
@@ -21,6 +22,7 @@ options:
     -n, --no-derive                Do not derive uploaded files.
     -i, --ignore-bucket            Destroy and respecify all metadata.
     -s, --size-hint=<size>         Specify a size-hint for your item.
+    -l, --log                      Log upload results to file.
 
 """
 import os
@@ -31,7 +33,7 @@ from subprocess import call
 
 from docopt import docopt
 
-from internetarchive import upload
+from internetarchive import get_item
 from internetarchive.iacli.argparser import get_args_dict, get_xml_text
 
 
@@ -70,7 +72,9 @@ def main(argv):
     else:
         local_file = args['<file>']
 
-    response = upload(args['<identifier>'], local_file, **upload_kwargs)
+    config = {} if not args['--log'] else {'logging': {'level': 'INFO'}}
+    item = get_item(args['<identifier>'], config=config)
+    response = item.upload(local_file, **upload_kwargs)
 
     if args['--debug']:
         for i, r in enumerate(response):

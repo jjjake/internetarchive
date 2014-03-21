@@ -69,6 +69,21 @@ class Item(object):
         self.http_session = requests.sessions.Session()
         self.http_session.cookies = self.session.cookies
         self.identifier = identifier
+
+        # Default empty attributes.
+        self.metadata = {}
+        self.files = []
+        self.created = None
+        self.d1 = None
+        self.d2 = None
+        self.dir = None
+        self.files_count = None
+        self.item_size = None
+        self.reviews = []
+        self.server = None
+        self.uniq = None
+        self.updated = None
+
         self._json = self.get_metadata(metadata_timeout)
         self.exists = False if self._json == {} else True
 

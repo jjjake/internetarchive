@@ -25,6 +25,7 @@ def test_ia_metadata_formats():
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
     test_output = '\n'.join([
+        "Text",
         "Archive BitTorrent",
         "Metadata\n",
     ])

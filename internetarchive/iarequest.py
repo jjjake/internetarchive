@@ -81,6 +81,7 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         :param headers: (optional) S3 compatible HTTP headers.
 
         """
+        headers['x-archive-auto-make-bucket'] = 1
         for meta_key, meta_value in metadata.items():
             # Encode arrays into JSON strings because Archive.org does not
             # yet support complex metadata structures in

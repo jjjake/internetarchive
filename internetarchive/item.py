@@ -13,7 +13,7 @@ from requests.exceptions import HTTPError
 from jsonpatch import make_patch
 from clint.textui import progress
 
-from . import s3, __version__, session, iarequest, utils
+from . import __version__, session, iarequest, utils
 
 
 log = logging.getLogger(__name__)

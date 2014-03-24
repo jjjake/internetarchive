@@ -13,7 +13,7 @@ setup(
     version='0.5.2',
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
-    packages=['internetarchive'],
+    packages=['internetarchive', 'internetarchive.iacli'],
     entry_points = {
         'console_scripts': [
             'ia = internetarchive.iacli.ia:main',

@@ -48,7 +48,7 @@ def test_ia_metadata_modify():
     assert proc.returncode == 1
     assert stderr == "error: Illegal tag name '-foo' (400)\n"
 
-@pytest.mark.skipif('len(internetarchive.config.get_cookiejar()) == 0',
+@pytest.mark.skipif('internetarchive.config.get_config().get("cookies") == None',
                     reason='requires authorization.')
 def test_ia_metadata_append():
     # first make a field to test

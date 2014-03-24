@@ -10,6 +10,7 @@ def test_item():
 
 
 def test_file(tmpdir):
+    prevdir = os.path.abspath('.')
     os.chdir(str(tmpdir))
 
     item = internetarchive.Item('nasa')
@@ -20,9 +21,12 @@ def test_file(tmpdir):
     file.download()
     
     assert unicode(os.stat(filename).st_size) == file.size
+
+    os.chdir(prevdir)
     
 
 def test_download(tmpdir):
+    prevdir = os.path.abspath('.')
     os.chdir(str(tmpdir))
 
     item = internetarchive.Item('nasa')
@@ -31,3 +35,5 @@ def test_download(tmpdir):
     item.download()
     assert os.path.exists(item_dir)
     assert os.path.exists(os.path.join(item_dir, item.identifier+'_meta.xml'))
+
+    os.chdir(prevdir)

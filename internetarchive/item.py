@@ -4,18 +4,20 @@ except ImportError:
     import json
 import urllib
 import os
-from sys import stdout
-import httplib
+import sys
 from fnmatch import fnmatch
-from requests import Request, Session
-from requests.exceptions import ConnectionError, HTTPError
-from clint.textui import progress
 import six
+import logging
 
+import requests.sessions
+from requests.exceptions import HTTPError
 from jsonpatch import make_patch
+from clint.textui import progress
 
-from . import s3, config, __version__, utils
+from . import __version__, session, iarequest, utils
 
+
+log = logging.getLogger(__name__)
 
 
 # Item class
@@ -32,17 +34,15 @@ class Item(object):
 
         >>> metadata = dict(title='The Stairs')
         >>> item.modify(metadata)
-        >>> print item.metadata['metadata']['title']
+        >>> print item.metadata['title']
         u'The Stairs'
 
     This class also uses IA's S3-like interface to upload files to an
     item. You need to supply your IAS3 credentials in environment
     variables in order to upload::
 
-        >>> import os
-        >>> os.environ['AWS_ACCESS_KEY_ID'] = 'Y6oUrAcCEs4sK8ey'
-        >>> os.environ['AWS_SECRET_ACCESS_KEY'] = 'youRSECRETKEYzZzZ'
-        >>> item.upload('myfile.tar')
+        >>> item.upload('myfile.tar', access_key='Y6oUrAcCEs4sK8ey',
+        ...                           secret_key='youRSECRETKEYzZzZ')
         True
 
     You can retrieve S3 keys here: `https://archive.org/account/s3.php
@@ -51,81 +51,78 @@ class Item(object):
     """
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, identifier, metadata_timeout=None, secure=False):
+    def __init__(self, identifier, metadata_timeout=None, config=None):
         """
         :type identifier: str
         :param identifier: The globally unique Archive.org identifier
                            for a given item.
 
         :type metadata_timeout: int
-        :param metadata_timeout: (optional) Set a timeout for retrieving 
+        :param metadata_timeout: (optional) Set a timeout for retrieving
                                  an item's metadata.
 
-        :type secure: bool
-        :param secure: (optional) If secure is True, use HTTPS protocol, 
-                       otherwise use HTTP.
+        :type config: dict
+        :param secure: (optional) Configuration options for session.
 
         """
-        self.secure = secure
-        protocol = 'https://' if secure else 'http://'
-        self.host = protocol + 'archive.org'
+        self.session = session.ArchiveSession(config)
+        self.protocol = 'https:' if self.session.secure else 'http:'
+        self.http_session = requests.sessions.Session()
+        self.http_session.cookies = self.session.cookies
         self.identifier = identifier
-        self.details_url = self.host + '/details/' + self.identifier
-        self.download_url = self.host + '/download/' + self.identifier
-        self.metadata_url = self.host + '/metadata/' + self.identifier
-        self.s3_endpoint = protocol + 's3.us.archive.org' + self.identifier
-        self.metadata_timeout = metadata_timeout
-        self.session = None
-        self.metadata = self.get_metadata()
-        self.exists = False if self.metadata == {} else True
 
+        # Default empty attributes.
+        self.metadata = {}
+        self.files = []
+        self.created = None
+        self.d1 = None
+        self.d2 = None
+        self.dir = None
+        self.files_count = None
+        self.item_size = None
+        self.reviews = []
+        self.server = None
+        self.uniq = None
+        self.updated = None
+
+        self._json = self.get_metadata(metadata_timeout)
+        self.exists = False if self._json == {} else True
 
     # __repr__()
     #_____________________________________________________________________________________
     def __repr__(self):
-        item_description = dict(
-                    identifier = self.identifier,
-                    exists = self.exists,
-                    item_size = self.metadata.get('item_size'),
-                    files_count = self.metadata.get('files_count'),
-        )
         return ('Item(identifier={identifier!r}, '
-                'exists={exists!r}, '
-                'item_size={item_size!r}, '
-                'files_count={files_count!r})'.format(**item_description))
-
+                'exists={exists!r})'.format(**self.__dict__))
 
     # get_metadata()
     #_____________________________________________________________________________________
-    def get_metadata(self, target=None):
-        """Get an item's metadata from the `Metadata API 
+    def get_metadata(self, metadata_timeout=None):
+        """Get an item's metadata from the `Metadata API
         <http://blog.archive.org/2013/07/04/metadata-api/>`__
 
         :type identifier: str
         :param identifier: Globally unique Archive.org identifier.
 
-        :type target: bool
-        :param target: (optional) Metadata target to retrieve.
-
         :rtype: dict
         :returns: Metadat API response.
 
         """
-        if not self.session:
-            self.session = Session()
-        response = self.session.get(self.metadata_url, timeout=self.metadata_timeout)
-        if response.status_code != 200:
-            raise ConnectionError("Unable connect to Archive.org "
-                                  "({0})".format(response.status_code))
-        metadata = response.json()
-        if target:
-            metadata = metadata.get(target, {})
+        url = '{protocol}//archive.org/metadata/{identifier}'.format(**self.__dict__)
+        try:
+            resp = self.http_session.get(url, timeout=metadata_timeout)
+            resp.raise_for_status()
+        except HTTPError as e:
+            error_msg = 'Error retrieving metadata from {0}, {1}'.format(resp.url, e)
+            log.error(error_msg)
+            raise HTTPError(error_msg)
+        metadata = resp.json()
+        for key in metadata:
+                setattr(self, key, metadata[key])
         return metadata
 
-
-    # files()
+    # iter_files()
     #_____________________________________________________________________________________
-    def files(self):
+    def iter_files(self):
         """Generator for iterating over files in an item.
 
         :rtype: generator
@@ -133,24 +130,49 @@ class Item(object):
                   <File>` objects.
 
         """
-        for file_dict in self.metadata.get('files', []):
-            file = File(self.__dict__, file_dict)
+        for file_dict in self.files:
+            file = File(self, file_dict.get('name'))
             yield file
-
 
     # file()
     #_____________________________________________________________________________________
-    def file(self, name):
+    def get_file(self, file_name):
         """Get a :class:`File <File>` object for the named file.
 
         :rtype: :class:`internetarchive.File <File>`
         :returns: An :class:`internetarchive.File <File>` object.
 
         """
-        for file_dict in self.metadata.get('files', []):
-            if file_dict.get('name') == name:
-                return File(self.__dict__, file_dict)
+        for f in self.iter_files():
+            if f.name == file_name:
+                return f
 
+    # get_files()
+    #_____________________________________________________________________________________
+    def get_files(self, files=None, source=None, formats=None, glob_pattern=None):
+        files = [] if not files else files
+        source = [] if not source else source
+
+        if not isinstance(files, (list, tuple, set)):
+            files = [files]
+        if not isinstance(source, (list, tuple, set)):
+            source = [source]
+        if not isinstance(formats, (list, tuple, set)):
+            formats = [formats]
+
+        file_objects = []
+        for f in self.iter_files():
+            if f.name in files:
+                file_objects.append(f)
+            elif f.source in source:
+                file_objects.append(f)
+            elif f.format in formats:
+                file_objects.append(f)
+            elif glob_pattern:
+                print f.name, fnmatch(f.name, glob_pattern)
+                if fnmatch(f.name, glob_pattern):
+                    file_objects.append(f)
+        return file_objects
 
     # download()
     #_____________________________________________________________________________________
@@ -187,16 +209,16 @@ class Item(object):
                 pool = Pool()
             except ImportError:
                 raise ImportError(
-                """No module named gevent
+                    """No module named gevent
 
-                Downloading files concurrently requires the gevent neworking library.
-                gevent and all of it's dependencies can be installed with pip:
+                    Downloading files concurrently requires the gevent neworking library.
+                    gevent and all of it's dependencies can be installed with pip:
 
-                \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+                    \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
 
-                """)
+                    """)
 
-        files = self.files()
+        files = self.iter_files()
         if source:
             if type(source) == str:
                 source = [source]
@@ -212,10 +234,10 @@ class Item(object):
             fname = f.name.encode('utf-8')
             path = os.path.join(self.identifier, fname)
             if dry_run:
-                stdout.write(f.url + '\n')
+                sys.stdout.write(f.url + '\n')
                 continue
             if verbose:
-                stdout.write(' downloading: {0}\n'.format(fname))
+                sys.stdout.write(' downloading: {0}\n'.format(fname))
             if concurrent:
                 pool.spawn(f.download, path, ignore_existing=ignore_existing)
             else:
@@ -224,10 +246,10 @@ class Item(object):
             pool.join()
         return True
 
-
     # modify_metadata()
     #_____________________________________________________________________________________
-    def modify_metadata(self, metadata, target='metadata', append=False, priority=0):
+    def modify_metadata(self, metadata, target='metadata', append=False, priority=0,
+                        access_key=None, secret_key=None, debug=False):
         """Modify the metadata of an existing item on Archive.org.
 
         Note: The Metadata Write API does not yet comply with the
@@ -259,7 +281,8 @@ class Item(object):
                   returned from the Metadata API.
 
         """
-        access_key, secret_key = config.get_s3_keys()
+        access_key = self.session.access_key if not access_key else access_key
+        secret_key = self.session.secret_key if not secret_key else secret_key
         src = self.metadata.get(target, {})
         dest = src.copy()
         dest.update(metadata)
@@ -274,41 +297,31 @@ class Item(object):
                     raise TypeError("Can only use append with string values.")
                 dest[key] = '{0} {1}'.format(src[key], val)
 
-        json_patch = make_patch(src, dest).patch
+        json_patch = json.dumps(make_patch(src, dest).patch)
 
-        data = {
-            '-patch': json.dumps(json_patch),
-            '-target': target,
-            'access': access_key,
-            'secret': secret_key,
-            'priority': priority,
-        }
-
-        host = 'archive.org'
-        path = '/metadata/{0}'.format(self.identifier)
-        http = httplib.HTTP(host)
-        http.putrequest("POST", path)
-        http.putheader("Host", host)
-        data = urllib.urlencode(data)
-        http.putheader("Content-Type", 'application/x-www-form-urlencoded')
-        http.putheader("Content-Length", str(len(data)))
-        http.endheaders()
-        http.send(data)
-        status_code, error_message, headers = http.getreply()
-        resp_file = http.getfile()
-        self.metadata = self.get_metadata()
-        return dict(
-            status_code = status_code,
-            content = json.loads(resp_file.read()),
+        url = '{protocol}//archive.org/metadata/{identifier}'.format(**self.__dict__)
+        request = iarequest.MetadataRequest(
+            url=url,
+            method='POST',
+            patch=json_patch,
+            target=target,
+            priority=priority,
+            access_key=access_key,
+            secret_key=secret_key,
         )
-
+        if debug:
+            return request
+        prepared_request = request.prepare()
+        resp = self.http_session.send(prepared_request)
+        self._json = self.get_metadata()
+        return resp
 
     # upload_file()
     #_____________________________________________________________________________________
     def upload_file(self, body, key=None, metadata={}, headers={},
-                    access_key=None, secret_key=None, queue_derive=True, 
+                    access_key=None, secret_key=None, queue_derive=True,
                     ignore_preexisting_bucket=False, verify=True, verbose=False,
-                    debug=False):
+                    debug=False, **kwargs):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -329,14 +342,14 @@ class Item(object):
                              being derived after upload.
 
         :type ignore_preexisting_bucket: bool
-        :param ignore_preexisting_bucket: (optional) Destroy and respecify the 
+        :param ignore_preexisting_bucket: (optional) Destroy and respecify the
                                           metadata for an item
 
         :type verbose: bool
         :param verbose: (optional) Print progress to stdout.
 
         :type debug: bool
-        :param debug: (optional) Set to True to print headers to stdout, and 
+        :param debug: (optional) Set to True to print headers to stdout, and
                       exit without sending the upload request.
 
         Usage::
@@ -348,11 +361,16 @@ class Item(object):
             True
 
         """
+        access_key = self.session.access_key if not access_key else access_key
+        secret_key = self.session.secret_key if not secret_key else secret_key
+
         if not hasattr(body, 'read'):
             body = open(body, 'rb')
+
         if not metadata.get('scanner'):
             scanner = 'Internet Archive Python library {0}'.format(__version__)
             metadata['scanner'] = scanner
+
         try:
             body.seek(0, os.SEEK_END)
             size = body.tell()
@@ -364,12 +382,8 @@ class Item(object):
             headers['x-archive-size-hint'] = size
 
         key = body.name.split('/')[-1] if key is None else key
-        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, key) 
-        headers = s3.build_headers(metadata=metadata, 
-                                   headers=headers, 
-                                   queue_derive=queue_derive,
-                                   auto_make_bucket=True,
-                                   ignore_preexisting_bucket=ignore_preexisting_bucket)
+        base_url = '{protocol}//s3.us.archive.org/{identifier}'.format(**self.__dict__)
+        url = '{base_url}/{key}'.format(base_url=base_url, key=key)
         if verify:
             headers['Content-MD5'] = utils.get_md5(body)
         if verbose:
@@ -377,31 +391,40 @@ class Item(object):
                 chunk_size = 1048576
                 expected_size = size/chunk_size + 1
                 chunks = utils.chunk_generator(body, chunk_size)
-                progress_generator = progress.bar(chunks, expected_size=expected_size, 
+                progress_generator = progress.bar(chunks, expected_size=expected_size,
                                                   label=' uploading {f}: '.format(f=key))
                 data = utils.IterableToFileAdapter(progress_generator, size)
             except:
                 sys.stdout.write(' uploading {f}: '.format(f=key))
                 data = body
         else:
-            data = body 
+            data = body
 
-        request = Request(
+        request = iarequest.S3Request(
             method='PUT',
             url=url,
             headers=headers,
             data=data,
-            auth=s3.BasicAuth(access_key, secret_key),
+            metadata=metadata,
+            access_key=access_key,
+            secret_key=secret_key,
+            **kwargs
         )
-        
+
         if debug:
             return request
         else:
-            if not self.session:
-                self.session = Session()
             prepared_request = request.prepare()
-            return self.session.send(prepared_request, stream=True)
-
+            try:
+                response = self.http_session.send(prepared_request, stream=True)
+                response.raise_for_status()
+                log.info('uploaded {f} to {u}'.format(f=key, u=url))
+                return response
+            except HTTPError as e:
+                error_msg = 'error uploading {0}, {1}'.format(key, e)
+                log.error(error_msg)
+                return response
+                #raise HTTPError(error_msg)
 
     # upload()
     #_____________________________________________________________________________________
@@ -458,22 +481,23 @@ class File(object):
     """:todo: document ``internetarchive.File`` class."""
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, item_dict, file_dict):
-        self.identifier = item_dict['identifier']
-        self.external_identifier = file_dict.get('external-identifier')
-        self.name = file_dict.get('name')
-        self.source = file_dict.get('source')
-        self.size = file_dict.get('size')
-        self.format = file_dict.get('format')
-        self.mtime = file_dict.get('mtime')
-        self.md5  = file_dict.get('md5')
-        self.crc32 = file_dict.get('crc32')
-        self.sha1 = file_dict.get('sha1')
-        self.fname = self.name.encode('utf-8')
-        self.length = file_dict.get('length')
-        self.url = item_dict.get('download_url') + '/' + urllib.quote(self.fname, safe='')
-        self.session = item_dict.get('session') if item_dict.get('session') else Session()
-
+    def __init__(self, item, name):
+        _file = {}
+        for f in item.files:
+            if f.get('name') == name:
+                _file = f
+                break
+    
+        self._item = item
+        self.identifier = item.identifier
+        self.name = None
+        self.size = None
+        self.source = None
+        self.format = None
+        for key in _file:
+            setattr(self, key, _file[key])
+        base_url = '{protocol}//archive.org/download/{identifier}'.format(**item.__dict__)
+        self.url = '{base_url}/{name}'.format(base_url=base_url, name=name)
 
     # __repr__()
     #_____________________________________________________________________________________
@@ -483,7 +507,6 @@ class File(object):
                 'size={size!r}, '
                 'source={source!r}, '
                 'format={format!r})'.format(**self.__dict__))
-
 
     # download()
     #_____________________________________________________________________________________
@@ -497,12 +520,8 @@ class File(object):
         if parent_dir != '' and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
-        if not self.session:
-            self.session = Session()
-        self.session.cookies = config.get_cookiejar()
-
         try:
-            response = self.session.get(self.url, stream=True)
+            response = self._item.http_session.get(self.url, stream=True)
             response.raise_for_status()
         except HTTPError as e:
             raise HTTPError('Error downloading {0}, {1}'.format(self.url, e))
@@ -512,23 +531,24 @@ class File(object):
                     f.write(chunk)
                     f.flush()
 
-             
     # delete()
     #_____________________________________________________________________________________
-    def delete(self, debug=False, verbose=False, cascade_delete=False):
-        headers = s3.build_headers(cascade_delete=cascade_delete)
-        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, self.fname)
-        access_key, secret_key = config.get_s3_keys()
-        request = Request(
-            method='DELETE', 
-            url=url, 
-            headers=headers,
-            auth=s3.BasicAuth(access_key, secret_key),
+    def delete(self, debug=False, verbose=False, cascade_delete=False, access_key=None,
+               secret_key=None):
+        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, self.name)
+        access_key = self._item.session.access_key if not access_key else access_key
+        secret_key = self._item.session.secret_key if not secret_key else secret_key
+        request = iarequest.S3Request(
+            method='DELETE',
+            url=url,
+            headers={'cascade_delete': cascade_delete},
+            access_key=access_key,
+            secret_key=secret_key
         )
         if debug:
-            return request 
+            return request
         else:
             if verbose:
-                stdout.write(' deleting file: {0}\n'.format(self.name))
+                sys.stdout.write(' deleting file: {0}\n'.format(self.name))
             prepared_request = request.prepare()
-            return self.session.send(prepared_request)
+            return self._item.http_session.send(prepared_request)

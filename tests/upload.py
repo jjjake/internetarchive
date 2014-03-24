@@ -14,6 +14,13 @@ import StringIO
 import tempfile
 import time
 
+import internetarchive.config as ic
+
+
+s3_conf = ic.get_config().get('s3', {})
+access = s3_conf.get('access_key')
+secret = s3_conf.get('secret_key')
+
 
 # get_new_item()
 #_________________________________________________________________________________________
@@ -38,7 +45,7 @@ def get_file(item_name, file_name):
         time.sleep(30)
 
         item = ia.Item(item_name)
-        f = item.file(file_name)
+        f = item.get_file(file_name)
         if f is not None:
             return f
 
@@ -54,7 +61,8 @@ def upload_stringIO(item):
     fh = StringIO.StringIO(contents)
     fh.name = name
 
-    item.upload(fh, metadata=dict(collection='test_collection'))
+    r = item.upload(fh, metadata=dict(collection='test_collection'), access_key=access,
+                    secret_key=secret)
 
     f = get_file(item.identifier, name)
     assert f.sha1 == hashlib.sha1(contents).hexdigest()
@@ -69,7 +77,8 @@ def upload_tempfile(item):
     temp_file.write(contents)
     temp_file.seek(0, os.SEEK_SET)
 
-    item.upload(temp_file.name, metadata=dict(collection='test_collection'))
+    item.upload(temp_file.name, metadata=dict(collection='test_collection'), 
+                access_key=access, secret_key=secret)
     temp_file.close()
 
     f = get_file(item.identifier, os.path.basename(temp_file.name))

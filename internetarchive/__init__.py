@@ -17,7 +17,7 @@ usage:
 """
 
 __title__ = 'internetarchive'
-__version__ = '0.5.1'
+__version__ = '0.5.2'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'GPL'
 __copyright__ = 'Copyright 2013 Jacob M. Johnson'
@@ -25,3 +25,17 @@ __copyright__ = 'Copyright 2013 Jacob M. Johnson'
 from .item import Item, File
 from .service import Search, Catalog
 from .api import *
+
+
+# Set default logging handler to avoid "No handler found" warnings.
+import logging
+try: # Python 2.7+
+    from logging import NullHandler
+except ImportError:
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
+
+
+log = logging.getLogger('internetarchive')
+log.addHandler(NullHandler())

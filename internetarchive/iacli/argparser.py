@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 
-
 # get_xml_text()
 #_________________________________________________________________________________________
 def get_xml_text(elements, text=''):

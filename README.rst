@@ -36,7 +36,7 @@ If you want to install this module globally on your system instead of inside a `
 Command-Line Usage
 ------------------
 Help is available by typing ``ia --help``. You can also get help on a command: ``ia <command> --help``.
-Available subcommands are ``configure``, ``metadata``, ``upload``, ``download``, ``search``, ``mine``, and ``catalog``.
+Available subcommands are ``configure``, ``metadata``, ``upload``, ``download``, ``search``, ``mine``, ``delete``, ``list``, and ``catalog``.
 
 
 Downloading
@@ -81,8 +81,8 @@ https://archive.org/account/s3.php
 
 .. code:: bash
 
-    $ export AWS_ACCESS_KEY_ID='xxx'
-    $ export AWS_SECRET_ACCESS_KEY='yyy'
+    $ export IAS3_ACCESS_KEY='xxx'
+    $ export IAS3_SECRET_KEY='yyy'
 
     #upload files:
     $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
@@ -100,8 +100,8 @@ You can use the ``ia`` command-line tool to download item metadata in JSON forma
 
     $ ia metadata TripDown1905
 
-You can also modify metadata. Be sure that the AWS\_ACCESS\_KEY\_ID and
-AWS\_SECRET\_ACCESS\_KEY environment variables are set.
+You can also modify metadata. Be sure that the IAS3\_ACCESS\_KEY and
+IAS3\_SECRET\_KEY environment variables are set.
 
 .. code:: bash
 
@@ -181,8 +181,8 @@ You can query the archive using an item identifier:
 
 .. code:: python
 
-    >>> import internetarchive
-    >>> item = internetarchive.Item('stairs')
+    >>> from internetarchive import get_item
+    >>> item = get_item('stairs')
     >>> print item.metadata
 
 Items contains files. You can download the entire item:
@@ -216,11 +216,10 @@ https://archive.org/account/s3.php
 
 .. code:: python
 
-    >>> import os
-    >>> os.environ['AWS_ACCESS_KEY_ID']='x'
-    >>> os.environ['AWS_SECRET_ACCESS_KEY']='y'
-    >>> item = internetarchive.Item('new_identifier')
-    >>> item.upload('/path/to/image.jpg', metadata=dict(mediatype='image', creator='Jake Johnson'))
+    >>> from internetarchive import get_item
+    >>> item = get_item('new_identifier')
+    >>> md = dict(mediatype='image', creator='Jake Johnson')
+    >>> item.upload('/path/to/image.jpg', access_key='xxx', secret_key='yyy')
 
 Item-level metadata must be supplied with the first file uploaded to an
 item.
@@ -238,7 +237,7 @@ You can also upload file-like objects:
 
     >>> import StringIO
     >>> fh = StringIO.StringIO('hello world')
-    >>> fh.name = 'hello_world.txt
+    >>> fh.name = 'hello_world.txt'
     >>> item.upload(fh)
 
 
@@ -252,12 +251,10 @@ and requires your IAS3 credentials.
 
 .. code:: python
 
-    >>> import os
-    >>> os.environ['AWS_ACCESS_KEY_ID']='x'
-    >>> os.environ['AWS_SECRET_ACCESS_KEY']='y'
-    >>> item = internetarchive.Item('my_identifier')
+    >>> from internetarchive import get_item
+    >>> item = get_item('my_identifier')
     >>> md = dict(blah='one', foo=['two', 'three'])
-    >>> item.modify_metadata(md)
+    >>> item.modify_metadata(md, access_key='xxx', secret_key='yyy')
 
 
 Searching from Python
@@ -268,14 +265,14 @@ engine <https://archive.org/advancedsearch.php>`__:
 
 .. code:: python
 
-    >>> import internetarchive
-    >>> search = internetarchive.Search('collection:nasa')
-    >>> print search.num_found
+    >>> from internetarchive import search
+    >>> s = search('collection:nasa')
+    >>> print s.num_found
     186911
 
 You can iterate over your results:
 
 .. code:: python
 
-    >>> for result in search.results():
+    >>> for result in s.results():
     ...     print result['identifier']

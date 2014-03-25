@@ -7,7 +7,7 @@ usage:
               (<file>... | - --remote-name=<name>)
               [--metadata=<key:value>...] [--header=<key:value>...]
               [--no-derive] [--ignore-bucket] [--size-hint=<size>]
-              [--log]
+              [--delete] [--log]
     ia upload --help
 
 options:
@@ -23,6 +23,8 @@ options:
     -i, --ignore-bucket            Destroy and respecify all metadata.
     -s, --size-hint=<size>         Specify a size-hint for your item.
     -l, --log                      Log upload results to file.
+    --delete                       Delete files after verifying checksums 
+                                   [default: False].
 
 """
 import os
@@ -56,7 +58,8 @@ def main(argv):
         debug=args['--debug'],
         queue_derive=True if args['--no-derive'] is False else False,
         ignore_preexisting_bucket=args['--ignore-bucket'],
-        verbose=verbose)
+        verbose=verbose,
+        delete=args['--delete'])
 
     # Upload stdin.
     if args['<file>'] == ['-'] and not args['-']:

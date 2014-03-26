@@ -1,7 +1,7 @@
 """Concurrently download metadata for items on Archive.org.
 
 usage:
-    ia mine [--cache | --output=<output.json>] [--workers=<count>] <itemlist.txt>
+    ia mine [--cache | --output=<output.json>] [--workers=<count>] (<itemlist.txt>|-)
     ia mine --help
 
 options:

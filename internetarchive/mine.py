@@ -8,7 +8,7 @@ except ImportError:
 
     This feature requires the gevent neworking library. gevent
     and all of it's dependencies can be installed with pip:
-    \tpip install cython gevent
+    \tpip install gevent
 
     """)
 

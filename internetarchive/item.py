@@ -214,7 +214,7 @@ class Item(object):
                     Downloading files concurrently requires the gevent neworking library.
                     gevent and all of it's dependencies can be installed with pip:
 
-                    \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+                    \tpip install gevent
 
                     """)
 

@@ -2,7 +2,6 @@ try:
     import ujson as json
 except ImportError:
     import json
-import urllib
 import os
 import sys
 from fnmatch import fnmatch
@@ -12,6 +11,7 @@ import requests.sessions
 from requests.exceptions import HTTPError
 from jsonpatch import make_patch
 from clint.textui import progress
+import six
 
 from . import __version__, session, iarequest, utils
 
@@ -467,7 +467,7 @@ class Item(object):
         responses = []
         for f in files:
             key = None
-            if isinstance(f, basestring) and os.path.isdir(f):
+            if isinstance(f, six.string_types) and os.path.isdir(f):
                 for filepath, key in iter_directory(f):
                     resp = self.upload_file(filepath, key=key, **kwargs)
                     responses.append(resp)

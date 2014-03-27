@@ -2,12 +2,6 @@ from setuptools import setup
 import sys
 
 
-extra = {}
-if sys.version_info >= (3,):
-    sys.stderr.write('Python3 is not yet supported.\n')
-    sys.exit(1)
-    #extra['use_2to3'] = True
-
 setup(
     name='internetarchive',
     version='0.5.2',
@@ -30,6 +24,7 @@ setup(
         'docopt==0.6.1',
         'PyYAML==3.10',
         'clint==0.3.3',
+        'six==1.4.1',
     ],
     extras_require = {
         'speedups': [
@@ -38,5 +33,4 @@ setup(
             'gevent==1.0',
         ],
     },
-    **extra
 )

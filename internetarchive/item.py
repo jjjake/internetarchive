@@ -27,13 +27,13 @@ class Item(object):
 
         >>> import internetarchive
         >>> item = internetarchive.Item('stairs')
-        >>> print item.metadata
+        >>> print(item.metadata)
 
     Or to modify the metadata for an item::
 
         >>> metadata = dict(title='The Stairs')
         >>> item.modify(metadata)
-        >>> print item.metadata['title']
+        >>> print(item.metadata['title'])
         u'The Stairs'
 
     This class also uses IA's S3-like interface to upload files to an
@@ -168,7 +168,6 @@ class Item(object):
             elif f.format in formats:
                 file_objects.append(f)
             elif glob_pattern:
-                print f.name, fnmatch(f.name, glob_pattern)
                 if fnmatch(f.name, glob_pattern):
                     file_objects.append(f)
         return file_objects

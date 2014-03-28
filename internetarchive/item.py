@@ -2,7 +2,6 @@ try:
     import ujson as json
 except ImportError:
     import json
-import urllib
 import os
 import sys
 from fnmatch import fnmatch
@@ -13,6 +12,7 @@ import requests.sessions
 from requests.exceptions import HTTPError
 from jsonpatch import make_patch
 from clint.textui import progress
+import six
 
 from . import __version__, session, iarequest, utils
 
@@ -28,13 +28,13 @@ class Item(object):
 
         >>> import internetarchive
         >>> item = internetarchive.Item('stairs')
-        >>> print item.metadata
+        >>> print(item.metadata)
 
     Or to modify the metadata for an item::
 
         >>> metadata = dict(title='The Stairs')
         >>> item.modify(metadata)
-        >>> print item.metadata['title']
+        >>> print(item.metadata['title'])
         u'The Stairs'
 
     This class also uses IA's S3-like interface to upload files to an
@@ -169,7 +169,6 @@ class Item(object):
             elif f.format in formats:
                 file_objects.append(f)
             elif glob_pattern:
-                print f.name, fnmatch(f.name, glob_pattern)
                 if fnmatch(f.name, glob_pattern):
                     file_objects.append(f)
         return file_objects
@@ -214,7 +213,7 @@ class Item(object):
                     Downloading files concurrently requires the gevent neworking library.
                     gevent and all of it's dependencies can be installed with pip:
 
-                    \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+                    \tpip install gevent
 
                     """)
 
@@ -320,8 +319,8 @@ class Item(object):
     #_____________________________________________________________________________________
     def upload_file(self, body, key=None, metadata={}, headers={},
                     access_key=None, secret_key=None, queue_derive=True,
-                    ignore_preexisting_bucket=False, verify=True, verbose=False,
-                    debug=False, **kwargs):
+                    ignore_preexisting_bucket=False, verbose=False, verify=True, 
+                    delete=False, debug=False, **kwargs):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -344,6 +343,14 @@ class Item(object):
         :type ignore_preexisting_bucket: bool
         :param ignore_preexisting_bucket: (optional) Destroy and respecify the
                                           metadata for an item
+
+        :type verify: bool
+        :param verify: (optional) Verify local MD5 checksum matches the MD5 
+                       checksum of the file received by IAS3.
+
+        :type delete: bool
+        :param delete: (optional) Delete local file after the upload has been
+                       successfully verified.
 
         :type verbose: bool
         :param verbose: (optional) Print progress to stdout.
@@ -384,7 +391,8 @@ class Item(object):
         key = body.name.split('/')[-1] if key is None else key
         base_url = '{protocol}//s3.us.archive.org/{identifier}'.format(**self.__dict__)
         url = '{base_url}/{key}'.format(base_url=base_url, key=key)
-        if verify:
+        # require the Content-MD5 header when delete is True.
+        if verify or delete:
             headers['Content-MD5'] = utils.get_md5(body)
         if verbose:
             try:
@@ -419,6 +427,8 @@ class Item(object):
                 response = self.http_session.send(prepared_request, stream=True)
                 response.raise_for_status()
                 log.info('uploaded {f} to {u}'.format(f=key, u=url))
+                if delete and response.status_code == 200:
+                    os.remove(body.name)
                 return response
             except HTTPError as e:
                 error_msg = 'error uploading {0}, {1}'.format(key, e)
@@ -465,7 +475,7 @@ class Item(object):
         responses = []
         for f in files:
             key = None
-            if isinstance(f, basestring) and os.path.isdir(f):
+            if isinstance(f, six.string_types) and os.path.isdir(f):
                 for filepath, key in iter_directory(f):
                     resp = self.upload_file(filepath, key=key, **kwargs)
                     responses.append(resp)

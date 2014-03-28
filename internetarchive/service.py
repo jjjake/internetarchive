@@ -2,8 +2,8 @@ try:
     import ujson as json
 except ImportError:
     import json
-import urllib
-import urllib2
+from six.moves.urllib.parse import urlencode, parse_qsl
+from six.moves.urllib.request import urlopen
 
 from requests import Session
 import requests.cookies
@@ -42,7 +42,7 @@ class Search(object):
         for k, v in enumerate(fields):
             key = 'fl[{0}]'.format(k)
             self.params[key] = v
-        self.encoded_params = urllib.urlencode(self.params)
+        self.encoded_params = urlencode(self.params)
         self.search_info = self._get_search_info()
         self.num_found = self.search_info['response']['numFound']
 
@@ -59,8 +59,8 @@ class Search(object):
     def _get_search_info(self):
         info_params = self.params.copy()
         info_params['rows'] = 0
-        encoded_info_params = urllib.urlencode(info_params)
-        f = urllib.urlopen(self._base_url, encoded_info_params)
+        encoded_info_params = urlencode(info_params)
+        f = urlopen(self._base_url, encoded_info_params)
         results = json.loads(f.read())
         del results['response']['docs']
         return results
@@ -73,8 +73,8 @@ class Search(object):
         total_pages = ((self.num_found / self.params['rows']) + 2)
         for page in range(1, total_pages):
             self.params['page'] = page
-            encoded_params = urllib.urlencode(self.params)
-            f = urllib.urlopen(self._base_url, encoded_params)
+            encoded_params = urlencode(self.params)
+            f = urlopen(self._base_url, encoded_params)
             results = json.loads(f.read())
             for doc in results['response']['docs']:
                 yield doc
@@ -174,7 +174,7 @@ class CatalogTask(object):
             if a: setattr(self, a, v)
         # special handling for 'args' - parse it into a dict if it is a string
         if isinstance(self.args, basestring):
-            self.args = dict(x for x in urllib2.urlparse.parse_qsl(self.args))
+            self.args = dict(x for x in parse_qsl(self.args))
 
     def __repr__(self):
         return ('CatalogTask(identifier={identifier},'
@@ -195,4 +195,4 @@ class CatalogTask(object):
         if self.task_id is None:
             raise ValueError('task_id is None')
         url = 'http://catalogd.archive.org/log/{0}'.format(self.task_id)
-        return urllib2.urlopen(url)
+        return urlopen(url)

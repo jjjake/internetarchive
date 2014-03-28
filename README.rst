@@ -53,7 +53,7 @@ To download the entire `TripDown1905 <https://archive.org/details/TripDown1905>`
 .. code:: bash
 
     #download just the mp4 files using ``--glob``
-    $ ia download TripDown1905 --glob='*.mp4'
+    $ ia download TripDown1905 --glob='\*.mp4'
 
     #download all the mp4 files using ``--formats``:
     $ ia download TripDown1905 --format='512Kb MPEG4'

@@ -74,3 +74,5 @@ def test_ia_download():
     stdout, stderr = proc.communicate()
     assert proc.returncode == 0
     shutil.rmtree('nasa')
+    
+    os.chdir(prevdir)

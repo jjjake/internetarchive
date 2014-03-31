@@ -9,7 +9,7 @@ sys.path.insert(0, inc_path)
 import internetarchive.config
 
 
-def test_ia_metadata_exists():
+def test_ia_list():
     nasa_files = ['NASAarchiveLogo.jpg', 'globe_west_540.jpg', 'nasa_reviews.xml',
                   'nasa_meta.xml', 'nasa_archive.torrent', 'nasa_files.xml']
     cmd = 'ia ls nasa'
@@ -19,17 +19,20 @@ def test_ia_metadata_exists():
     assert all(f in output  for f in nasa_files)
     assert proc.returncode == 0
 
+def test_ia_list_glob():
     cmd = 'ia ls nasa --glob="*torrent"'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
     assert stdout == 'nasa_archive.torrent\r\n'
     assert proc.returncode == 0
 
+def test_ia_list_verbose():
     cmd = 'ia ls nasa --all --verbose'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
     assert proc.returncode == 0
 
+def test_ia_list_location():
     cmd = 'ia ls nasa --location'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()

@@ -15,6 +15,7 @@ def test_ia_search():
     stdout, stderr = proc.communicate()
     assert proc.returncode == 0
 
+def test_ia_search_number():
     cmd = 'ia search iacli-test-item --number-found'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()

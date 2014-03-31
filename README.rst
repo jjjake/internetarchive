@@ -81,6 +81,11 @@ https://archive.org/account/s3.php
 
 .. code:: bash
 
+    #Supply the keys by:
+    $ export IAS3_ACCESS_KEY='xxx'
+    $ export IAS3_SECRET_KEY='yyy'
+
+    #Or:
     $ ia configure
     Please visit https://archive.org/account/s3.php to retrieve your S3 keys
     
@@ -88,8 +93,9 @@ https://archive.org/account/s3.php
     Please enter your IA S3 secret key: yyy
     
     Successfully saved your new config to: /home/yaron/.config/internetarchive.yml
+
     
-    #upload files:
+    #Upload files:
     $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
 
     #upload from `stdin`:

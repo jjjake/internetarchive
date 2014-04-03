@@ -48,7 +48,7 @@ def test_api():
 
     # download()
     if os.path.exists('iacli-test-item'):
-        shutil.rmtree(item_dir)
+        shutil.rmtree('iacli-test-item')
     r = download('iacli-test-item')
     assert os.path.exists('iacli-test-item')
     shutil.rmtree('iacli-test-item')

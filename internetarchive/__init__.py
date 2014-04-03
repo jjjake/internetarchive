@@ -6,8 +6,8 @@ Internetarchive Library
 Internetarchive is a python interface to archive.org.
 usage:
 
-    >>> import internetarchive
-    >>> item = internetarchive.Item('govlawgacode20071')
+    >>> from internetarchive import get_item
+    >>> item = get_item('govlawgacode20071')
     >>> item.exists
     True
 
@@ -17,13 +17,14 @@ usage:
 """
 
 __title__ = 'internetarchive'
-__version__ = '0.5.2'
+__version__ = '0.5.3'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'GPL'
 __copyright__ = 'Copyright 2013 Jacob M. Johnson'
 
 from .item import Item, File
-from .service import Search, Catalog
+from .search import Search
+from .catalog import Catalog
 from .api import *
 
 

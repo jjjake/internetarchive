@@ -58,7 +58,7 @@ def test_api():
     os.remove('nasa_meta.xml')
 
     # search()
-    s = search('identifier:nasa')
+    s = search_items('identifier:nasa')
     assert s.num_found == 1
 
 @pytest.mark.skipif('internetarchive.config.get_config().get("cookies") == None',

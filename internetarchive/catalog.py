@@ -3,105 +3,118 @@ try:
 except ImportError:
     import json
 from six.moves.urllib.parse import parse_qsl
-from six.moves.urllib.request import urlopen
 
-from requests import Session
-import requests.cookies
+import requests.sessions
 
-from . import config
+from . import session
 
 
+# Catalog class
 #_________________________________________________________________________________________
 class Catalog(object):
     """:todo: Document Catalog Class."""
-    GREEN = 0
-    BLUE = 1
-    RED = 2
-    BROWN = 9
+
+    ROW_TYPES = dict(
+        green=0,
+        blue=1,
+        red=2,
+        brown=9,
+        purple=-1,
+    )
 
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, identifier=None, params={}, verbose=True):
+    def __init__(self, identifier=None, task_ids=None, params={}, verbose=True,
+                 config=None):
         verbose = '1' if verbose else '0'
-        params = {'justme': 1} if not params else params
-        # Params required to retrieve JSONP from the IA catalog.
-        params['json'] = 2
-        params['output'] = 'json'
-        params['callback'] = 'foo'
+        params = {} if not params else params
 
-        self.session = Session()
+        self.session = session.ArchiveSession(config)
+        self.http_session = requests.sessions.Session()
+
+        # Set cookies from config.
+        self.http_session.cookies = self.session.cookies
+        self.http_session.cookies['verbose'] = verbose
+
+        # Params required to retrieve JSONP from the IA catalog.
+        self.params = dict(
+            json=2,
+            output='json',
+            callback='foo',
+        )
+        self.params.update(params)
+        # Return user's current tasks as default.
+        if not identifier and not task_ids:
+            self.params['justme'] = 1
+
+        if task_ids:
+            self.params.update(dict(
+                where='task_id in({tasks})'.format(tasks=','.join(task_ids)),
+                history=99999999999999999999999, # TODO: is there a better way?
+            ))
+
         if identifier:
             self.url = 'http://archive.org/history/{id}'.format(id=identifier)
+        elif task_ids:
+            self.url = 'http://cat-tracey.archive.org/catalog.php'
         else:
             self.url = 'http://archive.org/catalog.php'
-        self.params = params
-        cookies = requests.cookies.cookiejar_from_dict(config.get_config().get('cookies', {}))
-        cookies['verbose'] = verbose
-        self.session.cookies = cookies
-        self.tasks = self.get_tasks()
 
-    # get_tasks()
+        # Get tasks.
+        self.tasks = self._get_tasks()
+
+        # Set row_type attrs.
+        for key in self.ROW_TYPES:
+            rows = [t for t in self.tasks if t.row_type == self.ROW_TYPES[key]]
+            setattr(self, '{0}_rows'.format(key), rows)
+
+    # _get_tasks()
     #_____________________________________________________________________________________
-    def get_tasks(self):
-        r = self.session.get(self.url, params=self.params)
+    def _get_tasks(self):
+        r = self.http_session.get(self.url, params=self.params)
         # Convert JSONP to JSON (then parse the JSON).
         json_str = r.content[(r.content.index("(") + 1):r.content.rindex(")")]
-        return [CatalogTask(t) for t in json.loads(json_str)]
-
-    # filter_tasks()
-    #_____________________________________________________________________________________
-    def filter_tasks(self, pred):
-        return [t for t in self.tasks if pred(t)]
-
-    # tasks_by_type()
-    #_____________________________________________________________________________________
-    def tasks_by_type(self, row_type):
-        return self.filter_tasks(lambda t: t.row_type == row_type)
-
-    # green_rows()
-    #_____________________________________________________________________________________
-    @property
-    def green_rows(self):
-        return self.tasks_by_type(self.GREEN)
-
-    # blue_rows()
-    #_____________________________________________________________________________________
-    @property
-    def blue_rows(self):
-        return self.tasks_by_type(self.BLUE)
-
-    # red_rows()
-    #_____________________________________________________________________________________
-    @property
-    def red_rows(self):
-        return self.tasks_by_type(self.RED)
-
-    # brown_rows()
-    #_____________________________________________________________________________________
-    @property
-    def brown_rows(self):
-        return self.tasks_by_type(self.BROWN)
+        return [
+            CatalogTask(t, http_session=self.http_session) for t in json.loads(json_str)
+        ]
 
 
 # CatalogTask class
 #_________________________________________________________________________________________
 class CatalogTask(object):
-    """represents catalog task.
     """
-    COLUMNS = ('identifier', 'server', 'command', 'time', 'submitter',
-               'args', 'task_id', 'row_type')
+    Represents catalog task.
 
-    def __init__(self, columns):
-        """:param columns: array of values, typically returned by catalog
-        web service. see COLUMNS for the column name.
-        """
-        for a, v in map(None, self.COLUMNS, columns):
-            if a:
-                setattr(self, a, v)
+    """
+
+    COLUMNS = (
+        'identifier',
+        'server',
+        'command',
+        'time',
+        'submitter',
+        'args',
+        'task_id',
+        'row_type'
+    )
+
+    # init()
+    #_____________________________________________________________________________________
+    def __init__(self, columns, http_session=None):
+        if not http_session:
+            self._http_session = requests.sessions.Session()
+        else:
+            self._http_session = http_session
+
+        for key, value in map(None, self.COLUMNS, columns):
+            if key:
+                setattr(self, key, value)
         # special handling for 'args' - parse it into a dict if it is a string
         if isinstance(self.args, basestring):
             self.args = dict(x for x in parse_qsl(self.args))
 
+    # __repr__()
+    #_____________________________________________________________________________________
     def __repr__(self):
         return ('CatalogTask(identifier={identifier},'
                 ' task_id={task_id!r}, server={server!r},'
@@ -109,16 +122,28 @@ class CatalogTask(object):
                 ' submitter={submitter!r},'
                 ' row_type={row_type})'.format(**self.__dict__))
 
-    def __getitem__(self, k):
-        """dict-like access privided as backward compatibility."""
-        if k in self.COLUMNS:
-            return getattr(self, k, None)
-        else:
-            raise KeyError(k)
+    # __getitem__()
+    #_____________________________________________________________________________________
+    def __getitem__(self, key):
+        """
+        Dict-like access provided as backward compatibility.
 
-    def open_task_log(self):
-        """return file-like reading task log."""
+        """
+        if key in self.COLUMNS:
+            return getattr(self, key, None)
+        else:
+            raise KeyError(key)
+
+    # task_log()
+    #_____________________________________________________________________________________
+    def task_log(self):
+        """
+        Return file-like reading task log.
+
+        """
         if self.task_id is None:
             raise ValueError('task_id is None')
         url = 'http://catalogd.archive.org/log/{0}'.format(self.task_id)
-        return urlopen(url)
+        r = self._http_session.get(url)
+        r.raise_for_status()
+        return r.content

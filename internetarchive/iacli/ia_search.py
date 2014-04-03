@@ -44,6 +44,6 @@ def main(argv):
     if args['--number-found']:
         sys.stdout.write('{0}\n'.format(search_resp.num_found))
         sys.exit(0)
-    for result in search_resp():
+    for result in search_resp:
         output = '\t'.join([result.get(f, '') for f in fields]).encode('utf-8')
         sys.stdout.write(output + '\n')

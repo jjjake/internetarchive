@@ -480,10 +480,44 @@ class Item(object):
 # File class
 #_________________________________________________________________________________________
 class File(object):
-    """:todo: document ``internetarchive.File`` class."""
+    """This class represents a file in an archive.org item. You
+    can use this class to access the file metadata::
+
+        >>> import internetarchive
+        >>> file = internetarchive.get_files('stairs', 'stairs.avi')[0]
+        >>> print(file.format)
+        Cinepack
+        >>> print(file.size)
+        3786730
+        >>> print((file.width,file.height))
+        (u'640', u'480')
+
+    Or to download a file::
+        >>> file.download()
+        >>> file.download('fabulous_movie_of_stairs.avi')
+
+    This class also uses IA's S3-like interface to delete a file
+    from an item. You need to supply your IAS3 credentials in
+    environment variables in order to delete::
+
+        >>> file.delete(access_key='Y6oUrAcCEs4sK8ey',
+                        secret_key='youRSECRETKEYzZzZ')
+        
+    You can retrieve S3 keys here: `https://archive.org/account/s3.php
+    <https://archive.org/account/s3.php>`__
+    
+    """
     # init()
     #_____________________________________________________________________________________
     def __init__(self, item, name):
+        """
+        :type item: Item
+        :param item: The item that the file is part of.
+
+        :type name: str
+        :param name: The filename of the file.
+
+        """
         _file = {}
         for f in item.files:
             if f.get('name') == name:
@@ -513,7 +547,14 @@ class File(object):
     # download()
     #_____________________________________________________________________________________
     def download(self, file_path=None, ignore_existing=False):
-        """:todo: document ``internetarchive.File.download()`` method"""
+        """Download the file into the current working directory.
+        
+        :type file_path: str
+        : param file_path: Download file to the given file_path.
+
+        :type ignore_existing: bool
+        :param ignore_existing: Overwrite local files if they already
+                                exist."""
         file_path = self.name if not file_path else file_path
         if os.path.exists(file_path) and not ignore_existing:
             raise IOError('File already exists: {0}'.format(file_path))
@@ -537,6 +578,20 @@ class File(object):
     #_____________________________________________________________________________________
     def delete(self, debug=False, verbose=False, cascade_delete=False, access_key=None,
                secret_key=None):
+        """Delete a file from the Archive. Note: Some files -- such as
+        <itemname>_meta.xml -- cannot be deleted.
+
+        :type debug: bool
+        :param debug: Set to True to print headers to stdout and exit
+                      exit without sending the delete request.
+
+        :type verbose: bool
+        :param verbose: Print actions to stdout.
+
+        :type cascade_delete: bool
+        :param cascade_delete: Also deletes files derived from the file,
+                               and files the file was derived from.
+        """
         url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, self.name)
         access_key = self._item.session.access_key if not access_key else access_key
         secret_key = self._item.session.secret_key if not secret_key else secret_key

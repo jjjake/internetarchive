@@ -277,7 +277,7 @@ class Item(object):
         """
         access_key = self.session.access_key if not access_key else access_key
         secret_key = self.session.secret_key if not secret_key else secret_key
-        src = self.metadata.get(target, {})
+        src = self.__dict__.get(target, {})
         dest = src.copy()
         dest.update(metadata)
 

@@ -1,6 +1,6 @@
 from sys import stdout
 
-from . import item, service
+from . import item, search, catalog
 
 
 # get_item()
@@ -115,18 +115,18 @@ def delete(identifier, filenames=None, **kwargs):
 # get_tasks()
 #_________________________________________________________________________________________
 def get_tasks(**kwargs):
-    catalog = service.Catalog(identifier=kwargs.get('identifier'),
+    _catalog = catalog.Catalog(identifier=kwargs.get('identifier'),
                               params=kwargs.get('params'))
     task_type = kwargs.get('task_type')
     if task_type:
-        return eval('catalog.{0}_rows'.format(task_type.lower()))
+        return eval('_catalog.{0}_rows'.format(task_type.lower()))
     else:
-        return catalog.tasks
+        return _catalog.tasks
 
-# search()
+# search_items()
 #_________________________________________________________________________________________
-def search(query, **kwargs):
-    return service.Search(query, **kwargs)
+def search_items(query, **kwargs):
+    return search.Search(query, **kwargs)
 
 # mine()
 #_________________________________________________________________________________________

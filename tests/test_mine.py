@@ -9,8 +9,8 @@ try:
     test = True
 except ImportError:
     test = False
+pytestmark = pytest.mark.skipif('test == False', reason='requires gevent.')
 
-@pytest.mark.skipif('test == False', reason='requires gevent.')
 def test_mine():
     def general_tests(ids):
         miner = internetarchive.mine.Mine(ids)
@@ -25,7 +25,6 @@ def test_mine():
     general_tests(['%%'])
 
 
-@pytest.mark.skipif('test == False', reason='requires gevent.')
 def test_good_ids():
     ids = ['ozmaofoz00486gut', 'ozma_of_oz_librivox',
            'theemeraldcityof00517gut', 'emerald_city_librivox',
@@ -38,7 +37,6 @@ def test_good_ids():
         assert item.metadata['identifier'] == ident
 
 
-@pytest.mark.skipif('test == False', reason='requires gevent.')
 def test_bad_ids():
     bad_ids = ['%%', '../cow']
     

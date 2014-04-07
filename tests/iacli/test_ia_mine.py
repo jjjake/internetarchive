@@ -9,6 +9,14 @@ inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
 import internetarchive.config
 
+try:
+    import internetarchive.mine
+    test = True
+except ImportError:
+    test = False
+pytestmark = pytest.mark.skipif('test == False', reason='requires gevent.')
+
+
 @pytest.fixture
 def dir_with_testlist():
     newpath = tempfile.mkdtemp()

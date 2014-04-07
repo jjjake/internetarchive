@@ -48,6 +48,8 @@ class Catalog(object):
             self.params['justme'] = 1
 
         if task_ids:
+            if not isinstance(task_ids, (set, list)):
+                task_ids = [task_ids]
             self.params.update(dict(
                 where='task_id in({tasks})'.format(tasks=','.join(task_ids)),
                 history=99999999999999999999999, # TODO: is there a better way?

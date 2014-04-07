@@ -14,15 +14,15 @@ def test_ia_download_urls():
     cmd = 'ia download --dry-run nasa'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
-    test_output = '\n'.join([
+    test_output_set = set([
         "http://archive.org/download/nasa/NASAarchiveLogo.jpg",
         "http://archive.org/download/nasa/globe_west_540.jpg",
         "http://archive.org/download/nasa/nasa_reviews.xml",
         "http://archive.org/download/nasa/nasa_meta.xml",
         "http://archive.org/download/nasa/nasa_archive.torrent",
-        "http://archive.org/download/nasa/nasa_files.xml\n",
+        "http://archive.org/download/nasa/nasa_files.xml",
     ])
-    assert stdout == test_output
+    assert set(stdout[:-1].split('\n')) == test_output_set
 
 
 def test_ia_download_all(tmpdir):

@@ -10,9 +10,9 @@ import internetarchive.config
 
 try:
     import internetarchive.mine
-    test_mine = True
+    can_test_mine = True
 except ImportError:
-    test_mine = False
+    can_test_mine = False
 
 def test_api_get_item():
     item = get_item('iacli-test-item')
@@ -85,7 +85,7 @@ def test_funtions_needing_s3_keys():
 
 
 
-@pytest.mark.skipif('test_mine == False', reason='needs `internetarchive.mine` installed')
+@pytest.mark.skipif('can_test_mine == False', reason='needs `internetarchive.mine` installed')
 def test_mine():
     ids = ['iacli-test-item', 'nasa']
     miner = get_data_miner(ids)

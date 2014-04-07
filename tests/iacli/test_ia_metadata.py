@@ -24,12 +24,12 @@ def test_ia_metadata_formats():
     cmd = 'ia metadata --formats iacli_test_item'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
-    test_output = '\n'.join([
+    test_output_set = set([
         "Text",
         "Archive BitTorrent",
-        "Metadata\n",
+        "Metadata",
     ])
-    assert stdout == test_output
+    assert set(stdout[:-1].split('\n')) == test_output_set
 
 @pytest.mark.skipif('internetarchive.config.get_config().get("cookies") == None',
                     reason='requires authorization.')

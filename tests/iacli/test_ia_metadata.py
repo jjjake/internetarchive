@@ -29,6 +29,7 @@ def test_ia_metadata_formats():
         "Archive BitTorrent",
         "Metadata",
     ])
+    assert proc.returncode == 0
     assert set(stdout[:-1].split('\n')) == test_output_set
 
 @pytest.mark.skipif('internetarchive.config.get_config().get("cookies") == None',

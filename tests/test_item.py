@@ -9,6 +9,12 @@ def test_item():
     item = internetarchive.Item('nasa')
     assert item.metadata['identifier'] == 'nasa'
 
+def test_item_metadata():
+    item = internetarchive.Item('nasa')
+    assert item.files_count == len(item.files)
+    assert item.item_size == sum(int(file.get('size', '0')) for file in item.files)
+    
+
 
 def test_file(tmpdir):
     with tmpdir.as_cwd():
@@ -25,4 +31,6 @@ def test_download(tmpdir):
         item_dir = item.identifier
         item.download()
         assert os.path.exists(item_dir)
-        assert os.path.exists(os.path.join(item_dir, item.identifier+'_meta.xml'))
+        for file in item.iter_files():
+            assert os.path.exists(os.path.join(item_dir, file.name))
+

@@ -35,14 +35,14 @@ def test_ia_metadata_formats():
 @pytest.mark.skipif('internetarchive.config.get_config().get("cookies") == None',
                     reason='requires authorization.')
 class TestIaMetadataModify:
-    def test_modify_test_item():
+    def test_modify_test_item(self):
         valid_key = "foo-{k}".format(k=int(time())) 
         cmd = 'ia metadata --modify="{k}:test_value" iacli_test_item'.format(k=valid_key)
         proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
         assert proc.returncode == 0
 
-    def test_submit_illegal_modification():
+    def test_submit_illegal_modification(self):
         cmd = 'ia metadata --modify="-foo:test_value" iacli_test_item'
         proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()

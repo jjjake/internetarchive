@@ -61,14 +61,18 @@ def test_api_search():
 @pytest.mark.skipif('internetarchive.config.get_config().get("cookies") == None',
                     reason='requires authorization.')
 class TestFunctionsNeedingCookies:
+    def __init__(self):
+        self.valid_key = "foo-{k}".format(k=int(time()))
+
     def test_api_modify_metadata(self):
-        valid_key = "foo-{k}".format(k=int(time()))
+        valid_key = self.valid_key
         md = {
             valid_key: 'test value'
         }
         r = modify_metadata('iacli-test-item', md)
 
     def test_api_remove_tag(self):
+        valid_key = self.valid_key
         md = {
             valid_key: 'REMOVE_TAG'
         }

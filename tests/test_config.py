@@ -1,8 +1,8 @@
 import os, sys, shutil
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
-
 import yaml
+import pytest
 
 import internetarchive.config
 
@@ -31,14 +31,21 @@ def test_config(tmpdir):
     assert config['s3']['secret_key'] == 'test-secret'
     assert config['custom'] == 'test'
 
-def test_no_config():
+
+@pytest.fixture(scope='function')
+def with_no_home(request):
+    old_home = os.environ['HOME']
     os.environ['HOME'] = ''
+    def go_back_home():
+        os.environ['HOME'] = old_home # there's no place like home...
+    request.addfinalizer(go_back_home)
+
+def test_no_config(with_no_home):
     #config = internetarchive.config.get_config(config=test_conf)
     config = internetarchive.config.get_config()
     assert config == {}
 
-def test_custom_config():
-    os.environ['HOME'] = ''
+def test_custom_config(with_no_home):
     config = internetarchive.config.get_config(config=test_conf)
     assert config['cookies']['logged-in-sig'] == 'test-sig'
     assert config['cookies']['logged-in-user'] == 'test-user'

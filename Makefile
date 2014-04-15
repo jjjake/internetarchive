@@ -10,7 +10,7 @@ test:
 	py.test --verbose
 
 coverage:
-	py.test --verbose --cov-report term --cov=internetarchive
+	py.test --verbose --cov-report html --cov=internetarchive
 
 publish:
 	python setup.py register

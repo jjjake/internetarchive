@@ -1,6 +1,8 @@
 .. _api:
+
 API Documentation
 =================
+
 .. module:: internetarchive
 
 .. autofunction:: get_item

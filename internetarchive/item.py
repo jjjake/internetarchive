@@ -490,6 +490,7 @@ class File(object):
         (u'Cinepack', u'3786730')
 
     Or to download a file::
+
         >>> file.download()
         >>> file.download('fabulous_movie_of_stairs.avi')
 
@@ -498,7 +499,7 @@ class File(object):
     environment variables in order to delete::
 
         >>> file.delete(access_key='Y6oUrAcCEs4sK8ey',
-                        secret_key='youRSECRETKEYzZzZ')
+        ...             secret_key='youRSECRETKEYzZzZ')
 
     You can retrieve S3 keys here: `https://archive.org/account/s3.php
     <https://archive.org/account/s3.php>`__
@@ -547,7 +548,7 @@ class File(object):
         """Download the file into the current working directory.
 
         :type file_path: str
-        : param file_path: Download file to the given file_path.
+        :param file_path: Download file to the given file_path.
 
         :type ignore_existing: bool
         :param ignore_existing: Overwrite local files if they already

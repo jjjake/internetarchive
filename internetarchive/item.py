@@ -311,7 +311,7 @@ class Item(object):
     #_____________________________________________________________________________________
     def upload_file(self, body, key=None, metadata={}, headers={},
                     access_key=None, secret_key=None, queue_derive=True,
-                    ignore_preexisting_bucket=False, verbose=False, verify=True, 
+                    ignore_preexisting_bucket=False, verbose=False, verify=True,
                     delete=False, debug=False, **kwargs):
         """Upload a single file to an item. The item will be created
         if it does not exist.
@@ -337,7 +337,7 @@ class Item(object):
                                           metadata for an item
 
         :type verify: bool
-        :param verify: (optional) Verify local MD5 checksum matches the MD5 
+        :param verify: (optional) Verify local MD5 checksum matches the MD5
                        checksum of the file received by IAS3.
 
         :type delete: bool
@@ -484,13 +484,10 @@ class File(object):
     can use this class to access the file metadata::
 
         >>> import internetarchive
-        >>> file = internetarchive.get_files('stairs', 'stairs.avi')[0]
-        >>> print(file.format)
-        Cinepack
-        >>> print(file.size)
-        3786730
-        >>> print((file.width,file.height))
-        (u'640', u'480')
+        >>> item = internetarchive.Item('stairs')
+        >>> file = internetarchive.File(item, 'stairs.avi')
+        >>> print(f.format, f.size)
+        (u'Cinepack', u'3786730')
 
     Or to download a file::
         >>> file.download()
@@ -502,10 +499,10 @@ class File(object):
 
         >>> file.delete(access_key='Y6oUrAcCEs4sK8ey',
                         secret_key='youRSECRETKEYzZzZ')
-        
+
     You can retrieve S3 keys here: `https://archive.org/account/s3.php
     <https://archive.org/account/s3.php>`__
-    
+
     """
     # init()
     #_____________________________________________________________________________________
@@ -523,7 +520,7 @@ class File(object):
             if f.get('name') == name:
                 _file = f
                 break
-    
+
         self._item = item
         self.identifier = item.identifier
         self.name = None
@@ -548,7 +545,7 @@ class File(object):
     #_____________________________________________________________________________________
     def download(self, file_path=None, ignore_existing=False):
         """Download the file into the current working directory.
-        
+
         :type file_path: str
         : param file_path: Download file to the given file_path.
 

@@ -531,7 +531,8 @@ class File(object):
         for key in _file:
             setattr(self, key, _file[key])
         base_url = '{protocol}//archive.org/download/{identifier}'.format(**item.__dict__)
-        self.url = '{base_url}/{name}'.format(base_url=base_url, name=name)
+        self.url = '{base_url}/{name}'.format(base_url=base_url, 
+                                              name=name.encode('utf-8'))
 
     # __repr__()
     #_____________________________________________________________________________________

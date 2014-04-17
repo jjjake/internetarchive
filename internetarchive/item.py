@@ -422,8 +422,9 @@ class Item(object):
                 if delete and response.status_code == 200:
                     os.remove(body.name)
                 return response
-            except HTTPError as e:
-                error_msg = 'error uploading {0}, {1}'.format(key, e)
+            except HTTPError as exc:
+                error_msg = 'error uploading {0} to {1}, {2}'.format(key, self.identifier,
+                                                                     exc)
                 log.error(error_msg)
                 return response
                 #raise HTTPError(error_msg)

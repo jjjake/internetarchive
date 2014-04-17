@@ -461,17 +461,26 @@ class Item(object):
                     key = os.path.relpath(filepath, directory)
                     yield (filepath, key)
 
+        if isinstance(files, dict):
+            files = files.items()
         if not isinstance(files, (list, tuple)):
             files = [files]
 
         responses = []
         for f in files:
-            key = None
             if isinstance(f, six.string_types) and os.path.isdir(f):
                 for filepath, key in iter_directory(f):
+                    if not f.endswith('/'):
+                        key = '{0}/{1}'.format(f, key)
                     resp = self.upload_file(filepath, key=key, **kwargs)
                     responses.append(resp)
             else:
+                if not isinstance(f, (list, tuple)):
+                    key, body = (None, f)
+                else:
+                    key, body = f
+                if key and not isinstance(key, six.string_types):
+                    raise ValueError('Key must be a string.')
                 resp = self.upload_file(f, **kwargs)
                 responses.append(resp)
         return responses

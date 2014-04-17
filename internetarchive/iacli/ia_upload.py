@@ -46,7 +46,7 @@ from internetarchive.iacli.argparser import get_args_dict, get_xml_text
 def _upload_files(args, identifier, local_file, upload_kwargs):
     verbose = True if args['--quiet'] is False else False
     config = {} if not args['--log'] else {'logging': {'level': 'INFO'}}
-    item = get_item(identifier)
+    item = get_item(identifier, config=config)
     if verbose:
         sys.stdout.write('{0}:\n'.format(item.identifier))
 

@@ -383,9 +383,19 @@ class Item(object):
         key = body.name.split('/')[-1] if key is None else key
         base_url = '{protocol}//s3.us.archive.org/{identifier}'.format(**self.__dict__)
         url = '{base_url}/{key}'.format(base_url=base_url, key=key)
+
+        # If the file already exists on IA and the MD5 checksums match, skip.
+        md5_sum = utils.get_md5(body)
+        ia_file = self.get_file(key)
+        if ia_file and ia_file.md5 == md5_sum:
+            log.info('{f} already exists: {u}'.format(f=key, u=url))
+            if verbose:
+                sys.stdout.write(' {f} already exists, skipping.'.format(f=key))
+            return
+
         # require the Content-MD5 header when delete is True.
         if verify or delete:
-            headers['Content-MD5'] = utils.get_md5(body)
+            headers['Content-MD5'] = md5_sum 
         if verbose:
             try:
                 chunk_size = 1048576

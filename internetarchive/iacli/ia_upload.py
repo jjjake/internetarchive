@@ -62,6 +62,8 @@ def _upload_files(args, identifier, local_file, upload_kwargs):
             sys.stdout.write('HTTP Headers:\n{0}\n'.format(headers))
     else:
         for resp in response:
+            if not resp:
+                continue
             if resp.status_code == 200:
                 continue
             error = parseString(resp.content)

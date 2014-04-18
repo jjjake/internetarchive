@@ -312,7 +312,7 @@ class Item(object):
     def upload_file(self, body, key=None, metadata={}, headers={},
                     access_key=None, secret_key=None, queue_derive=True,
                     ignore_preexisting_bucket=False, verbose=False, verify=True,
-                    delete=False, debug=False, **kwargs):
+                    checksum=False, delete=False, debug=False, **kwargs):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -339,6 +339,9 @@ class Item(object):
         :type verify: bool
         :param verify: (optional) Verify local MD5 checksum matches the MD5
                        checksum of the file received by IAS3.
+
+        :type checksum: bool
+        :param checksum: (optional) Skip based on checksum.
 
         :type delete: bool
         :param delete: (optional) Delete local file after the upload has been
@@ -387,10 +390,10 @@ class Item(object):
         # If the file already exists on IA and the MD5 checksums match, skip.
         md5_sum = utils.get_md5(body)
         ia_file = self.get_file(key)
-        if ia_file and ia_file.md5 == md5_sum:
+        if (checksum) and (ia_file) and (ia_file.md5 == md5_sum):
             log.info('{f} already exists: {u}'.format(f=key, u=url))
             if verbose:
-                sys.stdout.write(' {f} already exists, skipping.'.format(f=key))
+                sys.stdout.write(' {f} already exists, skipping.\n'.format(f=key))
             return
 
         # require the Content-MD5 header when delete is True.

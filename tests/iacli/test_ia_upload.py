@@ -17,7 +17,7 @@ def test_ia_upload_from_stdin():
            'ia upload iacli-test-item - --remote-name="stdin.txt" --size-hint=8')
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
-    assert proc.returncode == 0
+    assert proc.returncode == 0, stderr
 
     cmd = ('echo "Hello World!" |'
            'ia upload iacli-test-item -')
@@ -30,13 +30,13 @@ def test_ia_upload_file():
     cmd = 'ia upload iacli-test-item setup.py'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
-    assert proc.returncode == 0
+    assert proc.returncode == 0, stderr
 
 def test_ia_upload_debug():
     cmd = 'ia upload iacli-test-item setup.py --debug'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
-    assert proc.returncode == 0
+    assert proc.returncode == 0, stderr
 
 def test_ia_upload_bad_request():
     # upload non-200 status_code.

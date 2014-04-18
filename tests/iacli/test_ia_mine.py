@@ -31,23 +31,23 @@ class TestMineWithTestlist:
         cmd = 'ia mine testlist.txt --cache'
         proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
-        assert proc.returncode == 0
+        assert proc.returncode == 0, stderr
         
     def test_ia_mine_output(self):
         cmd = 'ia mine testlist.txt --output=d.json'
         proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
-        assert proc.returncode == 0
+        assert proc.returncode == 0, stderr
         
     def test_ia_mine_plain(self):
         cmd = 'ia mine testlist.txt'
         proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
-        assert proc.returncode == 0
+        assert proc.returncode == 0, stderr
         
         
 def test_ia_mine_stdin():
     cmd = 'echo "nasa" | ia mine -'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
-    assert proc.returncode == 0
+    assert proc.returncode == 0, stderr

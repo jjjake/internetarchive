@@ -13,11 +13,11 @@ def test_ia_search():
     cmd = 'ia search iacli-test-item --sort=date:asc'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
-    assert proc.returncode == 0
+    assert proc.returncode == 0, stderr
 
 def test_ia_search_number():
     cmd = 'ia search "identifier:iacli-test-item" --number-found'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
     assert stdout == '1\n'
-    assert proc.returncode == 0
+    assert proc.returncode == 0, stderr

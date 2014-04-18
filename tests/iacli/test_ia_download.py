@@ -22,7 +22,7 @@ def test_ia_download_urls():
         "http://archive.org/download/nasa/nasa_archive.torrent",
         "http://archive.org/download/nasa/nasa_files.xml",
     ])
-    assert proc.returncode == 0
+    assert proc.returncode == 0, stderr
     assert set(stdout[:-1].split('\n')) == test_output_set
 
 
@@ -39,7 +39,7 @@ def test_ia_download_all(tmpdir):
             'nasa_reviews.xml', 
             'NASAarchiveLogo.jpg',
         ]
-        assert proc.returncode == 0
+        assert proc.returncode == 0, stderr
         assert sorted(os.listdir('nasa')) == sorted(test_output)
 
 
@@ -52,7 +52,7 @@ def test_ia_download_glob(tmpdir):
             'globe_west_540.jpg', 
             'NASAarchiveLogo.jpg',
         ]
-        assert proc.returncode == 0
+        assert proc.returncode == 0, stderr
         assert sorted(os.listdir('nasa')) == sorted(test_output)
 
 def test_ia_download_source(tmpdir):
@@ -66,7 +66,7 @@ def test_ia_download_source(tmpdir):
             'nasa_meta.xml', 
             'nasa_reviews.xml', 
         ]
-        assert proc.returncode == 0
+        assert proc.returncode == 0, stderr
         assert sorted(os.listdir('nasa')) == sorted(test_output)
 
 def test_ia_download_format(tmpdir):
@@ -77,7 +77,7 @@ def test_ia_download_format(tmpdir):
         test_output = [
             'nasa_archive.torrent', 
         ]
-        assert proc.returncode == 0
+        assert proc.returncode == 0, stderr
         assert sorted(os.listdir('nasa')) == sorted(test_output)
 
 def test_ia_download_file(tmpdir):
@@ -85,5 +85,5 @@ def test_ia_download_file(tmpdir):
         cmd = 'ia download nasa nasa_meta.xml'
         proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
-        assert proc.returncode == 0
+        assert proc.returncode == 0, stderr
         assert os.listdir('nasa') == ['nasa_meta.xml']

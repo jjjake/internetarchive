@@ -387,13 +387,20 @@ class Item(object):
         base_url = '{protocol}//s3.us.archive.org/{identifier}'.format(**self.__dict__)
         url = '{base_url}/{key}'.format(base_url=base_url, key=key)
 
-        # If the file already exists on IA and the MD5 checksums match, skip.
+        # Skip based on checksum.
         md5_sum = utils.get_md5(body)
         ia_file = self.get_file(key)
         if (checksum) and (ia_file) and (ia_file.md5 == md5_sum):
             log.info('{f} already exists: {u}'.format(f=key, u=url))
             if verbose:
                 sys.stdout.write(' {f} already exists, skipping.\n'.format(f=key))
+            if delete:
+                log.info(
+                    '{f} successfully uploaded to https://archive.org/download/{i}/{f} '
+                    'and verified, deleting '
+                    'local copy'.format(i=self.identifier, f=key)
+                )
+                os.remove(body.name)
             return
 
         # require the Content-MD5 header when delete is True.
@@ -433,6 +440,11 @@ class Item(object):
                 response.raise_for_status()
                 log.info('uploaded {f} to {u}'.format(f=key, u=url))
                 if delete and response.status_code == 200:
+                    log.info(
+                        '{f} successfully uploaded to '
+                        'https://archive.org/download/{i}/{f} and verified, deleting '
+                        'local copy'.format(i=self.identifier, f=key)
+                    )
                     os.remove(body.name)
                 return response
             except HTTPError as exc:

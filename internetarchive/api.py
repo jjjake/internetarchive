@@ -116,7 +116,8 @@ def delete(identifier, filenames=None, **kwargs):
 #_________________________________________________________________________________________
 def get_tasks(**kwargs):
     _catalog = catalog.Catalog(identifier=kwargs.get('identifier'),
-                              params=kwargs.get('params'))
+                               params=kwargs.get('params'), 
+                               task_ids=kwargs.get('task_ids'))
     task_type = kwargs.get('task_type')
     if task_type:
         return eval('_catalog.{0}_rows'.format(task_type.lower()))

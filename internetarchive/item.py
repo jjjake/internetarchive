@@ -83,6 +83,7 @@ class Item(object):
         self.server = None
         self.uniq = None
         self.updated = None
+        self.tasks = None
 
         self._json = self.get_metadata(metadata_timeout)
         self.exists = False if self._json == {} else True
@@ -390,7 +391,7 @@ class Item(object):
         # Skip based on checksum.
         md5_sum = utils.get_md5(body)
         ia_file = self.get_file(key)
-        if (checksum) and (ia_file) and (ia_file.md5 == md5_sum):
+        if (checksum) and (not self.tasks) and (ia_file) and (ia_file.md5 == md5_sum):
             log.info('{f} already exists: {u}'.format(f=key, u=url))
             if verbose:
                 sys.stdout.write(' {f} already exists, skipping.\n'.format(f=key))

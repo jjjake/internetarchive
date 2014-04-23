@@ -5,7 +5,7 @@ IA-S3 Documentation: https://archive.org/help/abouts3.txt
 usage:
     ia upload [--quiet] [--debug]
               (<identifier> <file>... | <identifier> - --remote-name=<name> | --spreadsheet=<metadata.csv>)
-              [--metadata=<key:value>...] [--header=<key:value>...]
+              [--metadata=<key:value>...] [--header=<key:value>...] [--checksum]
               [--no-derive] [--ignore-bucket] [--size-hint=<size>]
               [--delete] [--log]
     ia upload --help
@@ -20,6 +20,7 @@ options:
     -S, --spreadsheet=<metadata.csv>  bulk uploading...
     -m, --metadata=<key:value>...     Metadata to add to your item.
     -H, --header=<key:value>...       S3 HTTP headers to send with your request.
+    -c, --checksum                    Skip based on checksum [default: False].
     -n, --no-derive                   Do not derive uploaded files.
     -i, --ignore-bucket               Destroy and respecify all metadata.
     -s, --size-hint=<size>            Specify a size-hint for your item.
@@ -62,6 +63,8 @@ def _upload_files(args, identifier, local_file, upload_kwargs):
             sys.stdout.write('HTTP Headers:\n{0}\n'.format(headers))
     else:
         for resp in response:
+            if not resp:
+                continue
             if resp.status_code == 200:
                 continue
             error = parseString(resp.content)
@@ -88,6 +91,7 @@ def main(argv):
         debug=args['--debug'],
         queue_derive=True if args['--no-derive'] is False else False,
         ignore_preexisting_bucket=args['--ignore-bucket'],
+        checksum=args['--checksum'],
         verbose=True if args['--quiet'] is False else False,
         delete=args['--delete'],
     )

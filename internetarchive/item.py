@@ -312,7 +312,7 @@ class Item(object):
     def upload_file(self, body, key=None, metadata={}, headers={},
                     access_key=None, secret_key=None, queue_derive=True,
                     ignore_preexisting_bucket=False, verbose=False, verify=True,
-                    delete=False, debug=False, **kwargs):
+                    checksum=False, delete=False, debug=False, **kwargs):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -339,6 +339,9 @@ class Item(object):
         :type verify: bool
         :param verify: (optional) Verify local MD5 checksum matches the MD5
                        checksum of the file received by IAS3.
+
+        :type checksum: bool
+        :param checksum: (optional) Skip based on checksum.
 
         :type delete: bool
         :param delete: (optional) Delete local file after the upload has been
@@ -383,9 +386,26 @@ class Item(object):
         key = body.name.split('/')[-1] if key is None else key
         base_url = '{protocol}//s3.us.archive.org/{identifier}'.format(**self.__dict__)
         url = '{base_url}/{key}'.format(base_url=base_url, key=key)
+
+        # Skip based on checksum.
+        md5_sum = utils.get_md5(body)
+        ia_file = self.get_file(key)
+        if (checksum) and (ia_file) and (ia_file.md5 == md5_sum):
+            log.info('{f} already exists: {u}'.format(f=key, u=url))
+            if verbose:
+                sys.stdout.write(' {f} already exists, skipping.\n'.format(f=key))
+            if delete:
+                log.info(
+                    '{f} successfully uploaded to https://archive.org/download/{i}/{f} '
+                    'and verified, deleting '
+                    'local copy'.format(i=self.identifier, f=key)
+                )
+                os.remove(body.name)
+            return
+
         # require the Content-MD5 header when delete is True.
         if verify or delete:
-            headers['Content-MD5'] = utils.get_md5(body)
+            headers['Content-MD5'] = md5_sum 
         if verbose:
             try:
                 chunk_size = 1048576
@@ -420,10 +440,16 @@ class Item(object):
                 response.raise_for_status()
                 log.info('uploaded {f} to {u}'.format(f=key, u=url))
                 if delete and response.status_code == 200:
+                    log.info(
+                        '{f} successfully uploaded to '
+                        'https://archive.org/download/{i}/{f} and verified, deleting '
+                        'local copy'.format(i=self.identifier, f=key)
+                    )
                     os.remove(body.name)
                 return response
-            except HTTPError as e:
-                error_msg = 'error uploading {0}, {1}'.format(key, e)
+            except HTTPError as exc:
+                error_msg = 'error uploading {0} to {1}, {2}'.format(key, self.identifier,
+                                                                     exc)
                 log.error(error_msg)
                 return response
                 #raise HTTPError(error_msg)
@@ -461,17 +487,26 @@ class Item(object):
                     key = os.path.relpath(filepath, directory)
                     yield (filepath, key)
 
+        if isinstance(files, dict):
+            files = files.items()
         if not isinstance(files, (list, tuple)):
             files = [files]
 
         responses = []
         for f in files:
-            key = None
             if isinstance(f, six.string_types) and os.path.isdir(f):
                 for filepath, key in iter_directory(f):
+                    if not f.endswith('/'):
+                        key = '{0}/{1}'.format(f, key)
                     resp = self.upload_file(filepath, key=key, **kwargs)
                     responses.append(resp)
             else:
+                if not isinstance(f, (list, tuple)):
+                    key, body = (None, f)
+                else:
+                    key, body = f
+                if key and not isinstance(key, six.string_types):
+                    raise ValueError('Key must be a string.')
                 resp = self.upload_file(f, **kwargs)
                 responses.append(resp)
         return responses

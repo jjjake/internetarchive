@@ -6,6 +6,21 @@ import yaml
 # get_config()
 #_____________________________________________________________________________________
 def get_config(config=None, config_file=None):
+    """Retrieve user configuration from a file. If a file is not
+    given, looks in "$HOME/.config/internetarchive.yml" and
+    "$HOME/.internetarchive.yml", in that order.
+
+    :type config: dict
+    :param config: (optional) Configuration options to override
+                   those retrieved from the file.
+
+    :type config_file: str
+    :param config_file: (optional) Path to configuration file.
+
+    :rtype: dict
+    :returns: A dictionary of the configuration values.
+
+    """
     config = {} if not config else config
     if not config_file:
         home_dir = os.environ.get('HOME')

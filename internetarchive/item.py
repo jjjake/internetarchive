@@ -116,7 +116,7 @@ class Item(object):
             raise HTTPError(error_msg)
         metadata = resp.json()
         for key in metadata:
-                setattr(self, key, metadata[key])
+            setattr(self, key, metadata[key])
         return metadata
 
     # iter_files()
@@ -149,6 +149,29 @@ class Item(object):
     # get_files()
     #_____________________________________________________________________________________
     def get_files(self, files=None, source=None, formats=None, glob_pattern=None):
+        """Get a list of :class:`File <File>` objects filtered by the
+        passed parameters.
+
+        :type files: str, list, tuple, set
+        :param files: A file or list of files to include in the
+                      returned list.
+
+        :type source: str, list, tuple, set
+        :param source: A source or list of sources to include files
+                       from.
+
+        :type formats: str, list, tuple, set
+        :param formats: A format or list of formats to include files
+                        in those formats.
+
+        :type glob_pattern: str
+        :param glob_pattern: A glob pattern to match against the
+                             filenames.
+
+        :rtype: list
+        :returns: A list of :class:`File <File>` objects.
+
+        """
         files = [] if not files else files
         source = [] if not source else source
 
@@ -405,7 +428,7 @@ class Item(object):
 
         # require the Content-MD5 header when delete is True.
         if verify or delete:
-            headers['Content-MD5'] = md5_sum 
+            headers['Content-MD5'] = md5_sum
         if verbose:
             try:
                 chunk_size = 1048576
@@ -566,7 +589,7 @@ class File(object):
         for key in _file:
             setattr(self, key, _file[key])
         base_url = '{protocol}//archive.org/download/{identifier}'.format(**item.__dict__)
-        self.url = '{base_url}/{name}'.format(base_url=base_url, 
+        self.url = '{base_url}/{name}'.format(base_url=base_url,
                                               name=name.encode('utf-8'))
 
     # __repr__()

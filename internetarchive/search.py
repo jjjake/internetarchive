@@ -21,6 +21,25 @@ class Search(object):
     # init()
     #_____________________________________________________________________________________
     def __init__(self, query, fields=['identifier'], params={}, config=None):
+        """
+        :type query: str
+        :param query: The search string to send to the archive.org,
+                      using the `Advanced Search
+                      <https://archive.org/advancedsearch.php>`__
+                      syntax.
+
+        :type fields: list
+        :param fields: (optional) The fields to return about each item.
+                       By default, only returns the identifier.
+
+        :type params: dict
+        :param params: (optional) Additional parameters to pass with
+                       the query.
+
+        :type config: dict
+        :param config: (optional) User configuration options.
+
+        """
         self.session = session.ArchiveSession(config)
         self.http_session = requests.sessions.Session()
         self.url = 'http://archive.org/advancedsearch.php'

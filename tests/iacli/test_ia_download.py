@@ -10,7 +10,10 @@ import internetarchive.config
 
 
 
-def test_ia_download():
+def test_ia_download(tmpdir):
+    prevdir = os.path.abspath('.')
+    os.chdir(str(tmpdir))
+
     cmd = 'ia download --dry-run nasa'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
@@ -74,3 +77,5 @@ def test_ia_download():
     stdout, stderr = proc.communicate()
     assert proc.returncode == 0
     shutil.rmtree('nasa')
+    
+    os.chdir(prevdir)

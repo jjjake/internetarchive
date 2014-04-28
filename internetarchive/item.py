@@ -5,6 +5,7 @@ except ImportError:
 import os
 import sys
 from fnmatch import fnmatch
+import six
 import logging
 
 import requests.sessions
@@ -212,7 +213,7 @@ class Item(object):
                     Downloading files concurrently requires the gevent neworking library.
                     gevent and all of it's dependencies can be installed with pip:
 
-                    \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+                    \tpip install gevent
 
                     """)
 
@@ -260,6 +261,10 @@ class Item(object):
         :type target: str
         :param target: (optional) Set the metadata target to update.
 
+        :type append: bool
+        :param append: (optional) If true, append new value to current
+                       data, seperated by a space.
+
         :type priority: int
         :param priority: (optional) Set task priority.
 
@@ -286,6 +291,9 @@ class Item(object):
             if val == 'REMOVE_TAG' or not val:
                 del dest[key]
             if append:
+                if not (isinstance(src[key], six.string_types) and
+                        isinstance(val, six.string_types)):
+                    raise TypeError("Can only use append with string values.")
                 dest[key] = '{0} {1}'.format(src[key], val)
 
         json_patch = json.dumps(make_patch(src, dest).patch)

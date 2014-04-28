@@ -2,7 +2,7 @@
 API <https://archive.org/advancedsearch.php#raw>.
 
 usage:
-    ia search [--parameters=<key:value>...] [--sort=<field:order>]
+    ia search [--parameters=<key:value>...] [--sort=<field:order>...]
               [--field=<field>...] [--number-found] <query>...
     ia search --help
 

@@ -81,9 +81,14 @@ https://archive.org/account/s3.php
 
 .. code:: bash
 
-    $ export IAS3_ACCESS_KEY='xxx'
-    $ export IAS3_SECRET_KEY='yyy'
-
+    $ ia configure
+    Please visit https://archive.org/account/s3.php to retrieve your S3 keys
+    
+    Please enter your IA S3 access key: xxx
+    Please enter your IA S3 secret key: yyy
+    
+    Successfully saved your new config to: /home/yaron/.config/internetarchive.yml
+    
     #upload files:
     $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
 
@@ -100,8 +105,7 @@ You can use the ``ia`` command-line tool to download item metadata in JSON forma
 
     $ ia metadata TripDown1905
 
-You can also modify metadata. Be sure that the IAS3\_ACCESS\_KEY and
-IAS3\_SECRET\_KEY environment variables are set.
+You can also modify metadata. Be sure that you have set your IA S3 Access Key and IA S3 Secret Key using the ``ia configure`` command.
 
 .. code:: bash
 
@@ -116,7 +120,7 @@ You can also install ``gevent`` like so:
 
 .. code:: bash
 
-    $ pip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+    $ pip install gevent
 
 ``ia mine`` can be used to concurrently retrieve metadata for items via the `IA Metadata API <http://blog.archive.org/2013/07/04/metadata-api/>`__.
 
@@ -143,7 +147,7 @@ For instance, let's find all of the 990 forms who's foundation has the keyword "
 
 .. code:: bash
 
-    $ ia mine itemlist.txt | jq 'if .manifest then (.manifest[] | select(contains({foundation: "CANCER"}))) else empty end'
+    $ ia search 'collection:IRS990' | ia mine - | jq 'if .manifest then (.manifest[] | select(contains({foundation: "CANCER"}))) else empty end'
 
 Searching
 ~~~~~~~~~

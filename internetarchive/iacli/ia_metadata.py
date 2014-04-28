@@ -10,8 +10,9 @@ options:
     -h, --help
     -m, --modify=<key:value>   Modify the metadata of an item.
     -a, --append=<key:value>   Append metadata to an element.
-    -e, --exists               Check if an item exists.  exists, and 1 if it 
-                               does not.
+    -e, --exists               Check if an item exists. In addition to printing
+                               output, exits with return value 0 if the item
+                               exists, and 1 if it does not.
     -F, --formats              Return the file-formats the given item contains.
 
 """
@@ -45,7 +46,11 @@ def main(argv):
         append = True if args['--append'] else False
         metadata_args = args['--modify'] if args['--modify'] else args['--append']
         metadata = get_args_dict(metadata_args)
-        response = modify_metadata(args['<identifier>'], metadata, append=append)
+        try:
+            response = modify_metadata(args['<identifier>'], metadata, append=append)
+        except TypeError:
+            sys.stderr.write('error: Cannot append to a non-string value')
+            sys.exit(1)
         if not response.json()['success']:
             error_msg = response.json()['error']
             sys.stderr.write('error: {0} ({1})\n'.format(error_msg, response.status_code))

@@ -1,7 +1,6 @@
-from sys import stdout
-
-from . import item, search, catalog
-
+from .item import Item
+from .search import Search
+from .catalog import Catalog
 
 # get_item()
 #_________________________________________________________________________________________
@@ -26,7 +25,7 @@ def get_item(identifier, metadata_timeout=None, config=None):
     :returns: A :class:`internetarchive.Item <Item>` object.
 
     """
-    return item.Item(identifier, metadata_timeout, config)
+    return Item(identifier, metadata_timeout, config)
 
 # get_files()
 #_________________________________________________________________________________________
@@ -228,7 +227,7 @@ def delete(identifier, filenames=None, **kwargs):
 #_________________________________________________________________________________________
 def get_tasks(**kwargs):
     """:todo: Write docstring for get_tasks"""
-    _catalog = catalog.Catalog(identifier=kwargs.get('identifier'),
+    _catalog = Catalog(identifier=kwargs.get('identifier'),
                                params=kwargs.get('params'),
                                task_ids=kwargs.get('task_ids'))
     task_type = kwargs.get('task_type')
@@ -261,7 +260,7 @@ def search_items(query, **kwargs):
     :returns: An iterator over the search results.
     """
 
-    return search.Search(query, **kwargs)
+    return Search(query, **kwargs)
 
 # mine()
 #_________________________________________________________________________________________

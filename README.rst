@@ -187,7 +187,7 @@ You can query the archive using an item identifier:
 
     >>> from internetarchive import get_item
     >>> item = get_item('stairs')
-    >>> print item.metadata
+    >>> print(item.metadata)
 
 Items contains files. You can download the entire item:
 
@@ -208,7 +208,7 @@ You can iterate over files:
 .. code:: python
 
     >>> for f in item.files():
-    ...     print f.name, f.sha1
+    ...     print(f.name, f.sha1)
 
 Uploading from Python
 ~~~~~~~~~~~~~~~~~~~~~
@@ -269,14 +269,14 @@ engine <https://archive.org/advancedsearch.php>`__:
 
 .. code:: python
 
-    >>> from internetarchive import search
-    >>> s = search('collection:nasa')
-    >>> print s.num_found
+    >>> from internetarchive import search_items
+    >>> search = search_items('collection:nasa')
+    >>> print(search.num_found)
     186911
 
 You can iterate over your results:
 
 .. code:: python
 
-    >>> for result in s.results():
-    ...     print result['identifier']
+    >>> for result in search:
+    ...     print(result['identifier'])

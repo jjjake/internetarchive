@@ -20,7 +20,7 @@ import sys
 
 from docopt import docopt
 
-from internetarchive import search
+from internetarchive import search_items
 
 
 # main()
@@ -40,10 +40,10 @@ def main(argv):
     fields = ['identifier'] + args['--field']
 
     query = ' '.join(args['<query>'])
-    search_resp = search(query, fields=fields, params=params)
+    search_resp = search_items(query, fields=fields, params=params)
     if args['--number-found']:
         sys.stdout.write('{0}\n'.format(search_resp.num_found))
         sys.exit(0)
-    for result in search_resp.results():
+    for result in search_resp:
         output = '\t'.join([result.get(f, '') for f in fields]).encode('utf-8')
         sys.stdout.write(output + '\n')

@@ -32,14 +32,6 @@ Internetarchive: A Python Interface to Archive.org
     :show-inheritance:
 
 
-:class:`internetarchive.Mine`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Mine
-    :members:
-    :show-inheritance:
-
-
 :class:`internetarchive.Catalog`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -48,7 +48,7 @@ def test_api():
 
     # download()
     if os.path.exists('iacli-test-item'):
-        shutil.rmtree(item_dir)
+        shutil.rmtree('iacli-test-item')
     r = download('iacli-test-item')
     assert os.path.exists('iacli-test-item')
     shutil.rmtree('iacli-test-item')
@@ -58,7 +58,7 @@ def test_api():
     os.remove('nasa_meta.xml')
 
     # search()
-    s = search('identifier:nasa')
+    s = search_items('identifier:nasa')
     assert s.num_found == 1
 
 @pytest.mark.skipif('internetarchive.config.get_config().get("cookies") == None',

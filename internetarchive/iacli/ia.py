@@ -18,7 +18,7 @@ commands:
     delete    Delete files from Archive.org.
     search    Search Archive.org.
     mine      Download item metadata from Archive.org concurrently.
-    catalog   Retrieve information about your Archive.org catalog tasks.
+    tasks     Retrieve information about your Archive.org catalog tasks.
     list      List files in a given item.
 
 See 'ia help <command>' for more information on a specific command.
@@ -54,7 +54,7 @@ def main():
         rm='delete',
         se='search',
         mi='mine',
-        ca='catalog',
+        ta='tasks',
         ls='list',
     )
     if cmd in aliases:

@@ -282,7 +282,7 @@ class Item(object):
         """
         access_key = self.session.access_key if not access_key else access_key
         secret_key = self.session.secret_key if not secret_key else secret_key
-        src = self.metadata.get(target, {})
+        src = self.__dict__.get(target, {})
         dest = src.copy()
         dest.update(metadata)
 
@@ -319,8 +319,8 @@ class Item(object):
     #_____________________________________________________________________________________
     def upload_file(self, body, key=None, metadata={}, headers={},
                     access_key=None, secret_key=None, queue_derive=True,
-                    ignore_preexisting_bucket=False, verbose=False, verify=True, 
-                    delete=False, debug=False, **kwargs):
+                    ignore_preexisting_bucket=False, verbose=False, verify=True,
+                    checksum=False, delete=False, debug=False, **kwargs):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -345,8 +345,11 @@ class Item(object):
                                           metadata for an item
 
         :type verify: bool
-        :param verify: (optional) Verify local MD5 checksum matches the MD5 
+        :param verify: (optional) Verify local MD5 checksum matches the MD5
                        checksum of the file received by IAS3.
+
+        :type checksum: bool
+        :param checksum: (optional) Skip based on checksum.
 
         :type delete: bool
         :param delete: (optional) Delete local file after the upload has been
@@ -391,9 +394,26 @@ class Item(object):
         key = body.name.split('/')[-1] if key is None else key
         base_url = '{protocol}//s3.us.archive.org/{identifier}'.format(**self.__dict__)
         url = '{base_url}/{key}'.format(base_url=base_url, key=key)
+
+        # Skip based on checksum.
+        md5_sum = utils.get_md5(body)
+        ia_file = self.get_file(key)
+        if (checksum) and (ia_file) and (ia_file.md5 == md5_sum):
+            log.info('{f} already exists: {u}'.format(f=key, u=url))
+            if verbose:
+                sys.stdout.write(' {f} already exists, skipping.\n'.format(f=key))
+            if delete:
+                log.info(
+                    '{f} successfully uploaded to https://archive.org/download/{i}/{f} '
+                    'and verified, deleting '
+                    'local copy'.format(i=self.identifier, f=key)
+                )
+                os.remove(body.name)
+            return
+
         # require the Content-MD5 header when delete is True.
         if verify or delete:
-            headers['Content-MD5'] = utils.get_md5(body)
+            headers['Content-MD5'] = md5_sum 
         if verbose:
             try:
                 chunk_size = 1048576
@@ -428,10 +448,16 @@ class Item(object):
                 response.raise_for_status()
                 log.info('uploaded {f} to {u}'.format(f=key, u=url))
                 if delete and response.status_code == 200:
+                    log.info(
+                        '{f} successfully uploaded to '
+                        'https://archive.org/download/{i}/{f} and verified, deleting '
+                        'local copy'.format(i=self.identifier, f=key)
+                    )
                     os.remove(body.name)
                 return response
-            except HTTPError as e:
-                error_msg = 'error uploading {0}, {1}'.format(key, e)
+            except HTTPError as exc:
+                error_msg = 'error uploading {0} to {1}, {2}'.format(key, self.identifier,
+                                                                     exc)
                 log.error(error_msg)
                 return response
                 #raise HTTPError(error_msg)
@@ -469,17 +495,26 @@ class Item(object):
                     key = os.path.relpath(filepath, directory)
                     yield (filepath, key)
 
+        if isinstance(files, dict):
+            files = files.items()
         if not isinstance(files, (list, tuple)):
             files = [files]
 
         responses = []
         for f in files:
-            key = None
             if isinstance(f, six.string_types) and os.path.isdir(f):
                 for filepath, key in iter_directory(f):
+                    if not f.endswith('/'):
+                        key = '{0}/{1}'.format(f, key)
                     resp = self.upload_file(filepath, key=key, **kwargs)
                     responses.append(resp)
             else:
+                if not isinstance(f, (list, tuple)):
+                    key, body = (None, f)
+                else:
+                    key, body = f
+                if key and not isinstance(key, six.string_types):
+                    raise ValueError('Key must be a string.')
                 resp = self.upload_file(f, **kwargs)
                 responses.append(resp)
         return responses
@@ -488,16 +523,48 @@ class Item(object):
 # File class
 #_________________________________________________________________________________________
 class File(object):
-    """:todo: document ``internetarchive.File`` class."""
+    """This class represents a file in an archive.org item. You
+    can use this class to access the file metadata::
+
+        >>> import internetarchive
+        >>> item = internetarchive.Item('stairs')
+        >>> file = internetarchive.File(item, 'stairs.avi')
+        >>> print(f.format, f.size)
+        (u'Cinepack', u'3786730')
+
+    Or to download a file::
+
+        >>> file.download()
+        >>> file.download('fabulous_movie_of_stairs.avi')
+
+    This class also uses IA's S3-like interface to delete a file
+    from an item. You need to supply your IAS3 credentials in
+    environment variables in order to delete::
+
+        >>> file.delete(access_key='Y6oUrAcCEs4sK8ey',
+        ...             secret_key='youRSECRETKEYzZzZ')
+
+    You can retrieve S3 keys here: `https://archive.org/account/s3.php
+    <https://archive.org/account/s3.php>`__
+
+    """
     # init()
     #_____________________________________________________________________________________
     def __init__(self, item, name):
+        """
+        :type item: Item
+        :param item: The item that the file is part of.
+
+        :type name: str
+        :param name: The filename of the file.
+
+        """
         _file = {}
         for f in item.files:
             if f.get('name') == name:
                 _file = f
                 break
-    
+
         self._item = item
         self.identifier = item.identifier
         self.name = None
@@ -507,7 +574,8 @@ class File(object):
         for key in _file:
             setattr(self, key, _file[key])
         base_url = '{protocol}//archive.org/download/{identifier}'.format(**item.__dict__)
-        self.url = '{base_url}/{name}'.format(base_url=base_url, name=name)
+        self.url = '{base_url}/{name}'.format(base_url=base_url, 
+                                              name=name.encode('utf-8'))
 
     # __repr__()
     #_____________________________________________________________________________________
@@ -521,7 +589,14 @@ class File(object):
     # download()
     #_____________________________________________________________________________________
     def download(self, file_path=None, ignore_existing=False):
-        """:todo: document ``internetarchive.File.download()`` method"""
+        """Download the file into the current working directory.
+
+        :type file_path: str
+        :param file_path: Download file to the given file_path.
+
+        :type ignore_existing: bool
+        :param ignore_existing: Overwrite local files if they already
+                                exist."""
         file_path = self.name if not file_path else file_path
         if os.path.exists(file_path) and not ignore_existing:
             raise IOError('File already exists: {0}'.format(file_path))
@@ -545,6 +620,20 @@ class File(object):
     #_____________________________________________________________________________________
     def delete(self, debug=False, verbose=False, cascade_delete=False, access_key=None,
                secret_key=None):
+        """Delete a file from the Archive. Note: Some files -- such as
+        <itemname>_meta.xml -- cannot be deleted.
+
+        :type debug: bool
+        :param debug: Set to True to print headers to stdout and exit
+                      exit without sending the delete request.
+
+        :type verbose: bool
+        :param verbose: Print actions to stdout.
+
+        :type cascade_delete: bool
+        :param cascade_delete: Also deletes files derived from the file,
+                               and files the file was derived from.
+        """
         url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, self.name)
         access_key = self._item.session.access_key if not access_key else access_key
         secret_key = self._item.session.secret_key if not secret_key else secret_key

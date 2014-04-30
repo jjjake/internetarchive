@@ -69,7 +69,7 @@ class Item(object):
         self.protocol = 'https:' if self.session.secure else 'http:'
         self.http_session = requests.sessions.Session()
         max_retries_adapter = HTTPAdapter(max_retries=max_retries)
-        self.http_session.mount('{}//'.format(self.protocol), max_retries_adapter)
+        self.http_session.mount('{0}//'.format(self.protocol), max_retries_adapter)
         self.http_session.cookies = self.session.cookies
         self.identifier = identifier
 

@@ -64,6 +64,10 @@ class Item(object):
         :type config: dict
         :param secure: (optional) Configuration options for session.
 
+        :type max_retries: int
+        :param max_retries: (optional) Maximum number of times to request
+                            a website if the connection drops. (default: 1)
+
         """
         self.session = session.ArchiveSession(config)
         self.protocol = 'https:' if self.session.secure else 'http:'

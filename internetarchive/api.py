@@ -4,7 +4,7 @@ from .catalog import Catalog
 
 # get_item()
 #_________________________________________________________________________________________
-def get_item(identifier, metadata_timeout=None, config=None):
+def get_item(identifier, metadata_timeout=None, config=None, max_retries=1):
     """
     Gets the archive.org item with the identifier Item.
     See the documentation for :class:`internetarchive.Item <Item>`
@@ -21,11 +21,16 @@ def get_item(identifier, metadata_timeout=None, config=None):
     :type config: dict
     :param secure: (optional) Configuration options for session.
 
+    :type max_retries: int
+    :param max_retries: (optional) Set a maximum number of times to retry
+                        a query in case the connection drops or is refused.
+                        (default: 1)
+
     :rtype: :class:`internetarchive.Item <Item>`
     :returns: A :class:`internetarchive.Item <Item>` object.
 
     """
-    return Item(identifier, metadata_timeout, config)
+    return Item(identifier, metadata_timeout, config, max_retries)
 
 # get_files()
 #_________________________________________________________________________________________

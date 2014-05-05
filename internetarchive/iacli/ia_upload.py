@@ -29,7 +29,6 @@ options:
                                       [default: False].
 
 """
-import os
 import sys
 from tempfile import TemporaryFile
 from xml.dom.minidom import parseString

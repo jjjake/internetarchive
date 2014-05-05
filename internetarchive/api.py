@@ -5,8 +5,8 @@ from . import item, search, catalog
 
 # get_item()
 #_________________________________________________________________________________________
-def get_item(identifier, metadata_timeout=None, config=None):
-    return item.Item(identifier, metadata_timeout, config)
+def get_item(identifier, metadata_timeout=None, config=None, max_retries=1):
+    return item.Item(identifier, metadata_timeout, config, max_retries)
 
 # get_files()
 #_________________________________________________________________________________________

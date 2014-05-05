@@ -9,6 +9,7 @@ import logging
 
 import requests.sessions
 from requests.exceptions import HTTPError
+from requests import Response
 from jsonpatch import make_patch
 from clint.textui import progress
 import six
@@ -402,7 +403,9 @@ class Item(object):
                     'local copy'.format(i=self.identifier, f=key)
                 )
                 os.remove(body.name)
-            return
+            # Return an empty response object if checksums match.
+            # TODO: Is there a better way to handle this?
+            return Response()
 
         # require the Content-MD5 header when delete is True.
         if verify or delete:

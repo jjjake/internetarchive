@@ -8,6 +8,7 @@ from fnmatch import fnmatch
 import logging
 
 import requests.sessions
+from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from requests import Response
 from jsonpatch import make_patch
@@ -51,7 +52,7 @@ class Item(object):
     """
     # init()
     #_____________________________________________________________________________________
-    def __init__(self, identifier, metadata_timeout=None, config=None):
+    def __init__(self, identifier, metadata_timeout=None, config=None, max_retries=1):
         """
         :type identifier: str
         :param identifier: The globally unique Archive.org identifier
@@ -64,10 +65,16 @@ class Item(object):
         :type config: dict
         :param secure: (optional) Configuration options for session.
 
+        :type max_retries: int
+        :param max_retries: (optional) Maximum number of times to request
+                            a website if the connection drops. (default: 1)
+
         """
         self.session = session.ArchiveSession(config)
         self.protocol = 'https:' if self.session.secure else 'http:'
         self.http_session = requests.sessions.Session()
+        max_retries_adapter = HTTPAdapter(max_retries=max_retries)
+        self.http_session.mount('{0}//'.format(self.protocol), max_retries_adapter)
         self.http_session.cookies = self.session.cookies
         self.identifier = identifier
 

@@ -6,6 +6,8 @@ import os
 import sys
 from fnmatch import fnmatch
 import logging
+import re
+import copy
 
 import requests.sessions
 from requests.adapters import HTTPAdapter
@@ -292,9 +294,29 @@ class Item(object):
 
         # Prepare patch to remove metadata elements with the value: "REMOVE_TAG".
         for key, val in metadata.items():
-            if val == 'REMOVE_TAG' or not val:
+            # Insert support for elements, i.e. subject[1] = 'value1'
+            contains_index = re.search(r'\[\d+\]', key)
+            if contains_index:
+                # Get the index
+                i = int(re.search(r'(?<=\[)\d+(?=\])', key).group())
+                # Create a new key, without the index, and delete the
+                # old key from dest.
+                _key = key.split('[')[0]
                 del dest[key]
-            if append:
+                # Copy the src value, and insert the new value.
+                _src = copy.deepcopy(src)
+                _val = _src.get(_key, [])
+                if not isinstance(_val, (list, set, tuple)):
+                    _val = [_val]
+                _val.insert(i, val)
+                # Update dest with the final value.
+                dest[_key] = _val
+            # Support for deleting elements.
+            elif val == 'REMOVE_TAG' or not val:
+                del dest[key]
+            # Support for appending strings to values (original value
+            # must be a string as well!).
+            elif append:
                 dest[key] = '{0} {1}'.format(src[key], val)
 
         json_patch = json.dumps(make_patch(src, dest).patch)

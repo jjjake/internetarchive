@@ -12,14 +12,14 @@ usage:
     True
 
 :copyright: (c) 2013 by Jacob M. Johnson.
-:license: GPL, see LICENSE for more details.
+:license: AGPL 3, see LICENSE for more details.
 
 """
 
 __title__ = 'internetarchive'
 __version__ = '0.5.9'
 __author__ = 'Jacob M. Johnson'
-__license__ = 'GPL'
+__license__ = 'AGPL 3'
 __copyright__ = 'Copyright 2013 Jacob M. Johnson'
 
 from .item import Item, File

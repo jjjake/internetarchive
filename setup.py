@@ -14,7 +14,7 @@ setup(
         ],
     },
     url='https://github.com/jjjake/ia-wrapper',
-    license='LICENSE',
+    license='AGPL 3',
     description='A python interface to archive.org.',
     long_description=open('README.rst').read(),
     install_requires=[

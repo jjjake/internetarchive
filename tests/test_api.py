@@ -87,7 +87,7 @@ def test_funtions_needing_s3_keys():
 
 
 
-@pytest.mark.skipif('py_test_mine == False', reason='needs `internetarchive.mine` installed')
+@pytest.mark.skipif('py_test_mine == False', reason='requires internetarchive[speedups]')
 def test_mine():
     ids = ['iacli-test-item', 'nasa']
     miner = get_data_miner(ids)

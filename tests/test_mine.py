@@ -6,11 +6,11 @@ import pytest
 
 try:
     import internetarchive.mine
-    test = True
+    py_test_mine = True
 except ImportError:
-    test = False
+    py_test_mine = False
 
-@pytest.mark.skipif('test == False', reason='requires gevent.')
+@pytest.mark.skipif('py_test_mine == False', reason='requires internetarchive[speedups]')
 def test_mine():
     def general_tests(ids):
         miner = internetarchive.mine.Mine(ids)
@@ -25,7 +25,7 @@ def test_mine():
     general_tests(['%%'])
 
 
-@pytest.mark.skipif('test == False', reason='requires gevent.')
+@pytest.mark.skipif('py_test_mine == False', reason='requires internetarchive[speedups]')
 def test_good_ids():
     ids = ['ozmaofoz00486gut', 'ozma_of_oz_librivox',
            'theemeraldcityof00517gut', 'emerald_city_librivox',
@@ -38,7 +38,7 @@ def test_good_ids():
         assert item.metadata['identifier'] == ident
 
 
-@pytest.mark.skipif('test == False', reason='requires gevent.')
+@pytest.mark.skipif('py_test_mine == False', reason='requires internetarchive[speedups]')
 def test_bad_ids():
     bad_ids = ['%%', '../cow']
     

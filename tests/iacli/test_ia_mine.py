@@ -6,9 +6,17 @@ import pytest
 
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
+
+
 import internetarchive.config
+try:
+    import internetarchive.mine
+    py_test_mine = True
+except ImportError:
+    py_test_mine = False
 
 
+@pytest.mark.skipif('py_test_mine == False', reason='requires internetarchive[speedups]')
 def test_ia_mine():
     with open('testlist.txt', 'w') as fp:
         fp.write('\n'.join(['nasa', 'iacli-test-item']))

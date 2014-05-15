@@ -10,16 +10,15 @@ import internetarchive.config
 
 try:
     import internetarchive.mine
-    test_mine = True
+    can_test_mine = True
 except ImportError:
-    test_mine = False
+    can_test_mine = False
 
-def test_api():
-    # get_item()
+def test_api_get_item():
     item = get_item('iacli-test-item')
     assert item.metadata['identifier'] == 'iacli-test-item'
 
-    # get_files()
+def test_api_get_files():
     files = get_files('nasa', 'nasa_meta.xml')
     assert files[0].name == 'nasa_meta.xml'
 
@@ -39,46 +38,49 @@ def test_api():
     files = get_files('nasa', glob_pattern='*xml')
     assert all(f.name in xml_files for f in files)
 
-    # iter_files()
+def test_api_iter_files():
     file_generator = iter_files('nasa')
     assert not isinstance(file_generator, list)
     all_files = ['NASAarchiveLogo.jpg', 'globe_west_540.jpg', 'nasa_reviews.xml',
                  'nasa_meta.xml', 'nasa_archive.torrent', 'nasa_files.xml']
     assert all(f.name in all_files for f in list(file_generator))
 
-    # download()
-    if os.path.exists('iacli-test-item'):
-        shutil.rmtree('iacli-test-item')
-    r = download('iacli-test-item')
-    assert os.path.exists('iacli-test-item')
-    shutil.rmtree('iacli-test-item')
+def test_api_download(tmpdir):
+    with tmpdir.as_cwd():
+        r = download('iacli-test-item')
+        assert os.path.exists('iacli-test-item')
 
-    # download_file()
-    r = download('nasa', 'nasa_meta.xml')
-    os.remove('nasa_meta.xml')
+def test_api_download_file(tmpdir):
+    with tmpdir.as_cwd():
+        r = download('nasa', 'nasa_meta.xml')
 
-    # search()
+def test_api_search():
     s = search_items('identifier:nasa')
     assert s.num_found == 1
 
 @pytest.mark.skipif('internetarchive.config.get_config().get("cookies") == None',
                     reason='requires authorization.')
-def test_functions_needing_cookies():
-    # modify_metadata()
-    valid_key = "foo-{k}".format(k=int(time()))
-    md = {
-        valid_key: 'test value'
-    }
-    r = modify_metadata('iacli-test-item', md)
+class TestFunctionsNeedingCookies:
+    def __init__(self):
+        self.valid_key = "foo-{k}".format(k=int(time()))
 
-    # Remove tag.
-    md = {
-        valid_key: 'REMOVE_TAG'
-    }
-    r = modify_metadata('iacli-test-item', md)
+    def test_api_modify_metadata(self):
+        valid_key = self.valid_key
+        md = {
+            valid_key: 'test value'
+        }
+        r = modify_metadata('iacli-test-item', md)
 
-    tasks = get_tasks()
-    red_rows = get_tasks(task_type='red')
+    def test_api_remove_tag(self):
+        valid_key = self.valid_key
+        md = {
+            valid_key: 'REMOVE_TAG'
+        }
+        r = modify_metadata('iacli-test-item', md)
+
+    def test_api_get_tasks(self):
+        tasks = get_tasks()
+        red_rows = get_tasks(task_type='red')
 
 @pytest.mark.skipif('internetarchive.config.get_config().get("s3") == None',
                     reason='requires authorization.')
@@ -87,7 +89,7 @@ def test_funtions_needing_s3_keys():
 
 
 
-@pytest.mark.skipif('test_mine == False', reason='needs `internetarchive.mine` installed')
+@pytest.mark.skipif('can_test_mine == False', reason='needs `internetarchive.mine` installed')
 def test_mine():
     ids = ['iacli-test-item', 'nasa']
     miner = get_data_miner(ids)

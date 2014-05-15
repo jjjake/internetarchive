@@ -9,7 +9,7 @@ def get_md5(file_object):
         if not data:
             break
         m.update(data)
-    file_object.seek(0, os.SEEK_SET) 
+    file_object.seek(0, os.SEEK_SET)
     return m.hexdigest()
 
 def chunk_generator(fp, chunk_size):

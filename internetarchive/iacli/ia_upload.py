@@ -25,7 +25,7 @@ options:
     -i, --ignore-bucket               Destroy and respecify all metadata.
     -s, --size-hint=<size>            Specify a size-hint for your item.
     -l, --log                         Log upload results to file.
-    --delete                          Delete files after verifying checksums 
+    --delete                          Delete files after verifying checksums
                                       [default: False].
 
 """

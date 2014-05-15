@@ -10,8 +10,9 @@ options:
     -h, --help
     -m, --modify=<key:value>   Modify the metadata of an item.
     -a, --append=<key:value>   Append metadata to an element.
-    -e, --exists               Check if an item exists.  exists, and 1 if it 
-                               does not.
+    -e, --exists               Check if an item exists. In addition to printing
+                               output, exits with return value 0 if the item
+                               exists, and 1 if it does not.
     -F, --formats              Return the file-formats the given item contains.
 
 """

@@ -20,7 +20,7 @@ import sys
 
 from docopt import docopt
 
-from internetarchive import Catalog, get_tasks
+from internetarchive import get_tasks
 
 
 # ia_catalog()

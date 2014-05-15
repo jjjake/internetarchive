@@ -37,7 +37,7 @@ class ArchiveSession(object):
 
         s3_config = self.config.get('s3', {})
         self.access_key = s3_config.get(('access_key'), os.environ.get('IAS3_ACCESS_KEY'))
-        self.secret_key = s3_config.get(('secret_key'), os.environ.get('IAS3_ACCESS_KEY'))
+        self.secret_key = s3_config.get(('secret_key'), os.environ.get('IAS3_SECRET_KEY'))
 
         self.logging_config = config.get('logging', {})
         if self.logging_config:

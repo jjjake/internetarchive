@@ -10,3 +10,5 @@ script: "py.test"
 branches:
   only:
       - master  
+before_install:
+  - sudo apt-get install python-dev python3-dev

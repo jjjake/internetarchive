@@ -14,7 +14,7 @@ options:
     -s, --spreadsheet=<metadata.csv>  Modify metadata in bulk using a spreadsheet as input.
     -e, --exists                      Check if an item exists
     -F, --formats                     Return the file-formats the given item contains.
-    -p, --priority=<priority>        Set the task priority [default: 0].
+    -p, --priority=<priority>        Set the task priority.
 
 """
 import sys
@@ -92,6 +92,8 @@ def main(argv):
 
     # Edit metadata for items in bulk, using a spreadsheet as input.
     if args['--spreadsheet']:
+        if not args['--priority']:
+            args['--priority'] = -5
         spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
         responses = []
         for row in spreadsheet:

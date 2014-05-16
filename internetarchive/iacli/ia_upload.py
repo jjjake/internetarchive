@@ -36,6 +36,7 @@ from subprocess import call
 import csv
 
 from docopt import docopt
+from requests.exceptions import HTTPError
 
 from internetarchive import get_item
 from internetarchive.iacli.argparser import get_args_dict, get_xml_text
@@ -50,7 +51,27 @@ def _upload_files(args, identifier, local_file, upload_kwargs):
     if verbose:
         sys.stdout.write('{0}:\n'.format(item.identifier))
 
-    response = item.upload(local_file, **upload_kwargs)
+    try:
+        response = item.upload(local_file, **upload_kwargs)
+    except HTTPError as exc:
+        response = exc.response
+        if response.status_code == 403:
+            if (not item.session.access_key) and (not item.session.secret_key):
+                sys.stderr.write('\nIAS3 Authentication failed. Please set your IAS3 '
+                                 'access key and secret key \nvia the environment '
+                                 'variables `IAS3_ACCESS_KEY` and `IAS3_SECRET_KEY`, '
+                                 'or \nrun `ia configure` to add your IAS3 keys to your '
+                                 'ia config file. You can \nobtain your IAS3 keys at the '
+                                 'following URL:\n\n\t'
+                                 'https://archive.org/account/s3.php\n\n')
+            else:
+                sys.stderr.write('\nIAS3 Authentication failed. It appears the keyset '
+                                 '"{0}:{1}" \ndoes not have permission to upload '
+                                 'to the given item or '
+                                 'collection.\n\n'.format(item.session.access_key,
+                                                          item.session.secret_key))
+            sys.exit(1)
+
     if args['--debug']:
         for i, r in enumerate(response):
             if i != 0:

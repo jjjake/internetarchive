@@ -481,11 +481,12 @@ class Item(object):
                     os.remove(body.name)
                 return response
             except HTTPError as exc:
-                error_msg = 'error uploading {0} to {1}, {2}'.format(key, self.identifier,
-                                                                     exc)
+                error_msg = ' error uploading {0} to {1}, {2}'.format(key, self.identifier,
+                                                                     exc.message)
                 log.error(error_msg)
-                return response
-                #raise HTTPError(error_msg)
+                if verbose:
+                    sys.stderr.write(error_msg + '\n')
+                raise exc
 
     # upload()
     #_____________________________________________________________________________________

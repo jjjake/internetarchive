@@ -36,33 +36,38 @@ def main(argv):
         9: 'brown',
     }
 
-    if args['<identifier>']:
-        tasks = get_tasks(identifier=args['<identifier>'])
-    elif args['--green-rows']:
-        tasks = get_tasks(task_type='green')
-    elif args['--blue-rows']:
-        tasks = get_tasks(task_type='blue')
-    elif args['--red-rows']:
-        tasks = get_tasks(task_type='red')
-    elif args['--get-task-log']:
-        task = get_tasks(task_ids=args['--get-task-log'])
-        if task:
-            log = task[0].task_log()
-            sys.stdout.write(log)
+    try:
+        if args['<identifier>']:
+            tasks = get_tasks(identifier=args['<identifier>'])
+        elif args['--green-rows']:
+            tasks = get_tasks(task_type='green')
+        elif args['--blue-rows']:
+            tasks = get_tasks(task_type='blue')
+        elif args['--red-rows']:
+            tasks = get_tasks(task_type='red')
+        elif args['--get-task-log']:
+            task = get_tasks(task_ids=args['--get-task-log'])
+            if task:
+                log = task[0].task_log()
+                sys.stdout.write(log)
+            else:
+                sys.stderr.write(
+                    'error retrieving task-log for {0}\n'.format(args['--get-task-log'])
+                )
+                sys.exit(1)
+            sys.exit(0)
         else:
-            sys.stderr.write(
-                'error retrieving task-log for {0}\n'.format(args['--get-task-log'])
-            )
-            sys.exit(1)
-        sys.exit(0)
-    else:
-        tasks = get_tasks(task_ids=args['--task'])
-    for t in tasks:
-        task_info = [
-            t.identifier, t.task_id, t.server, t.time, t.command, row_types[t.row_type],
-        ]
-        if args['--verbose']:
-            # parse task args and append to task_info list.
-            targs = '\t'.join(['{0}={1}'.format(k, v) for (k, v) in t.args.items()])
-            task_info += [t.submitter, targs]
-        sys.stdout.write('\t'.join([str(x) for x in task_info]) + '\n')
+            tasks = get_tasks(task_ids=args['--task'])
+        for t in tasks:
+            task_info = [
+                t.identifier, t.task_id, t.server, t.time, t.command, 
+                row_types[t.row_type],
+            ]
+            if args['--verbose']:
+                # parse task args and append to task_info list.
+                targs = '\t'.join(['{0}={1}'.format(k, v) for (k, v) in t.args.items()])
+                task_info += [t.submitter, targs]
+            sys.stdout.write('\t'.join([str(x) for x in task_info]) + '\n')
+    except NameError as exc:
+        sys.stderr.write('error: {0}'.format(exc.message))
+        sys.exit(1)

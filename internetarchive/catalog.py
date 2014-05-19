@@ -30,6 +30,20 @@ class Catalog(object):
         params = {} if not params else params
 
         self.session = session.ArchiveSession(config)
+        # Accessing the Archive.org catalog requires a users 
+        # logged-in-* cookies (i.e. you must be logged in).
+        # Raise an exception if they are not set.
+        if not self.session.cookies.get('logged-in-user'):
+            raise NameError('logged-in-user cookie not set. Use `ia configure --cookies` '
+                            'to add your logged-in-user cookie to your internetarchive '
+                            'config file, or set the IA_LOGGED_IN_USER environment '
+                            'variable.')
+        elif not self.session.cookies.get('logged-in-sig'):
+            raise NameError('logged-in-sig cookie not set. Use `ia configure --cookies` '
+                            'to add your logged-in-sig cookie to your internetarchive '
+                            'config file, or set the IA_LOGGED_IN_SIG environment '
+                            'variable.')
+
         self.http_session = requests.sessions.Session()
 
         # Set cookies from config.

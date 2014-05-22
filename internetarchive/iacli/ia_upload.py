@@ -54,8 +54,8 @@ def _upload_files(args, identifier, local_file, upload_kwargs):
     try:
         response = item.upload(local_file, **upload_kwargs)
     except HTTPError as exc:
-        response = exc.response
-        if response.status_code == 403:
+        response = [exc.response]
+        if response[0].status_code == 403:
             if (not item.session.access_key) and (not item.session.secret_key):
                 sys.stderr.write('\nIAS3 Authentication failed. Please set your IAS3 '
                                  'access key and secret key \nvia the environment '
@@ -81,6 +81,7 @@ def _upload_files(args, identifier, local_file, upload_kwargs):
             )
             sys.stdout.write('Endpoint:\n {0}\n\n'.format(r.url))
             sys.stdout.write('HTTP Headers:\n{0}\n'.format(headers))
+
     else:
         for resp in response:
             if not resp:

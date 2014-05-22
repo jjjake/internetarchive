@@ -105,10 +105,10 @@ def test_upload():
 # main()
 #_________________________________________________________________________________________
 if __name__ == '__main__':
-    if os.environ.get('AWS_ACCESS_KEY_ID') is None:
-        raise LookupError, 'You must set AWS_ACCESS_KEY_ID environment variable!'
+    if os.environ.get('IAS3_ACCESS_KEY') is None:
+        raise LookupError, 'You must set IAS3_ACCESS_KEY environment variable!'
 
-    if os.environ.get('AWS_SECRET_ACCESS_KEY') is None:
-        raise LookupError, 'You must set AWS_SECRET_ACCESS_KEY environment variable!'
+    if os.environ.get('IAS3_SECRET_KEY') is None:
+        raise LookupError, 'You must set IAS3_SECRET_KEY environment variable!'
 
     test_upload()

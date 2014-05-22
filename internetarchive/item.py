@@ -541,7 +541,7 @@ class Item(object):
                     key, body = f
                 if key and not isinstance(key, six.string_types):
                     raise ValueError('Key must be a string.')
-                resp = self.upload_file(f, **kwargs)
+                resp = self.upload_file(body, key=key, **kwargs)
                 responses.append(resp)
         return responses
 

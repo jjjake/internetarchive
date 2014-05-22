@@ -38,12 +38,12 @@ def get_args_dict(args):
         # Flatten single item lists.
         if len(value) <= 1:
             value = value[0]
+            metadata[_key] = value
 
         # Insert support for elements, i.e. subject[1] = 'value1'
         if contains_index(_key):
             # Set the new key, removing the index.
             key = get_key_without_index(_key)
-            print key
             del metadata[_key]
             if metadata.get(key):
                 # Convert value to a list if the key already exists,

@@ -1,5 +1,6 @@
 import os
 import logging
+import warnings
 
 import requests.sessions
 import requests.cookies
@@ -38,6 +39,21 @@ class ArchiveSession(object):
         s3_config = self.config.get('s3', {})
         self.access_key = s3_config.get(('access_key'), os.environ.get('IAS3_ACCESS_KEY'))
         self.secret_key = s3_config.get(('secret_key'), os.environ.get('IAS3_SECRET_KEY'))
+
+        # If access/secret keys are not in config or defined set
+        # IAS3_* env variables, check for AWS_* env variables, and warn
+        # about pending deprecation of AWS_* env variables.
+        warnings.simplefilter('once')
+        if not self.access_key:
+            self.access_key = os.environ.get('AWS_ACCESS_KEY_ID')
+            if self.access_key:
+                warnings.warn('AWS_ACCESS_KEY_ID will soon be deprecated, Please use '
+                              'IAS3_ACCESS_KEY.', PendingDeprecationWarning)
+        if not self.secret_key:
+            self.secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+            if self.secret_key:
+                warnings.warn('AWS_SECRET_ACCESS_KEY will soon be deprecated, Please use '
+                              'IAS3_SECRET_KEY.', PendingDeprecationWarning)
 
         self.logging_config = config.get('logging', {})
         if self.logging_config:

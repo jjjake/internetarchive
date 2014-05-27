@@ -25,6 +25,7 @@ setup(
         'PyYAML==3.10',
         'clint==0.3.3',
         'six==1.4.1',
+        'Counter==1.0.0',
     ],
     extras_require = {
         'speedups': [

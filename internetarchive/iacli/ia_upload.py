@@ -52,7 +52,7 @@ def _upload_files(args, identifier, local_file, upload_kwargs):
         sys.stdout.write('{0}:\n'.format(item.identifier))
 
     try:
-        response = item.upload(local_file, **upload_kwargs)
+        response = item.upload({args['--remote-name']: local_file}, **upload_kwargs)
     except HTTPError as exc:
         response = [exc.response]
         if not response[0]:
@@ -129,7 +129,6 @@ def main(argv):
         local_file = TemporaryFile()
         local_file.write(sys.stdin.read())
         local_file.seek(0)
-        upload_kwargs['key'] = args['--remote-name']
         _upload_files(args, args['<identifier>'], local_file, upload_kwargs)
 
     # Bulk upload using spreadsheet.

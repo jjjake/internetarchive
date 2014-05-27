@@ -46,4 +46,4 @@ def test_ia_metadata_modify():
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
     assert proc.returncode == 1
-    assert stderr == "error: Illegal tag name '-foo' (400)\n"
+    assert "Illegal tag name" in stderr

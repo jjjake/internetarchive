@@ -138,7 +138,10 @@ def main(argv):
         for row in spreadsheet:
             local_file = row['file']
             del row['file']
-            metadata = dict((k.lower(), v) for (k, v) in row.items() if v)
+            # TODO: Clean up how indexed metadata items are coerced
+            # into metadata.
+            md_args = ['{0}:{1}'.format(k.lower(), v) for (k, v) in row.items() if v]
+            metadata = get_args_dict(md_args)
             upload_kwargs['metadata'].update(metadata)
             _upload_files(args, row['item'], local_file, upload_kwargs)
 

@@ -257,7 +257,7 @@ class Item(object):
 
     # modify_metadata()
     #_____________________________________________________________________________________
-    def modify_metadata(self, metadata, target='metadata', append=False, priority=0,
+    def modify_metadata(self, metadata, target=None, append=False, priority=None,
                         access_key=None, secret_key=None, debug=False):
         """Modify the metadata of an existing item on Archive.org.
 
@@ -288,44 +288,12 @@ class Item(object):
         """
         access_key = self.session.access_key if not access_key else access_key
         secret_key = self.session.secret_key if not secret_key else secret_key
-        src = self.__dict__.get(target, {})
-        dest = src.copy()
-        dest.update(metadata)
-
-        # Prepare patch to remove metadata elements with the value: "REMOVE_TAG".
-        for key, val in metadata.items():
-            # Insert support for elements, i.e. subject[1] = 'value1'
-            contains_index = re.search(r'\[\d+\]', key)
-            if contains_index:
-                # Get the index
-                i = int(re.search(r'(?<=\[)\d+(?=\])', key).group())
-                # Create a new key, without the index, and delete the
-                # old key from dest.
-                _key = key.split('[')[0]
-                del dest[key]
-                # Copy the src value, and insert the new value.
-                _src = copy.deepcopy(src)
-                _val = _src.get(_key, [])
-                if not isinstance(_val, (list, set, tuple)):
-                    _val = [_val]
-                _val.insert(i, val)
-                # Update dest with the final value.
-                dest[_key] = _val
-            # Support for deleting elements.
-            elif val == 'REMOVE_TAG' or not val:
-                del dest[key]
-            # Support for appending strings to values (original value
-            # must be a string as well!).
-            elif append:
-                dest[key] = '{0} {1}'.format(src[key], val)
-
-        json_patch = json.dumps(make_patch(src, dest).patch)
 
         url = '{protocol}//archive.org/metadata/{identifier}'.format(**self.__dict__)
         request = iarequest.MetadataRequest(
             url=url,
-            method='POST',
-            patch=json_patch,
+            metadata=metadata,
+            source_metadata=self.__dict__.get(target, {}),
             target=target,
             priority=priority,
             access_key=access_key,

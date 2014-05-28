@@ -1,7 +1,12 @@
 import json
 import re
 import copy
-from collections import Counter
+import sys
+# py26 support...
+if sys.version_info < (2, 7):
+    from counter import Counter
+else:
+    from collections import Counter
 
 import requests.models
 import requests

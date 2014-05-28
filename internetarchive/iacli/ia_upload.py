@@ -52,7 +52,11 @@ def _upload_files(args, identifier, local_file, upload_kwargs):
         sys.stdout.write('{0}:\n'.format(item.identifier))
 
     try:
-        response = item.upload({args['--remote-name']: local_file}, **upload_kwargs)
+        if args['--remote-name']:
+            files = {args['--remote-name']: local_file}
+        else:
+            files = local_file
+        response = item.upload(files, **upload_kwargs)
     except HTTPError as exc:
         response = [exc.response]
         if not response[0]:

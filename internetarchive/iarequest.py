@@ -232,6 +232,8 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
         indexed_keys[key] += len(source_metadata.get(key, []))
         # Intialize the value in the prepared_metadata dict.
         prepared_metadata[key] = source_metadata.get(key, [])
+        if not isinstance(prepared_metadata[key], list):
+            prepared_metadata[key] = [prepared_metadata[key]]
         # Fill the value of the prepared_metadata key with None values
         # so all indexed items can be indexed in order.
         while len(prepared_metadata[key]) < indexed_keys[key]:

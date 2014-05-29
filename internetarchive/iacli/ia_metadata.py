@@ -97,6 +97,8 @@ def main(argv):
         spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
         responses = []
         for row in spreadsheet:
+            if not row['item']:
+                continue
             item = get_item(row['item'])
             if row.get('file'):
                 del row['file']

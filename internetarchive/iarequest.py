@@ -241,7 +241,9 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
 
     # Index all items which contain an index.
     for key in metadata:
-        if rm_index(key) in indexed_keys:
+        if (rm_index(key) in indexed_keys):
+            if metadata[key] in source_metadata.get(rm_index(key), ''):
+                continue
             prepared_metadata[rm_index(key)].insert(get_index(key), metadata[key])
         elif append:
             prepared_metadata[key] = '{0} {1}'.format(source_metadata[key], metadata[key])

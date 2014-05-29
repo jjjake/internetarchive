@@ -44,11 +44,11 @@ from internetarchive.iacli.argparser import get_args_dict, get_xml_text
 
 # main()
 #_________________________________________________________________________________________
-def _upload_files(args, identifier, local_file, upload_kwargs):
+def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=None):
     verbose = True if args['--quiet'] is False else False
     config = {} if not args['--log'] else {'logging': {'level': 'INFO'}}
     item = get_item(identifier, config=config)
-    if verbose:
+    if (verbose) and (prev_identifier != identifier):
         sys.stdout.write('{0}:\n'.format(item.identifier))
 
     try:
@@ -138,15 +138,21 @@ def main(argv):
     # Bulk upload using spreadsheet.
     elif args['--spreadsheet']:
         spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
+        prev_identifier = None
         for row in spreadsheet:
             local_file = row['file']
+            identifier = row['item']
             del row['file']
+            del row['item']
+            if (not identifier) and (prev_identifier):
+                identifier = prev_identifier
             # TODO: Clean up how indexed metadata items are coerced
             # into metadata.
             md_args = ['{0}:{1}'.format(k.lower(), v) for (k, v) in row.items() if v]
             metadata = get_args_dict(md_args)
             upload_kwargs['metadata'].update(metadata)
-            _upload_files(args, row['item'], local_file, upload_kwargs)
+            _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier)
+            prev_identifier = identifier
 
     # Upload files.
     else:

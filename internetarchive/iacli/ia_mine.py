@@ -35,7 +35,7 @@ def main(argv):
     miner = get_data_miner(identifiers, workers=workers)
 
     for i, item in miner:
-        metadata = json.dumps(item.metadata)
+        metadata = json.dumps(item._json)
         if args['--cache']:
             sys.stdout.write('saving metadata for: {0}\n'.format(item.identifier))
             with open('{0}_meta.json'.format(item.identifier), 'w') as fp:

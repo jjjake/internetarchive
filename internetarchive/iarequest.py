@@ -241,6 +241,15 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
 
     # Index all items which contain an index.
     for key in metadata:
+        # Support for removing specific values from a metadata elements
+        # array.
+        if metadata[key] == 'REMOVE_TAG':
+            prepared_metadata[rm_index(key)].pop(get_index(key))
+            continue
+        if isinstance(metadata[key], list):
+            for k in metadata[key]:
+                if k == 'REMOVE_TAG':
+                    metadata[key].remove(k)
         if (rm_index(key) in indexed_keys):
             if metadata[key] in source_metadata.get(rm_index(key), ''):
                 continue

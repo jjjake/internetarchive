@@ -2,11 +2,6 @@ import json
 import re
 import copy
 import sys
-# py26 support...
-if sys.version_info < (2, 7):
-    from counter import Counter
-else:
-    from collections import Counter
 
 import requests.models
 import requests
@@ -213,17 +208,40 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
 
 
 def prepare_metadata(metadata, source_metadata=None, append=False):
+    """Prepare a metadata dict for an 
+    :class:`S3PreparedRequest <S3PreparedRequest>` or 
+    :class:`MetadataPreparedRequest <MetadataPreparedRequest>` object.
+
+    :type metadata: dict
+    :param metadata: The metadata dict to be prepared.
+
+    :type source_metadata: dict
+    :param source_metadata: (optional) The source metadata for the item
+                            being modified.
+
+    :rtype: dict
+    :returns: A filtered metadata dict to be used for generating IA
+              S3 and Metadata API requests.
+
+    """
     # Make a deepcopy of source_metadata if it exists. A deepcopy is
     # necessary to avoid modifying the original dict.
     source_metadata = {} if not source_metadata else copy.deepcopy(source_metadata)
     prepared_metadata = {}
 
+    # Functions for dealing with metadata keys containing indexes.
     contains_index = lambda k: re.search(r'\[\d+\]', k)
     get_index = lambda k: int(re.search(r'(?<=\[)\d+(?=\])', k).group())
     rm_index = lambda k: k.split('[')[0]
+
     # Create indexed_keys counter dict. i.e.: {'subject': 3} -- subject
-    # (with the index removed) appears in 3 times in the metadata dict.
-    indexed_keys = Counter([rm_index(k) for k in metadata if contains_index(k)])
+    # (with the index removed) appears 3 times in the metadata dict.
+    indexed_keys = {}
+    for key in metadata:
+        if not contains_index(key):
+            continue
+        count = len([x for x in metadata if rm_index(x) == rm_index(key)])
+        indexed_keys[rm_index(key)] = count
 
     # Initialize the values for all indexed_keys.
     for key in indexed_keys:
@@ -241,26 +259,41 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
 
     # Index all items which contain an index.
     for key in metadata:
-        # Support for removing specific values from a metadata elements
-        # array.
         if metadata[key] == 'REMOVE_TAG':
-            prepared_metadata[rm_index(key)].pop(get_index(key))
             continue
-        if isinstance(metadata[key], list):
-            for k in metadata[key]:
-                if k == 'REMOVE_TAG':
-                    metadata[key].remove(k)
+        # Insert values from indexed keys into prepared_metadata dict.
         if (rm_index(key) in indexed_keys):
             if metadata[key] in source_metadata.get(rm_index(key), ''):
                 continue
             prepared_metadata[rm_index(key)].insert(get_index(key), metadata[key])
+        # If append is True, append value to source_metadata value.
         elif append:
             prepared_metadata[key] = '{0} {1}'.format(source_metadata[key], metadata[key])
         else:
             prepared_metadata[key] = metadata[key]
 
-    # Filter out None values.
+    # Remove values from metadata if value is REMOVE_TAG.
+    _done = []
     for key in indexed_keys:
+        # Filter None values from items with arrays as values 
         prepared_metadata[key] = [v for v in prepared_metadata[key] if v]
+        # Only filter the given indexed key if it has not already been
+        # filtered.
+        if key not in d:
+            indexes = []
+            for k in metadata:
+                if not contains_index(k):
+                    continue
+                elif not rm_index(k) == key:
+                    continue
+                elif not metadata[k] == 'REMOVE_TAG':
+                    continue
+                else:
+                    indexes.append(get_index(k))
+            # Delete indexed values in reverse to not throw off the
+            # subsequent indexes.
+            for i in sorted(indexes, reverse=True):
+                del prepared_metadata[key][i]
+            _done.append(key)
 
     return prepared_metadata

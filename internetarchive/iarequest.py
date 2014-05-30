@@ -279,7 +279,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
         prepared_metadata[key] = [v for v in prepared_metadata[key] if v]
         # Only filter the given indexed key if it has not already been
         # filtered.
-        if key not in d:
+        if key not in _done:
             indexes = []
             for k in metadata:
                 if not contains_index(k):

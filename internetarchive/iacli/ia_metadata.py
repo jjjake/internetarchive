@@ -97,9 +97,9 @@ def main(argv):
         spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
         responses = []
         for row in spreadsheet:
-            if not row['item']:
+            if not row['identifier']:
                 continue
-            item = get_item(row['item'])
+            item = get_item(row['identifier'])
             if row.get('file'):
                 del row['file']
             metadata = dict((k.lower(), v) for (k, v) in row.items() if v)

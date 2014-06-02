@@ -141,9 +141,9 @@ def main(argv):
         prev_identifier = None
         for row in spreadsheet:
             local_file = row['file']
-            identifier = row['item']
+            identifier = row['identifier']
             del row['file']
-            del row['item']
+            del row['identifier']
             if (not identifier) and (prev_identifier):
                 identifier = prev_identifier
             # TODO: Clean up how indexed metadata items are coerced

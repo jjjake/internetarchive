@@ -58,7 +58,7 @@ class Catalog(object):
         )
         self.params.update(params)
         # Return user's current tasks as default.
-        if not identifier and not task_ids:
+        if not identifier and not task_ids and not params:
             self.params['justme'] = 1
 
         if task_ids:

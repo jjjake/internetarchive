@@ -7,3 +7,6 @@ Release History
 +++++++++
 
 - Changed indexed metadata elements to clobber values instead of insert.
+- AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are now deprecated.
+  IAS3_ACCESS_KEY and IAS3_SECRET_KEY must be used if setting IAS3
+  keys via environment variables.

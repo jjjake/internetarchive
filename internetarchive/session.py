@@ -22,14 +22,14 @@ class ArchiveSession(object):
     FmtString = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
     # __init__()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __init__(self, config=None):
         super(ArchiveSession, self).__init__()
         config = internetarchive.config.get_config(config)
         self.cookies = requests.cookies.cookiejar_from_dict(config.get('cookies', {}))
-        if not 'logged-in-user' in self.cookies:
+        if 'logged-in-user' not in self.cookies:
             self.cookies['logged-in-user'] = os.environ.get('IA_LOGGED_IN_USER')
-        if not 'logged-in-sig' in self.cookies:
+        if 'logged-in-sig' not in self.cookies:
             self.cookies['logged-in-sig'] = os.environ.get('IA_LOGGED_IN_SIG')
 
         self.config = config
@@ -46,7 +46,7 @@ class ArchiveSession(object):
             self.set_file_logger(_level, log_file)
 
     # __init__()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def set_file_logger(self, log_level, path, logger_name='internetarchive'):
         """Convenience function to quickly configure any level of
         logging to a file.

@@ -298,6 +298,7 @@ class Item(object):
             priority=priority,
             access_key=access_key,
             secret_key=secret_key,
+            append=append,
         )
         if debug:
             return request

@@ -119,6 +119,7 @@ class MetadataRequest(requests.models.Request):
         priority=None,
         access_key=None,
         secret_key=None,
+        append=None,
         **kwargs):
 
         super(MetadataRequest, self).__init__(**kwargs)
@@ -131,6 +132,7 @@ class MetadataRequest(requests.models.Request):
         self.source_metadata = source_metadata
         self.target = target
         self.priority = priority
+        self.append = append
 
     def prepare(self):
         p = MetadataPreparedRequest()
@@ -150,6 +152,7 @@ class MetadataRequest(requests.models.Request):
             priority=self.priority,
             source_metadata=self.source_metadata,
             target=self.target,
+            append=self.append,
         )
         return p
 
@@ -164,7 +167,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
     #_____________________________________________________________________________________
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, metadata={},
-                source_metadata=None, target=None, priority=None):
+                source_metadata=None, target=None, priority=None, append=None):
 
         method = 'POST' if not method else method
 
@@ -172,7 +175,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         self.prepare_url(url, params)
         self.prepare_headers(headers)
         self.prepare_cookies(cookies)
-        self.prepare_body(metadata, source_metadata, target, priority)
+        self.prepare_body(metadata, source_metadata, target, priority, append)
         self.prepare_auth(auth, url)
         # Note that prepare_auth must be last to enable authentication schemes
         # such as OAuth to work on a fully prepared request.
@@ -180,7 +183,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         # This MUST go after prepare_auth. Authenticators could add a hook
         self.prepare_hooks(hooks)
 
-    def prepare_body(self, metadata, source_metadata, target, priority):
+    def prepare_body(self, metadata, source_metadata, target, priority, append):
         target = 'metadata' if not target else target
         priority = 0 if not priority else priority
 
@@ -188,7 +191,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             r = requests.get(self.url)
             source_metadata = r.json().get(target, {})
         destination_metadata = source_metadata.copy()
-        prepared_metadata = prepare_metadata(metadata, source_metadata)
+        prepared_metadata = prepare_metadata(metadata, source_metadata, append)
         destination_metadata.update(prepared_metadata)
 
         # Delete metadata items where value is REMOVE_TAG.
@@ -259,13 +262,12 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
 
     # Index all items which contain an index.
     for key in metadata:
-        if metadata[key] == 'REMOVE_TAG':
-            continue
         # Insert values from indexed keys into prepared_metadata dict.
         if (rm_index(key) in indexed_keys):
-            if metadata[key] in source_metadata.get(rm_index(key), ''):
-                continue
-            prepared_metadata[rm_index(key)].insert(get_index(key), metadata[key])
+            try:
+                prepared_metadata[rm_index(key)][get_index(key)] = metadata[key]
+            except IndexError:
+                prepared_metadata[rm_index(key)].append(metadata[key])
         # If append is True, append value to source_metadata value.
         elif append:
             prepared_metadata[key] = '{0} {1}'.format(source_metadata[key], metadata[key])

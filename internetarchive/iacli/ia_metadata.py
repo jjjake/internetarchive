@@ -87,7 +87,7 @@ def main(argv):
 
         # Dump JSON to stdout.
         else:
-            metadata = dumps(item.metadata)
+            metadata = dumps(item._json)
             sys.stdout.write(metadata + '\n')
 
     # Edit metadata for items in bulk, using a spreadsheet as input.

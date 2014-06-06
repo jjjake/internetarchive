@@ -4,6 +4,24 @@ from . import item, search, catalog
 # get_item()
 # ________________________________________________________________________________________
 def get_item(identifier, metadata_timeout=None, config=None, max_retries=1):
+    """Get an :class:`internetarchive.item.Item <Item>` object.
+
+    :type identifier: str
+    :param identifier: The globally unique Archive.org identifier
+    for a given item.
+
+    :type metadata_timeout: int
+    :param metadata_timeout: (optional) Set a timeout for retrieving
+    an item's metadata.
+
+    :type config: dict
+    :param secure: (optional) Configuration options for session.
+
+    :type max_retries: int
+    :param max_retries: (optional) Maximum number of times to request
+    a website if the connection drops. (default: 1)
+
+    """
     return item.Item(identifier, metadata_timeout, config, max_retries)
 
 

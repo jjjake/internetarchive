@@ -1,34 +1,36 @@
-from sys import stdout
-
 from . import item, search, catalog
 
 
 # get_item()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def get_item(identifier, metadata_timeout=None, config=None, max_retries=1):
     return item.Item(identifier, metadata_timeout, config, max_retries)
 
+
 # get_files()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def get_files(identifier, files=None, source=None, formats=None, glob_pattern=None,
               metadata_timeout=None, config=None):
     item = get_item(identifier, metadata_timeout, config)
     return item.get_files(files, source, formats, glob_pattern)
 
+
 # iter_files()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def iter_files(identifier, metadata_timeout=None, config=None):
     item = get_item(identifier, metadata_timeout, config)
     return item.iter_files()
 
+
 # modify_metadata()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def modify_metadata(identifier, metadata, timeout=None, target='metadata', append=False):
     item = get_item(identifier, metadata_timeout=timeout)
     return item.modify_metadata(metadata, target, append=append)
 
+
 # upload()
-#_____________________________________________________________________________________
+# ____________________________________________________________________________________
 def upload(identifier, files, **kwargs):
     """Upload files to an item. The item will be created if it
     does not exist.
@@ -56,8 +58,9 @@ def upload(identifier, files, **kwargs):
     item = get_item(identifier)
     return item.upload(files, **kwargs)
 
+
 # download()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def download(identifier, filenames=None, **kwargs):
     """Download an item into the current working directory.
 
@@ -100,23 +103,25 @@ def download(identifier, filenames=None, **kwargs):
     else:
         item.download(**kwargs)
 
+
 # delete()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def delete(identifier, filenames=None, **kwargs):
     item = get_item(identifier)
     if filenames:
         if not isinstance(filenames, (set, list)):
             filenames = [filenames]
         for f in item.iter_files():
-            if not f.name in filenames:
+            if f.name not in filenames:
                 continue
             f.delete(**kwargs)
 
+
 # get_tasks()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def get_tasks(**kwargs):
     _catalog = catalog.Catalog(identifier=kwargs.get('identifier'),
-                               params=kwargs.get('params'), 
+                               params=kwargs.get('params'),
                                task_ids=kwargs.get('task_ids'))
     task_type = kwargs.get('task_type')
     if task_type:
@@ -124,13 +129,15 @@ def get_tasks(**kwargs):
     else:
         return _catalog.tasks
 
+
 # search_items()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def search_items(query, **kwargs):
     return search.Search(query, **kwargs)
 
+
 # mine()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def get_data_miner(identifiers, **kwargs):
     from . import mine
     return mine.Mine(identifiers, **kwargs)

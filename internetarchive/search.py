@@ -4,7 +4,7 @@ from . import session
 
 
 # Search class
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 class Search(object):
     """This class represents an archive.org item search. You can use
     this class to search for archive.org items using the advanced
@@ -19,7 +19,7 @@ class Search(object):
 
     """
     # init()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __init__(self, query, fields=['identifier'], params={}, config=None):
         self.session = session.ArchiveSession(config)
         self.http_session = requests.sessions.Session()
@@ -41,13 +41,13 @@ class Search(object):
         self.query = self._search_info['responseHeader']['params']['q']
 
     # __repr__()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __repr__(self):
         return ('Search(query={query!r}, '
                 'num_found={num_found!r})'.format(**self.__dict__))
 
     # _get_search_info()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def _get_search_info(self):
         info_params = self.params.copy()
         info_params['rows'] = 0
@@ -57,7 +57,7 @@ class Search(object):
         return results
 
     # __iter__()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __iter__(self):
         """Generator for iterating over search results"""
         total_pages = ((self.num_found / self.params['rows']) + 2)

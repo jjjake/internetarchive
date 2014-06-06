@@ -10,7 +10,7 @@ from . import session
 
 
 # Catalog class
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 class Catalog(object):
     """:todo: Document Catalog Class."""
 
@@ -23,14 +23,14 @@ class Catalog(object):
     )
 
     # init()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __init__(self, identifier=None, task_ids=None, params={}, verbose=True,
                  config=None):
         verbose = '1' if verbose else '0'
         params = {} if not params else params
 
         self.session = session.ArchiveSession(config)
-        # Accessing the Archive.org catalog requires a users 
+        # Accessing the Archive.org catalog requires a users
         # logged-in-* cookies (i.e. you must be logged in).
         # Raise an exception if they are not set.
         if not self.session.cookies.get('logged-in-user'):
@@ -66,7 +66,7 @@ class Catalog(object):
                 task_ids = [task_ids]
             self.params.update(dict(
                 where='task_id in({tasks})'.format(tasks=','.join(task_ids)),
-                history=99999999999999999999999, # TODO: is there a better way?
+                history=99999999999999999999999,  # TODO: is there a better way?
             ))
 
         if identifier:
@@ -85,7 +85,7 @@ class Catalog(object):
             setattr(self, '{0}_rows'.format(key), rows)
 
     # _get_tasks()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def _get_tasks(self):
         r = self.http_session.get(self.url, params=self.params)
         # Convert JSONP to JSON (then parse the JSON).
@@ -96,7 +96,7 @@ class Catalog(object):
 
 
 # CatalogTask class
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 class CatalogTask(object):
     """
     Represents catalog task.
@@ -115,7 +115,7 @@ class CatalogTask(object):
     )
 
     # init()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __init__(self, columns, http_session=None):
         if not http_session:
             self._http_session = requests.sessions.Session()
@@ -130,7 +130,7 @@ class CatalogTask(object):
             self.args = dict(x for x in parse_qsl(self.args))
 
     # __repr__()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __repr__(self):
         return ('CatalogTask(identifier={identifier},'
                 ' task_id={task_id!r}, server={server!r},'
@@ -139,7 +139,7 @@ class CatalogTask(object):
                 ' row_type={row_type})'.format(**self.__dict__))
 
     # __getitem__()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __getitem__(self, key):
         """
         Dict-like access provided as backward compatibility.
@@ -151,7 +151,7 @@ class CatalogTask(object):
             raise KeyError(key)
 
     # task_log()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def task_log(self):
         """
         Return file-like reading task log.

@@ -4,21 +4,20 @@ try:
     monkey.patch_all(thread=False)
 except ImportError:
     raise ImportError(
-    """No module named gevent
+        """No module named gevent
 
-    This feature requires the gevent neworking library. gevent
-    and all of it's dependencies can be installed with pip:
-    \tpip install cython gevent
+        This feature requires the gevent neworking library. gevent
+        and all of it's dependencies can be installed with pip:
+        \tpip install cython gevent
 
-    """)
+        """)
 
 from internetarchive import Item
 from requests.exceptions import RequestException
 
 
-
 # Mine class
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 class Mine(object):
     """This class is for concurrently retrieving metadata for items on
     Archive.org.
@@ -32,13 +31,13 @@ class Mine(object):
 
         """
     # __init__()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __init__(self, identifiers, workers=20, max_requests=10):
         """Makes a generator for an list of `(index, item)` where `item`
         is an instance of `Item` containing metadata, and index is the index,
         for each id in `identifiers`. Note: this does not return the
         items in the same order as given in the identifiers list
-        
+
         :type identifiers: list
         :param identifiers: a list of identifiers to get the metadata of
         :type workers: int
@@ -48,7 +47,7 @@ class Mine(object):
         in case there is something wrong with requesting it
 
         :rtype: Mine
-        
+
         """
         self.skips = []
         self.queue = queue
@@ -61,9 +60,8 @@ class Mine(object):
         self.input_queue = self.queue.JoinableQueue(1000)
         self.json_queue = self.queue.Queue(1000)
 
-
     # _metadata_getter()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def _metadata_getter(self):
         while True:
             i, identifier, num_requests = self.input_queue.get()
@@ -72,7 +70,7 @@ class Mine(object):
                 self.json_queue.put((i, item))
             except Exception as e:
                 if (type(e) == RequestException and
-                       (self.max_requests is None or num_requests < self.max_requests)):
+                        (self.max_requests is None or num_requests < self.max_requests)):
                     self.input_queue.put((i, identifier, num_requests+1))
                 else:
                     if identifier not in self.skips:
@@ -86,18 +84,16 @@ class Mine(object):
             finally:
                 self.input_queue.task_done()
 
-
     # _queue_input()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def _queue_input(self):
         for i, identifier in enumerate(self.identifiers):
-            if not identifier in self.skips:
+            if identifier not in self.skips:
                 self.input_queue.put((i, identifier, 0))
                 self.queued_count += 1
 
-
     # __iter__()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __iter__(self):
         self.queued_count = 0
         self.got_count = 0

@@ -4,7 +4,7 @@ import yaml
 
 
 # get_config()
-#_____________________________________________________________________________________
+# ____________________________________________________________________________________
 def get_config(config=None, config_file=None):
     config = {} if not config else config
     if not config_file:

@@ -1,7 +1,10 @@
+try:
+    import ujson as json
+except ImportError:
+    import json
 import json
 import re
 import copy
-import sys
 
 import requests.models
 import requests
@@ -56,7 +59,7 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         super(S3PreparedRequest, self).__init__()
 
     # prepare()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, queue_derive=None,
                 metadata={}):
@@ -73,7 +76,7 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         self.prepare_hooks(hooks)
 
     # prepare_headers()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def prepare_headers(self, headers, metadata):
         """Convert a dictionary of metadata into S3 compatible HTTP
         headers, and append headers to ``headers``.
@@ -164,7 +167,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         super(MetadataPreparedRequest, self).__init__()
 
     # prepare()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, metadata={},
                 source_metadata=None, target=None, priority=None, append=None):
@@ -211,8 +214,8 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
 
 
 def prepare_metadata(metadata, source_metadata=None, append=False):
-    """Prepare a metadata dict for an 
-    :class:`S3PreparedRequest <S3PreparedRequest>` or 
+    """Prepare a metadata dict for an
+    :class:`S3PreparedRequest <S3PreparedRequest>` or
     :class:`MetadataPreparedRequest <MetadataPreparedRequest>` object.
 
     :type metadata: dict
@@ -248,7 +251,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
 
     # Initialize the values for all indexed_keys.
     for key in indexed_keys:
-        # Increment the counter so we know how many values the final 
+        # Increment the counter so we know how many values the final
         # value in prepared_metadata should have.
         indexed_keys[key] += len(source_metadata.get(key, []))
         # Intialize the value in the prepared_metadata dict.
@@ -277,7 +280,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
     # Remove values from metadata if value is REMOVE_TAG.
     _done = []
     for key in indexed_keys:
-        # Filter None values from items with arrays as values 
+        # Filter None values from items with arrays as values
         prepared_metadata[key] = [v for v in prepared_metadata[key] if v]
         # Only filter the given indexed key if it has not already been
         # filtered.

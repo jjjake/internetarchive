@@ -1,19 +1,12 @@
-try:
-    import ujson as json
-except ImportError:
-    import json
 import os
 import sys
 from fnmatch import fnmatch
 import logging
-import re
-import copy
 
 import requests.sessions
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from requests import Response
-from jsonpatch import make_patch
 from clint.textui import progress
 import six
 
@@ -24,7 +17,7 @@ log = logging.getLogger(__name__)
 
 
 # Item class
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 class Item(object):
     """This class represents an archive.org item. You can use this
     class to access item metadata::
@@ -53,7 +46,7 @@ class Item(object):
 
     """
     # init()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __init__(self, identifier, metadata_timeout=None, config=None, max_retries=1):
         """
         :type identifier: str
@@ -99,13 +92,13 @@ class Item(object):
         self.exists = False if self._json == {} else True
 
     # __repr__()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __repr__(self):
         return ('Item(identifier={identifier!r}, '
                 'exists={exists!r})'.format(**self.__dict__))
 
     # get_metadata()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def get_metadata(self, metadata_timeout=None):
         """Get an item's metadata from the `Metadata API
         <http://blog.archive.org/2013/07/04/metadata-api/>`__
@@ -131,7 +124,7 @@ class Item(object):
         return metadata
 
     # iter_files()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def iter_files(self):
         """Generator for iterating over files in an item.
 
@@ -145,7 +138,7 @@ class Item(object):
             yield file
 
     # file()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def get_file(self, file_name):
         """Get a :class:`File <File>` object for the named file.
 
@@ -158,7 +151,7 @@ class Item(object):
                 return f
 
     # get_files()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def get_files(self, files=None, source=None, formats=None, glob_pattern=None):
         files = [] if not files else files
         source = [] if not source else source
@@ -184,7 +177,7 @@ class Item(object):
         return file_objects
 
     # download()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def download(self, concurrent=False, source=None, formats=None, glob_pattern=None,
                  dry_run=False, verbose=False, ignore_existing=False):
         """Download the entire item into the current working directory.
@@ -256,7 +249,7 @@ class Item(object):
         return True
 
     # modify_metadata()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def modify_metadata(self, metadata, target=None, append=False, priority=None,
                         access_key=None, secret_key=None, debug=False):
         """Modify the metadata of an existing item on Archive.org.
@@ -308,7 +301,7 @@ class Item(object):
         return resp
 
     # upload_file()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def upload_file(self, body, key=None, metadata={}, headers={},
                     access_key=None, secret_key=None, queue_derive=True,
                     ignore_preexisting_bucket=False, verbose=False, verify=True,
@@ -407,7 +400,7 @@ class Item(object):
 
         # require the Content-MD5 header when delete is True.
         if verify or delete:
-            headers['Content-MD5'] = md5_sum 
+            headers['Content-MD5'] = md5_sum
         if verbose:
             try:
                 chunk_size = 1048576
@@ -453,9 +446,9 @@ class Item(object):
                 error_msg = (' error uploading {0} to {1}, '
                              '{2}'.format(key, self.identifier, exc))
                 if response.status_code == 400 and \
-                    any('\n' in str(v) for (k, v) in request.headers.items()):
-                        error_msg += (' - Check your metadata and header values for '
-                                      'newline charchters (i.e. "\\n").')
+                        any('\n' in str(v) for (k, v) in request.headers.items()):
+                    error_msg += (' - Check your metadata and header values for '
+                                  'newline charchters (i.e. "\\n").')
                 log.error(error_msg)
                 if verbose:
                     sys.stderr.write(error_msg + '\n')
@@ -463,7 +456,7 @@ class Item(object):
                 raise type(exc)(error_msg)
 
     # upload()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def upload(self, files, **kwargs):
         """Upload files to an item. The item will be created if it
         does not exist.
@@ -521,7 +514,7 @@ class Item(object):
 
 
 # File class
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 class File(object):
     """This class represents a file in an archive.org item. You
     can use this class to access the file metadata::
@@ -549,7 +542,7 @@ class File(object):
 
     """
     # init()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __init__(self, item, name):
         """
         :type item: Item
@@ -574,11 +567,11 @@ class File(object):
         for key in _file:
             setattr(self, key, _file[key])
         base_url = '{protocol}//archive.org/download/{identifier}'.format(**item.__dict__)
-        self.url = '{base_url}/{name}'.format(base_url=base_url, 
+        self.url = '{base_url}/{name}'.format(base_url=base_url,
                                               name=name.encode('utf-8'))
 
     # __repr__()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def __repr__(self):
         return ('File(identifier={identifier!r}, '
                 'filename={name!r}, '
@@ -587,7 +580,7 @@ class File(object):
                 'format={format!r})'.format(**self.__dict__))
 
     # download()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def download(self, file_path=None, ignore_existing=False):
         """Download the file into the current working directory.
 
@@ -617,7 +610,7 @@ class File(object):
                     f.flush()
 
     # delete()
-    #_____________________________________________________________________________________
+    # ____________________________________________________________________________________
     def delete(self, debug=False, verbose=False, cascade_delete=False, access_key=None,
                secret_key=None):
         """Delete a file from the Archive. Note: Some files -- such as

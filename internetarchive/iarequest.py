@@ -65,7 +65,7 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                 metadata={}):
         self.prepare_method(method)
         self.prepare_url(url, params)
-        self.prepare_headers(headers, metadata)
+        self.prepare_headers(headers, metadata, queue_derive)
         self.prepare_cookies(cookies)
         self.prepare_body(data, files)
         self.prepare_auth(auth, url)
@@ -77,7 +77,7 @@ class S3PreparedRequest(requests.models.PreparedRequest):
 
     # prepare_headers()
     # ____________________________________________________________________________________
-    def prepare_headers(self, headers, metadata):
+    def prepare_headers(self, headers, metadata, queue_derive=True):
         """Convert a dictionary of metadata into S3 compatible HTTP
         headers, and append headers to ``headers``.
 
@@ -91,6 +91,8 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         """
         prepared_metadata = prepare_metadata(metadata)
         headers['x-archive-auto-make-bucket'] = 1
+        if not queue_derive:
+            headers['x-archive-queue-derive'] = 0
         for meta_key, meta_value in prepared_metadata.items():
             # Encode arrays into JSON strings because Archive.org does not
             # yet support complex metadata structures in

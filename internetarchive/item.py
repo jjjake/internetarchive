@@ -423,6 +423,7 @@ class Item(object):
             metadata=metadata,
             access_key=access_key,
             secret_key=secret_key,
+            queue_derive=queue_derive,
             **kwargs
         )
 

@@ -92,7 +92,7 @@ def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=N
         for resp in response:
             if not resp:
                 continue
-            if resp.status_code == 200:
+            if (resp.status_code == 200) or (not resp.status_code):
                 continue
             error = parseString(resp.content)
             code = get_xml_text(error.getElementsByTagName('Code'))

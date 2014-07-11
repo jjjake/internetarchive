@@ -47,7 +47,8 @@ class Item(object):
     """
     # init()
     # ____________________________________________________________________________________
-    def __init__(self, identifier, metadata_timeout=None, config=None, max_retries=1):
+    def __init__(self, identifier, metadata_timeout=None, config=None, max_retries=1,
+                 archive_session=None):
         """
         :type identifier: str
         :param identifier: The globally unique Archive.org identifier
@@ -64,8 +65,13 @@ class Item(object):
         :param max_retries: (optional) Maximum number of times to request
                             a website if the connection drops. (default: 1)
 
+        :type archive_session: :class:`ArchiveSession <ArchiveSession>` 
+        :param archive_session: An :class:`ArchiveSession <ArchiveSession>`
+                                object can be provided via the `archive_session`
+                                parameter.
+
         """
-        self.session = session.ArchiveSession(config)
+        self.session = archive_session if archive_session else session.get_session(config)
         self.protocol = 'https:' if self.session.secure else 'http:'
         self.http_session = requests.sessions.Session()
         max_retries_adapter = HTTPAdapter(max_retries=max_retries)

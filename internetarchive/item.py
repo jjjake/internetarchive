@@ -178,8 +178,13 @@ class Item(object):
             elif f.format in formats:
                 file_objects.append(f)
             elif glob_pattern:
-                if fnmatch(f.name, glob_pattern):
-                    file_objects.append(f)
+                # Support for | operator.
+                patterns = glob_pattern.split('|')
+                if not isinstance(patterns, list):
+                    patterns = [patterns]
+                for p in patterns:
+                    if fnmatch(f.name, p):
+                        file_objects.append(f)
         return file_objects
 
     # download()

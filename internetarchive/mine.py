@@ -12,7 +12,8 @@ except ImportError:
 
         """)
 
-from internetarchive import Item
+from internetarchive import get_item
+from internetarchive.session import get_session
 from requests.exceptions import RequestException
 
 
@@ -59,6 +60,9 @@ class Mine(object):
         self.got_count = 0
         self.input_queue = self.queue.JoinableQueue(1000)
         self.json_queue = self.queue.Queue(1000)
+        
+        # Use the same session for each item fetch.
+        self.session = get_session()
 
     # _metadata_getter()
     # ____________________________________________________________________________________
@@ -66,7 +70,7 @@ class Mine(object):
         while True:
             i, identifier, num_requests = self.input_queue.get()
             try:
-                item = Item(identifier)
+                item = get_item(identifier, archive_session=self.session)
                 self.json_queue.put((i, item))
             except Exception as e:
                 if (type(e) == RequestException and
@@ -80,7 +84,6 @@ class Mine(object):
                     if e.args is not None and len(e.args) > 0 and type(e.args[0]) == str:
                         e.args = ((e.args[0]+' when processing id '+repr(identifier),) +
                                   e.args[1:])
-                    raise
             finally:
                 self.input_queue.task_done()
 

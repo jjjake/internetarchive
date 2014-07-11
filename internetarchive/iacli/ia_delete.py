@@ -3,21 +3,25 @@
 IA-S3 Documentation: https://archive.org/help/abouts3.txt
 
 usage:
-    ia delete [--verbose] [--debug] [--cascade] <identifier> <file>...
-    ia delete [--verbose] [--debug] --all <identifier>
+    ia delete [--verbose] [--debug] [--dry-run] [--cascade] <identifier> <file>...
+    ia delete [--verbose] [--debug] [--dry-run] --all <identifier>
+    ia delete [--verbose] [--debug] [--dry-run] --glob=<pattern> <identifier>
     ia delete --help
 
 options:
     -h, --help
-    -v, --verbose  Print status to stdout.
-    -c, --cascade  Delete all derivative files associated with the given file.
-    -a, --all      Delete all files in the given item (Note: Some files, such
-                   as <identifier>_meta.xml and <identifier>_files.xml, cannot
-                   be deleted)
+    -v, --verbose          Print status to stdout.
+    -c, --cascade          Delete all derivative files associated with the given file.
+    -a, --all              Delete all files in the given item (Note: Some files, such
+                           as <identifier>_meta.xml and <identifier>_files.xml, cannot
+                           be deleted)
+    -d, --dry-run          Output files to be deleted to stdout, but don't actually delete.
+    -g, --glob=<pattern>   Only return patterns match the given pattern.
 
 """
 import sys
 from xml.dom.minidom import parseString
+from fnmatch import fnmatch
 
 from docopt import docopt
 
@@ -41,6 +45,8 @@ def main(argv):
     if args['--all']:
         files = [f for f in item.iter_files()]
         args['--cacade'] = True
+    elif args['--glob']:
+        files = item.get_files(glob_pattern=args['--glob'])
     else:
         files = [item.get_file(f) for f in args['<file>']]
 
@@ -50,6 +56,10 @@ def main(argv):
                 sys.stderr.write(' error: "{0}" does not exist\n'.format(f.name))
             sys.exit(1)
         if any(f.name.endswith(s) for s in no_delete):
+            continue
+        if args['--dry-run']:
+            sys.stdout.write('will delete: {0}/{1}\n'.format(item.identifier, 
+                                                             f.name.encode('utf-8')))
             continue
         resp = f.delete(verbose=args['--verbose'], cascade_delete=args['--cascade'])
         if resp.status_code != 204:

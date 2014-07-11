@@ -3,14 +3,14 @@
 IA-S3 Documentation: https://archive.org/help/abouts3.txt
 
 usage:
-    ia delete [--verbose] [--debug] [--dry-run] [--cascade] <identifier> <file>...
-    ia delete [--verbose] [--debug] [--dry-run] --all <identifier>
-    ia delete [--verbose] [--debug] [--dry-run] --glob=<pattern> <identifier>
+    ia delete [--quiet] [--debug] [--dry-run] [--cascade] <identifier> <file>...
+    ia delete [--quiet] [--debug] [--dry-run] --all <identifier>
+    ia delete [--quiet] [--debug] [--dry-run] --glob=<pattern> <identifier>
     ia delete --help
 
 options:
     -h, --help
-    -v, --verbose          Print status to stdout.
+    -q, --quiet            Print status to stdout. 
     -c, --cascade          Delete all derivative files associated with the given file.
     -a, --all              Delete all files in the given item (Note: Some files, such
                            as <identifier>_meta.xml and <identifier>_files.xml, cannot
@@ -33,7 +33,7 @@ from internetarchive.iacli.argparser import get_xml_text
 #_________________________________________________________________________________________
 def main(argv):
     args = docopt(__doc__, argv=argv)
-    verbose = args['--verbose']
+    verbose = True if not args['--quiet'] else False
     item = get_item(args['<identifier>'])
 
     # Files that cannot be deleted via S3.
@@ -61,7 +61,7 @@ def main(argv):
             sys.stdout.write('will delete: {0}/{1}\n'.format(item.identifier, 
                                                              f.name.encode('utf-8')))
             continue
-        resp = f.delete(verbose=args['--verbose'], cascade_delete=args['--cascade'])
+        resp = f.delete(verbose=verbose, cascade_delete=args['--cascade'])
         if resp.status_code != 204:
             error = parseString(resp.content)
             msg = get_xml_text(error.getElementsByTagName('Message'))

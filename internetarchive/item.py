@@ -639,7 +639,8 @@ class File(object):
         :param cascade_delete: Also deletes files derived from the file,
                                and files the file was derived from.
         """
-        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier, self.name)
+        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier,
+                                                        self.name.encode('utf-8'))
         access_key = self._item.session.access_key if not access_key else access_key
         secret_key = self._item.session.secret_key if not secret_key else secret_key
         request = iarequest.S3Request(
@@ -653,6 +654,6 @@ class File(object):
             return request
         else:
             if verbose:
-                sys.stdout.write(' deleting file: {0}\n'.format(self.name))
+                sys.stdout.write(' deleting file: {0}\n'.format(self.name.encode('utf-8')))
             prepared_request = request.prepare()
             return self._item.http_session.send(prepared_request)

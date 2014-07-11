@@ -3,7 +3,7 @@
 Release History
 ---------------
 
-0.6.7 2014-07-11 
+0.6.8 2014-07-11 
 +++++++++
 
 - The delete `ia` subcommand is now verbose by default.

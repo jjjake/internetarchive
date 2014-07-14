@@ -83,7 +83,7 @@ def test_functions_needing_cookies():
 @pytest.mark.skipif('internetarchive.config.get_config().get("s3") == None',
                     reason='requires authorization.')
 def test_funtions_needing_s3_keys():
-    r = upload('iacli-test-item', 'setup.py', key='testsetup.py')
+    r = upload('iacli-test-item', {'testsetup.py': 'setup.py'})
 
 
 

@@ -159,7 +159,7 @@ class CatalogTask(object):
         """
         if self.task_id is None:
             raise ValueError('task_id is None')
-        url = 'http://catalogd.archive.org/log/{0}'.format(self.task_id)
+        url = 'http://catalogd.archive.org/log/{0}?full=1'.format(self.task_id)
         r = self._http_session.get(url)
         r.raise_for_status()
         return r.content

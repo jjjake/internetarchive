@@ -37,16 +37,16 @@ def main(argv):
     for i, item in miner:
         metadata = json.dumps(item._json)
         if args['--cache']:
-            sys.stdout.write('saving metadata for: {0}\n'.format(item.identifier))
+            sys.stderr.write('saving metadata for: {0}\n'.format(item.identifier))
             with open('{0}_meta.json'.format(item.identifier), 'w') as fp:
                 fp.write(metadata)
         elif args['--output']:
-            sys.stdout.write('saving metadata for: {0}\n'.format(item.identifier))
+            sys.stderr.write('saving metadata for: {0}\n'.format(item.identifier))
             with open(args['--output'], 'a+') as fp:
                 fp.write(metadata + '\n')
         else:
             try:
-                sys.stdout.write(metadata + '\n')
+                sys.stderr.write(metadata + '\n')
             except IOError:
                 break
     sys.exit(0)

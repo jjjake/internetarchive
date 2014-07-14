@@ -42,8 +42,10 @@ def test_ia_mine():
     stdout, stderr = proc.communicate()
     assert proc.returncode == 0
 
-    os.remove('testlist.txt')
-    os.remove('d.json')
-    os.remove('nasa_meta.json')
-    os.remove('iacli-test-item_meta.json')
-
+    try:
+        os.remove('testlist.txt')
+        os.remove('d.json')
+        os.remove('nasa_meta.json')
+        os.remove('iacli-test-item_meta.json')
+    except OSError:
+        continue

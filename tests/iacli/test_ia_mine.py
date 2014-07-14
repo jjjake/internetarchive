@@ -48,4 +48,4 @@ def test_ia_mine():
         os.remove('nasa_meta.json')
         os.remove('iacli-test-item_meta.json')
     except OSError:
-        continue
+        pass

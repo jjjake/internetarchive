@@ -127,7 +127,7 @@ class CatalogTask(object):
                 setattr(self, key, value)
         # special handling for 'args' - parse it into a dict if it is a string
         if isinstance(self.args, basestring):
-            self.args = dict(x for x in parse_qsl(self.args))
+            self.args = dict(x for x in parse_qsl(self.args.encode('utf-8')))
 
     # __repr__()
     # ____________________________________________________________________________________

@@ -48,7 +48,13 @@ def main(argv):
     elif args['--glob']:
         files = item.get_files(glob_pattern=args['--glob'])
     else:
-        files = [item.get_file(f) for f in args['<file>']]
+        fnames = []
+        if args['<file>'] == ['-']:
+            fnames = [f.strip().decode('utf-8') for f in sys.stdin]
+        else:
+            fnames = [f.strip().decode('utf-8') for f in args['<file>']]
+
+        files = [f for f in [item.get_file(f) for f in fnames] if f]
 
     for f in files:
         if not f:
@@ -58,7 +64,7 @@ def main(argv):
         if any(f.name.endswith(s) for s in no_delete):
             continue
         if args['--dry-run']:
-            sys.stdout.write('will delete: {0}/{1}\n'.format(item.identifier, 
+            sys.stdout.write(' will delete: {0}/{1}\n'.format(item.identifier, 
                                                              f.name.encode('utf-8')))
             continue
         resp = f.delete(verbose=verbose, cascade_delete=args['--cascade'])

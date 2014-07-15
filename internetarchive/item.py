@@ -457,10 +457,6 @@ class Item(object):
             except HTTPError as exc:
                 error_msg = (' error uploading {0} to {1}, '
                              '{2}'.format(key, self.identifier, exc))
-                if response.status_code == 400 and \
-                        any('\n' in str(v) for (k, v) in request.headers.items()):
-                    error_msg += (' - Check your metadata and header values for '
-                                  'newline charchters (i.e. "\\n").')
                 log.error(error_msg)
                 if verbose:
                     sys.stderr.write(error_msg + '\n')

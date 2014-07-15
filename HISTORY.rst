@@ -3,6 +3,10 @@
 Release History
 ---------------
 
+0.6.9 (?)
++++++++++
+- Added support for \n and \r characters in upload headers.
+
 0.6.8 2014-07-11 
 +++++++++
 

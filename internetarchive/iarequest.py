@@ -6,6 +6,7 @@ import json
 import re
 import copy
 
+from six.moves import urllib
 import requests.models
 import requests
 from jsonpatch import make_patch
@@ -109,6 +110,8 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                 if not value:
                     continue
                 header_key = 'x-archive-meta{0:02d}-{1}'.format(i, meta_key)
+                if any(c in value for c in ['\n', '\r']):
+                    value = 'uri({0})'.format(urllib.parse.quote(value))
                 # because rfc822 http headers disallow _ in names, IA-S3 will
                 # translate two hyphens in a row (--) into an underscore (_).
                 header_key = header_key.replace('_', '--')

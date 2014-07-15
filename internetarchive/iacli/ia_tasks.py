@@ -2,7 +2,7 @@
 
 usage:
     ia tasks [--verbose] [--task=<task_id>...] [--get-task-log=<task_id>]
-             [--green-rows] [--blue-rows] [--red-rows]
+             [--green-rows] [--blue-rows] [--red-rows] [--parameter=<k:v>...]
     ia tasks [--verbose] <identifier>
     ia tasks --help
 
@@ -14,6 +14,7 @@ options:
     -g, --green-rows              Return information about tasks that have not run.
     -b, --blue-rows               Return information about running tasks.
     -r, --red-rows                Return information about tasks that have failed.
+    -p, --parameter=<k:v>...      Return tasks matching the given parameter.
 
 """
 import sys
@@ -21,12 +22,14 @@ import sys
 from docopt import docopt
 
 from internetarchive import Catalog, get_tasks
+from internetarchive.iacli.argparser import get_args_dict
 
 
 # ia_catalog()
 #_________________________________________________________________________________________
 def main(argv):
     args = docopt(__doc__, argv=argv)
+    params = get_args_dict(args['--parameter'])
 
     row_types = {
         -1: 'done',
@@ -38,15 +41,15 @@ def main(argv):
 
     try:
         if args['<identifier>']:
-            tasks = get_tasks(identifier=args['<identifier>'])
+            tasks = get_tasks(identifier=args['<identifier>'], params=args['--parameter'])
         elif args['--green-rows']:
-            tasks = get_tasks(task_type='green')
+            tasks = get_tasks(task_type='green', params=params)
         elif args['--blue-rows']:
-            tasks = get_tasks(task_type='blue')
+            tasks = get_tasks(task_type='blue', params=params)
         elif args['--red-rows']:
-            tasks = get_tasks(task_type='red')
+            tasks = get_tasks(task_type='red', params=params)
         elif args['--get-task-log']:
-            task = get_tasks(task_ids=args['--get-task-log'])
+            task = get_tasks(task_ids=args['--get-task-log'], params=params)
             if task:
                 log = task[0].task_log()
                 sys.stdout.write(log)
@@ -57,7 +60,7 @@ def main(argv):
                 sys.exit(1)
             sys.exit(0)
         else:
-            tasks = get_tasks(task_ids=args['--task'])
+            tasks = get_tasks(task_ids=args['--task'], params=params)
         for t in tasks:
             task_info = [
                 t.identifier, t.task_id, t.server, t.time, t.command, 

@@ -2,6 +2,7 @@ import os
 import sys
 from fnmatch import fnmatch
 import logging
+import time
 
 import requests.sessions
 from requests.adapters import HTTPAdapter
@@ -316,7 +317,8 @@ class Item(object):
     def upload_file(self, body, key=None, metadata={}, headers={},
                     access_key=None, secret_key=None, queue_derive=True,
                     ignore_preexisting_bucket=False, verbose=False, verify=True,
-                    checksum=False, delete=False, debug=False, **kwargs):
+                    checksum=False, delete=False, retries=0, retries_sleep=20, 
+                    debug=False, **kwargs):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -350,6 +352,14 @@ class Item(object):
         :type delete: bool
         :param delete: (optional) Delete local file after the upload has been
                        successfully verified.
+
+        :type retries: int
+        :param retries: (optional) Number of times to retry the given request
+                        if S3 returns a 503 SlowDown error.
+
+        :type retries_sleep: int
+        :param retries_sleep: (optional) Amount of time to sleep between 
+                              ``retries``.
 
         :type verbose: bool
         :param verbose: (optional) Print progress to stdout.
@@ -426,6 +436,11 @@ class Item(object):
         else:
             data = body
 
+        # Delete retries and sleep_retries from kwargs.
+        if 'retries' in kwargs:
+            del kwargs['retries']
+        if 'retries_sleep' in kwargs:
+            del kwargs['retries_sleep']
         request = iarequest.S3Request(
             method='PUT',
             url=url,
@@ -443,7 +458,21 @@ class Item(object):
         else:
             prepared_request = request.prepare()
             try:
-                response = self.http_session.send(prepared_request, stream=True)
+                while True:
+                    response = self.http_session.send(prepared_request, stream=True)
+                    if (response.status_code == 503) and (retries > 0):
+                        error_msg = ('s3 is overloaded, sleeping for '
+                                     '{0} seconds and retrying. '
+                                     '{1} retries left.'.format(retries_sleep, retries))
+                        log.info(error_msg)
+                        sys.stderr.write(' warning: {0}\n'.format(error_msg))
+                        time.sleep(retries_sleep)
+                        retries -= 1
+                        continue
+                    else:
+                        if response.status_code == 503:
+                            log.info('maximum retries exceeded, upload failed.')
+                        break
                 response.raise_for_status()
                 log.info('uploaded {f} to {u}'.format(f=key, u=url))
                 if delete and response.status_code == 200:

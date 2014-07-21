@@ -7,7 +7,7 @@ usage:
               (<identifier> <file>... | <identifier> - --remote-name=<name> | --spreadsheet=<metadata.csv>)
               [--metadata=<key:value>...] [--header=<key:value>...] [--checksum]
               [--no-derive] [--ignore-bucket] [--size-hint=<size>]
-              [--delete] [--log]
+              [--delete] [--retries=<i>] [--sleep=<i>] [--log]
     ia upload --help
 
 options:
@@ -24,6 +24,10 @@ options:
     -n, --no-derive                   Do not derive uploaded files.
     -i, --ignore-bucket               Destroy and respecify all metadata.
     -s, --size-hint=<size>            Specify a size-hint for your item.
+    -R, --retries=<i>                 Number of times to retry request if S3
+                                      retruns a 503 SlowDown error.
+    -s, --sleep=<i>                   The amount of time to sleep between retries
+                                      [default: 30].
     -l, --log                         Log upload results to file.
     --delete                          Delete files after verifying checksums 
                                       [default: False].
@@ -120,6 +124,8 @@ def main(argv):
         ignore_preexisting_bucket=args['--ignore-bucket'],
         checksum=args['--checksum'],
         verbose=True if args['--quiet'] is False else False,
+        retries=int(args['--retries']) if args['--retries'] else 0,
+        retries_sleep=int(args['--sleep']),
         delete=args['--delete'],
     )
 

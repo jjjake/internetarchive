@@ -4,6 +4,7 @@ usage:
     ia tasks [--verbose] [--task=<task_id>...] [--get-task-log=<task_id>]
              [--green-rows] [--blue-rows] [--red-rows] [--parameter=<k:v>...]
     ia tasks [--verbose] <identifier>
+             [--green-rows] [--blue-rows] [--red-rows] [--parameter=<k:v>...]
     ia tasks --help
 
 options:
@@ -39,15 +40,17 @@ def main(argv):
         9: 'brown',
     }
 
+    task_type = None
+    if args['--green-rows']:
+        task_type = 'green'
+    elif args['--blue-rows']:
+        task_type = 'blue'
+    elif args['--red-rows']:
+        task_type = 'red'
+
     try:
         if args['<identifier>']:
-            tasks = get_tasks(identifier=args['<identifier>'], params=args['--parameter'])
-        elif args['--green-rows']:
-            tasks = get_tasks(task_type='green', params=params)
-        elif args['--blue-rows']:
-            tasks = get_tasks(task_type='blue', params=params)
-        elif args['--red-rows']:
-            tasks = get_tasks(task_type='red', params=params)
+            tasks = get_tasks(identifier=args['<identifier>'], task_type=task_type, params=params)
         elif args['--get-task-log']:
             task = get_tasks(task_ids=args['--get-task-log'], params=params)
             if task:
@@ -59,8 +62,11 @@ def main(argv):
                 )
                 sys.exit(1)
             sys.exit(0)
-        else:
+        elif args['--task']:
             tasks = get_tasks(task_ids=args['--task'], params=params)
+        else:
+            tasks = get_tasks(task_type=task_type, params=params)
+
         for t in tasks:
             task_info = [
                 t.identifier, t.task_id, t.server, t.time, t.command, 

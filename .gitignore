@@ -9,3 +9,5 @@ itemlist.txt
 .tox
 TAGS
 *csv
+htmlcov
+*log

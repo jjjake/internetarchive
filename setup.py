@@ -18,7 +18,7 @@ setup(
     description='A python interface to archive.org.',
     long_description=open('README.rst').read(),
     install_requires=[
-        'requests==2.2.0',
+        'requests==2.3.0',
         'jsonpatch==0.4',
         'pytest==2.3.4',
         'docopt==0.6.1',

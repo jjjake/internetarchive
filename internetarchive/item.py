@@ -422,43 +422,49 @@ class Item(object):
         # require the Content-MD5 header when delete is True.
         if verify or delete:
             headers['Content-MD5'] = md5_sum
-        if verbose:
-            try:
-                chunk_size = 1048576
-                expected_size = size/chunk_size + 1
-                chunks = utils.chunk_generator(body, chunk_size)
-                progress_generator = progress.bar(chunks, expected_size=expected_size,
-                                                  label=' uploading {f}: '.format(f=key))
-                data = utils.IterableToFileAdapter(progress_generator, size)
-            except:
-                sys.stdout.write(' uploading {f}: '.format(f=key))
-                data = body
-        else:
-            data = body
 
         # Delete retries and sleep_retries from kwargs.
         if 'retries' in kwargs:
             del kwargs['retries']
         if 'retries_sleep' in kwargs:
             del kwargs['retries_sleep']
-        request = iarequest.S3Request(
-            method='PUT',
-            url=url,
-            headers=headers,
-            data=data,
-            metadata=metadata,
-            access_key=access_key,
-            secret_key=secret_key,
-            queue_derive=queue_derive,
-            **kwargs
-        )
+
+        def _build_request():
+            body.seek(0, os.SEEK_SET)
+            if verbose:
+                try:
+                    chunk_size = 1048576
+                    expected_size = size/chunk_size + 1
+                    chunks = utils.chunk_generator(body, chunk_size)
+                    progress_generator = progress.bar(chunks, expected_size=expected_size,
+                                                      label=' uploading {f}: '.format(f=key))
+                    data = utils.IterableToFileAdapter(progress_generator, size)
+                except:
+                    sys.stdout.write(' uploading {f}: '.format(f=key))
+                    data = body
+            else:
+                data = body
+
+            request = iarequest.S3Request(
+                method='PUT',
+                url=url,
+                headers=headers,
+                data=data,
+                metadata=metadata,
+                access_key=access_key,
+                secret_key=secret_key,
+                queue_derive=queue_derive,
+                **kwargs
+            )
+            return request
 
         if debug:
-            return request
+            return _build_request()
         else:
-            prepared_request = request.prepare()
             try:
                 while True:
+                    request = _build_request()
+                    prepared_request = request.prepare()
                     response = self.http_session.send(prepared_request, stream=True)
                     if (response.status_code == 503) and (retries > 0):
                         error_msg = ('s3 is overloaded, sleeping for '

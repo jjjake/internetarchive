@@ -3,7 +3,8 @@ from . import item, search, catalog
 
 # get_item()
 # ________________________________________________________________________________________
-def get_item(identifier, metadata_timeout=None, config=None, max_retries=1):
+def get_item(identifier, metadata_timeout=None, config=None, max_retries=1,
+             archive_session=None):
     """Get an :class:`internetarchive.item.Item <Item>` object.
 
     :type identifier: str
@@ -22,7 +23,7 @@ def get_item(identifier, metadata_timeout=None, config=None, max_retries=1):
                         a website if the connection drops.
 
     """
-    return item.Item(identifier, metadata_timeout, config, max_retries)
+    return item.Item(identifier, metadata_timeout, config, max_retries, archive_session)
 
 
 # get_files()

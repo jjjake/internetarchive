@@ -3,7 +3,7 @@
 Release History
 ---------------
 
-0.7.0 (?)
+0.7.0 2014-07-23
 +++++++++
 - Added support for retry on S3 503 SlowDown errors.
 

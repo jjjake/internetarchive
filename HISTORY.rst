@@ -3,8 +3,17 @@
 Release History
 ---------------
 
-0.7.0 2014-07-23
+0.7.1 (?)
 +++++++++
+- Added `Item.s3_is_overloaded()` method for S3 status check. This method is now used on
+  retries in the upload method now as well. This will avoid uploading any data if a 503
+  is expected. If a 503 is still returned, retries are attempted.
+- Added `--status-check` option to `ia upload` for S3 status check.
+- Added `--source` parameter to `ia list` for returning files matching IA source (i.e. 
+  original, derivative, metadata, etc.).
+
+0.7.0 2014-07-23
+++++++++++++++++
 - Added support for retry on S3 503 SlowDown errors.
 
 0.6.9 2014-07-15

@@ -8,6 +8,7 @@ usage:
               [--metadata=<key:value>...] [--header=<key:value>...] [--checksum]
               [--no-derive] [--ignore-bucket] [--size-hint=<size>]
               [--delete] [--retries=<i>] [--sleep=<i>] [--log]
+    ia upload <identifier> --status-check
     ia upload --help
 
 options:
@@ -29,6 +30,8 @@ options:
     -s, --sleep=<i>                   The amount of time to sleep between retries
                                       [default: 30].
     -l, --log                         Log upload results to file.
+    --status-check                    Check if S3 is accepting requests to the
+                                      given item.
     --delete                          Delete files after verifying checksums 
                                       [default: False].
 
@@ -52,6 +55,14 @@ def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=N
     verbose = True if args['--quiet'] is False else False
     config = {} if not args['--log'] else {'logging': {'level': 'INFO'}}
     item = get_item(identifier, config=config)
+    if args['--status-check']:
+        if item.s3_is_overloaded():
+            sys.stderr.write('warning: {0} is over limit, and not accepting requests. '
+                             'Expect 503 SlowDown errors.\n'.format(identifier))
+            sys.exit(1)
+        else:
+            sys.stdout.write('success: {0} is accepting requests.\n'.format(identifier))
+            sys.exit(0)
     if (verbose) and (prev_identifier != identifier):
         sys.stdout.write('{0}:\n'.format(item.identifier))
 

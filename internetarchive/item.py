@@ -312,6 +312,22 @@ class Item(object):
         self._json = self.get_metadata()
         return resp
 
+    # s3_is_overloaded()
+    # ____________________________________________________________________________________
+    def s3_is_overloaded(self, access_key=None):
+        u = 'http://s3.us.archive.org'
+        p = dict(
+            check_limit=1,
+            accesskey=access_key,
+            bucket=self.identifier,
+        )
+        r = self.http_session.get(u, params=p)
+        j = r.json()
+        if j.get('over_limit') == 0:
+            return False
+        else:
+            return True
+
     # upload_file()
     # ____________________________________________________________________________________
     def upload_file(self, body, key=None, metadata={}, headers={},
@@ -462,16 +478,25 @@ class Item(object):
             return _build_request()
         else:
             try:
+                error_msg = ('s3 is overloaded, sleeping for '
+                             '{0} seconds and retrying. '
+                             '{1} retries left.'.format(retries_sleep, retries))
                 while True:
+                    if retries > 0:
+                        if self.s3_is_overloaded(access_key):
+                            time.sleep(retries_sleep)
+                            log.info(error_msg)
+                            if verbose:
+                                sys.stderr.write(' warning: {0}\n'.format(error_msg))
+                            retries -= 1
+                            continue
                     request = _build_request()
                     prepared_request = request.prepare()
                     response = self.http_session.send(prepared_request, stream=True)
                     if (response.status_code == 503) and (retries > 0):
-                        error_msg = ('s3 is overloaded, sleeping for '
-                                     '{0} seconds and retrying. '
-                                     '{1} retries left.'.format(retries_sleep, retries))
                         log.info(error_msg)
-                        sys.stderr.write(' warning: {0}\n'.format(error_msg))
+                        if verbose:
+                            sys.stderr.write(' warning: {0}\n'.format(error_msg))
                         time.sleep(retries_sleep)
                         retries -= 1
                         continue

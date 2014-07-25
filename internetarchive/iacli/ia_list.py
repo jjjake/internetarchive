@@ -1,7 +1,8 @@
 """List files in a given item.
 
 usage:
-    ia list [-v] [--glob=<pattern>|--location] [--columns <column1,column2> | --all] <identifier>
+    ia list [-v] [--glob=<pattern>] [--location] [--source=<source>] 
+            [--columns <column1,column2> | --all] <identifier>
     ia metadata --help
 
 options:
@@ -11,6 +12,7 @@ options:
     -l, --location              Print full URL for each file.
     -c, --columns=<name,size>   List specified file information. [default: name]
     -g, --glob=<pattern>        Only return patterns match the given pattern.
+    -s, --source=<source>       Return files matching source.
 
 """
 import sys
@@ -45,6 +47,8 @@ def main(argv):
         if not isinstance(patterns, list):
             patterns = [patterns]
         files = [f for f in files if any(fnmatch(f['name'], p) for p in patterns)]
+    elif args.get('--source'):
+        files = [f.__dict__ for f in item.get_files(source=args['--source'])]
 
     output = []
     for f in files:

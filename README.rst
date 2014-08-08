@@ -219,7 +219,7 @@ https://archive.org/account/s3.php
     >>> from internetarchive import get_item
     >>> item = get_item('new_identifier')
     >>> md = dict(mediatype='image', creator='Jake Johnson')
-    >>> item.upload('/path/to/image.jpg', access_key='xxx', secret_key='yyy')
+    >>> item.upload('/path/to/image.jpg', metadata=md, access_key='xxx', secret_key='yyy')
 
 Item-level metadata must be supplied with the first file uploaded to an
 item.

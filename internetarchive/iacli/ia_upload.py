@@ -4,7 +4,7 @@ IA-S3 Documentation: https://archive.org/help/abouts3.txt
 
 usage:
     ia upload [--quiet] [--debug]
-              (<identifier> <file>... | <identifier> - --remote-name=<name> | --spreadsheet=<metadata.csv>)
+              (<identifier> <file>... | <identifier> - --remote-name=<name> | <identifier> <file> --remote-name=<name> | --spreadsheet=<metadata.csv>)
               [--metadata=<key:value>...] [--header=<key:value>...] [--checksum]
               [--no-derive] [--ignore-bucket] [--size-hint=<size>]
               [--delete] [--retries=<i>] [--sleep=<i>] [--log]
@@ -67,6 +67,8 @@ def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=N
         sys.stdout.write('{0}:\n'.format(item.identifier))
 
     try:
+        if isinstance(local_file, (list, tuple, set)) and args['--remote-name']:
+            local_file = local_file[0]
         if args['--remote-name']:
             files = {args['--remote-name']: local_file}
         else:

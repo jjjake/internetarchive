@@ -702,7 +702,7 @@ class File(object):
         request = iarequest.S3Request(
             method='DELETE',
             url=url,
-            headers={'cascade_delete': cascade_delete},
+            headers={'x-archive-cascade-delete': int(cascade_delete)},
             access_key=access_key,
             secret_key=secret_key
         )

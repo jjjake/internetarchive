@@ -710,6 +710,11 @@ class File(object):
             return request
         else:
             if verbose:
-                sys.stdout.write(' deleting file: {0}\n'.format(self.name.encode('utf-8')))
+                msg = ' deleting: {0}'.format(self.name.encode('utf-8'))
+                if cascade_delete:
+                    msg += ' and all derivative files.\n'
+                else:
+                    msg += '\n'
+                sys.stdout.write(msg)
             prepared_request = request.prepare()
             return self._item.http_session.send(prepared_request)

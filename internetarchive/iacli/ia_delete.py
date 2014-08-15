@@ -56,6 +56,10 @@ def main(argv):
 
         files = [f for f in [item.get_file(f) for f in fnames] if f]
 
+    if not files:
+        sys.stderr.write(' warning: no files found, nothing deleted.\n')
+        sys.exit(1)
+
     for f in files:
         if not f:
             if verbose:

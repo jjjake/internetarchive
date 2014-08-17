@@ -54,14 +54,14 @@ def get_file(item_name, file_name):
 
 # upload_stringIO()
 #_________________________________________________________________________________________
-def upload_stringIO(item):
+def upload_stringIO(item, metadata=dict(collection='test_collection')):
     contents = 'hello world'
     name = 'hello_world.txt'
 
     fh = StringIO.StringIO(contents)
     fh.name = name
 
-    r = item.upload(fh, metadata=dict(collection='test_collection'), access_key=access,
+    r = item.upload(fh, metadata=metadata, access_key=access,
                     secret_key=secret)
 
     f = get_file(item.identifier, name)
@@ -85,6 +85,25 @@ def upload_tempfile(item):
     assert f.sha1 == hashlib.sha1(contents).hexdigest()
 
 
+# upload_two_new_tems()
+#_________________________________________________________________________________________
+def upload_two_new_items():
+    first_item = get_new_item()
+    second_item = get_new_item()
+
+    upload_stringIO(first_item, metadata={
+            'collection': 'test_collection',
+            'description': 'testing ia-wrapper {}'.format(first_item.identifier),
+        })
+    upload_stringIO(second_item, metadata={
+            'collection': 'test_collection',
+            'description': '',
+        })
+    first_item.get_metadata()
+    second_item.get_metadata()
+    assert first_item.metadata['description'] != second_item.metadata['description']
+
+
 # test_upload()
 #_________________________________________________________________________________________
 def test_upload():
@@ -98,6 +117,9 @@ def test_upload():
 
     print 'Testing upload using tempfile'
     upload_tempfile(item)
+
+    print 'Testing that subsequent uploads do not have headers from previous uploads'
+    upload_two_new_items()
 
     print 'Finished upload test'
 

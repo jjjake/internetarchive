@@ -10,6 +10,7 @@ from requests.exceptions import HTTPError
 from requests import Response
 from clint.textui import progress
 import six
+import six.moves.urllib as urllib
 
 from . import __version__, session, iarequest, utils
 
@@ -556,20 +557,48 @@ class Item(object):
                     key = os.path.relpath(filepath, directory)
                     yield (filepath, key)
 
+        #def _queue_derive():
+        #    if (queue_derive is False) or (queue_derive is True and i < len(files)):
+        #        kwargs['queue_derive'] = False
+        #    else:
+        #        kwargs['queue_derive'] = True
+        #    return kwargs
+
         if isinstance(files, dict):
             files = files.items()
         if not isinstance(files, (list, tuple)):
             files = [files]
 
+        queue_derive = kwargs.get('queue_derive', True)
+
         responses = []
+        file_index = 0
         for f in files:
+            file_index += 1
             if isinstance(f, six.string_types) and os.path.isdir(f):
+                fdir_index = 0
                 for filepath, key in iter_directory(f):
+                    # Set derive header if queue_derive is True, 
+                    # and this is the last request being made.
+                    fdir_index += 1
+                    if queue_derive is True and file_index >= len(files) \
+                        and fdir_index >= len(os.listdir(f)):
+                            kwargs['queue_derive'] = True
+                    else:
+                        kwargs['queue_derive'] = False
+
                     if not f.endswith('/'):
                         key = '{0}/{1}'.format(f, key)
                     resp = self.upload_file(filepath, key=key, **kwargs)
                     responses.append(resp)
             else:
+                # Set derive header if queue_derive is True, 
+                # and this is the last request being made.
+                if queue_derive is True and file_index >= len(files):
+                    kwargs['queue_derive'] = True
+                else:
+                    kwargs['queue_derive'] = False
+
                 if not isinstance(f, (list, tuple)):
                     key, body = (None, f)
                 else:
@@ -636,7 +665,7 @@ class File(object):
             setattr(self, key, _file[key])
         base_url = '{protocol}//archive.org/download/{identifier}'.format(**item.__dict__)
         self.url = '{base_url}/{name}'.format(base_url=base_url,
-                                              name=name.encode('utf-8'))
+                                              name=urllib.parse.quote(name.encode('utf-8')))
 
     # __repr__()
     # ____________________________________________________________________________________

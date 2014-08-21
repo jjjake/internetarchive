@@ -11,7 +11,11 @@ Release History
 - Added `--status-check` option to `ia upload` for S3 status check.
 - Added `--source` parameter to `ia list` for returning files matching IA source (i.e. 
   original, derivative, metadata, etc.).
-- Added support to `ia upload` for setting remote-name if only a single file is being uploaded.
+- Added support to `ia upload` for setting remote-name if only a single file is being
+  uploaded.
+- Derive tasks are now only queued after the last file has been uploaded.
+- File URLs are now quoted in `File` objects, for downloading files with specail
+  characters in their filenames
 
 0.7.0 2014-07-23
 ++++++++++++++++

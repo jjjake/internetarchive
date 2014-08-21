@@ -331,7 +331,7 @@ class Item(object):
 
     # upload_file()
     # ____________________________________________________________________________________
-    def upload_file(self, body, key=None, metadata={}, headers={},
+    def upload_file(self, body, key=None, metadata=None, headers=None,
                     access_key=None, secret_key=None, queue_derive=True,
                     ignore_preexisting_bucket=False, verbose=False, verify=True,
                     checksum=False, delete=False, retries=0, retries_sleep=20, 
@@ -394,6 +394,13 @@ class Item(object):
             True
 
         """
+
+        if headers is None:
+            headers = {}
+
+        if metadata is None:
+            metadata = {}
+
         access_key = self.session.access_key if not access_key else access_key
         secret_key = self.session.secret_key if not secret_key else secret_key
 

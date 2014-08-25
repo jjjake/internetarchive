@@ -564,13 +564,6 @@ class Item(object):
                     key = os.path.relpath(filepath, directory)
                     yield (filepath, key)
 
-        #def _queue_derive():
-        #    if (queue_derive is False) or (queue_derive is True and i < len(files)):
-        #        kwargs['queue_derive'] = False
-        #    else:
-        #        kwargs['queue_derive'] = True
-        #    return kwargs
-
         if isinstance(files, dict):
             files = files.items()
         if not isinstance(files, (list, tuple)):

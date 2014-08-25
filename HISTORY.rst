@@ -3,8 +3,8 @@
 Release History
 ---------------
 
-0.7.1 (?)
-+++++++++
+0.7.1 2014-08-25
+++++++++++++++++
 - Added `Item.s3_is_overloaded()` method for S3 status check. This method is now used on
   retries in the upload method now as well. This will avoid uploading any data if a 503
   is expected. If a 503 is still returned, retries are attempted.

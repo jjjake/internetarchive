@@ -67,7 +67,7 @@ class Item(object):
         :param max_retries: (optional) Maximum number of times to request
                             a website if the connection drops. (default: 1)
 
-        :type archive_session: :class:`ArchiveSession <ArchiveSession>` 
+        :type archive_session: :class:`ArchiveSession <ArchiveSession>`
         :param archive_session: An :class:`ArchiveSession <ArchiveSession>`
                                 object can be provided via the `archive_session`
                                 parameter.
@@ -334,7 +334,7 @@ class Item(object):
     def upload_file(self, body, key=None, metadata=None, headers=None,
                     access_key=None, secret_key=None, queue_derive=True,
                     ignore_preexisting_bucket=False, verbose=False, verify=True,
-                    checksum=False, delete=False, retries=0, retries_sleep=20, 
+                    checksum=False, delete=False, retries=0, retries_sleep=20,
                     debug=False, **kwargs):
         """Upload a single file to an item. The item will be created
         if it does not exist.
@@ -375,7 +375,7 @@ class Item(object):
                         if S3 returns a 503 SlowDown error.
 
         :type retries_sleep: int
-        :param retries_sleep: (optional) Amount of time to sleep between 
+        :param retries_sleep: (optional) Amount of time to sleep between
                               ``retries``.
 
         :type verbose: bool
@@ -578,7 +578,7 @@ class Item(object):
             if isinstance(f, six.string_types) and os.path.isdir(f):
                 fdir_index = 0
                 for filepath, key in iter_directory(f):
-                    # Set derive header if queue_derive is True, 
+                    # Set derive header if queue_derive is True,
                     # and this is the last request being made.
                     fdir_index += 1
                     if queue_derive is True and file_index >= len(files) \
@@ -592,7 +592,7 @@ class Item(object):
                     resp = self.upload_file(filepath, key=key, **kwargs)
                     responses.append(resp)
             else:
-                # Set derive header if queue_derive is True, 
+                # Set derive header if queue_derive is True,
                 # and this is the last request being made.
                 if queue_derive is True and file_index >= len(files):
                     kwargs['queue_derive'] = True

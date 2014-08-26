@@ -3,6 +3,9 @@
 Release History
 ---------------
 
+0.7.2 (?)
++++++++++
+
 0.7.1 2014-08-25
 ++++++++++++++++
 - Added `Item.s3_is_overloaded()` method for S3 status check. This method is now used on

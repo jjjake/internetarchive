@@ -334,7 +334,7 @@ class Item(object):
     def upload_file(self, body, key=None, metadata=None, headers=None,
                     access_key=None, secret_key=None, queue_derive=True,
                     ignore_preexisting_bucket=False, verbose=False, verify=True,
-                    checksum=False, delete=False, retries=0, retries_sleep=20,
+                    checksum=False, delete=False, retries=None, retries_sleep=None,
                     debug=False, **kwargs):
         """Upload a single file to an item. The item will be created
         if it does not exist.
@@ -394,15 +394,13 @@ class Item(object):
             True
 
         """
-
-        if headers is None:
-            headers = {}
-
-        if metadata is None:
-            metadata = {}
-
-        access_key = self.session.access_key if not access_key else access_key
-        secret_key = self.session.secret_key if not secret_key else secret_key
+        # Defaults for empty params.
+        headers = {} if headers is None else headers
+        metadata = {} if metadata is None else metadata
+        access_key = self.session.access_key if access_key is None else access_key
+        secret_key = self.session.secret_key if secret_key is None else secret_key
+        retries = 0 if retries is None else retries
+        retries_sleep = 30 if retries_sleep is None else retries_sleep
 
         if not hasattr(body, 'read'):
             body = open(body, 'rb')

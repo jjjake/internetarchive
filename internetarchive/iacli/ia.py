@@ -92,7 +92,7 @@ def main():
         globals()['ia_module'] = __import__(module, fromlist=['internetarchive.iacli'])
     except ImportError:
         sys.stderr.write('error: "{0}" is not an `ia` command!\n'.format(cmd))
-        sys.exit(1)
+        sys.exit(127)
 
     ia_module.main(argv)
 

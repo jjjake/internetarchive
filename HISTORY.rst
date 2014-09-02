@@ -5,6 +5,7 @@ Release History
 
 0.7.2 (?)
 +++++++++
+- Suppress `KeyboardInterrupt` exceptions and exit with status code 130.
 
 0.7.1 2014-08-25
 ++++++++++++++++

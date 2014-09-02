@@ -24,7 +24,23 @@ commands:
 See 'ia help <command>' for more information on a specific command.
 
 """
+def suppress_keyboard_interrupt_message():
+    """Register a new excepthook to suppress KeyboardInterrupt
+    exception messages, and exit with status code 130.
+
+    """
+    old_excepthook = sys.excepthook
+
+    def new_hook(type, value, traceback):
+        if type != KeyboardInterrupt:
+            old_excepthook(type, value, traceback)
+        else:
+            sys.exit(130)
+
+    sys.excepthook = new_hook
+
 import sys
+suppress_keyboard_interrupt_message()
 from subprocess import call
 
 from docopt import docopt
@@ -77,10 +93,8 @@ def main():
     except ImportError:
         sys.stderr.write('error: "{0}" is not an `ia` command!\n'.format(cmd))
         sys.exit(1)
-    try:
-        ia_module.main(argv)
-    except KeyboardInterrupt:
-        sys.exit(1)
+
+    ia_module.main(argv)
 
 if __name__ == '__main__':
     main()

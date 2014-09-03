@@ -191,8 +191,8 @@ class Item(object):
 
     # download()
     # ____________________________________________________________________________________
-    def download(self, concurrent=False, source=None, formats=None, glob_pattern=None,
-                 dry_run=False, verbose=False, ignore_existing=False):
+    def download(self, concurrent=None, source=None, formats=None, glob_pattern=None,
+                 dry_run=None, verbose=None, ignore_existing=None, checksum=None):
         """Download the entire item into the current working directory.
 
         :type concurrent: bool
@@ -212,10 +212,21 @@ class Item(object):
         :param ignore_existing: Overwrite local files if they already
                                 exist.
 
+        :type checksum: bool
+        :param checksum: Skip downloading file based on checksum.
+
         :rtype: bool
         :returns: True if if files have been downloaded successfully.
 
         """
+        concurrent = False if concurrent is None else concurrent
+        dry_run = False if dry_run is None else dry_run
+        verbose = False if verbose is None else verbose
+        ignore_existing = False if ignore_existing is None else ignore_existing
+        checksum = False if checksum is None else checksum
+
+        if verbose:
+            sys.stdout.write('{0}:\n'.format(self.identifier))
         if concurrent:
             try:
                 from gevent import monkey
@@ -251,12 +262,10 @@ class Item(object):
             if dry_run:
                 sys.stdout.write(f.url + '\n')
                 continue
-            if verbose:
-                sys.stdout.write(' downloading: {0}\n'.format(fname))
             if concurrent:
-                pool.spawn(f.download, path, ignore_existing=ignore_existing)
+                pool.spawn(f.download, path, verbose, ignore_existing, checksum)
             else:
-                f.download(path, ignore_existing=ignore_existing)
+                f.download(path, verbose, ignore_existing, checksum)
         if concurrent:
             pool.join()
         return True
@@ -659,6 +668,7 @@ class File(object):
         self.size = None
         self.source = None
         self.format = None
+        self.md5 = None
         for key in _file:
             setattr(self, key, _file[key])
         base_url = '{protocol}//archive.org/download/{identifier}'.format(**item.__dict__)
@@ -676,7 +686,7 @@ class File(object):
 
     # download()
     # ____________________________________________________________________________________
-    def download(self, file_path=None, ignore_existing=False):
+    def download(self, file_path=None, verbose=None, ignore_existing=None, checksum=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -684,11 +694,31 @@ class File(object):
 
         :type ignore_existing: bool
         :param ignore_existing: Overwrite local files if they already
-                                exist."""
-        file_path = self.name if not file_path else file_path
-        if os.path.exists(file_path) and not ignore_existing:
-            raise IOError('File already exists: {0}'.format(file_path))
+                                exist.
 
+        :type checksum: bool
+        :param checksum: Skip downloading file based on checksum.
+
+        """
+        verbose = False if verbose is None else verbose
+        ignore_existing = False if ignore_existing is None else ignore_existing
+        checksum = False if checksum is None else checksum
+
+        file_path = self.name if not file_path else file_path
+        if os.path.exists(file_path):
+            if ignore_existing is False and checksum is False:
+                raise IOError('File already exists: {0}'.format(file_path))
+            if checksum:
+                md5_sum = utils.get_md5(open(file_path))
+                if md5_sum == self.md5:
+                    log.info('Not downloading {0}, '
+                             'file already exists.'.format(file_path))
+                    if verbose:
+                        sys.stdout.write(' skipping: {0} already exists.\n'.format(file_path))
+                    return
+
+        if verbose:
+            sys.stdout.write(' downloading: {0}\n'.format(file_path))
         parent_dir = os.path.dirname(file_path)
         if parent_dir != '' and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)

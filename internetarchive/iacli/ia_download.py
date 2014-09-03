@@ -1,7 +1,7 @@
 """Download files from archive.org.
 
 usage:
-    ia download [--verbose] [--dry-run] [--ignore-existing]
+    ia download [--quiet] [--dry-run] [--ignore-existing] [--checksum]
                 [--source=<source>... | --original]
                 [--glob=<pattern> | --format=<format>...] [--concurrent] <identifier>
                 [<file>...]
@@ -9,9 +9,10 @@ usage:
 
 options:
     -h, --help
-    -v, --verbose             Print download progress to stdout.
+    -q, --quiet               Turn off ia's output [default: False].
     -d, --dry-run             Print URLs to stdout and exit.
     -i, --ignore-existing     Clobber files already downloaded.
+    -C, --checksum            Skip files based on checksum [default: False].
     -s, --source=<source>...  Only download files matching the given source.
     -o, --original            Only download files with source=original.
     -g, --glob=<pattern>      Only download files whose filename matches the
@@ -50,8 +51,11 @@ def main(argv):
         files = args['<file>']
 
     item = get_item(identifier)
+    verbose = True if args['--quiet'] is False else False
 
     if files:
+        if verbose:
+            sys.stdout.write('{0}:\n'.format(identifier))
         for f in files:
             fname = f.encode('utf-8')
             path = os.path.join(identifier, fname)
@@ -59,8 +63,7 @@ def main(argv):
             if args['--dry-run']:
                 sys.stdout.write(f.url + '\n')
             else:
-                sys.stdout.write(' downloading: {0}\n'.format(fname))
-                f.download(file_path=path, ignore_existing=args['--ignore-existing'])
+                f.download(path, verbose, args['--ignore-existing'], args['--checksum'])
         sys.exit(0)
 
     # Otherwise, download the entire item.
@@ -77,7 +80,8 @@ def main(argv):
         formats=args['--format'],
         glob_pattern=args['--glob'],
         dry_run=args['--dry-run'],
-        verbose=args['--verbose'],
+        verbose=verbose,
         ignore_existing=args['--ignore-existing'],
+        checksum=args['--checksum'],
     )
     sys.exit(0)

@@ -227,6 +227,15 @@ class Item(object):
 
         if verbose:
             sys.stdout.write('{0}:\n'.format(self.identifier))
+            if self._json.get('is_dark') is True:
+                sys.stdout.write(' skipping: item is dark.\n')
+                log.warning('Not downloading item {0}, '
+                            'item is dark'.format(self.identifier))
+            elif self.metadata == {}:
+                sys.stdout.write(' skipping: item does not exist.\n')
+                log.warning('Not downloading item {0}, '
+                            'item does not exist.'.format(self.identifier))
+
         if concurrent:
             try:
                 from gevent import monkey
@@ -707,11 +716,11 @@ class File(object):
         file_path = self.name if not file_path else file_path
         if os.path.exists(file_path):
             if ignore_existing is False and checksum is False:
-                raise IOError('File already exists: {0}'.format(file_path))
+                raise IOError('File already downloaded: {0}'.format(file_path))
             if checksum:
                 md5_sum = utils.get_md5(open(file_path))
                 if md5_sum == self.md5:
-                    log.info('Not downloading {0}, '
+                    log.info('Not downloading file {0}, '
                              'file already exists.'.format(file_path))
                     if verbose:
                         sys.stdout.write(' skipping: {0} already exists.\n'.format(file_path))

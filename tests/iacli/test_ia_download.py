@@ -22,7 +22,8 @@ def test_ia_download():
         "http://archive.org/download/nasa/nasa_archive.torrent",
         "http://archive.org/download/nasa/nasa_files.xml",
     ])
-    assert set(stdout[:-1].split('\n')) == test_output_set
+    output = set([x for x in stdout[:-1].split('\n') if 'nasa:' not in x])  
+    assert output == test_output_set
 
     cmd = 'ia download --ignore-existing nasa'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)

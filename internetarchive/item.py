@@ -255,16 +255,14 @@ class Item(object):
 
         files = self.iter_files()
         if source:
-            if type(source) == str:
-                source = [source]
-            files = [f for f in files if f.source in source]
+            files = self.get_files(source=source)
         if formats:
-            if type(formats) == str:
-                formats = [formats]
-            files = [f for f in files if f.format in formats]
+            files = self.get_files(formats=formats)
         if glob_pattern:
-            files = [f for f in files if fnmatch(f.name, glob_pattern)]
+            files = self.get_files(glob_pattern=glob_pattern)
 
+        if not files and verbose:
+            sys.stdout.write(' no matching files found, nothing downloaded.\n')
         for f in files:
             fname = f.name.encode('utf-8')
             path = os.path.join(self.identifier, fname)
@@ -723,7 +721,7 @@ class File(object):
                     log.info('Not downloading file {0}, '
                              'file already exists.'.format(file_path))
                     if verbose:
-                        sys.stdout.write(' skipping: {0} already exists.\n'.format(file_path))
+                        sys.stdout.write(' skipping {0}: already exists.\n'.format(file_path))
                     return
 
         if verbose:

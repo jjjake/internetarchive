@@ -192,7 +192,8 @@ class Item(object):
     # download()
     # ____________________________________________________________________________________
     def download(self, concurrent=None, source=None, formats=None, glob_pattern=None,
-                 dry_run=None, verbose=None, ignore_existing=None, checksum=None):
+                 dry_run=None, verbose=None, ignore_existing=None, checksum=None,
+                 no_directory=None):
         """Download the entire item into the current working directory.
 
         :type concurrent: bool
@@ -215,6 +216,11 @@ class Item(object):
         :type checksum: bool
         :param checksum: Skip downloading file based on checksum.
 
+        :type no_directory: bool
+        :param no_directory: Download files to current working
+                             directory rather than creating an item
+                             directory.
+
         :rtype: bool
         :returns: True if if files have been downloaded successfully.
 
@@ -224,6 +230,7 @@ class Item(object):
         verbose = False if verbose is None else verbose
         ignore_existing = False if ignore_existing is None else ignore_existing
         checksum = False if checksum is None else checksum
+        no_directory = False if no_directory is None else no_directory
 
         if verbose:
             sys.stdout.write('{0}:\n'.format(self.identifier))
@@ -265,7 +272,10 @@ class Item(object):
             sys.stdout.write(' no matching files found, nothing downloaded.\n')
         for f in files:
             fname = f.name.encode('utf-8')
-            path = os.path.join(self.identifier, fname)
+            if no_directory:
+                path = fname
+            else:
+                path = os.path.join(self.identifier, fname)
             if dry_run:
                 sys.stdout.write(f.url + '\n')
                 continue

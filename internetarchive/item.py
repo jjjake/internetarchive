@@ -750,7 +750,8 @@ class File(object):
                 if chunk:
                     f.write(chunk)
                     f.flush()
-        log.info('downloaded {0}/{1} to {2}'.format(self.identifier, self.name,
+        log.info('downloaded {0}/{1} to {2}'.format(self.identifier,
+                                                    self.name.encode('utf-8'),
                                                     file_path))
 
     # delete()

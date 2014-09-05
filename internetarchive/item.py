@@ -724,11 +724,11 @@ class File(object):
         file_path = self.name if not file_path else file_path
         if os.path.exists(file_path):
             if ignore_existing is False and checksum is False:
-                raise IOError('File already downloaded: {0}'.format(file_path))
+                raise IOError('file already downloaded: {0}'.format(file_path))
             if checksum:
                 md5_sum = utils.get_md5(open(file_path))
                 if md5_sum == self.md5:
-                    log.info('Not downloading file {0}, '
+                    log.info('not downloading file {0}, '
                              'file already exists.'.format(file_path))
                     if verbose:
                         sys.stdout.write(' skipping {0}: already exists.\n'.format(file_path))
@@ -744,12 +744,14 @@ class File(object):
             response = self._item.http_session.get(self.url, stream=True)
             response.raise_for_status()
         except HTTPError as e:
-            raise HTTPError('Error downloading {0}, {1}'.format(self.url, e))
+            raise HTTPError('error downloading {0}, {1}'.format(self.url, e))
         with open(file_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
                     f.flush()
+        log.info('downloaded {0}/{1} to {2}'.format(self.identifier, self.name,
+                                                    file_path))
 
     # delete()
     # ____________________________________________________________________________________

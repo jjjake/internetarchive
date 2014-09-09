@@ -3,6 +3,7 @@ import sys
 from fnmatch import fnmatch
 import logging
 import time
+import subprocess
 
 import requests.sessions
 from requests.adapters import HTTPAdapter
@@ -193,7 +194,7 @@ class Item(object):
     # ____________________________________________________________________________________
     def download(self, concurrent=None, source=None, formats=None, glob_pattern=None,
                  dry_run=None, verbose=None, ignore_existing=None, checksum=None,
-                 no_directory=None):
+                 no_directory=None, wgetflag=False):
         """Download the entire item into the current working directory.
 
         :type concurrent: bool
@@ -282,7 +283,7 @@ class Item(object):
             if concurrent:
                 pool.spawn(f.download, path, verbose, ignore_existing, checksum)
             else:
-                f.download(path, verbose, ignore_existing, checksum)
+                f.download(path, verbose, ignore_existing, checksum,wgetflag)
         if concurrent:
             pool.join()
         return True
@@ -703,7 +704,7 @@ class File(object):
 
     # download()
     # ____________________________________________________________________________________
-    def download(self, file_path=None, verbose=None, ignore_existing=None, checksum=None):
+    def download(self, file_path=None, verbose=None, ignore_existing=None, checksum=None, wgetflag=False):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -740,16 +741,21 @@ class File(object):
         if parent_dir != '' and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
-        try:
-            response = self._item.http_session.get(self.url, stream=True)
-            response.raise_for_status()
-        except HTTPError as e:
-            raise HTTPError('error downloading {0}, {1}'.format(self.url, e))
-        with open(file_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-                    f.flush()
+        if  wgetflag:
+            response = subprocess.call(["wget", "-c", self.url, "-O", file_path])
+            if response != 0:
+                raise HTTPError('error downloading {0}'.format(self.url))
+        else:
+            try:
+                response = self._item.http_session.get(self.url, stream=True)
+                response.raise_for_status()
+            except HTTPError as e:
+                raise HTTPError('error downloading {0}, {1}'.format(self.url, e))
+            with open(file_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
+                        f.flush()
         log.info('downloaded {0}/{1} to {2}'.format(self.identifier,
                                                     self.name.encode('utf-8'),
                                                     file_path))

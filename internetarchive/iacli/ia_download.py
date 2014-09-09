@@ -1,7 +1,7 @@
 """Download files from archive.org.
 
 usage:
-    ia download [--quiet] [--dry-run] [--ignore-existing] [--checksum]
+    ia download [--quiet] [--wget] [--dry-run] [--ignore-existing] [--checksum]
                 [--no-directories] [--source=<source>... | --original]
                 [--glob=<pattern> | --format=<format>...] [--concurrent] <identifier>
                 [<file>...]
@@ -10,6 +10,7 @@ usage:
 options:
     -h, --help
     -q, --quiet               Turn off ia's output [default: False].
+    -w, --wget                Download files using wget [default: False].
     -d, --dry-run             Print URLs to stdout and exit.
     -i, --ignore-existing     Clobber files already downloaded.
     -C, --checksum            Skip files based on checksum [default: False].
@@ -29,6 +30,7 @@ options:
     -c, --concurrent          Download files concurrently using the Python
                               gevent networking library (gevent must be
                               installed).
+
 
 """
 import os
@@ -54,6 +56,7 @@ def main(argv):
 
     item = get_item(identifier)
     verbose = True if args['--quiet'] is False else False
+    wget = True if args['--wget'] is True else False
 
     if files:
         if verbose:
@@ -68,7 +71,7 @@ def main(argv):
             if args['--dry-run']:
                 sys.stdout.write(f.url + '\n')
             else:
-                f.download(path, verbose, args['--ignore-existing'], args['--checksum'])
+                f.download(path, verbose, args['--ignore-existing'], args['--checksum'],wgetflag=wget)
         sys.exit(0)
 
     # Otherwise, download the entire item.
@@ -89,5 +92,6 @@ def main(argv):
         ignore_existing=args['--ignore-existing'],
         checksum=args['--checksum'],
         no_directory=args['--no-directories'],
+        wgetflag=wget,
     )
     sys.exit(0)

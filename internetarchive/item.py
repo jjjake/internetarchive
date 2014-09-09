@@ -742,7 +742,7 @@ class File(object):
             os.makedirs(parent_dir)
 
         if  wgetflag:
-            response = subprocess.call(["wget", self.url, "-O", file_path])
+            response = subprocess.call(["wget", "-c", self.url, "-O", file_path])
             if response != 0:
                 raise HTTPError('error downloading {0}'.format(self.url))
         else:

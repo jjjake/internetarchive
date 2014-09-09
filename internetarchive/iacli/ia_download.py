@@ -53,7 +53,10 @@ def main(argv):
         files = args['<file>']
 
     item = get_item(identifier)
-    verbose = True if args['--quiet'] is False else False
+    if (args['--quiet'] is False) and (args['--dry-run'] is False):
+        verbose = True
+    else:
+        verbose = False
 
     if files:
         if verbose:

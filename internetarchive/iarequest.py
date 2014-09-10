@@ -194,15 +194,26 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         self.prepare_hooks(hooks)
 
     def prepare_body(self, metadata, source_metadata, target, priority, append):
-        target = 'metadata' if not target else target
         priority = 0 if not priority else priority
 
         if not source_metadata:
             r = requests.get(self.url)
-            source_metadata = r.json().get(target, {})
-        destination_metadata = source_metadata.copy()
-        prepared_metadata = prepare_metadata(metadata, source_metadata, append)
-        destination_metadata.update(prepared_metadata)
+            source_metadata = r.json().get(target.split('/')[0], {})
+        if 'metadata' in target:
+            destination_metadata = source_metadata.copy()
+            prepared_metadata = prepare_metadata(metadata, source_metadata, append)
+            destination_metadata.update(prepared_metadata)
+        elif 'files' in target:
+            filename = '/'.join(target.split('/')[1:])
+            for f in source_metadata:
+                if f.get('name') == filename:
+                    source_metadata = f
+                    break
+            destination_metadata = source_metadata.copy()
+            prepared_metadata = prepare_metadata(metadata, source_metadata, append)
+            destination_metadata.update(prepared_metadata)
+        else:
+            raise ValueError('"{0}" is not a supported metadata target.'.format(target))
 
         # Delete metadata items where value is REMOVE_TAG.
         destination_metadata = dict(

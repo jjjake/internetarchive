@@ -1,7 +1,7 @@
 """Retrieve and modify metadata for items on archive.org.
 
 usage:
-    ia metadata [--modify=<key:value>...] [--priority=<priority>] <identifier>...
+    ia metadata [--modify=<key:value>...] [--target=<target>] [--priority=<priority>] <identifier>...
     ia metadata [--spreadsheet=<metadata.csv>] [--priority=<priority>] [--modify=<key:value>...]
     ia metadata [--append=<key:value>...] [--priority=<priority>] <identifier>...
     ia metadata [--exists | --formats] <identifier>...
@@ -10,6 +10,7 @@ usage:
 options:
     -h, --help
     -m, --modify=<key:value>          Modify the metadata of an item.
+    -t, --target=<target>             The metadata target to modify.
     -a, --append=<key:value>          Append metadata to an element.
     -s, --spreadsheet=<metadata.csv>  Modify metadata in bulk using a spreadsheet as input.
     -e, --exists                      Check if an item exists
@@ -31,13 +32,14 @@ from internetarchive.iacli.argparser import get_args_dict
 # ________________________________________________________________________________________
 def modify_metadata(item, metadata, args):
     append = True if args['--append'] else False
-    r = item.modify_metadata(metadata, append=append, priority=args['--priority'])
+    r = item.modify_metadata(metadata, target=args['--target'], append=append,
+                             priority=args['--priority'])
     if not r.json()['success']:
         error_msg = r.json()['error']
         sys.stderr.write('{0} - error ({1}): {2}\n'.format(item.identifier, r.status_code,
                                                            error_msg))
         return r
-    sys.stdout.write('{0} - success: {1}\n'.format(item.identifier, 
+    sys.stdout.write('{0} - success: {1}\n'.format(item.identifier,
                                                    r.json()['log']))
     return r
 

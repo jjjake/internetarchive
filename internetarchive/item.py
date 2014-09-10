@@ -320,12 +320,13 @@ class Item(object):
         """
         access_key = self.session.access_key if not access_key else access_key
         secret_key = self.session.secret_key if not secret_key else secret_key
+        target = 'metadata' if target is None else target
 
         url = '{protocol}//archive.org/metadata/{identifier}'.format(**self.__dict__)
         request = iarequest.MetadataRequest(
             url=url,
             metadata=metadata,
-            source_metadata=self.__dict__.get(target, {}),
+            source_metadata=self._json.get(target.split('/')[0], {}),
             target=target,
             priority=priority,
             access_key=access_key,

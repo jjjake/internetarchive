@@ -12,6 +12,7 @@ Release History
   flag.
 - Added an option to not download into item directories, but rather the current working
   directory (i.e. `ia download --no-directories <id>`).
+- Added/fixed support for modifying different metadata targets (i.e. files/logo.jpg).
 
 0.7.1 2014-08-25
 ++++++++++++++++

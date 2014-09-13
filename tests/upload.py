@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 """Test uploading through the internetarchive python package.
 
@@ -11,6 +12,7 @@ import datetime
 import hashlib
 import os
 import StringIO
+import string
 import tempfile
 import time
 
@@ -57,7 +59,6 @@ def get_file(item_name, file_name):
 def upload_stringIO(item, metadata=dict(collection='test_collection')):
     contents = 'hello world'
     name = 'hello_world.txt'
-
     fh = StringIO.StringIO(contents)
     fh.name = name
 
@@ -77,8 +78,10 @@ def upload_tempfile(item):
     temp_file.write(contents)
     temp_file.seek(0, os.SEEK_SET)
 
-    item.upload(temp_file.name, metadata=dict(collection='test_collection'), 
-                access_key=access, secret_key=secret)
+    item.upload(temp_file.name, metadata= {
+            'collection': 'test_collection',
+            'description': 'ℛℯα∂α♭ℓℯ ♭ʊ☂ η☺т Ѧ$☾ℐℐ, ¡ooʇ ןnɟǝsn sı uʍop-ǝpısdn' + string.whitespace,
+        }, access_key=access, secret_key=secret)
     temp_file.close()
 
     f = get_file(item.identifier, os.path.basename(temp_file.name))

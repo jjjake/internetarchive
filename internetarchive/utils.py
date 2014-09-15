@@ -1,5 +1,14 @@
 import hashlib
 import os
+import re
+
+
+def needs_quote(s):
+    try:
+        s.decode('ascii')
+    except UnicodeDecodeError:
+        return True
+    return re.search(r'\s', s) is not None
 
 
 def get_md5(file_object):

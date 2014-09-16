@@ -36,7 +36,7 @@ def modify_metadata(item, metadata, args):
                              priority=args['--priority'])
     if not r.json()['success']:
         error_msg = r.json()['error']
-        sys.stderr.write('{0} - error ({1}): {2}\n'.format(item.identifier, r.status_code,
+        sys.stderr.write(u'{0} - error ({1}): {2}\n'.format(item.identifier, r.status_code,
                                                            error_msg))
         return r
     sys.stdout.write('{0} - success: {1}\n'.format(item.identifier,

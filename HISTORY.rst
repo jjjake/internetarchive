@@ -3,8 +3,8 @@
 Release History
 ---------------
 
-0.7.2 (?)
-+++++++++
+0.7.2 2014-09-16
+++++++++++++++++
 - Suppress `KeyboardInterrupt` exceptions and exit with status code 130.
 - Added ability to skip downloading files based on checksum in `ia download`,
   `Item.download()`, and `File.download()`.

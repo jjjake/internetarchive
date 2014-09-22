@@ -3,6 +3,10 @@
 Release History
 ---------------
 
+0.7.3 (?)
++++++++++
+- Added progress bar to `ia mine`.
+
 0.7.2 2014-09-16
 ++++++++++++++++
 - Suppress `KeyboardInterrupt` exceptions and exit with status code 130.

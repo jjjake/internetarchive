@@ -45,13 +45,15 @@ import csv
 from docopt import docopt
 from requests.exceptions import HTTPError
 
+from internetarchive.session ArchiveSession
 from internetarchive import get_item
 from internetarchive.iacli.argparser import get_args_dict, get_xml_text
 
 
-# main()
-#_________________________________________________________________________________________
-def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=None):
+# _upload_files()
+# ________________________________________________________________________________________
+def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=None
+                  archive_session=None):
     verbose = True if args['--quiet'] is False else False
     config = {} if not args['--log'] else {'logging': {'level': 'INFO'}}
     item = get_item(identifier, config=config)
@@ -120,7 +122,7 @@ def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=N
             sys.exit(1)
 
 # main()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
@@ -156,6 +158,9 @@ def main(argv):
 
     # Bulk upload using spreadsheet.
     elif args['--spreadsheet']:
+        # Use the same session for each upload request.
+        session = ArchiveSession()
+
         spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
         prev_identifier = None
         for row in spreadsheet:
@@ -170,7 +175,8 @@ def main(argv):
             md_args = ['{0}:{1}'.format(k.lower(), v) for (k, v) in row.items() if v]
             metadata = get_args_dict(md_args)
             upload_kwargs['metadata'].update(metadata)
-            _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier)
+            _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier,
+                          session)
             prev_identifier = identifier
 
     # Upload files.

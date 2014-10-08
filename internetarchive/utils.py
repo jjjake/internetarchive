@@ -6,7 +6,7 @@ import re
 def needs_quote(s):
     try:
         s.decode('ascii')
-    except UnicodeDecodeError:
+    except (UnicodeDecodeError, UnicodeEncodeError):
         return True
     return re.search(r'\s', s) is not None
 

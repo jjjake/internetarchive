@@ -112,6 +112,8 @@ class S3PreparedRequest(requests.models.PreparedRequest):
             for i, value in enumerate(meta_value):
                 if not value:
                     continue
+                if isinstance(value, unicode):
+                    value = value.encode('utf-8')
                 header_key = 'x-archive-meta{0:02d}-{1}'.format(i, meta_key)
                 if needs_quote(value):
                     value = 'uri({0})'.format(urllib.parse.quote(value))

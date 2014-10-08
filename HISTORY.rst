@@ -3,9 +3,10 @@
 Release History
 ---------------
 
-0.7.3 (?)
-+++++++++
+0.7.3 2014-10-08
+++++++++++++++++
 - Added progress bar to `ia mine`.
+- Fixed unicode metadata support for `upload()`.
 
 0.7.2 2014-09-16
 ++++++++++++++++

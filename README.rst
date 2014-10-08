@@ -195,7 +195,7 @@ or you can download just a particular file:
 
 .. code:: python
 
-    >>> f = item.file('glogo.png')
+    >>> f = item.get_file('glogo.png')
     >>> f.download() #writes to disk
     >>> f.download('/foo/bar/some_other_name.png')
 
@@ -203,7 +203,7 @@ You can iterate over files:
 
 .. code:: python
 
-    >>> for f in item.files():
+    >>> for f in item.iter_files():
     ...     print(f.name, f.sha1)
 
 Uploading from Python

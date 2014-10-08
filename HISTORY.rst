@@ -3,6 +3,10 @@
 Release History
 ---------------
 
+0.7.5 2014-10-08
+++++++++++++++++
+- Fixed typo.
+
 0.7.4 2014-10-08
 ++++++++++++++++
 - Fixed missing "import" typo in `internetarchive.iacli.ia_upload`.

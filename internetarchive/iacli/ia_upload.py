@@ -52,7 +52,7 @@ from internetarchive.iacli.argparser import get_args_dict, get_xml_text
 
 # _upload_files()
 # ________________________________________________________________________________________
-def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=None
+def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=None,
                   archive_session=None):
     verbose = True if args['--quiet'] is False else False
     config = {} if not args['--log'] else {'logging': {'level': 'INFO'}}

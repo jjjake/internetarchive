@@ -45,7 +45,7 @@ import csv
 from docopt import docopt
 from requests.exceptions import HTTPError
 
-from internetarchive.session ArchiveSession
+from internetarchive.session import ArchiveSession
 from internetarchive import get_item
 from internetarchive.iacli.argparser import get_args_dict, get_xml_text
 

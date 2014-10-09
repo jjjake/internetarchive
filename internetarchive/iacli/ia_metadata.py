@@ -19,7 +19,10 @@ options:
 
 """
 import sys
-from json import dumps
+try:
+    import ujson as json
+except ImportError:
+    import json
 import csv
 
 from docopt import docopt
@@ -89,7 +92,7 @@ def main(argv):
 
         # Dump JSON to stdout.
         else:
-            metadata = dumps(item._json)
+            metadata = json.dumps(item._json)
             sys.stdout.write(metadata + '\n')
 
     # Edit metadata for items in bulk, using a spreadsheet as input.

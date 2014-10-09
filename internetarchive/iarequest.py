@@ -2,7 +2,6 @@ try:
     import ujson as json
 except ImportError:
     import json
-import json
 import re
 import copy
 

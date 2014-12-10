@@ -57,7 +57,7 @@ def main(argv):
                 fp.write(metadata + '\n')
         else:
             try:
-                sys.stderr.write(metadata + '\n')
+                sys.stdout.write(metadata + '\n')
             except IOError:
                 break
     sys.exit(0)

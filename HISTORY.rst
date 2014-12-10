@@ -6,6 +6,7 @@ Release History
 0.7.5 2014-10-08
 ++++++++++++++++
 - Fixed typo.
+- Write metadata to stdout rather than stderr in `ia mine`.
 
 0.7.4 2014-10-08
 ++++++++++++++++

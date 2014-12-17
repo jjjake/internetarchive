@@ -20,7 +20,7 @@ class Search(object):
     """
     # init()
     # ____________________________________________________________________________________
-    def __init__(self, query, fields=['identifier'], params={}, config=None):
+    def __init__(self, query, fields=['identifier'], params={}, config=None, v2=False):
         self.session = session.ArchiveSession(config)
         self.http_session = requests.sessions.Session()
         self.url = 'http://archive.org/advancedsearch.php'
@@ -28,6 +28,11 @@ class Search(object):
             q=query,
             rows=100,
         )
+
+        if v2:
+            self.session.cookies['ui3'] = 'ia-wrapper'
+            self.http_session.cookies = self.session.cookies
+
         self.params = default_params.copy()
         self.params.update(params)
         if not self.params.get('output'):

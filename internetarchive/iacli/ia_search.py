@@ -3,7 +3,7 @@ API <https://archive.org/advancedsearch.php#raw>.
 
 usage:
     ia search [--parameters=<key:value>...] [--sort=<field:order>]
-              [--field=<field>...] [--number-found] <query>...
+              [--field=<field>...] [--number-found] [--v2] <query>...
     ia search --help
 
 options:
@@ -14,6 +14,7 @@ options:
                                      and "desc" for descending.
     -f, --field=<field>...           Metadata fields to return.
     -n, --number-found               Print the number of results to stdout.
+    --v2                             Search https://archive.org/v2.
 
 """
 import sys
@@ -40,7 +41,7 @@ def main(argv):
     fields = ['identifier'] + args['--field']
 
     query = ' '.join(args['<query>'])
-    search_resp = search_items(query, fields=fields, params=params)
+    search_resp = search_items(query, fields=fields, params=params, v2=args['--v2'])
     if args['--number-found']:
         sys.stdout.write('{0}\n'.format(search_resp.num_found))
         sys.exit(0)

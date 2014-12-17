@@ -3,10 +3,14 @@
 Release History
 ---------------
 
+0.7.6 (?)
++++++++++
+- Write metadata to stdout rather than stderr in `ia mine`.
+- Added options to search archive.org/v2.
+
 0.7.5 2014-10-08
 ++++++++++++++++
 - Fixed typo.
-- Write metadata to stdout rather than stderr in `ia mine`.
 
 0.7.4 2014-10-08
 ++++++++++++++++

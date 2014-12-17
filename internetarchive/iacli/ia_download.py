@@ -2,7 +2,7 @@
 
 usage:
     ia download [--quiet] [--dry-run] [--ignore-existing] [--checksum]
-                [--no-directories] [--source=<source>... | --original]
+                [--destdir=<dir>] [--no-directories] [--source=<source>... | --original]
                 [--glob=<pattern> | --format=<format>...] [--concurrent] <identifier>
                 [<file>...]
     ia download --help
@@ -26,6 +26,8 @@ options:
 
     --no-directories          Download files into working directory. Do not
                               create item directories.
+    --destdir=<dir>           The destination directory to download files
+                              and item directories to.
     -c, --concurrent          Download files concurrently using the Python
                               gevent networking library (gevent must be
                               installed).
@@ -71,7 +73,8 @@ def main(argv):
             if args['--dry-run']:
                 sys.stdout.write(f.url + '\n')
             else:
-                f.download(path, verbose, args['--ignore-existing'], args['--checksum'])
+                f.download(path, verbose, args['--ignore-existing'], args['--checksum'],
+                           args['--destdir'])
         sys.exit(0)
 
     # Otherwise, download the entire item.
@@ -91,6 +94,7 @@ def main(argv):
         verbose=verbose,
         ignore_existing=args['--ignore-existing'],
         checksum=args['--checksum'],
+        destdir=args['--destdir'],
         no_directory=args['--no-directories'],
     )
     sys.exit(0)

@@ -3,10 +3,11 @@
 Release History
 ---------------
 
-0.7.6 (?)
-+++++++++
+0.7.6 2014-12-17
+++++++++++++++++
 - Write metadata to stdout rather than stderr in `ia mine`.
 - Added options to search archive.org/v2.
+- Added destdir option to download files/itemdirs to a given destination dir.
 
 0.7.5 2014-10-08
 ++++++++++++++++

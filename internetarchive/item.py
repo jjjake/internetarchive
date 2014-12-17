@@ -193,7 +193,7 @@ class Item(object):
     # ____________________________________________________________________________________
     def download(self, concurrent=None, source=None, formats=None, glob_pattern=None,
                  dry_run=None, verbose=None, ignore_existing=None, checksum=None,
-                 no_directory=None):
+                 destdir=None, no_directory=None):
         """Download the entire item into the current working directory.
 
         :type concurrent: bool
@@ -280,9 +280,9 @@ class Item(object):
                 sys.stdout.write(f.url + '\n')
                 continue
             if concurrent:
-                pool.spawn(f.download, path, verbose, ignore_existing, checksum)
+                pool.spawn(f.download, path, verbose, ignore_existing, checksum, destdir)
             else:
-                f.download(path, verbose, ignore_existing, checksum)
+                f.download(path, verbose, ignore_existing, checksum, destdir)
         if concurrent:
             pool.join()
         return True
@@ -704,7 +704,8 @@ class File(object):
 
     # download()
     # ____________________________________________________________________________________
-    def download(self, file_path=None, verbose=None, ignore_existing=None, checksum=None):
+    def download(self, file_path=None, verbose=None, ignore_existing=None, checksum=None,
+                 destdir=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -723,6 +724,14 @@ class File(object):
         checksum = False if checksum is None else checksum
 
         file_path = self.name if not file_path else file_path
+
+        if destdir:
+            if not os.path.exists(destdir):
+                os.mkdir(destdir)
+            if os.path.isfile(destdir):
+                raise IOError('{} is not a directory!'.format(destdir))
+            file_path = os.path.join(destdir, file_path)
+
         if os.path.exists(file_path):
             if ignore_existing is False and checksum is False:
                 raise IOError('file already downloaded: {0}'.format(file_path))

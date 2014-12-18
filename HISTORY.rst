@@ -3,6 +3,12 @@
 Release History
 ---------------
 
+0.7.7 (?)
++++++++++
+- Simplified `ia configure`. It now only asks for Archive.org email/password and
+  automatically adds S3 keys and Archive.org cookies to config.
+  See `internetarchive.config.get_auth_config()`.
+
 0.7.6 2014-12-17
 ++++++++++++++++
 - Write metadata to stdout rather than stderr in `ia mine`.

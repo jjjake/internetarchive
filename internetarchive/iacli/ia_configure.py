@@ -1,41 +1,34 @@
 """Configure the `ia` CLI and internetarchive Python library.
 
 usage:
-    ia configure [--cookies]
-    ia configure --help
+    ia configure [--help]
 
 options:
     -h, --help
-    -c, --cookies  Add your IA cookies to configuration file.
 
 """
 import os
 import sys
+from getpass import getpass
 
 from docopt import docopt
 import yaml
 
+from internetarchive.config import get_auth_config
+
+
 
 # ia_configure()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
-    sys.stdout.write(
-        'Please visit https://archive.org/account/s3.php to retrieve your S3 keys\n\n')
+    sys.stdout.write('Please enter your Archive.org credentials below to have your\n'
+                     'Archive.org cookies and IA-S3 keys added to your config file.\n\n')
+    username=raw_input('Email address: '),
+    password=getpass('Password: '),
 
-    config = {
-            's3': {
-                'access_key': raw_input('Please enter your IA S3 access key: '),
-                'secret_key': raw_input('Please enter your IA S3 secret key: '),
-            }
-    }
-
-    if args['--cookies']:
-        config['cookies'] = {
-            'logged-in-user': raw_input('Please enter your logged-in-user cookie: '),
-            'logged-in-sig': raw_input('Please Enter your logged-in-sig cookie: ')
-    }
+    config = get_auth_config(username, password)
 
     configfile = yaml.dump(config, default_flow_style=False)
     configdir = os.path.join(os.environ['HOME'], '.config')

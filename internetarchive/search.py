@@ -30,7 +30,8 @@ class Search(object):
         )
 
         if v2:
-            self.session.cookies['ui3'] = 'ia-wrapper'
+            # Use "1" as value to not confuse IA analytics.
+            self.session.cookies['ui3'] = '1'
             self.http_session.cookies = self.session.cookies
 
         self.params = default_params.copy()

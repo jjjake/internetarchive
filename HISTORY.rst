@@ -3,8 +3,13 @@
 Release History
 ---------------
 
-0.7.7 (?)
+0.7.8 (?)
 +++++++++
+- Output error message when downloading non-existing files in `ia download` rather
+  than raising Python exception.
+
+0.7.7 2014-12-17
+++++++++++++++++
 - Simplified `ia configure`. It now only asks for Archive.org email/password and
   automatically adds S3 keys and Archive.org cookies to config.
   See `internetarchive.config.get_auth_config()`.

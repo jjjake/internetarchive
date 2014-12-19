@@ -70,6 +70,9 @@ def main(argv):
             else:
                 path = os.path.join(identifier, fname)
             f = item.get_file(fname)
+            if not f:
+                sys.stderr.write(' {} doesn\'t exist!\n'.format(fname))
+                continue
             if args['--dry-run']:
                 sys.stdout.write(f.url + '\n')
             else:

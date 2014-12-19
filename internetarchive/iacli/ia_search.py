@@ -47,4 +47,7 @@ def main(argv):
         sys.exit(0)
     for result in search_resp:
         output = '\t'.join([result.get(f, '') for f in fields]).encode('utf-8')
-        sys.stdout.write(output + '\n')
+        try:
+            sys.stdout.write(output + '\n')
+        except IOError:
+            sys.exit(0)

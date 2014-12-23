@@ -80,10 +80,8 @@ def main():
 
     if cmd == 'help' or not cmd:
         if not args['<args>']:
-            call(['ia', '--help'])
-        else:
-            call(['ia', args['<args>'][0], '--help'])
-        sys.exit(0)
+            sys.stderr.write(__doc__.strip() + '\n')
+        sys.exit(1)
 
     # Dynamically import and call subcommand module specified on the
     # command line.

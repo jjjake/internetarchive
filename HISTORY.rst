@@ -3,11 +3,14 @@
 Release History
 ---------------
 
-0.7.8 (?)
-+++++++++
+0.7.8 2014-12-23
+++++++++++++++++
 - Output error message when downloading non-existing files in `ia download` rather
   than raising Python exception.
 - Fixed IOError in `ia search` when using `head`, `tail`, etc..
+- Simplified `ia search` to output only JSON, rather than doing any special
+  formatting.
+- Added experimental support for creating pex binaries of ia in `Makefile`. 
 
 0.7.7 2014-12-17
 ++++++++++++++++

@@ -38,6 +38,14 @@ ia-egg:
 	python2.7 setup.py bdist_egg
 	mv dist/internetarchive-*.egg pex-dist/
 
-pex-binary: pyyaml-egg ia-egg
-	rm ia-pex
+clean-pex:
+	rm -fr ia-pex "$$HOME/.pex/install/*" "$$HOME/.pex/build/*"
+
+pex-binary: clean-pex pyyaml-egg ia-egg
 	pex -v --repo pex-dist/ -r PyYAML -r internetarchive -e internetarchive.iacli.ia:main -p ia-pex
+
+pex-binary3.4: clean-pex pyyaml-egg ia-egg
+	pex -v --python=python3.4 --repo pex-dist/ -r PyYAML -r internetarchive -e internetarchive.iacli.ia:main -p ia-pex
+
+pex-gevent-binary: clean-pex pyyaml-egg ia-egg
+	pex -v --python=python3.4 --repo pex-dist/ -r gevent -r PyYAML -r internetarchive -e internetarchive.iacli.ia:main -p ia-pex

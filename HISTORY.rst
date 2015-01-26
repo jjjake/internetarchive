@@ -3,6 +3,12 @@
 Release History
 ---------------
 
+0.7.9 2015-01-26
+++++++++++++++++
+- Fixed bug in `internetarchive.config.get_auth_config` (i.e. `ia configure`)
+  where logged-in cookies returned expired within hours. Cookies should now be
+  valid for about one year.
+
 0.7.8 2014-12-23
 ++++++++++++++++
 - Output error message when downloading non-existing files in `ia download` rather

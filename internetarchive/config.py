@@ -11,6 +11,7 @@ def get_auth_config(username, password):
     payload = dict(
         username=username,
         password=password,
+        remember='CHECKED',
         action='login',
     )
 

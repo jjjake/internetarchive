@@ -66,7 +66,7 @@ class Search(object):
     # ____________________________________________________________________________________
     def __iter__(self):
         """Generator for iterating over search results"""
-        total_pages = ((self.num_found / self.params['rows']) + 2)
+        total_pages = ((self.num_found // self.params['rows']) + 2)
         for page in range(1, total_pages):
             self.params['page'] = page
             r = self.http_session.get(self.url, params=self.params)

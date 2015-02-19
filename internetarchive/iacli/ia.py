@@ -17,7 +17,6 @@ commands:
     download  Download files from Archive.org.
     delete    Delete files from Archive.org.
     search    Search Archive.org.
-    mine      Download item metadata from Archive.org concurrently.
     tasks     Retrieve information about your Archive.org catalog tasks.
     list      List files in a given item.
 
@@ -69,7 +68,6 @@ def main():
         do='download',
         rm='delete',
         se='search',
-        mi='mine',
         ta='tasks',
         ls='list',
     )

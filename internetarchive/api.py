@@ -86,9 +86,6 @@ def download(identifier, filenames=None, **kwargs):
     :type filenames: str, list, set
     :param filenames: The filename(s) of the given file(s) to download.
 
-    :type concurrent: bool
-    :param concurrent: Download files concurrently if ``True``.
-
     :type source: str
     :param source: Only download files matching given source.
 
@@ -153,10 +150,3 @@ def get_tasks(**kwargs):
 # ________________________________________________________________________________________
 def search_items(query, **kwargs):
     return search.Search(query, **kwargs)
-
-
-# mine()
-# ________________________________________________________________________________________
-def get_data_miner(identifiers, **kwargs):
-    from . import mine
-    return mine.Mine(identifiers, **kwargs)

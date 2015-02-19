@@ -191,13 +191,10 @@ class Item(object):
 
     # download()
     # ____________________________________________________________________________________
-    def download(self, concurrent=None, source=None, formats=None, glob_pattern=None,
-                 dry_run=None, verbose=None, ignore_existing=None, checksum=None,
-                 destdir=None, no_directory=None):
+    def download(self, source=None, formats=None, glob_pattern=None, dry_run=None,
+                 verbose=None, ignore_existing=None, checksum=None, destdir=None,
+                 no_directory=None):
         """Download the entire item into the current working directory.
-
-        :type concurrent: bool
-        :param concurrent: Download files concurrently if ``True``.
 
         :type source: str
         :param source: Only download files matching given source.
@@ -225,7 +222,6 @@ class Item(object):
         :returns: True if if files have been downloaded successfully.
 
         """
-        concurrent = False if concurrent is None else concurrent
         dry_run = False if dry_run is None else dry_run
         verbose = False if verbose is None else verbose
         ignore_existing = False if ignore_existing is None else ignore_existing
@@ -242,23 +238,6 @@ class Item(object):
                 sys.stdout.write(' skipping: item does not exist.\n')
                 log.warning('Not downloading item {0}, '
                             'item does not exist.'.format(self.identifier))
-
-        if concurrent:
-            try:
-                from gevent import monkey
-                monkey.patch_socket()
-                from gevent.pool import Pool
-                pool = Pool()
-            except ImportError:
-                raise ImportError(
-                    """No module named gevent
-
-                    Downloading files concurrently requires the gevent neworking library.
-                    gevent and all of it's dependencies can be installed with pip:
-
-                    \tpip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
-
-                    """)
 
         files = self.iter_files()
         if source:
@@ -279,12 +258,7 @@ class Item(object):
             if dry_run:
                 sys.stdout.write(f.url + '\n')
                 continue
-            if concurrent:
-                pool.spawn(f.download, path, verbose, ignore_existing, checksum, destdir)
-            else:
-                f.download(path, verbose, ignore_existing, checksum, destdir)
-        if concurrent:
-            pool.join()
+            f.download(path, verbose, ignore_existing, checksum, destdir)
         return True
 
     # modify_metadata()

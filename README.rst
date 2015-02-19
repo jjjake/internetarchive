@@ -21,13 +21,6 @@ You can install this module via pip:
 
 ``pip install internetarchive``
 
-Alternatively, you can install a few extra dependencies to help speed things up a bit:
-
-``pip install "internetarchive[speedups]"``
-
-This will install `ujson <https://pypi.python.org/pypi/ujson>`__ for faster JSON parsing,
-and `gevent <https://pypi.python.org/pypi/gevent>`__ for concurrent downloads.
-
 If you want to install this module globally on your system instead of inside a ``virtualenv``, use sudo:
 
 ``sudo pip install internetarchive``
@@ -36,7 +29,7 @@ If you want to install this module globally on your system instead of inside a `
 Command-Line Usage
 ------------------
 Help is available by typing ``ia --help``. You can also get help on a command: ``ia <command> --help``.
-Available subcommands are ``configure``, ``metadata``, ``upload``, ``download``, ``search``, ``mine``, ``delete``, ``list``, and ``catalog``.
+Available subcommands are ``configure``, ``metadata``, ``upload``, ``download``, ``search``, ``delete``, ``list``, and ``catalog``.
 
 
 Downloading
@@ -107,43 +100,6 @@ IAS3\_SECRET\_KEY environment variables are set.
 
     $ ia metadata <identifier> --modify="foo:bar" --modify="baz:foooo"
 
-Data Mining
-~~~~~~~~~~~
-
-If you have the Python library ``gevent`` installed, you can use the ``ia mine`` command.
-``gevent`` is automatically installed if you installed ``ia`` via ``pip install "internetarchive[speedups]"``.
-You can also install ``gevent`` like so:
-
-.. code:: bash
-
-    $ pip install cython git+git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
-
-``ia mine`` can be used to concurrently retrieve metadata for items via the `IA Metadata API <http://blog.archive.org/2013/07/04/metadata-api/>`__.
-
-.. code:: bash
-
-    # Create an itemlist to be used as input for your ``ia mine`` command.
-    $ ia search 'collection:IRS990' > itemlist.txt
-
-    # Print metadata to stdout (each items metadata is separated by a "\n" character).
-    $ ia mine itemlist.txt
-
-    # Download all metadata for each item contained in itemlist.txt.
-    $ ia mine itemlist.txt --cache
-
-    # Download all metadata for each item into a single file (each items metadata is separated by a "\n" character).
-    $ ia mine itemlist.txt --output irs990_metadata.json
-
-``ia mine`` can be a very powerful command when used with `jq <http://stedolan.github.io/jq/>`__, a command-line JSON processor.
-For instance, items in the `IRS990 collection <https://archive.org/details/IRS990>`__ have extra metadata that does not get
-indexed by the Archive.org search engine. Using ``ia mine`` and ``jq``, you can quickly parse through this metadata using
-adhoc ``jq`` queries to find what you are looking for.
-
-For instance, let's find all of the 990 forms who's foundation has the keyword "CANCER" in their name:
-
-.. code:: bash
-
-    $ ia mine itemlist.txt | jq 'if .manifest then (.manifest[] | select(contains({foundation: "CANCER"}))) else empty end'
 
 Searching
 ~~~~~~~~~

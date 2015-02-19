@@ -3,6 +3,10 @@
 Release History
 ---------------
 
+1.0.0 (?)
++++++++++
+- Deprecated `internetarchive.mine` (use: https://github.com/jjjake/iamine).
+
 0.7.9 2015-01-26
 ++++++++++++++++
 - Fixed bug in `internetarchive.config.get_auth_config` (i.e. `ia configure`)

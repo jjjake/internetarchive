@@ -84,12 +84,3 @@ def test_functions_needing_cookies():
                     reason='requires authorization.')
 def test_funtions_needing_s3_keys():
     r = upload('iacli-test-item', {'testsetup.py': 'setup.py'})
-
-
-
-@pytest.mark.skipif('py_test_mine == False', reason='requires internetarchive[speedups]')
-def test_mine():
-    ids = ['iacli-test-item', 'nasa']
-    miner = get_data_miner(ids)
-    for i, item in miner:
-        assert item.exists

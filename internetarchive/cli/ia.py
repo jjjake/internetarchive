@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""A command line interface for Archive.org.
+"""A command line interface to Archive.org.
 
 usage:
     ia [--debug | --help | --version] [<command>] [<args>...]
@@ -23,6 +23,8 @@ commands:
 See 'ia help <command>' for more information on a specific command.
 
 """
+
+
 def suppress_keyboard_interrupt_message():
     """Register a new excepthook to suppress KeyboardInterrupt
     exception messages, and exit with status code 130.
@@ -49,7 +51,7 @@ from internetarchive.cli import *
 
 
 # main()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def main():
     """This is the CLI driver for ia-wrapper."""
     args = docopt(__doc__, version=__version__, options_first=True)

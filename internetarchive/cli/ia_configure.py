@@ -17,7 +17,6 @@ import yaml
 from internetarchive.config import get_auth_config
 
 
-
 # ia_configure()
 # ________________________________________________________________________________________
 def main(argv):
@@ -25,10 +24,13 @@ def main(argv):
 
     sys.stdout.write('Please enter your Archive.org credentials below to have your\n'
                      'Archive.org cookies and IA-S3 keys added to your config file.\n\n')
-    username=raw_input('Email address: '),
-    password=getpass('Password: '),
+    username = raw_input('Email address: ')
+    password = getpass('Password: ')
 
-    config = get_auth_config(username, password)
+    try:
+        config = get_auth_config(username, password)
+    except KeyError:
+        sys.exit('\nLogin failed, please check your credentials and try again.\n')
 
     configfile = yaml.dump(config, default_flow_style=False)
     configdir = os.path.join(os.environ['HOME'], '.config')

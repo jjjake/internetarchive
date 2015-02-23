@@ -4,7 +4,8 @@ IA-S3 Documentation: https://archive.org/help/abouts3.txt
 
 usage:
     ia upload [--quiet] [--debug]
-              (<identifier> <file>... | <identifier> - --remote-name=<name> | <identifier> <file> --remote-name=<name> | --spreadsheet=<metadata.csv>)
+              (<identifier> <file>... | <identifier> - --remote-name=<name> |
+              <identifier> <file> --remote-name=<name> | --spreadsheet=<metadata.csv>)
               [--metadata=<key:value>...] [--header=<key:value>...] [--checksum]
               [--no-derive] [--ignore-bucket] [--size-hint=<size>]
               [--delete] [--retries=<i>] [--sleep=<i>] [--log]
@@ -32,7 +33,7 @@ options:
     -l, --log                         Log upload results to file.
     --status-check                    Check if S3 is accepting requests to the
                                       given item.
-    --delete                          Delete files after verifying checksums 
+    --delete                          Delete files after verifying checksums
                                       [default: False].
 
 """
@@ -120,6 +121,7 @@ def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=N
                 'error "{0}" ({1}): {2}\n'.format(code, resp.status_code, msg)
             )
             sys.exit(1)
+
 
 # main()
 # ________________________________________________________________________________________

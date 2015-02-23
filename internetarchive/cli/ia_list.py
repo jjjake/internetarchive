@@ -1,7 +1,7 @@
 """List files in a given item.
 
 usage:
-    ia list [-v] [--glob=<pattern>] [--location] [--source=<source>] 
+    ia list [-v] [--glob=<pattern>] [--location] [--source=<source>]
             [--columns <column1,column2> | --all] <identifier>
     ia metadata --help
 
@@ -27,7 +27,7 @@ from internetarchive import get_item
 
 
 # main()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def main(argv):
     args = docopt(__doc__, argv=argv)
     item = get_item(args['<identifier>'])

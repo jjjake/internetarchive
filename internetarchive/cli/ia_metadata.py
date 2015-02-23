@@ -1,8 +1,10 @@
 """Retrieve and modify metadata for items on archive.org.
 
 usage:
-    ia metadata [--modify=<key:value>...] [--target=<target>] [--priority=<priority>] <identifier>...
-    ia metadata [--spreadsheet=<metadata.csv>] [--priority=<priority>] [--modify=<key:value>...]
+    ia metadata [--modify=<key:value>...] [--target=<target>] [--priority=<priority>]
+                <identifier>...
+    ia metadata [--spreadsheet=<metadata.csv>] [--priority=<priority>]
+                [--modify=<key:value>...]
     ia metadata [--append=<key:value>...] [--priority=<priority>] <identifier>...
     ia metadata [--exists | --formats] <identifier>...
     ia metadata --help
@@ -12,10 +14,11 @@ options:
     -m, --modify=<key:value>          Modify the metadata of an item.
     -t, --target=<target>             The metadata target to modify.
     -a, --append=<key:value>          Append metadata to an element.
-    -s, --spreadsheet=<metadata.csv>  Modify metadata in bulk using a spreadsheet as input.
+    -s, --spreadsheet=<metadata.csv>  Modify metadata in bulk using a spreadsheet as
+                                      input.
     -e, --exists                      Check if an item exists
     -F, --formats                     Return the file-formats the given item contains.
-    -p, --priority=<priority>        Set the task priority.
+    -p, --priority=<priority>         Set the task priority.
 
 """
 import sys
@@ -39,8 +42,8 @@ def modify_metadata(item, metadata, args):
                              priority=args['--priority'])
     if not r.json()['success']:
         error_msg = r.json()['error']
-        sys.stderr.write(u'{0} - error ({1}): {2}\n'.format(item.identifier, r.status_code,
-                                                           error_msg))
+        sys.stderr.write(u'{0} - error ({1}): {2}\n'.format(item.identifier,
+                                                            r.status_code, error_msg))
         return r
     sys.stdout.write('{0} - success: {1}\n'.format(item.identifier,
                                                    r.json()['log']))

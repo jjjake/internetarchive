@@ -10,12 +10,13 @@ usage:
 
 options:
     -h, --help
-    -q, --quiet            Print status to stdout. 
+    -q, --quiet            Print status to stdout.
     -c, --cascade          Delete all derivative files associated with the given file.
     -a, --all              Delete all files in the given item (Note: Some files, such
                            as <identifier>_meta.xml and <identifier>_files.xml, cannot
                            be deleted)
-    -d, --dry-run          Output files to be deleted to stdout, but don't actually delete.
+    -d, --dry-run          Output files to be deleted to stdout, but don't actually
+                           delete.
     -g, --glob=<pattern>   Only return patterns match the given pattern.
 
 """
@@ -30,7 +31,7 @@ from internetarchive.cli.argparser import get_xml_text
 
 
 # main()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def main(argv):
     args = docopt(__doc__, argv=argv)
     verbose = True if not args['--quiet'] else False
@@ -68,8 +69,8 @@ def main(argv):
         if any(f.name.endswith(s) for s in no_delete):
             continue
         if args['--dry-run']:
-            sys.stdout.write(' will delete: {0}/{1}\n'.format(item.identifier, 
-                                                             f.name.encode('utf-8')))
+            sys.stdout.write(' will delete: {0}/{1}\n'.format(item.identifier,
+                                                              f.name.encode('utf-8')))
             continue
         resp = f.delete(verbose=verbose, cascade_delete=args['--cascade'])
         if resp.status_code != 204:

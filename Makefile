@@ -38,4 +38,4 @@ pex-binary: pyyaml-egg
 	pip wheel .
 	rm -f wheelhouse/PyYAML-3.1*macosx*
 	mv wheelhouse/* pex-dist/
-	pex -vvv --python=python2.7 --repo=pex-dist --no-pypi -r internetarchive -r PyYAML -e internetarchive.iacli.ia:main -p ia-$(VERSION).pex
+	pex -vvv --python=python2.7 --repo=pex-dist --no-pypi -r internetarchive -r PyYAML -e internetarchive.cli.ia:main -p ia-$(VERSION).pex

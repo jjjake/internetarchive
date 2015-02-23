@@ -23,7 +23,7 @@ import sys
 from docopt import docopt
 
 from internetarchive import Catalog, get_tasks
-from internetarchive.iacli.argparser import get_args_dict
+from internetarchive.cli.argparser import get_args_dict
 
 
 # ia_catalog()

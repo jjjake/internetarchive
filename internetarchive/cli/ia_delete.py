@@ -26,7 +26,7 @@ from fnmatch import fnmatch
 from docopt import docopt
 
 from internetarchive import get_item
-from internetarchive.iacli.argparser import get_xml_text
+from internetarchive.cli.argparser import get_xml_text
 
 
 # main()

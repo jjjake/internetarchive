@@ -26,11 +26,11 @@ setup(
     zip_safe=False,
     packages=[
         'internetarchive',
-        'internetarchive.iacli',
+        'internetarchive.cli',
     ],
     entry_points = {
         'console_scripts': [
-            'ia = internetarchive.iacli.ia:main',
+            'ia = internetarchive.cli.ia:main',
         ],
     },
     install_requires=[

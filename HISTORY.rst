@@ -6,6 +6,9 @@ Release History
 1.0.0 (?)
 +++++++++
 - Deprecated `internetarchive.mine` (use: https://github.com/jjjake/iamine).
+- `ia` now looks for plugins installed under the 'internetarchive.cli.puglins'
+  entry_point.
+- `internetarchive.iacli` package renamed to `internetarchive.cli`.
 
 0.7.9 2015-01-26
 ++++++++++++++++

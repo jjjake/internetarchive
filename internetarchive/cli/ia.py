@@ -45,19 +45,13 @@ from subprocess import call
 from docopt import docopt
 
 from internetarchive import __version__
+from internetarchive.cli import *
 
 
 # main()
 #_________________________________________________________________________________________
 def main():
-    """This script is the CLI driver for ia-wrapper. It dynamically
-    imports and calls the subcommand specified on the command line. It
-    depends on the ``internetarchive`` and ``iacli`` packages.
-
-    Subcommands can be arbitrarily added to the ``iacli`` package as
-    modules, and can be dynamically executed via this script, ``ia``.
-
-    """
+    """This is the CLI driver for ia-wrapper."""
     args = docopt(__doc__, version=__version__, options_first=True)
 
     # Get subcommand.
@@ -76,21 +70,20 @@ def main():
 
     argv = [cmd] + args['<args>']
 
-    if cmd == 'help' or not cmd:
+    if (cmd == 'help') or (not cmd):
         if not args['<args>']:
-            sys.stderr.write(__doc__.strip() + '\n')
-        sys.exit(1)
+            sys.exit(sys.stderr.write(__doc__.strip() + '\n'))
+        else:
+            sys.exit(call(['ia', args['<args>'][-1], '--help']))
 
-    # Dynamically import and call subcommand module specified on the
-    # command line.
-    module = 'internetarchive.iacli.ia_{0}'.format(cmd)
     try:
-        globals()['ia_module'] = __import__(module, fromlist=['internetarchive.iacli'])
-    except ImportError:
+        ia_module = globals()['ia_{}'.format(cmd)]
+    except KeyError:
+        sys.stderr.write(__doc__.strip() + '\n\n')
         sys.stderr.write('error: "{0}" is not an `ia` command!\n'.format(cmd))
         sys.exit(127)
 
-    ia_module.main(argv)
+    sys.exit(ia_module.main(argv))
 
 if __name__ == '__main__':
     main()

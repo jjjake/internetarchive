@@ -28,7 +28,7 @@ import csv
 from docopt import docopt
 
 from internetarchive import get_item
-from internetarchive.iacli.argparser import get_args_dict
+from internetarchive.cli.argparser import get_args_dict
 
 
 # modify_metadata()

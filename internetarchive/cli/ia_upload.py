@@ -47,7 +47,7 @@ from requests.exceptions import HTTPError
 
 from internetarchive.session import ArchiveSession
 from internetarchive import get_item
-from internetarchive.iacli.argparser import get_args_dict, get_xml_text
+from internetarchive.cli.argparser import get_args_dict, get_xml_text
 
 
 # _upload_files()

@@ -17,7 +17,7 @@ usage:
 """
 
 __title__ = 'internetarchive'
-__version__ = '0.7.9'
+__version__ = '1.0.0dev1'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
 __copyright__ = 'Copyright 2013 Jacob M. Johnson'
@@ -40,3 +40,9 @@ except ImportError:
 
 log = logging.getLogger('internetarchive')
 log.addHandler(NullHandler())
+
+
+from pkg_resources import iter_entry_points, load_entry_point
+for object in iter_entry_points(group='internetarchive.plugins', name=None):
+    globals()[object.name] = load_entry_point(
+        object.dist, 'internetarchive.plugins', object.name)

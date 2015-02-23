@@ -40,7 +40,7 @@ setup(
         'docopt==0.6.1',
         'PyYAML==3.10',
         'clint==0.3.3',
-        'six==1.4.1',
+        'six==1.9.0',
     ],
     classifiers=(
         'Development Status :: 4 - Beta',

@@ -41,6 +41,7 @@ setup(
         'PyYAML==3.10',
         'clint==0.3.3',
         'six==1.9.0',
+        'schema==0.3.1',
     ],
     classifiers=(
         'Development Status :: 4 - Beta',

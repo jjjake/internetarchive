@@ -3,6 +3,13 @@ import os
 import re
 
 
+def validate_ia_identifier(string):
+    legal_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'
+    assert 80 >= len(string) >= 3
+    assert all(c in legal_chars for c in string)
+    return True
+
+
 def needs_quote(s):
     try:
         s.decode('ascii')

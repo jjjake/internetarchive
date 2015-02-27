@@ -3,86 +3,80 @@
 IA-S3 Documentation: https://archive.org/help/abouts3.txt
 
 usage:
-    ia upload [--quiet] [--debug]
-              (<identifier> <file>... | <identifier> - --remote-name=<name> |
-              <identifier> <file> --remote-name=<name> | --spreadsheet=<metadata.csv>)
-              [--metadata=<key:value>...] [--header=<key:value>...] [--checksum]
-              [--no-derive] [--ignore-bucket] [--size-hint=<size>]
-              [--delete] [--retries=<i>] [--sleep=<i>] [--log]
+    ia upload <identifier> <file>... [options]...
+    ia upload <identifier> - --remote-name=<name> [options]...
+    ia upload <identifier> <file> --remote-name=<name> [options]...
+    ia upload --spreadsheet=<metadata.csv> [options]...
     ia upload <identifier> --status-check
     ia upload --help
 
 options:
     -h, --help
     -q, --quiet                       Turn off ia's output [default: False].
-    -d, --debug                       Print S3 request parameters to stdout and
-                                      exit without sending request.
-    -r, --remote-name=<name>          When uploading data from stdin, this option
-                                      sets the remote filename.
-    -S, --spreadsheet=<metadata.csv>  bulk uploading...
+    -d, --debug                       Print S3 request parameters to stdout and exit
+                                      without sending request.
+    -r, --remote-name=<name>          When uploading data from stdin, this option sets the
+                                      remote filename.
+    -S, --spreadsheet=<metadata.csv>  bulk uploading.
     -m, --metadata=<key:value>...     Metadata to add to your item.
     -H, --header=<key:value>...       S3 HTTP headers to send with your request.
-    -c, --checksum                    Skip based on checksum [default: False].
+    -c, --checksum                    Skip based on checksum. [default: False]
     -n, --no-derive                   Do not derive uploaded files.
     -i, --ignore-bucket               Destroy and respecify all metadata.
-    -s, --size-hint=<size>            Specify a size-hint for your item.
-    -R, --retries=<i>                 Number of times to retry request if S3
-                                      retruns a 503 SlowDown error.
+    --size-hint=<size>                Specify a size-hint for your item.
+    --delete                          Delete files after verifying checksums
+                                      [default: False].
+    -R, --retries=<i>                 Number of times to retry request if S3 retruns a
+                                      503 SlowDown error.
     -s, --sleep=<i>                   The amount of time to sleep between retries
                                       [default: 30].
     -l, --log                         Log upload results to file.
-    --status-check                    Check if S3 is accepting requests to the
-                                      given item.
-    --delete                          Delete files after verifying checksums
-                                      [default: False].
+    --status-check                    Check if S3 is accepting requests to the given item.
 
 """
 import sys
+import os
 from tempfile import TemporaryFile
 from xml.dom.minidom import parseString
-from subprocess import call
 import csv
 
-from docopt import docopt
+from docopt import docopt, printable_usage
 from requests.exceptions import HTTPError
+from schema import Schema, Use, Or, And, SchemaError
 
 from internetarchive.session import ArchiveSession
 from internetarchive import get_item
 from internetarchive.cli.argparser import get_args_dict, get_xml_text
+from internetarchive.utils import validate_ia_identifier
 
 
 # _upload_files()
 # ________________________________________________________________________________________
-def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=None,
-                  archive_session=None):
-    verbose = True if args['--quiet'] is False else False
-    config = {} if not args['--log'] else {'logging': {'level': 'INFO'}}
-    item = get_item(identifier, config=config)
-    if args['--status-check']:
-        if item.s3_is_overloaded():
-            sys.stderr.write('warning: {0} is over limit, and not accepting requests. '
-                             'Expect 503 SlowDown errors.\n'.format(identifier))
-            sys.exit(1)
-        else:
-            sys.stdout.write('success: {0} is accepting requests.\n'.format(identifier))
-            sys.exit(0)
-    if (verbose) and (prev_identifier != identifier):
+def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
+    """Helper function for calling :meth:`Item.upload`"""
+    if (upload_kwargs['verbose']) and (prev_identifier != item.identifier):
         sys.stdout.write('{0}:\n'.format(item.identifier))
 
     try:
-        if isinstance(local_file, (list, tuple, set)) and args['--remote-name']:
-            local_file = local_file[0]
-        if args['--remote-name']:
-            files = {args['--remote-name']: local_file}
-        else:
-            files = local_file
         response = item.upload(files, **upload_kwargs)
     except HTTPError as exc:
         response = [exc.response]
-        if not response[0]:
-            sys.exit(1)
+    finally:
+        # Debug mode.
+        if upload_kwargs['debug']:
+            for i, r in enumerate(response):
+                if i != 0:
+                    sys.stdout.write('---\n')
+                headers = '\n'.join(
+                    [' {0}: {1}'.format(k, v) for (k, v) in r.headers.items()]
+                )
+                sys.stdout.write('Endpoint:\n {0}\n\n'.format(r.url))
+                sys.stdout.write('HTTP Headers:\n{0}\n'.format(headers))
+                sys.exit(0)
+
+        # Missing S3 keys.
         if response[0].status_code == 403:
-            if (not item.session.access_key) and (not item.session.secret_key):
+            if (not item.session.access_key) or (not item.session.secret_key):
                 sys.stderr.write('\nIAS3 Authentication failed. Please set your IAS3 '
                                  'access key and secret key \nvia the environment '
                                  'variables `IAS3_ACCESS_KEY` and `IAS3_SECRET_KEY`, '
@@ -90,35 +84,17 @@ def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=N
                                  'ia config file. You can \nobtain your IAS3 keys at the '
                                  'following URL:\n\n\t'
                                  'https://archive.org/account/s3.php\n\n')
-            else:
-                sys.stderr.write('\nIAS3 Authentication failed. It appears the keyset '
-                                 '"{0}:{1}" \ndoes not have permission to upload '
-                                 'to the given item or '
-                                 'collection.\n\n'.format(item.session.access_key,
-                                                          item.session.secret_key))
-            sys.exit(1)
+                sys.exit(1)
 
-    if args['--debug']:
-        for i, r in enumerate(response):
-            if i != 0:
-                sys.stdout.write('---\n')
-            headers = '\n'.join(
-                [' {0}: {1}'.format(k, v) for (k, v) in r.headers.items()]
-            )
-            sys.stdout.write('Endpoint:\n {0}\n\n'.format(r.url))
-            sys.stdout.write('HTTP Headers:\n{0}\n'.format(headers))
-
-    else:
-        for resp in response:
-            if not resp:
-                continue
-            if (resp.status_code == 200) or (not resp.status_code):
-                continue
-            error = parseString(resp.content)
-            code = get_xml_text(error.getElementsByTagName('Code'))
+        # Format error message for any non 200 responses that
+        # we haven't caught yet,and write to stderr.
+        if response[0].status_code != 200:
+            filename = response[0].request.url.split('/')[-1]
+            error = parseString(response[0].content)
             msg = get_xml_text(error.getElementsByTagName('Message'))
             sys.stderr.write(
-                'error "{0}" ({1}): {2}\n'.format(code, resp.status_code, msg)
+                ' * error uploading {0} ({1}): {2}\n'.format(filename,
+                    response[0].status_code, msg)
             )
             sys.exit(1)
 
@@ -128,41 +104,92 @@ def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=N
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
-    headers = get_args_dict(args['--header'])
-    if args['--size-hint']:
-        headers['x-archive-size-hint'] = args['--size-hint']
+    # Validate args.
+    s = Schema({str: Use(bool),
+        '<identifier>': Or(None, And(str, validate_ia_identifier,
+            error=('<identifier> should be between 3 and 80 characters in length, and '
+                   'can only contain alphanumeric characters, underscores ( _ ), or '
+                   'dashes ( - )'))),
+        '<file>': And(
+            And(lambda f: all(os.path.exists(x) for x in f if x != '-'),
+                error='<file> should be a readable file or directory.'),
+            And(lambda f: False if f == ['-'] and not args['--remote-name'] else True,
+                error='--remote-name must be provided when uploading from stdin.')),
+        '--remote-name': Or(None, And(str)),
+        '--spreadsheet': Or(None, os.path.isfile,
+            error='--spreadsheet should be a readable file.'),
+        '--metadata': Or(None, And(Use(get_args_dict), dict),
+            error='--metadata must be formatted as --metadata="key:value"'),
+        '--header': Or(None, And(Use(get_args_dict), dict),
+            error='--header must be formatted as --header="key:value"'),
+        '--retries': Use(lambda x: int(x[0]) if x else 0),
+        '--sleep': Use(lambda l: int(l[0]), error='--sleep value must be an integer.'),
+        '--size-hint': Or(Use(lambda l: int(l[0]) if l else None), int, None,
+            error='--size-hint value must be an integer.'),
+        '--status-check': bool,
+    })
+    try:
+        args = s.validate(args)
+    except SchemaError as exc:
+        sys.exit(sys.stderr.write('{0}\n{1}\n'.format(
+            str(exc), printable_usage(__doc__))))
+
+    # Load Item.
+    config = {} if not args['--log'] else {'logging': {'level': 'INFO'}}
+    item = get_item(args['<identifier>'], config=config) if args['<identifier>'] else None
+
+    # Status check.
+    if args['--status-check']:
+        if item.s3_is_overloaded():
+            sys.exit(sys.stderr.write(
+                'warning: {0} is over limit, and not accepting requests. '
+                'Expect 503 SlowDown errors.\n'.format(args['<identifier>'])))
+        else:
+            sys.exit(sys.stdout.write(
+                'success: {0} is accepting requests.\n'.format(args['<identifier>'])))
 
     # Upload keyword arguments.
+    if args['--size-hint']:
+        args['--header']['x-archive-size-hint'] = args['--size-hint']
+
+    queue_derive = True if args['--no-derive'] is False else False
+    verbose = True if args['--quiet'] is False else False
+
     upload_kwargs = dict(
-        metadata=get_args_dict(args['--metadata']),
-        headers=headers,
+        metadata=args['--metadata'],
+        headers=args['--header'],
         debug=args['--debug'],
-        queue_derive=True if args['--no-derive'] is False else False,
+        queue_derive=queue_derive,
         ignore_preexisting_bucket=args['--ignore-bucket'],
         checksum=args['--checksum'],
-        verbose=True if args['--quiet'] is False else False,
-        retries=int(args['--retries']) if args['--retries'] else 0,
-        retries_sleep=int(args['--sleep']),
+        verbose=verbose,
+        retries=args['--retries'],
+        retries_sleep=args['--sleep'],
         delete=args['--delete'],
     )
 
-    if args['<file>'] == ['-'] and not args['-']:
-        sys.stderr.write('--remote-name is required when uploading from stdin.\n')
-        call(['ia', 'upload', '--help'])
-        sys.exit(1)
+    # Upload files.
+    if not args['--spreadsheet']:
+        if args['-']:
+            local_file = TemporaryFile()
+            local_file.write(sys.stdin.read())
+            local_file.seek(0)
+        else:
+            local_file = args['<file>']
 
-    # Upload from stdin.
-    if args['-']:
-        local_file = TemporaryFile()
-        local_file.write(sys.stdin.read())
-        local_file.seek(0)
-        _upload_files(args, args['<identifier>'], local_file, upload_kwargs)
+        if isinstance(local_file, (list, tuple, set)) and args['--remote-name']:
+            local_file = local_file[0]
+        if args['--remote-name']:
+            files = {args['--remote-name']: local_file}
+        else:
+            files = local_file
+
+        _upload_files(item, files, upload_kwargs)
 
     # Bulk upload using spreadsheet.
-    elif args['--spreadsheet']:
+    else:
         # Use the same session for each upload request.
         session = ArchiveSession()
-
         spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
         prev_identifier = None
         for row in spreadsheet:
@@ -172,16 +199,11 @@ def main(argv):
             del row['identifier']
             if (not identifier) and (prev_identifier):
                 identifier = prev_identifier
+            item = get_item(identifier, config=config)
             # TODO: Clean up how indexed metadata items are coerced
             # into metadata.
             md_args = ['{0}:{1}'.format(k.lower(), v) for (k, v) in row.items() if v]
             metadata = get_args_dict(md_args)
             upload_kwargs['metadata'].update(metadata)
-            _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier,
-                          session)
+            _upload_files(item, local_file, upload_kwargs, prev_identifier, session)
             prev_identifier = identifier
-
-    # Upload files.
-    else:
-        local_file = args['<file>']
-        _upload_files(args, args['<identifier>'], local_file, upload_kwargs)

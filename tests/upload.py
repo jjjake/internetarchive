@@ -25,7 +25,7 @@ secret = s3_conf.get('secret_key')
 
 
 # get_new_item()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def get_new_item():
     """return an ia item object for an item that does not yet exist"""
     now = datetime.datetime.utcnow()
@@ -34,16 +34,16 @@ def get_new_item():
     if item.exists is False:
         return item
 
-    raise KeyError, 'Could not find a unique item name after 5 tries'
+    raise KeyError('Could not find a unique item name after 5 tries')
 
 
 # get_file()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def get_file(item_name, file_name):
     """get a file from a newly-created item. Wait for file to land in item, retry if needed"""
 
     for i in range(5):
-        print '  waiting 30 seconds for upload of', file_name
+        print('  waiting 30 seconds for upload of {}'.format(file_name))
         time.sleep(30)
 
         item = ia.Item(item_name)
@@ -51,11 +51,11 @@ def get_file(item_name, file_name):
         if f is not None:
             return f
 
-    raise KeyError, 'Could not retrieve file after 5 tries'
+    raise KeyError('Could not retrieve file after 5 tries')
 
 
 # upload_stringIO()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def upload_stringIO(item, metadata=dict(collection='test_collection')):
     contents = 'hello world'
     name = 'hello_world.txt'
@@ -70,7 +70,7 @@ def upload_stringIO(item, metadata=dict(collection='test_collection')):
 
 
 # upload_tempfile()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def upload_tempfile(item):
     contents = 'temporary file contents'
     temp_file = tempfile.NamedTemporaryFile(suffix='.txt')
@@ -78,7 +78,7 @@ def upload_tempfile(item):
     temp_file.write(contents)
     temp_file.seek(0, os.SEEK_SET)
 
-    item.upload(temp_file.name, metadata= {
+    item.upload(temp_file.name, metadata = {
             'collection': 'test_collection',
             'description': 'ℛℯα∂α♭ℓℯ ♭ʊ☂ η☺т Ѧ$☾ℐℐ, ¡ooʇ ןnɟǝsn sı uʍop-ǝpısdn' + string.whitespace,
         }, access_key=access, secret_key=secret)
@@ -89,7 +89,7 @@ def upload_tempfile(item):
 
 
 # upload_two_new_tems()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def upload_two_new_items():
     first_item = get_new_item()
     second_item = get_new_item()
@@ -104,36 +104,36 @@ def upload_two_new_items():
         })
     first_item.get_metadata()
     second_item.get_metadata()
-    assert first_item.metadata['description'] != second_item.metadata['description']
+    assert first_item.metadata.get('description') != second_item.metadata.get('description')
 
 
 # test_upload()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def test_upload():
-    print 'Finding new item name'
+    print('Finding new item name')
     item = get_new_item()
 
-    print 'Uploading new item named', item.identifier
+    print('Uploading new item named {}'.format(item.identifier))
 
-    print 'Testing upload using StringIO'
+    print('Testing upload using StringIO')
     upload_stringIO(item)
 
-    print 'Testing upload using tempfile'
+    print('Testing upload using tempfile')
     upload_tempfile(item)
 
-    print 'Testing that subsequent uploads do not have headers from previous uploads'
+    print('Testing that subsequent uploads do not have headers from previous uploads')
     upload_two_new_items()
 
-    print 'Finished upload test'
+    print('Finished upload test')
 
 
 # main()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 if __name__ == '__main__':
     if os.environ.get('IAS3_ACCESS_KEY') is None:
-        raise LookupError, 'You must set IAS3_ACCESS_KEY environment variable!'
+        raise LookupError('You must set IAS3_ACCESS_KEY environment variable!')
 
     if os.environ.get('IAS3_SECRET_KEY') is None:
-        raise LookupError, 'You must set IAS3_SECRET_KEY environment variable!'
+        raise LookupError('You must set IAS3_SECRET_KEY environment variable!')
 
     test_upload()

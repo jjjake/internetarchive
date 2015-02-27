@@ -44,5 +44,8 @@ log.addHandler(NullHandler())
 
 from pkg_resources import iter_entry_points, load_entry_point
 for object in iter_entry_points(group='internetarchive.plugins', name=None):
-    globals()[object.name] = load_entry_point(
-        object.dist, 'internetarchive.plugins', object.name)
+    try:
+        globals()[object.name] = load_entry_point(
+            object.dist, 'internetarchive.plugins', object.name)
+    except ImportError:
+        log.warning('Failed to import plugin: {}'.format(object.name))

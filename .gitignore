@@ -61,4 +61,4 @@ pex-dist
 wheelhouse
 
 # Virtualenv
-.venv
+.venv*

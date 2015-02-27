@@ -125,7 +125,7 @@ class Item(object):
         except HTTPError as e:
             error_msg = 'Error retrieving metadata from {0}, {1}'.format(resp.url, e)
             log.error(error_msg)
-            raise HTTPError(error_msg)
+            raise
         metadata = resp.json()
         for key in metadata:
                 setattr(self, key, metadata[key])
@@ -163,6 +163,10 @@ class Item(object):
     def get_files(self, files=None, source=None, formats=None, glob_pattern=None):
         files = [] if not files else files
         source = [] if not source else source
+
+        # If no filters are applied, return all files.
+        if not any(k for k in [files, source, formats, glob_pattern]):
+            return list(self.iter_files())
 
         if not isinstance(files, (list, tuple, set)):
             files = [files]
@@ -263,8 +267,8 @@ class Item(object):
 
     # modify_metadata()
     # ____________________________________________________________________________________
-    def modify_metadata(self, metadata, target=None, append=False, priority=None,
-                        access_key=None, secret_key=None, debug=False):
+    def modify_metadata(self, metadata, target=None, append=None, priority=None,
+                        access_key=None, secret_key=None, debug=None):
         """Modify the metadata of an existing item on Archive.org.
 
         Note: The Metadata Write API does not yet comply with the
@@ -292,9 +296,11 @@ class Item(object):
                   returned from the Metadata API.
 
         """
+        target = 'metadata' if target is None else target
+        append = False if append is None else append
         access_key = self.session.access_key if not access_key else access_key
         secret_key = self.session.secret_key if not secret_key else secret_key
-        target = 'metadata' if target is None else target
+        debug = False if debug is None else debug
 
         url = '{protocol}//archive.org/metadata/{identifier}'.format(**self.__dict__)
         request = iarequest.MetadataRequest(
@@ -525,10 +531,7 @@ class Item(object):
                 error_msg = (' error uploading {0} to {1}, '
                              '{2}'.format(key, self.identifier, exc))
                 log.error(error_msg)
-                if verbose:
-                    sys.stderr.write(error_msg + '\n')
-                # Raise HTTPError with error message.
-                raise type(exc)(error_msg)
+                raise
 
     # upload()
     # ____________________________________________________________________________________
@@ -728,7 +731,9 @@ class File(object):
             response = self._item.http_session.get(self.url, stream=True)
             response.raise_for_status()
         except HTTPError as e:
-            raise HTTPError('error downloading {0}, {1}'.format(self.url, e))
+            error_msg = 'error downloading {0}, {1}'.format(self.url, e)
+            log.error(error_msg)
+            raise
         with open(file_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=1024):
                 if chunk:

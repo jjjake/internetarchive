@@ -62,3 +62,6 @@ wheelhouse
 
 # Virtualenv
 .venv*
+
+# IA.
+*itemlist.txt

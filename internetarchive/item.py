@@ -75,7 +75,7 @@ class Item(object):
 
         """
         max_retries = 10 if not max_retries else max_retries
-        config = {} if config else config
+        config = {} if not config else config
 
         self.session = archive_session if archive_session else session.get_session(config)
         self.protocol = 'https:' if self.session.secure else 'http:'

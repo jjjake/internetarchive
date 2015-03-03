@@ -11,21 +11,45 @@ usage:
     >>> item.exists
     True
 
-:copyright: (c) 2013 by Jacob M. Johnson.
+:copyright: (c) 2015 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 
 """
 
 __title__ = 'internetarchive'
-__version__ = '1.0.0dev1'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
-__copyright__ = 'Copyright 2013 Jacob M. Johnson'
+__copyright__ = 'Copyright 2013 Internet Archive'
 
 from .item import Item, File
 from .search import Search
 from .catalog import Catalog
-from .api import *
+from .api import get_item, get_files, iter_files, modify_metadata, upload, download, \
+    delete, get_tasks, search_items
+
+from ._version import __version__
+
+
+__all__ = [
+    '__version__',
+
+    # Classes.
+    'Item',
+    'File',
+    'Search',
+    'Catalog',
+
+    # API.
+    'get_item',
+    'get_files',
+    'iter_files',
+    'modify_metadata',
+    'upload',
+    'download',
+    'delete',
+    'get_tasks',
+    'search_items',
+]
 
 
 # Set default logging handler to avoid "No handler found" warnings.
@@ -47,5 +71,6 @@ for object in iter_entry_points(group='internetarchive.plugins', name=None):
     try:
         globals()[object.name] = load_entry_point(
             object.dist, 'internetarchive.plugins', object.name)
+        __all__.append(object.name)
     except ImportError:
         log.warning('Failed to import plugin: {}'.format(object.name))

@@ -7,12 +7,13 @@ import time
 import requests.sessions
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
-from requests import Response
+from requests import Response, Request
 from clint.textui import progress
 import six
 import six.moves.urllib as urllib
 
-from . import __version__, session, iarequest, utils
+from . import session, iarequest, utils
+from ._version import __version__
 
 
 log = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ class Item(object):
     """
     # init()
     # ____________________________________________________________________________________
-    def __init__(self, identifier, metadata_timeout=None, config=None, max_retries=1,
+    def __init__(self, identifier, metadata_timeout=None, config=None, max_retries=None,
                  archive_session=None):
         """
         :type identifier: str
@@ -73,6 +74,9 @@ class Item(object):
                                 parameter.
 
         """
+        max_retries = 10 if not max_retries else max_retries
+        config = {} if config else config
+
         self.session = archive_session if archive_session else session.get_session(config)
         self.protocol = 'https:' if self.session.secure else 'http:'
         self.http_session = requests.sessions.Session()
@@ -133,7 +137,7 @@ class Item(object):
 
     # iter_files()
     # ____________________________________________________________________________________
-    def iter_files(self):
+    def _iter_files(self):
         """Generator for iterating over files in an item.
 
         :rtype: generator
@@ -141,9 +145,8 @@ class Item(object):
                   <File>` objects.
 
         """
-        for file_dict in self.files:
-            file = File(self, file_dict.get('name'))
-            yield file
+        for f in self.files:
+            yield self.get_file(f['name'])
 
     # file()
     # ____________________________________________________________________________________
@@ -154,19 +157,14 @@ class Item(object):
         :returns: An :class:`internetarchive.File <File>` object.
 
         """
-        for f in self.iter_files():
-            if f.name == file_name:
-                return f
+        return File(self, file_name)
 
     # get_files()
     # ____________________________________________________________________________________
     def get_files(self, files=None, source=None, formats=None, glob_pattern=None):
         files = [] if not files else files
         source = [] if not source else source
-
-        # If no filters are applied, return all files.
-        if not any(k for k in [files, source, formats, glob_pattern]):
-            return list(self.iter_files())
+        formats = [] if not formats else formats
 
         if not isinstance(files, (list, tuple, set)):
             files = [files]
@@ -175,85 +173,80 @@ class Item(object):
         if not isinstance(formats, (list, tuple, set)):
             formats = [formats]
 
-        file_objects = []
-        for f in self.iter_files():
-            if f.name in files:
-                file_objects.append(f)
-            elif f.source in source:
-                file_objects.append(f)
-            elif f.format in formats:
-                file_objects.append(f)
+        if not any(k for k in [files, source, formats, glob_pattern]):
+            for f in self._iter_files():
+                yield f
+
+        for f in self.files:
+            if f.get('name') in files:
+                yield self.get_file(f.get('name'))
+            elif f.get('source') in source:
+                yield self.get_file(f.get('name'))
+            elif f.get('format') in formats:
+                yield self.get_file(f.get('name'))
             elif glob_pattern:
-                # Support for | operator.
                 patterns = glob_pattern.split('|')
                 if not isinstance(patterns, list):
                     patterns = [patterns]
                 for p in patterns:
-                    if fnmatch(f.name, p):
-                        file_objects.append(f)
-        return file_objects
+                    if fnmatch(f.get('name', ''), p):
+                        yield self.get_file(f.get('name'))
 
     # download()
     # ____________________________________________________________________________________
-    def download(self, source=None, formats=None, glob_pattern=None, dry_run=None,
-                 verbose=None, ignore_existing=None, checksum=None, destdir=None,
-                 no_directory=None):
-        """Download the entire item into the current working directory.
+    def download(self, files=None, source=None, formats=None, glob_pattern=None,
+                 dry_run=None, clobber=None, no_clobber=None, checksum=None,
+                 destdir=None, no_directory=None, verbose=None, debug=None):
+        """Download files from an item.
+
+        :param files: (optional) Only download files matching given file names.
 
         :type source: str
-        :param source: Only download files matching given source.
+        :param source: (optional) Only download files matching given source.
 
         :type formats: str
-        :param formats: Only download files matching the given Formats.
+        :param formats: (optional) Only download files matching the given Formats.
 
         :type glob_pattern: str
-        :param glob_pattern: Only download files matching the given glob
-                             pattern
+        :param glob_pattern: (optional) Only download files matching the given glob
+                             pattern.
 
-        :type ignore_existing: bool
-        :param ignore_existing: Overwrite local files if they already
-                                exist.
+        :type clobber: bool
+        :param clobber: (optional) Overwrite local files if they already exist.
+
+        :type no_clobber: bool
+        :param no_clobber: (optional) Do not overwrite local files if they already exist,
+                           or raise an IOError exception.
 
         :type checksum: bool
-        :param checksum: Skip downloading file based on checksum.
+        :param checksum: (optional) Skip downloading file based on checksum.
 
         :type no_directory: bool
-        :param no_directory: Download files to current working
-                             directory rather than creating an item
-                             directory.
+        :param no_directory: (optional) Download files to current working directory rather
+                             than creating an item directory.
 
         :rtype: bool
         :returns: True if if files have been downloaded successfully.
 
         """
-        dry_run = False if dry_run is None else dry_run
-        verbose = False if verbose is None else verbose
-        ignore_existing = False if ignore_existing is None else ignore_existing
-        checksum = False if checksum is None else checksum
-        no_directory = False if no_directory is None else no_directory
+        dry_run = False if not dry_run else True
+        clobber = False if not clobber else True
+        checksum = False if not checksum else True
+        no_directory = False if not no_directory else True
+        verbose = False if not verbose else True
+        debug = False if not debug else True
 
         if verbose:
-            sys.stdout.write('{0}:\n'.format(self.identifier))
+            sys.stderr.write('{0}:\n'.format(self.identifier))
             if self._json.get('is_dark') is True:
-                sys.stdout.write(' skipping: item is dark.\n')
-                log.warning('Not downloading item {0}, '
-                            'item is dark'.format(self.identifier))
+                sys.stderr.write(' skipping: item is dark.\n')
+                return
             elif self.metadata == {}:
-                sys.stdout.write(' skipping: item does not exist.\n')
-                log.warning('Not downloading item {0}, '
-                            'item does not exist.'.format(self.identifier))
+                sys.stderr.write(' skipping: item does not exist.\n')
+                return
 
-        files = self.iter_files()
-        if source:
-            files = self.get_files(source=source)
-        if formats:
-            files = self.get_files(formats=formats)
-        if glob_pattern:
-            files = self.get_files(glob_pattern=glob_pattern)
-
-        if not files and verbose:
-            sys.stdout.write(' no matching files found, nothing downloaded.\n')
-        for f in files:
+        responses = []
+        for f in self.get_files(files, source, formats, glob_pattern):
             fname = f.name.encode('utf-8')
             if no_directory:
                 path = fname
@@ -262,8 +255,17 @@ class Item(object):
             if dry_run:
                 sys.stdout.write(f.url + '\n')
                 continue
-            f.download(path, verbose, ignore_existing, checksum, destdir)
-        return True
+            try:
+                r = f.download(path, clobber, checksum, destdir, verbose, debug)
+                responses.append(r)
+            except IOError as exc:
+                if no_clobber:
+                    if verbose:
+                        sys.stderr.write(' {}\n'.format(exc))
+                    continue
+                else:
+                    raise
+        return responses
 
     # modify_metadata()
     # ____________________________________________________________________________________
@@ -436,7 +438,7 @@ class Item(object):
         if (checksum) and (not self.tasks) and (ia_file) and (ia_file.md5 == md5_sum):
             log.info('{f} already exists: {u}'.format(f=key, u=url))
             if verbose:
-                sys.stdout.write(' {f} already exists, skipping.\n'.format(f=key))
+                sys.stderr.write(' {f} already exists, skipping.\n'.format(f=key))
             if delete:
                 log.info(
                     '{f} successfully uploaded to https://archive.org/download/{i}/{f} '
@@ -469,7 +471,7 @@ class Item(object):
                                                       label=' uploading {f}: '.format(f=key))
                     data = utils.IterableToFileAdapter(progress_generator, size)
                 except:
-                    sys.stdout.write(' uploading {f}: '.format(f=key))
+                    sys.stderr.write(' uploading {f}: '.format(f=key))
                     data = body
             else:
                 data = body
@@ -681,24 +683,24 @@ class File(object):
 
     # download()
     # ____________________________________________________________________________________
-    def download(self, file_path=None, verbose=None, ignore_existing=None, checksum=None,
-                 destdir=None):
+    def download(self, file_path=None, clobber=None, checksum=None, destdir=None,
+                 verbose=None, debug=None):
         """Download the file into the current working directory.
 
         :type file_path: str
         :param file_path: Download file to the given file_path.
 
-        :type ignore_existing: bool
-        :param ignore_existing: Overwrite local files if they already
-                                exist.
+        :type clobber: bool
+        :param clobber: Overwrite local files if they already exist.
 
         :type checksum: bool
         :param checksum: Skip downloading file based on checksum.
 
         """
-        verbose = False if verbose is None else verbose
-        ignore_existing = False if ignore_existing is None else ignore_existing
-        checksum = False if checksum is None else checksum
+        checksum = False if not checksum else True
+        clobber = False if not clobber else True
+        verbose = False if not verbose else True
+        debug = False if not debug else True
 
         file_path = self.name if not file_path else file_path
 
@@ -710,61 +712,92 @@ class File(object):
             file_path = os.path.join(destdir, file_path)
 
         if os.path.exists(file_path):
-            if ignore_existing is False and checksum is False:
-                raise IOError('file already downloaded: {0}'.format(file_path))
-            if checksum:
+            if clobber:
+                pass
+            elif checksum:
                 md5_sum = utils.get_md5(open(file_path))
                 if md5_sum == self.md5:
                     log.info('not downloading file {0}, '
                              'file already exists.'.format(file_path))
                     if verbose:
-                        sys.stdout.write(' skipping {0}: already exists.\n'.format(file_path))
+                        sys.stderr.write(
+                            ' skipping {0}: already exists.\n'.format(file_path))
                     return
+            else:
+                raise IOError('file already downloaded: {0}'.format(file_path))
 
-        if verbose:
-            sys.stdout.write(' downloading: {0}\n'.format(file_path))
         parent_dir = os.path.dirname(file_path)
         if parent_dir != '' and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
-
+        request = Request(method='GET', url=self.url)
+        if debug:
+            return request
         try:
-            response = self._item.http_session.get(self.url, stream=True)
+            prepared_request = request.prepare()
+            response = self._item.http_session.send(prepared_request, stream=True)
             response.raise_for_status()
         except HTTPError as e:
             error_msg = 'error downloading {0}, {1}'.format(self.url, e)
             log.error(error_msg)
             raise
         with open(file_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
+            if verbose:
+                try:
+                    total_length = int(response.headers.get('content-length'))
+                    chunk_size = 1024
+                    expected_size = (total_length/chunk_size) + 1
+                    label = ' downloading {}: '.format(file_path)
+                    content = progress.bar(response.iter_content(chunk_size=chunk_size),
+                                           expected_size=expected_size, label=label)
+                except:
+                    sys.stderr.write(' downloading: {0}\n'.format(file_path))
+            else:
+                content = response.iter_content(chunk_size=chunk_size)
+            for chunk in content:
                 if chunk:
                     f.write(chunk)
                     f.flush()
+
         log.info('downloaded {0}/{1} to {2}'.format(self.identifier,
                                                     self.name.encode('utf-8'),
                                                     file_path))
+        return response
 
     # delete()
     # ____________________________________________________________________________________
-    def delete(self, debug=False, verbose=False, cascade_delete=False, access_key=None,
-               secret_key=None):
+    def delete(self, cascade_delete=None, access_key=None, secret_key=None, verbose=None,
+               debug=None):
         """Delete a file from the Archive. Note: Some files -- such as
         <itemname>_meta.xml -- cannot be deleted.
 
-        :type debug: bool
-        :param debug: Set to True to print headers to stdout and exit
-                      exit without sending the delete request.
+        :type cascade_delete: bool
+        :param cascade_delete: (optional) Also deletes files derived from the file, and
+                               files the file was derived from.
+
+        :type access_key: str
+        :param access_key: (optional) IA-S3 access_key to use when making the given
+                           request.
+
+        :type secret_key: str
+        :param secret_key: (optional) IA-S3 secret_key to use when making the given
+                           request.
 
         :type verbose: bool
-        :param verbose: Print actions to stdout.
+        :param verbose: (optional) Print actions to stdout.
 
-        :type cascade_delete: bool
-        :param cascade_delete: Also deletes files derived from the file,
-                               and files the file was derived from.
+        :type debug: bool
+        :param debug: (optional) Set to True to print headers to stdout and exit exit
+                      without sending the delete request.
+
         """
-        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier,
-                                                        self.name.encode('utf-8'))
+        cascade_delete = False if not cascade_delete else True
         access_key = self._item.session.access_key if not access_key else access_key
         secret_key = self._item.session.secret_key if not secret_key else secret_key
+        debug = False if not debug else debug
+        verbose = False if not verbose else verbose
+
+        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier,
+                                                        self.name.encode('utf-8'))
         request = iarequest.S3Request(
             method='DELETE',
             url=url,
@@ -781,6 +814,15 @@ class File(object):
                     msg += ' and all derivative files.\n'
                 else:
                     msg += '\n'
-                sys.stdout.write(msg)
+                sys.stderr.write(msg)
             prepared_request = request.prepare()
-            return self._item.http_session.send(prepared_request)
+
+            try:
+                resp = self._item.http_session.send(prepared_request)
+                resp.raise_for_status()
+            except HTTPError as e:
+                error_msg = 'Error deleting {0}, {1}'.format(resp.url, e)
+                log.error(error_msg)
+                raise
+            finally:
+                return resp

@@ -448,7 +448,7 @@ class Item(object):
 
         key = body.name.split('/')[-1] if key is None else key
         base_url = '{protocol}//s3.us.archive.org/{identifier}'.format(**self.__dict__)
-        url = '{base_url}/{key}'.format(base_url=base_url, key=key)
+        url = '{base_url}/{key}'.format(base_url=base_url, key=urllib.parse.quote(key))
 
         # Skip based on checksum.
         md5_sum = utils.get_md5(body)

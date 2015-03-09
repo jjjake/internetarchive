@@ -3,6 +3,10 @@
 Release History
 ---------------
 
+0.8.0 2015-03-09
+++++++++++++++++
+- Encode filenames in upload URLs.
+
 0.7.9 2015-01-26
 ++++++++++++++++
 - Fixed bug in `internetarchive.config.get_auth_config` (i.e. `ia configure`)

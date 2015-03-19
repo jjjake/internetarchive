@@ -20,7 +20,15 @@ class Search(object):
     """
     # init()
     # ____________________________________________________________________________________
-    def __init__(self, query, fields=['identifier'], params={}, config=None, v2=False):
+    def __init__(self, query, fields=None, params=None, config=None, v2=None):
+        fields = ['identifier'] if not fields else fields
+        # Support str or list values for fields param.
+        fields = [fields] if not isinstance(fields, (list, set, tuple)) else fields
+
+        params = {} if not params else params
+        config = {} if not config else config
+        v2 = False if not v2 else True
+
         self.session = session.ArchiveSession(config)
         self.http_session = requests.sessions.Session()
         self.url = 'http://archive.org/advancedsearch.php'

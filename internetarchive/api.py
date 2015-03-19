@@ -317,9 +317,10 @@ def get_tasks(identifier=None, task_ids=None, task_type=None, params=None, confi
 
     :type verbose: bool
     :param verbose: (optional) Set to ``True`` to retrieve verbose information for each
-                    catalog task returned.
+                    catalog task returned. verbose is set to ``True`` by default.
 
     :returns: A set of :class:`CatalogTask` objects.
+
     """
     _catalog = catalog.Catalog(identifier=identifier, task_ids=task_ids, params=params,
                                config=config, verbose=verbose)

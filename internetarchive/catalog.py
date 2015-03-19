@@ -2,17 +2,27 @@ try:
     import ujson as json
 except ImportError:
     import json
+import six
 from six.moves.urllib.parse import parse_qsl
 
 import requests.sessions
 
 from . import session
+from .utils import map2x
 
 
 # Catalog class
 # ________________________________________________________________________________________
 class Catalog(object):
-    """:todo: Document Catalog Class."""
+    """This class represents the Archive.org catalog. You can use this class to access
+    tasks from the catalog::
+
+        >>> import internetarchive
+        >>> c = internetarchive.Catalog(identifier='jstor_ejc')
+        >>> c.tasks[-1]
+        CatalogTask(identifier=jstor_ejc, task_id=143919540, server=u'ia601503', command=u'archiv', submitter=u'jake@archive.org', row_type=-1)
+
+    """
 
     ROW_TYPES = dict(
         green=0,
@@ -24,10 +34,35 @@ class Catalog(object):
 
     # init()
     # ____________________________________________________________________________________
-    def __init__(self, identifier=None, task_ids=None, params={}, verbose=True,
-                 config=None):
-        verbose = '1' if verbose else '0'
+    def __init__(self, identifier=None, task_ids=None, params=None, config=None,
+                 verbose=None):
+        """Get tasks from the Archive.org catalog. ``internetarchive`` must be configured
+        with your logged-in-* cookies to use this function. If no arguments are provided,
+        all queued tasks for the user will be returned.
+
+        :type identifier: str
+        :param identifier: (optional) The Archive.org identifier for which to retrieve
+                           tasks for.
+
+        :type task_ids: int or str
+        :param task_ids: (optional) The task_ids to retrieve from the Archive.org catalog.
+
+        :type params: dict
+        :param params: (optional) The URL parameters to send with each request sent to the
+                       Archive.org catalog API.
+
+        :type config: dict
+        :param secure: (optional) Configuration options for session.
+
+        :type verbose: bool
+        :param verbose: (optional) Set to ``True`` to retrieve verbose information for
+                        each catalog task returned. Verbose is set to ``True`` by default.
+
+        """
+        task_ids = [] if not task_ids else task_ids
         params = {} if not params else params
+        config = {} if not config else config
+        verbose = '1' if verbose is None or verbose is True else '0'
 
         self.session = session.ArchiveSession(config)
         # Accessing the Archive.org catalog requires a users
@@ -64,6 +99,7 @@ class Catalog(object):
         if task_ids:
             if not isinstance(task_ids, (set, list)):
                 task_ids = [task_ids]
+            task_ids = [str(t) for t in task_ids]
             self.params.update(dict(
                 where='task_id in({tasks})'.format(tasks=','.join(task_ids)),
                 history=99999999999999999999999,  # TODO: is there a better way?
@@ -88,8 +124,9 @@ class Catalog(object):
     # ____________________________________________________________________________________
     def _get_tasks(self):
         r = self.http_session.get(self.url, params=self.params)
+        content = r.content.decode('utf-8')
         # Convert JSONP to JSON (then parse the JSON).
-        json_str = r.content[(r.content.index("(") + 1):r.content.rindex(")")]
+        json_str = r.content[(content.index("(") + 1):content.rindex(")")]
         return [
             CatalogTask(t, http_session=self.http_session) for t in json.loads(json_str)
         ]
@@ -98,8 +135,8 @@ class Catalog(object):
 # CatalogTask class
 # ________________________________________________________________________________________
 class CatalogTask(object):
-    """
-    Represents catalog task.
+    """This class represents an Archive.org catalog task. It is primarily used by
+    :class:`Catalog`, and should not be used directly.
 
     """
 
@@ -122,11 +159,11 @@ class CatalogTask(object):
         else:
             self._http_session = http_session
 
-        for key, value in map(None, self.COLUMNS, columns):
+        for key, value in map2x(None, self.COLUMNS, columns):
             if key:
                 setattr(self, key, value)
         # special handling for 'args' - parse it into a dict if it is a string
-        if isinstance(self.args, basestring):
+        if isinstance(self.args, six.string_types):
             self.args = dict(x for x in parse_qsl(self.args.encode('utf-8')))
 
     # __repr__()
@@ -141,10 +178,7 @@ class CatalogTask(object):
     # __getitem__()
     # ____________________________________________________________________________________
     def __getitem__(self, key):
-        """
-        Dict-like access provided as backward compatibility.
-
-        """
+        """Dict-like access provided as backward compatibility."""
         if key in self.COLUMNS:
             return getattr(self, key, None)
         else:
@@ -153,8 +187,10 @@ class CatalogTask(object):
     # task_log()
     # ____________________________________________________________________________________
     def task_log(self):
-        """
-        Return file-like reading task log.
+        """Get task log.
+
+        :rtype: str
+        :returns: The task log as a string.
 
         """
         if self.task_id is None:
@@ -163,4 +199,4 @@ class CatalogTask(object):
         p = dict(full=1)
         r = self._http_session.get(url, params=p)
         r.raise_for_status()
-        return r.content
+        return r.content.decode('utf-8')

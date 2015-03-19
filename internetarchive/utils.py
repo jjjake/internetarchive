@@ -1,6 +1,16 @@
 import hashlib
 import os
 import re
+from itertools import starmap
+from six.moves import zip_longest
+
+
+def map2x(func, *iterables):
+    """map() function for Python 2/3 compatability"""
+    zipped = zip_longest(*iterables)
+    if func is None:
+        return zipped
+    return starmap(func, zipped)
 
 
 def validate_ia_identifier(string):

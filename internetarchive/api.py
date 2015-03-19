@@ -16,7 +16,7 @@ from . import item, search, catalog
 # ________________________________________________________________________________________
 def get_item(identifier, metadata_timeout=None, config=None, max_retries=None,
              archive_session=None):
-    """Get an :class:`internetarchive.Item <Item>` object.
+    """Get an :class:`Item` object.
 
     :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
@@ -31,8 +31,8 @@ def get_item(identifier, metadata_timeout=None, config=None, max_retries=None,
     :param max_retries: (optional) Maximum number of times to request a website if the
                         connection drops.
 
-    :type archive_session: :class:`ArchiveSession <ArchiveSession>`
-    :param archive_session: An :class:`ArchiveSession <ArchiveSession>` object can be
+    :type archive_session: :class:`ArchiveSession`
+    :param archive_session: An :class:`ArchiveSession` object can be
                             provided via the `archive_session` parameter.
 
     """
@@ -45,7 +45,7 @@ def get_item(identifier, metadata_timeout=None, config=None, max_retries=None,
 # ________________________________________________________________________________________
 def get_files(identifier, files=None, source=None, formats=None, glob_pattern=None,
               **kwargs):
-    """Get :class:`internetarchive.File <File>` objects from an item.
+    """Get :class:`File` objects from an item.
 
     :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
@@ -86,8 +86,7 @@ def iter_files(identifier, **kwargs):
 def modify_metadata(identifier, metadata, target='metadata', append=False, priority=None,
                     access_key=None, secret_key=None, debug=False, **kwargs):
     """Modify the metadata of an existing item on Archive.org.
-    Returns :class:`requests.Response <Response>` object or
-    :class:`requests.Request <Request>` object if debug is True.
+
 
     :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
@@ -116,6 +115,9 @@ def modify_metadata(identifier, metadata, target='metadata', append=False, prior
                   object instead of sending request.
 
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
+
+    :returns: :class:`requests.Response` object or :class:`requests.Request` object if
+              debug is ``True``.
 
     """
     item = get_item(identifier, **kwargs)
@@ -287,11 +289,40 @@ def delete(identifier, files=None, source=None, formats=None, glob_pattern=None,
 
 # get_tasks()
 # ________________________________________________________________________________________
-def get_tasks(**kwargs):
-    _catalog = catalog.Catalog(identifier=kwargs.get('identifier'),
-                               params=kwargs.get('params'),
-                               task_ids=kwargs.get('task_ids'))
-    task_type = kwargs.get('task_type')
+def get_tasks(identifier=None, task_ids=None, task_type=None, params=None, config=None,
+              verbose=None):
+    """Get tasks from the Archive.org catalog. ``internetarchive`` must be configured
+    with your logged-in-* cookies to use this function. If no arguments are provided,
+    all queued tasks for the user will be returned.
+
+    :type identifier: str
+    :param identifier: (optional) The Archive.org identifier for which to retrieve tasks
+                       for.
+
+    :type task_ids: int or str
+    :param task_ids: (optional) The task_ids to retrieve from the Archive.org catalog.
+
+    :type task_type: str
+    :param task_type: (optional) The type of tasks to retrieve from the Archive.org
+                      catalog. The types can be either "red" for failed tasks, "blue" for
+                      running tasks, "green" for pending tasks, "brown" for paused tasks,
+                      or "purple" for completed tasks.
+
+    :type params: dict
+    :param params: (optional) The URL parameters to send with each request sent to the
+                   Archive.org catalog API.
+
+    :type config: dict
+    :param secure: (optional) Configuration options for session.
+
+    :type verbose: bool
+    :param verbose: (optional) Set to ``True`` to retrieve verbose information for each
+                    catalog task returned.
+
+    :returns: A set of :class:`CatalogTask` objects.
+    """
+    _catalog = catalog.Catalog(identifier=identifier, task_ids=task_ids, params=params,
+                               config=config, verbose=verbose)
     if task_type:
         return eval('_catalog.{0}_rows'.format(task_type.lower()))
     else:
@@ -300,5 +331,28 @@ def get_tasks(**kwargs):
 
 # search_items()
 # ________________________________________________________________________________________
-def search_items(query, **kwargs):
-    return search.Search(query, **kwargs)
+def search_items(query, fields=None, params=None, config=None, v2=None):
+    """Search for items on Archive.org.
+
+    :type query: str
+    :param query: The Archive.org search query to yield results for. Refer to
+                  https://archive.org/advancedsearch.php#raw for help formatting your
+                  query.
+
+    :type fields: bool
+    :param fields: (optional) The metadata fields to return in the search results.
+
+    :type params: dict
+    :param params: (optional) The URL parameters to send with each request sent to the
+                   Archive.org Advancedsearch Api.
+
+    :type config: dict
+    :param secure: (optional) Configuration options for session.
+
+    :type v2: bool
+    :param v2: To use the archive.org/v2 Advancedsearch API, set v2 to ``True``.
+
+    :returns: A :class:`Search` object, yielding search results.
+
+    """
+    return search.Search(query, fields=fields, params=params, config=config, v2=v2)

@@ -17,6 +17,7 @@ usage:
 """
 
 __title__ = 'internetarchive'
+__version__ = '1.0.0dev1'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
 __copyright__ = 'Copyright 2013 Internet Archive'
@@ -26,8 +27,6 @@ from .search import Search
 from .catalog import Catalog
 from .api import get_item, get_files, iter_files, modify_metadata, upload, download, \
     delete, get_tasks, search_items
-
-from ._version import __version__
 
 
 __all__ = [

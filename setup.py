@@ -1,8 +1,14 @@
 from setuptools import setup
 from codecs import open
+import re
+import ast
 
-from internetarchive._version import __version__
 
+_version_re = re.compile(r'__version__\s+=\s+(.*)')
+
+with open('internetarchive/__init__.py', 'rb') as f:
+    version = str(ast.literal_eval(_version_re.search(
+        f.read().decode('utf-8')).group(1)))
 
 with open('README.rst', 'r', 'utf-8') as f:
     readme = f.read()
@@ -11,7 +17,7 @@ with open('HISTORY.rst', 'r', 'utf-8') as f:
 
 setup(
     name='internetarchive',
-    version=__version__,
+    version=version,
     url='https://github.com/jjjake/ia-wrapper',
     license='AGPL 3',
     author='Jacob M. Johnson',

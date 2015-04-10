@@ -1,5 +1,9 @@
 import os, sys, shutil
-from subprocess import Popen, PIPE
+try:
+    from gevent.subprocess import Popen, PIPE
+except ImportError:
+    from subprocess import Popen, PIPE
+
 from time import time
 
 import pytest

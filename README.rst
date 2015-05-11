@@ -36,7 +36,7 @@ If you want to install this module globally on your system instead of inside a `
 Command-Line Usage
 ------------------
 Help is available by typing ``ia --help``. You can also get help on a command: ``ia <command> --help``.
-Available subcommands are ``configure``, ``metadata``, ``upload``, ``download``, ``search``, ``mine``, ``delete``, ``list``, and ``catalog``.
+Available subcommands are ``configure``, ``metadata``, ``upload``, ``download``, ``search``, ``delete``, ``list``, and ``catalog``.
 
 
 Downloading
@@ -110,7 +110,7 @@ IAS3\_SECRET\_KEY environment variables are set.
 Data Mining
 ~~~~~~~~~~~
 
-IA Mine can be used for data mining Archive.org metadata and search results: https://github.com/jjjake/iamine
+IA Mine can be used for data mining Archive.org metadata and search results: `https://github.com/jjjake/iamine <https://github.com/jjjake/iamine>`__.
 
 Searching
 ~~~~~~~~~

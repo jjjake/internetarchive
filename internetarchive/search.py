@@ -21,7 +21,7 @@ class Search(object):
     # init()
     # ____________________________________________________________________________________
     def __init__(self, query, fields=None, params=None, config=None, v2=None):
-        fields = ['identifier'] if not fields else fields
+        fields = [] if not fields else fields
         # Support str or list values for fields param.
         fields = [fields] if not isinstance(fields, (list, set, tuple)) else fields
 
@@ -74,7 +74,7 @@ class Search(object):
     # ____________________________________________________________________________________
     def __iter__(self):
         """Generator for iterating over search results"""
-        total_pages = ((self.num_found / self.params['rows']) + 2)
+        total_pages = ((self.num_found / int(self.params['rows'])) + 2)
         for page in range(1, total_pages):
             self.params['page'] = page
             r = self.http_session.get(self.url, params=self.params)

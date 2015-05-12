@@ -35,6 +35,7 @@ def test_no_args():
         'nasa_meta.xml',
         'nasa_reviews.xml',
         'NASAarchiveLogo.jpg',
+        'globe_west_540_thumb.jpg',
     ])
     assert set(os.listdir('nasa')) == test_output
     assert exit_code == 0
@@ -52,6 +53,7 @@ def test_dry_run():
         "http://archive.org/download/nasa/nasa_meta.xml",
         "http://archive.org/download/nasa/nasa_archive.torrent",
         "http://archive.org/download/nasa/nasa_files.xml",
+        "http://archive.org/download/nasa/globe_west_540_thumb.jpg",
     ])
     assert parse_output(stdout) == test_output_set
     assert exit_code == 0
@@ -65,6 +67,7 @@ def test_glob():
     test_output = set([
         'globe_west_540.jpg',
         'NASAarchiveLogo.jpg',
+        'globe_west_540_thumb.jpg',
     ])
     assert set(os.listdir('nasa')) == test_output
     assert exit_code == 0

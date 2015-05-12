@@ -36,11 +36,9 @@ setup(
         ],
     },
     install_requires=[
-        'requests==2.3.0',
+        'requests==2.6.0',
         'jsonpatch==0.4',
-        'pytest==2.3.4',
         'docopt==0.6.1',
-        'PyYAML==3.10',
         'clint==0.3.3',
         'six==1.9.0',
         'schema==0.3.1',

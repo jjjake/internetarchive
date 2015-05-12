@@ -8,6 +8,7 @@ from requests.exceptions import HTTPError
 from requests import Response
 from clint.textui import progress
 import six
+import six.moves.urllib as urllib
 
 from . import iarequest, utils
 from .session import ArchiveSession

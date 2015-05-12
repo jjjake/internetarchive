@@ -30,8 +30,8 @@ def test_get_auth_config():
               content_type='application/json')
 
     r = internetarchive.config.get_auth_config('test@example.com', 'password1')
-    assert r['s3']['access-key'] == 'test-access'
-    assert r['s3']['secret-key'] == 'test-secret'
+    assert r['s3']['access'] == 'test-access'
+    assert r['s3']['secret'] == 'test-secret'
     assert r['cookies']['logged-in-user'] == 'test@archive.org'
     assert r['cookies']['logged-in-sig'] == 'test-sig'
 
@@ -53,8 +53,8 @@ def test_get_config():
 
 def test_get_config_with_config_file(tmpdir):
     test_conf = ('[s3]\n'
-                 'access-key = test-access\n'
-                 'secret-key = test-secret\n'
+                 'access = test-access\n'
+                 'secret = test-secret\n'
                  '[cookies]\n'
                  'logged-in-sig = test-sig\n'
                  'logged-in-user = test@archive.org\n')
@@ -67,8 +67,8 @@ def test_get_config_with_config_file(tmpdir):
                                                config={'custom': 'test'})
     assert config['cookies']['logged-in-sig'] == 'test-sig'
     assert config['cookies']['logged-in-user'] == 'test@archive.org'
-    assert config['s3']['access-key'] == 'test-access'
-    assert config['s3']['secret-key'] == 'test-secret'
+    assert config['s3']['access'] == 'test-access'
+    assert config['s3']['secret'] == 'test-secret'
     assert config['custom'] == 'test'
 
 
@@ -81,8 +81,8 @@ def test_get_config_no_config_file():
 def test_get_config_with_config():
     test_conf = {
         's3': {
-            'access-key': 'custom-access',
-            'secret-key': 'custom-secret',
+            'access': 'custom-access',
+            'secret': 'custom-secret',
         },
         'cookies': {
             'logged-in-user': 'test@archive.org',
@@ -94,8 +94,8 @@ def test_get_config_with_config():
     config = internetarchive.config.get_config(config=test_conf)
     assert config['cookies']['logged-in-sig'] == 'test-sig'
     assert config['cookies']['logged-in-user'] == 'test@archive.org'
-    assert config['s3']['access-key'] == 'custom-access'
-    assert config['s3']['secret-key'] == 'custom-secret'
+    assert config['s3']['access'] == 'custom-access'
+    assert config['s3']['secret'] == 'custom-secret'
 
 
 def test_get_config_home_not_set():
@@ -107,21 +107,21 @@ def test_get_config_home_not_set():
 def test_get_config_home_not_set_with_config():
     test_conf = {
         's3': {
-            'access-key': 'no-home-access',
-            'secret-key': 'no-home-secret',
+            'access': 'no-home-access',
+            'secret': 'no-home-secret',
         },
     }
     os.environ['HOME'] = '/none'
     config = internetarchive.config.get_config(config=test_conf)
     assert isinstance(config, dict)
-    assert config['s3']['access-key'] == 'no-home-access'
-    assert config['s3']['secret-key'] == 'no-home-secret'
+    assert config['s3']['access'] == 'no-home-access'
+    assert config['s3']['secret'] == 'no-home-secret'
 
 
 def test_get_config_config_and_config_file(tmpdir):
     test_conf = ('[s3]\n'
-                 'access-key = test-access\n'
-                 'secret-key = test-secret\n'
+                 'access = test-access\n'
+                 'secret = test-secret\n'
                  '[cookies]\n'
                  'logged-in-sig = test-sig\n'
                  'logged-in-user = test@archive.org\n')
@@ -133,17 +133,17 @@ def test_get_config_config_and_config_file(tmpdir):
         
     test_conf = {
         's3': {
-            'access-key': 'custom-access',
-            'secret-key': 'custom-secret',
+            'access': 'custom-access',
+            'secret': 'custom-secret',
         },
         'cookies': {
             'logged-in-user': 'test@archive.org',
             'logged-in-sig': 'test-sig',
         },
     }
-    del test_conf['s3']['access-key']
+    del test_conf['s3']['access']
     config = internetarchive.config.get_config(config_file='ia_test.ini', config=test_conf)
     assert config['cookies']['logged-in-sig'] == 'test-sig'
     assert config['cookies']['logged-in-user'] == 'test@archive.org'
-    assert config['s3']['access-key'] == 'test-access'
-    assert config['s3']['secret-key'] == 'custom-secret'
+    assert config['s3']['access'] == 'test-access'
+    assert config['s3']['secret'] == 'custom-secret'

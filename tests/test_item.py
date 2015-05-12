@@ -616,7 +616,7 @@ def test_modify_metadata():
             'priority': 0,
             '-target': 'metadata',
             '-patch':
-            '[{"add":"\\/foo","value":"bar"},{"add":"\\/foo11","value":"bar"}]'
+            '[{"add": "/foo", "value": "bar"}, {"add": "/foo11", "value": "bar"}]'
         }
         assert p.data == expected_data
 
@@ -633,7 +633,7 @@ def test_modify_metadata():
         expected_data = {
             'priority': 0,
             '-target': 'metadata',
-            '-patch': '[{"remove":"\/title"}]'
+            '-patch': '[{"remove": "/title"}]'
         }
         assert p.data == expected_data
 
@@ -644,7 +644,7 @@ def test_modify_metadata():
         expected_data = {
             'priority': 0,
             '-target': 'metadata',
-            '-patch': '[{"add":"\/subject","value":["one","two","last"]}]'
+            '-patch': '[{"add": "/subject", "value": ["one", "two", "last"]}]'
         }
         assert p.data == expected_data
 
@@ -656,7 +656,7 @@ def test_modify_metadata():
         expected_data = {
             'priority': 0,
             '-target': 'metadata',
-            '-patch': '[{"value":"new first","replace":"\/subject\/2"}]'
+            '-patch': '[{"value": "new first", "replace": "/subject/2"}]'
         }
         assert p.data == expected_data
 

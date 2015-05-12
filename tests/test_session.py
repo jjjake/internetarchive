@@ -14,8 +14,8 @@ TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
 
 CONFIG = {
     's3': {
-        'access-key': 'test_access',
-        'secret-key': 'test_secret',
+        'access': 'test_access',
+        'secret': 'test_secret',
     },
     'cookies': {
         'logged-in-user': 'test%40example.com',

@@ -54,13 +54,13 @@ SEARCH_RESPONSE = {
 
 # get_session() __________________________________________________________________________
 def test_get_session_with_config():
-    s = get_session(config={'s3': {'access-key': 'key'}})
+    s = get_session(config={'s3': {'access': 'key'}})
     assert s.access_key == 'key'
 
 
 def test_get_session_with_config_file(tmpdir):
     tmpdir.chdir()
-    test_conf = """[s3]\naccess-key = key2"""
+    test_conf = """[s3]\naccess = key2"""
     with open('ia_test.ini', 'w') as fh:
         fh.write(test_conf)
     s = get_session(config_file='ia_test.ini')
@@ -82,13 +82,13 @@ def test_get_item_with_config():
         rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
-        item = get_item('nasa', config={'s3': {'access-key': 'key'}})
+        item = get_item('nasa', config={'s3': {'access': 'key'}})
         assert item.session.access_key == 'key'
 
 
 def test_get_item_with_config_file(tmpdir):
     tmpdir.chdir()
-    test_conf = """[s3]\naccess-key = key2"""
+    test_conf = """[s3]\naccess = key2"""
     with open('ia_test.ini', 'w') as fh:
         fh.write(test_conf)
     with responses.RequestsMock() as rsps:
@@ -104,7 +104,7 @@ def test_get_item_with_archive_session():
         rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
-        s = get_session(config={'s3': {'access-key': 'key3'}})
+        s = get_session(config={'s3': {'access': 'key3'}})
         item = get_item('nasa', archive_session=s)
         assert item.session.access_key == 'key3'
 
@@ -151,7 +151,7 @@ def test_get_files_with_get_item_kwargs(tmpdir):
         rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
-        s = get_session(config={'s3': {'access-key': 'key'}})
+        s = get_session(config={'s3': {'access': 'key'}})
         files = get_files('nasa', files='nasa_meta.xml', archive_session=s)
         files = list(files)
         assert len(files) == 1
@@ -164,7 +164,7 @@ def test_get_files_with_get_item_kwargs(tmpdir):
         assert len(files) == 1
         assert files[0].name == 'nasa_meta.xml'
 
-        test_conf = """[s3]\naccess-key = key2"""
+        test_conf = """[s3]\naccess = key2"""
         with open('ia_test.ini', 'w') as fh:
             fh.write(test_conf)
         files = get_files('nasa', files='nasa_meta.xml', config_file='ia_test.ini')

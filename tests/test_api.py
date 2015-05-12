@@ -43,8 +43,9 @@ def test_api():
     file_generator = iter_files('nasa')
     assert not isinstance(file_generator, list)
     all_files = ['NASAarchiveLogo.jpg', 'globe_west_540.jpg', 'nasa_reviews.xml',
-                 'nasa_meta.xml', 'nasa_archive.torrent', 'nasa_files.xml']
-    assert all(f.name in all_files for f in list(file_generator))
+                 'nasa_meta.xml', 'nasa_archive.torrent', 'nasa_files.xml',
+                 'globe_west_540_thumb.jpg']
+    assert all(f.name in all_files for f in file_generator)
 
     # download()
     if os.path.exists('iacli-test-item'):

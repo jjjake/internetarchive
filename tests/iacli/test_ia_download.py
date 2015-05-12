@@ -21,6 +21,7 @@ def test_ia_download():
         "http://archive.org/download/nasa/nasa_meta.xml",
         "http://archive.org/download/nasa/nasa_archive.torrent",
         "http://archive.org/download/nasa/nasa_files.xml",
+        "http://archive.org/download/nasa/globe_west_540_thumb.jpg",
     ])
     output = set([x for x in stdout[:-1].split('\n') if 'nasa:' not in x])  
     assert output == test_output_set
@@ -35,6 +36,7 @@ def test_ia_download():
         'nasa_meta.xml', 
         'nasa_reviews.xml', 
         'NASAarchiveLogo.jpg',
+        'globe_west_540_thumb.jpg',
     ]
     assert sorted(os.listdir('nasa')) == sorted(test_output)
     shutil.rmtree('nasa')
@@ -45,6 +47,7 @@ def test_ia_download():
     test_output = [
         'globe_west_540.jpg', 
         'NASAarchiveLogo.jpg',
+        'globe_west_540_thumb.jpg',
     ]
     assert sorted(os.listdir('nasa')) == sorted(test_output)
     shutil.rmtree('nasa')

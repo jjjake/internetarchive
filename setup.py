@@ -4,7 +4,7 @@ import sys
 
 setup(
     name='internetarchive',
-    version='0.8.1',
+    version='0.8.2',
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive', 'internetarchive.iacli'],

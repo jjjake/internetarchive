@@ -3,6 +3,17 @@ import os
 import re
 from itertools import starmap
 from six.moves import zip_longest
+import collections
+
+
+def deep_update(d, u):
+    for k, v in u.items():
+        if isinstance(v, collections.Mapping):
+            r = deep_update(d.get(k, {}), v)
+            d[k] = r
+        else:
+            d[k] = u[k]
+    return d
 
 
 def map2x(func, *iterables):

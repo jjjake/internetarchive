@@ -33,7 +33,7 @@ def validate_ia_identifier(string):
 
 def needs_quote(s):
     try:
-        s.decode('ascii')
+        s.encode('ascii')
     except (UnicodeDecodeError, UnicodeEncodeError):
         return True
     return re.search(r'\s', s) is not None

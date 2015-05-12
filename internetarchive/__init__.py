@@ -20,7 +20,7 @@ __title__ = 'internetarchive'
 __version__ = '1.0.0.dev1'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
-__copyright__ = 'Copyright 2013 Internet Archive'
+__copyright__ = 'Copyright 2015 Internet Archive'
 
 from .item import Item
 from .files import File

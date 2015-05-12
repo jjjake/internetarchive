@@ -370,7 +370,8 @@ class Item(BaseItem):
         base_url = '{protocol}//s3.us.archive.org/{identifier}'.format(
             protocol=self.session.protocol,
             identifier=self.identifier)
-        url = '{base_url}/{key}'.format(base_url=base_url, key=key.lstrip('/'))
+        url = '{base_url}/{key}'.format(base_url=base_url,
+                                        key=urllib.parse.quote(key.lstrip('/')))
 
         # Skip based on checksum.
         md5_sum = utils.get_md5(body)

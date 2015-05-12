@@ -9,6 +9,7 @@ from six.moves import urllib
 import requests.models
 import requests
 from jsonpatch import make_patch
+import six
 
 from . import auth
 from internetarchive.utils import needs_quote
@@ -104,17 +105,16 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                 meta_value = json.dumps(meta_value)
             # Convert the metadata value into a list if it is not already
             # iterable.
-            if not hasattr(meta_value, '__iter__'):
+            if (isinstance(meta_value, six.string_types)
+                    or not hasattr(meta_value, '__iter__')):
                 meta_value = [meta_value]
             # Convert metadata items into HTTP headers and add to
             # ``headers`` dict.
             for i, value in enumerate(meta_value):
                 if not value:
                     continue
-                if isinstance(value, unicode):
-                    value = value.encode('utf-8')
                 header_key = 'x-archive-meta{0:02d}-{1}'.format(i, meta_key)
-                if needs_quote(value):
+                if (isinstance(value, six.string_types) and needs_quote(value)):
                     value = 'uri({0})'.format(urllib.parse.quote(value))
                 # because rfc822 http headers disallow _ in names, IA-S3 will
                 # translate two hyphens in a row (--) into an underscore (_).

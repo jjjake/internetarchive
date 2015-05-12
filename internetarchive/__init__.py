@@ -17,16 +17,17 @@ usage:
 """
 
 __title__ = 'internetarchive'
-__version__ = '1.0.0dev1'
+__version__ = '1.0.0.dev1'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
 __copyright__ = 'Copyright 2013 Internet Archive'
 
-from .item import Item, File
+from .item import Item
+from .files import File
 from .search import Search
 from .catalog import Catalog
-from .api import get_item, get_files, iter_files, modify_metadata, upload, download, \
-    delete, get_tasks, search_items
+from .api import get_item, get_files, modify_metadata, upload, download, \
+    delete, get_tasks, search_items, get_session, configure
 
 
 __all__ = [
@@ -41,13 +42,14 @@ __all__ = [
     # API.
     'get_item',
     'get_files',
-    'iter_files',
     'modify_metadata',
     'upload',
     'download',
     'delete',
     'get_tasks',
     'search_items',
+    'get_session',
+    'configure',
 ]
 
 

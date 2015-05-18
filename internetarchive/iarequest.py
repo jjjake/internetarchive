@@ -292,7 +292,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
             except IndexError:
                 prepared_metadata[rm_index(key)].append(metadata[key])
         # If append is True, append value to source_metadata value.
-        elif append:
+        elif append and source_metadata.get(key):
             prepared_metadata[key] = '{0} {1}'.format(source_metadata[key], metadata[key])
         else:
             prepared_metadata[key] = metadata[key]

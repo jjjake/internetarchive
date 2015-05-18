@@ -3,6 +3,11 @@
 Release History
 ---------------
 
+0.8.3 2015-05-18
+++++++++++++++++
+- Fixed append to work like a standard metadata update if the metadata field
+  does not yet exist for the given item.
+
 0.8.0 2015-03-09
 ++++++++++++++++
 - Encode filenames in upload URLs.

@@ -18,7 +18,7 @@ with open('HISTORY.rst', 'r', 'utf-8') as f:
 setup(
     name='internetarchive',
     version=version,
-    url='https://github.com/jjjake/ia-wrapper',
+    url='https://github.com/jjjake/internetarchive',
     license='AGPL 3',
     author='Jacob M. Johnson',
     author_email='jake@archive.org',

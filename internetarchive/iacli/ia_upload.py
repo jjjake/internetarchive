@@ -7,7 +7,7 @@ usage:
               (<identifier> <file>... | <identifier> - --remote-name=<name> | <identifier> <file> --remote-name=<name> | --spreadsheet=<metadata.csv>)
               [--metadata=<key:value>...] [--header=<key:value>...] [--checksum]
               [--no-derive] [--ignore-bucket] [--size-hint=<size>]
-              [--delete] [--retries=<i>] [--sleep=<i>] [--log]
+              [--delete] [--retries=<i>] [--sleep=<i>] [--log] [--no-collection-check]
     ia upload <identifier> --status-check
     ia upload --help
 
@@ -34,6 +34,8 @@ options:
                                       given item.
     --delete                          Delete files after verifying checksums 
                                       [default: False].
+    --no-collection-check             Skip checking if the collection being
+                                      uploaded to exists [default: False].
 
 """
 import sys
@@ -42,7 +44,7 @@ from xml.dom.minidom import parseString
 from subprocess import call
 import csv
 
-from docopt import docopt
+from docopt import docopt, printable_usage
 from requests.exceptions import HTTPError
 
 from internetarchive.session import ArchiveSession
@@ -126,13 +128,25 @@ def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=N
 def main(argv):
     args = docopt(__doc__, argv=argv)
 
+    metadata = get_args_dict(args['--metadata'])
+    # Make sure the collection being uploaded to exists.
+    collection_id = metadata.get('collection')
+    if collection_id and not args['--no-collection-check'] and not args['--status-check']:
+        collection = get_item(collection_id) 
+        if not collection.exists:
+            sys.stderr.write(
+                    'You must upload to a collection that exists. '
+                    '"{0}" does not exist.\n{1}\n'.format(collection_id,
+                                                          printable_usage(__doc__)))
+            sys.exit(1)
+
     headers = get_args_dict(args['--header'])
     if args['--size-hint']:
         headers['x-archive-size-hint'] = args['--size-hint']
 
     # Upload keyword arguments.
     upload_kwargs = dict(
-        metadata=get_args_dict(args['--metadata']),
+        metadata=metadata,
         headers=headers,
         debug=args['--debug'],
         queue_derive=True if args['--no-derive'] is False else False,

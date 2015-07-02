@@ -1,10 +1,10 @@
 A python interface to archive.org
 ---------------------------------
 
-.. image:: https://travis-ci.org/jjjake/ia-wrapper.png?branch=master
-        :target: https://travis-ci.org/jjjake/ia-wrapper
+.. image:: https://travis-ci.org/jjjake/internetarchive.png?branch=master
+        :target: https://travis-ci.org/jjjake/internetarchive
 
-.. image:: https://pypip.in/d/internetarchive/badge.png
+.. image:: https://img.shields.io/pypi/internetarchive.png
         :target: https://pypi.python.org/pypi/internetarchive
 
 This package installs a CLI tool named ``ia`` for using archive.org from the command-line.

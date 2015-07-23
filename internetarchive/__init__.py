@@ -17,7 +17,7 @@ usage:
 """
 
 __title__ = 'internetarchive'
-__version__ = '0.8.4'
+__version__ = '0.8.8'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
 __copyright__ = 'Copyright 2015 Internet Archive'

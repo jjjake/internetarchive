@@ -4,7 +4,7 @@ import sys
 
 setup(
     name='internetarchive',
-    version='0.8.4',
+    version='0.8.5',
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     packages=['internetarchive', 'internetarchive.iacli'],
@@ -18,7 +18,7 @@ setup(
     description='A python interface to archive.org.',
     long_description=open('README.rst').read(),
     install_requires=[
-        'requests==2.3.0',
+        'requests==2.7.0',
         'jsonpatch==0.4',
         'pytest==2.3.4',
         'docopt==0.6.1',

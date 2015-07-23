@@ -36,7 +36,7 @@ setup(
         ],
     },
     install_requires=[
-        'requests==2.6.0',
+        'requests==2.7.0',
         'jsonpatch==0.4',
         'docopt==0.6.1',
         'clint==0.3.3',

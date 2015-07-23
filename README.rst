@@ -1,11 +1,11 @@
 A python interface to archive.org
 ---------------------------------
 
-.. image:: https://travis-ci.org/jjjake/ia-wrapper.png?branch=master
-        :target: https://travis-ci.org/jjjake/ia-wrapper
+.. image:: https://travis-ci.org/jjjake/internetarchive.svg
+    :target: https://travis-ci.org/jjjake/internetarchive
 
-.. image:: https://pypip.in/d/internetarchive/badge.png
-        :target: https://pypi.python.org/pypi/internetarchive
+.. image:: https://img.shields.io/pypi/dm/internetarchive.svg
+    :target: https://pypi.python.org/pypi/internetarchive
 
 This package installs a CLI tool named ``ia`` for using archive.org from the command-line.
 It also installs the ``internetarchive`` python module for programatic access to archive.org.
@@ -24,6 +24,18 @@ You can install this module via pip:
 If you want to install this module globally on your system instead of inside a ``virtualenv``, use sudo:
 
 ``sudo pip install internetarchive``
+
+
+Configuring
+~~~~~~~~~~~
+You can configure both the ``ia`` command-line tool and the Python interface from the command-line:
+
+.. code:: bash
+
+    $ ia configure
+
+You will be prompted to enter your Archive.org login credentials. If authorization is successful a config file will be saved
+on your computer that contains your Archive.org S3 keys for uploading and modifying metadata.
 
 
 Command-Line Usage
@@ -67,15 +79,10 @@ To download the entire `TripDown1905 <https://archive.org/details/TripDown1905>`
 Uploading
 ~~~~~~~~~
 
-You can use the provided ``ia`` command-line tool to upload items. You
-need to supply your IAS3 credentials in environment variables in order
-to upload. You can retrieve S3 keys from
-https://archive.org/account/s3.php
+You can use the provided ``ia`` command-line tool to upload items. After `configuring ia <https://github.com/jjjake/internetarchive#configuring>`__,
+you can upload files like so:
 
 .. code:: bash
-
-    $ export IAS3_ACCESS_KEY='xxx'
-    $ export IAS3_SECRET_KEY='yyy'
 
     #upload files:
     $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
@@ -93,8 +100,7 @@ You can use the ``ia`` command-line tool to download item metadata in JSON forma
 
     $ ia metadata TripDown1905
 
-You can also modify metadata. Be sure that the IAS3\_ACCESS\_KEY and
-IAS3\_SECRET\_KEY environment variables are set.
+You can also modify metadata after `configuring ia <https://github.com/jjjake/internetarchive#configuring>`__.
 
 .. code:: bash
 
@@ -165,17 +171,15 @@ You can iterate over files:
 Uploading from Python
 ~~~~~~~~~~~~~~~~~~~~~
 
-You can use the IA's S3-like interface to upload files to an item. You
-need to supply your IAS3 credentials in environment variables in order
-to upload. You can retrieve S3 keys from
-https://archive.org/account/s3.php
+You can use the IA's S3-like interface to upload files to an item after
+`configuring the internetarchive library <https://github.com/jjjake/internetarchive#configuring>`__.
 
 .. code:: python
 
     >>> from internetarchive import get_item
     >>> item = get_item('new_identifier')
     >>> md = dict(mediatype='image', creator='Jake Johnson')
-    >>> item.upload('/path/to/image.jpg', metadata=md, access_key='xxx', secret_key='yyy')
+    >>> item.upload('/path/to/image.jpg', metadata=md)
 
 Item-level metadata must be supplied with the first file uploaded to an
 item.
@@ -200,17 +204,16 @@ You can also upload file-like objects:
 Modifying Metadata from Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can modify metadata for existing items, using the
-``item.modify_metadata()`` function. This uses the `IA Metadata
-API <http://blog.archive.org/2013/07/04/metadata-api/>`__ under the hood
-and requires your IAS3 credentials.
+You can modify metadata for existing items, using the ``item.modify_metadata()`` function. This uses the `IA Metadata
+API <http://blog.archive.org/2013/07/04/metadata-api/>`__ under the hood and requires your IAS3 credentials. So, once
+again make sure you have the `internetarchive library configured <https://github.com/jjjake/internetarchive#configuring>`__.
 
 .. code:: python
 
     >>> from internetarchive import get_item
     >>> item = get_item('my_identifier')
     >>> md = dict(blah='one', foo=['two', 'three'])
-    >>> item.modify_metadata(md, access_key='xxx', secret_key='yyy')
+    >>> item.modify_metadata(md)
 
 
 Searching from Python

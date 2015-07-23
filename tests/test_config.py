@@ -2,7 +2,6 @@ import os, sys, shutil
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
 
-import yaml
 import responses
 
 import internetarchive.config
@@ -12,9 +11,14 @@ from internetarchive.exceptions import AuthenticationError
 
 @responses.activate
 def test_get_auth_config():
+    def request_callback(request):
+        headers = {'set-cookie': 'logged-in-user=test%40archive.org; logged-in-sig=test-sig;'}
+        return (200, headers, '')
+
     responses.add(responses.POST, 'https://archive.org/account/login.php',
-              status=200,
-              adding_headers={'set-cookie': 'logged-in-user=test%40archive.org; logged-in-sig=test-sig;'})
+                  adding_headers={'set-cookie': 'logged-in-user=test%40archive.org; logged-in-sig=test-sig;'})
+    #responses.add_callback(responses.POST, 'https://archive.org/account/login.php', request_callback)
+              #adding_headers={'set-cookie': 'logged-in-user=test%40archive.org; logged-in-sig=test-sig;'})
 
     test_body = """{
         "key": {

@@ -120,7 +120,6 @@ def test_get_item_with_kwargs():
 
     try:
         item = get_item('nasa', request_kwargs={'timeout': .0000000000001})
-        assert False
     except Exception as exc:
         assert 'Connection to archive.org timed out' in str(exc)
 

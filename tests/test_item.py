@@ -71,7 +71,6 @@ def test_get_item():
     assert item.uniq == 2131998567
     assert item.updated == 1427273788
     assert item.tasks == None
-    assert repr(item) == "Item(identifier=u'nasa', exists=True)"
 
 
 # get_file() _____________________________________________________________________________

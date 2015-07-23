@@ -32,7 +32,7 @@ def test_ia_metadata_formats():
     ])
     assert set(stdout[:-1].split('\n')) == test_output_set
 
-@pytest.mark.skipif('internetarchive.config.get_config().get("cookies") == None',
+@pytest.mark.skipif('internetarchive.config.get_config().get("s3") == None',
                     reason='requires authorization.')
 def test_ia_metadata_modify():
     # Modify test item.

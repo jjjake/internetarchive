@@ -1,3 +1,4 @@
+from __future__ import unicode_literals, print_function
 import os
 import sys
 import logging
@@ -78,11 +79,13 @@ class File(BaseFile):
 
         """
         super(File, self).__init__(item.item_metadata, name)
-
         self.item = item
-        self.url = ('{protocol}//archive.org/download/{identifier}/{name}'.format(
-            protocol=item.session.protocol, identifier=self.identifier,
-            name=urllib.parse.quote(name.encode('utf-8'))))
+        url_parts = dict(
+            protocol=item.session.protocol,
+            id=self.identifier,
+            name=urllib.parse.quote(name.encode('utf-8')),
+        )
+        self.url = '{protocol}//archive.org/download/{id}/{name}'.format(**url_parts)
 
     # __repr__()
     # ____________________________________________________________________________________
@@ -96,7 +99,7 @@ class File(BaseFile):
     # download()
     # ____________________________________________________________________________________
     def download(self, file_path=None, clobber=None, checksum=None, destdir=None,
-                 verbose=None, debug=None):
+                 verbose=None, debug=None, request_kwargs=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -113,6 +116,7 @@ class File(BaseFile):
         clobber = False if not clobber else True
         verbose = False if not verbose else True
         debug = False if not debug else True
+        request_kwargs = {} if not request_kwargs else request_kwargs
 
         file_path = self.name if not file_path else file_path
 
@@ -120,7 +124,7 @@ class File(BaseFile):
             if not os.path.exists(destdir):
                 os.mkdir(destdir)
             if os.path.isfile(destdir):
-                raise IOError('{} is not a directory!'.format(destdir))
+                raise IOError('{0} is not a directory!'.format(destdir))
             file_path = os.path.join(destdir, file_path)
 
         if os.path.exists(file_path):
@@ -132,8 +136,8 @@ class File(BaseFile):
                     log.info('not downloading file {0}, '
                              'file already exists.'.format(file_path))
                     if verbose:
-                        sys.stderr.write(
-                            ' skipping {0}: already exists.\n'.format(file_path))
+                        print(' skipping {0}: already exists.'.format(file_path),
+                              file=sys.stderr)
                     return
             else:
                 raise IOError('file already downloaded: {0}'.format(file_path))
@@ -146,7 +150,9 @@ class File(BaseFile):
             return request
         try:
             prepared_request = request.prepare()
-            response = self.item.session.send(prepared_request, stream=True)
+            response = self.item.session.send(prepared_request,
+                                              stream=True,
+                                              **request_kwargs)
             response.raise_for_status()
         except HTTPError as e:
             error_msg = 'error downloading {0}, {1}'.format(self.url, e)
@@ -158,11 +164,11 @@ class File(BaseFile):
                 try:
                     total_length = int(response.headers.get('content-length'))
                     expected_size = (total_length/chunk_size) + 1
-                    label = ' downloading {}: '.format(file_path)
+                    label = ' downloading {0}: '.format(file_path)
                     content = progress.bar(response.iter_content(chunk_size=chunk_size),
                                            expected_size=expected_size, label=label)
                 except:
-                    sys.stderr.write(' downloading: {0}\n'.format(file_path))
+                    print(' downloading: {0}'.format(file_path), file=sys.stderr)
                     content = response.iter_content(chunk_size=chunk_size)
             else:
                 content = response.iter_content(chunk_size=chunk_size)
@@ -172,7 +178,7 @@ class File(BaseFile):
                     f.flush()
 
         log.info('downloaded {0}/{1} to {2}'.format(self.identifier,
-                                                    self.name.encode('utf-8'),
+                                                    self.name,
                                                     file_path))
         return response
 
@@ -210,7 +216,7 @@ class File(BaseFile):
         verbose = False if not verbose else verbose
 
         url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier,
-                                                        self.name.encode('utf-8'))
+                                                        self.name)
         request = iarequest.S3Request(
             method='DELETE',
             url=url,
@@ -222,12 +228,10 @@ class File(BaseFile):
             return request
         else:
             if verbose:
-                msg = ' deleting: {0}'.format(self.name.encode('utf-8'))
+                msg = ' deleting: {0}'.format(self.name)
                 if cascade_delete:
-                    msg += ' and all derivative files.\n'
-                else:
-                    msg += '\n'
-                sys.stderr.write(msg)
+                    msg += ' and all derivative files.'
+                print(msg, file=sys.stderr)
             prepared_request = request.prepare()
 
             try:

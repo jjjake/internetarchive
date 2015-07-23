@@ -21,21 +21,22 @@ options:
 
 """
 import sys
-from xml.dom.minidom import parseString
 from fnmatch import fnmatch
 
 from docopt import docopt
 
 from internetarchive import get_item
+from internetarchive.config import get_config
 from internetarchive.cli.argparser import get_xml_text
 
 
 # main()
 # ________________________________________________________________________________________
-def main(argv):
+def main(argv, config_file=None):
     args = docopt(__doc__, argv=argv)
     verbose = True if not args['--quiet'] else False
-    item = get_item(args['<identifier>'])
+    config = get_config(config_file=config_file)
+    item = get_item(args['<identifier>'], config)
 
     # Files that cannot be deleted via S3.
     no_delete = ['_meta.xml', '_files.xml', '_meta.sqlite']
@@ -74,7 +75,6 @@ def main(argv):
             continue
         resp = f.delete(verbose=verbose, cascade_delete=args['--cascade'])
         if resp.status_code != 204:
-            error = parseString(resp.content)
-            msg = get_xml_text(error.getElementsByTagName('Message'))
+            msg = get_xml_text(resp.content)
             sys.stderr.write(' error: {0} ({1})\n'.format(msg, resp.status_code))
             sys.exit(1)

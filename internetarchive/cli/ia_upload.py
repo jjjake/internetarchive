@@ -22,7 +22,6 @@ options:
     -H, --header=<key:value>...       S3 HTTP headers to send with your request.
     -c, --checksum                    Skip based on checksum. [default: False]
     -n, --no-derive                   Do not derive uploaded files.
-    -i, --ignore-bucket               Destroy and respecify all metadata.
     --size-hint=<size>                Specify a size-hint for your item.
     --delete                          Delete files after verifying checksums
                                       [default: False].
@@ -34,78 +33,69 @@ options:
     --status-check                    Check if S3 is accepting requests to the given item.
 
 """
+from __future__ import unicode_literals
 import sys
 import os
 from tempfile import TemporaryFile
-from xml.dom.minidom import parseString
 import csv
 
 from docopt import docopt, printable_usage
 from requests.exceptions import HTTPError
 from schema import Schema, Use, Or, And, SchemaError
+import six
 
 from internetarchive.session import ArchiveSession
-from internetarchive import get_item
 from internetarchive.cli.argparser import get_args_dict, get_xml_text
 from internetarchive.utils import validate_ia_identifier
 
 
 # _upload_files()
 # ________________________________________________________________________________________
-def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
+def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None,
+                  responses=None):
     """Helper function for calling :meth:`Item.upload`"""
+    responses = [] if not responses else responses
     if (upload_kwargs['verbose']) and (prev_identifier != item.identifier):
         sys.stdout.write('{0}:\n'.format(item.identifier))
 
+    #response = item.upload(files, **upload_kwargs)
     try:
         response = item.upload(files, **upload_kwargs)
+        responses += response
     except HTTPError as exc:
-        response = [exc.response]
+        responses += [exc.response]
     finally:
         # Debug mode.
         if upload_kwargs['debug']:
-            for i, r in enumerate(response):
+            for i, r in enumerate(responses):
                 if i != 0:
                     sys.stdout.write('---\n')
                 headers = '\n'.join(
-                    [' {0}: {1}'.format(k, v) for (k, v) in r.headers.items()]
+                    [' {0}:{1}'.format(k, v) for (k, v) in r.headers.items()]
                 )
                 sys.stdout.write('Endpoint:\n {0}\n\n'.format(r.url))
                 sys.stdout.write('HTTP Headers:\n{0}\n'.format(headers))
-                sys.exit(0)
-
-        # Missing S3 keys.
-        if response[0].status_code == 403:
-            if (not item.session.access_key) or (not item.session.secret_key):
-                sys.stderr.write('\nIAS3 Authentication failed. Please set your IAS3 '
-                                 'access key and secret key \nvia the environment '
-                                 'variables `IAS3_ACCESS_KEY` and `IAS3_SECRET_KEY`, '
-                                 'or \nrun `ia configure` to add your IAS3 keys to your '
-                                 'ia config file. You can \nobtain your IAS3 keys at the '
-                                 'following URL:\n\n\t'
-                                 'https://archive.org/account/s3.php\n\n')
-                sys.exit(1)
+                return
 
         # Format error message for any non 200 responses that
         # we haven't caught yet,and write to stderr.
-        if response[0].status_code != 200:
-            filename = response[0].request.url.split('/')[-1]
-            error = parseString(response[0].content)
-            msg = get_xml_text(error.getElementsByTagName('Message'))
+        if responses and responses[-1].status_code and responses[-1].status_code != 200:
+            filename = responses[-1].request.url.split('/')[-1]
+            msg = get_xml_text(responses[-1].content)
             sys.stderr.write(
                 ' * error uploading {0} ({1}): {2}\n'.format(filename,
-                    response[0].status_code, msg)
+                    responses[-1].status_code, msg)
             )
-            sys.exit(1)
+    return responses
 
 
 # main()
 # ________________________________________________________________________________________
-def main(argv):
+def main(argv, session):
     args = docopt(__doc__, argv=argv)
 
     # Validate args.
-    s = Schema({str: Use(bool),
+    s = Schema({six.text_type: Use(bool),
         '<identifier>': Or(None, And(str, validate_ia_identifier,
             error=('<identifier> should be between 3 and 80 characters in length, and '
                    'can only contain alphanumeric characters, underscores ( _ ), or '
@@ -131,22 +121,21 @@ def main(argv):
     try:
         args = s.validate(args)
     except SchemaError as exc:
-        sys.exit(sys.stderr.write('{0}\n{1}\n'.format(
-            str(exc), printable_usage(__doc__))))
-
-    # Load Item.
-    config = {} if not args['--log'] else {'logging': {'level': 'INFO'}}
-    item = get_item(args['<identifier>'], config=config) if args['<identifier>'] else None
+        sys.stderr.write('{0}\n{1}\n'.format(str(exc), printable_usage(__doc__)))
+        sys.exit(1)
 
     # Status check.
     if args['--status-check']:
-        if item.s3_is_overloaded():
+        if session.s3_is_overloaded():
             sys.exit(sys.stderr.write(
                 'warning: {0} is over limit, and not accepting requests. '
                 'Expect 503 SlowDown errors.\n'.format(args['<identifier>'])))
         else:
             sys.exit(sys.stdout.write(
                 'success: {0} is accepting requests.\n'.format(args['<identifier>'])))
+
+    elif args['<identifier>']:
+        item = session.get_item(args['<identifier>'])
 
     # Upload keyword arguments.
     if args['--size-hint']:
@@ -160,7 +149,6 @@ def main(argv):
         headers=args['--header'],
         debug=args['--debug'],
         queue_derive=queue_derive,
-        ignore_preexisting_bucket=args['--ignore-bucket'],
         checksum=args['--checksum'],
         verbose=verbose,
         retries=args['--retries'],
@@ -184,7 +172,7 @@ def main(argv):
         else:
             files = local_file
 
-        _upload_files(item, files, upload_kwargs)
+        responses = _upload_files(item, files, upload_kwargs)
 
     # Bulk upload using spreadsheet.
     else:
@@ -192,6 +180,7 @@ def main(argv):
         session = ArchiveSession()
         spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
         prev_identifier = None
+        responses = []
         for row in spreadsheet:
             local_file = row['file']
             identifier = row['identifier']
@@ -199,11 +188,16 @@ def main(argv):
             del row['identifier']
             if (not identifier) and (prev_identifier):
                 identifier = prev_identifier
-            item = get_item(identifier, config=config)
+            item = session.get_item(identifier, config=config)
             # TODO: Clean up how indexed metadata items are coerced
             # into metadata.
             md_args = ['{0}:{1}'.format(k.lower(), v) for (k, v) in row.items() if v]
             metadata = get_args_dict(md_args)
             upload_kwargs['metadata'].update(metadata)
-            _upload_files(item, local_file, upload_kwargs, prev_identifier, session)
+            r = _upload_files(item, local_file, upload_kwargs, prev_identifier, session,
+                              responses)
+            responses += r
             prev_identifier = identifier
+
+    if responses and not all(r.ok for r in responses):
+        sys.exit(1)

@@ -30,7 +30,6 @@ import csv
 
 from docopt import docopt
 
-from internetarchive import get_item
 from internetarchive.cli.argparser import get_args_dict
 
 
@@ -52,23 +51,23 @@ def modify_metadata(item, metadata, args):
 
 # main()
 # ________________________________________________________________________________________
-def main(argv):
+def main(argv, session):
     args = docopt(__doc__, argv=argv)
 
     formats = set()
     responses = []
 
-    for i, _item in enumerate(args['<identifier>']):
-        item = get_item(_item)
+    for i, identifier in enumerate(args['<identifier>']):
+        item = session.get_item(identifier)
 
         # Check existence of item.
         if args['--exists']:
             if item.exists:
                 responses.append(True)
-                sys.stdout.write('{0} exists\n'.format(item.identifier))
+                sys.stdout.write('{0} exists\n'.format(identifier))
             else:
                 responses.append(False)
-                sys.stderr.write('{0} does not exist\n'.format(item.identifier))
+                sys.stderr.write('{0} does not exist\n'.format(identifier))
             if (i + 1) == len(args['<identifier>']):
                 if all(r is True for r in responses):
                     sys.exit(0)
@@ -88,7 +87,7 @@ def main(argv):
 
         # Get metadata.
         elif args['--formats']:
-            for f in item.iter_files():
+            for f in item.get_files():
                 formats.add(f.format)
             if (i + 1) == len(args['<identifier>']):
                 sys.stdout.write('\n'.join(formats) + '\n')
@@ -107,7 +106,7 @@ def main(argv):
         for row in spreadsheet:
             if not row['identifier']:
                 continue
-            item = get_item(row['identifier'])
+            item = session.get_item(row['identifier'])
             if row.get('file'):
                 del row['file']
             metadata = dict((k.lower(), v) for (k, v) in row.items() if v)

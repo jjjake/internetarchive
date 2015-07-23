@@ -1,3 +1,4 @@
+from __future__ import unicode_literals, print_function
 import os
 import sys
 from fnmatch import fnmatch
@@ -8,10 +9,9 @@ from requests.exceptions import HTTPError
 from requests import Response
 from clint.textui import progress
 import six
-import six.moves.urllib as urllib
 
 from . import iarequest, utils
-from .session import ArchiveSession
+#from .session import ArchiveSession
 from .files import File
 from . import __version__
 
@@ -19,7 +19,15 @@ log = logging.getLogger(__name__)
 
 
 class BaseItem(object):
-    def __init__(self, item_metadata):
+    # __init__()
+    # ____________________________________________________________________________________
+    def __init__(self, identifier=None, item_metadata=None):
+        # Default attributes.
+        self.identifier = identifier
+        self.item_metadata = {} if not item_metadata else item_metadata
+        self.exists = None
+
+        # Archive.org metadata attributes.
         self.metadata = {}
         self.files = []
         self.created = None
@@ -34,12 +42,28 @@ class BaseItem(object):
         self.updated = None
         self.tasks = None
 
-        for key in item_metadata:
-            setattr(self, key, item_metadata[key])
+        # Load item.
+        self.load()
 
-        self.item_metadata = item_metadata
-        self.identifier = self.metadata.get('identifier')
+    # __repr__()
+    # ____________________________________________________________________________________
+    def __repr__(self):
+        return ('Item(identifier={identifier!r}, '
+                'exists={exists!r})'.format(**self.__dict__))
+
+    # load()
+    # ____________________________________________________________________________________
+    def load(self, item_metadata=None):
+        if item_metadata:
+            self.item_metadata = item_metadata
+
+        if not self.identifier:
+            self.identifier = item_metadata.get('metadata', {}).get('identifier')
+
         self.exists = True if self.item_metadata else False
+
+        for key in self.item_metadata:
+            setattr(self, key, self.item_metadata[key])
 
 
 # Item class
@@ -73,15 +97,43 @@ class Item(BaseItem):
 
     # init()
     # ____________________________________________________________________________________
-    def __init__(self, item_metadata, archive_session=None, **kwargs):
-        self.session = archive_session if archive_session else ArchiveSession(**kwargs)
-        super(Item, self).__init__(item_metadata)
+    def __init__(self, archive_session, identifier, item_metadata=None, **kwargs):
+        """
+        :type archive_session: :class:`ArchiveSession <ArchiveSession>`
 
-    # __repr__()
+        :type identifier: str
+        :param identifier: The globally unique Archive.org identifier for this item.
+
+                           An identifier is composed of any unique combination of
+                           alphanumeric characters, underscore ( _ ) and dash ( - ). While
+                           there are no official limits it is strongly suggested that they
+                           be between 5 and 80 characters in length. Identifiers must be
+                           unique across the entirety of Internet Archive, not simply
+                           unique within a single collection.
+
+                           Once defined an identifier can not be changed. It will travel
+                           with the item or object and is involved in every manner of
+                           accessing or referring to the item.
+
+        :type item_metadata: dict
+        :param item_metadata: The Archive.org item metadata used to initialize this item.
+                              If no item metadata is provided, it will be retrieved from
+                              Archive.org using the provided identifier.
+        """
+        self.session = archive_session if archive_session else ArchiveSession(**kwargs)
+
+        ## Load metadata from Archive.org if item_metadata is not provided.
+        #if not item_metadata:
+        #    item_metadata = self.session.get_metadata(identifier, **kwargs)
+
+        super(Item, self).__init__(identifier, item_metadata)
+
+    # refresh()
     # ____________________________________________________________________________________
-    def __repr__(self):
-        return ('Item(identifier={identifier!r}, '
-                'exists={exists!r})'.format(**self.__dict__))
+    def refresh(self, item_metadata=None, **kwargs):
+        if not item_metadata:
+            item_metadata = self.session.get_metadata(self.identifier, **kwargs)
+        self.load(item_metadata)
 
     # file()
     # ____________________________________________________________________________________
@@ -141,7 +193,8 @@ class Item(BaseItem):
                  destdir=None,
                  no_directory=None,
                  verbose=None,
-                 debug=None):
+                 debug=None,
+                 request_kwargs=None):
         """Download files from an item.
 
         :param files: (optional) Only download files matching given file names.
@@ -181,31 +234,36 @@ class Item(BaseItem):
         debug = False if not debug else True
 
         if verbose:
-            sys.stderr.write('{0}:\n'.format(self.identifier))
+            print('{0}:'.format(self.identifier), file=sys.stderr)
             if self.item_metadata.get('is_dark') is True:
-                sys.stderr.write(' skipping: item is dark.\n')
+                print(' skipping: item is dark.', file=sys.stderr)
                 return
             elif self.metadata == {}:
-                sys.stderr.write(' skipping: item does not exist.\n')
+                print(' skipping: item does not exist.', file=sys.stderr)
                 return
 
         responses = []
         for f in self.get_files(files, source, formats, glob_pattern):
-            fname = f.name.encode('utf-8')
             if no_directory:
-                path = fname
+                path = f.name
             else:
-                path = os.path.join(self.identifier, fname)
+                path = os.path.join(self.identifier, f.name)
             if dry_run:
-                sys.stdout.write(f.url + '\n')
+                print(f.url)
                 continue
             try:
-                r = f.download(path, clobber, checksum, destdir, verbose, debug)
+                r = f.download(file_path=path,
+                               clobber=clobber,
+                               checksum=checksum,
+                               destdir=destdir,
+                               verbose=verbose,
+                               debug=debug,
+                               request_kwargs=request_kwargs)
                 responses.append(r)
             except IOError as exc:
                 if no_clobber:
                     if verbose:
-                        sys.stderr.write(' {}\n'.format(exc))
+                        print(' {0}'.format(exc.args[0]), file=sys.stderr)
                 else:
                     raise (exc)
         return responses
@@ -218,7 +276,8 @@ class Item(BaseItem):
                         priority=None,
                         access_key=None,
                         secret_key=None,
-                        debug=None):
+                        debug=None,
+                        request_kwargs=None):
         """Modify the metadata of an existing item on Archive.org.
 
         Note: The Metadata Write API does not yet comply with the
@@ -250,6 +309,7 @@ class Item(BaseItem):
         access_key = self.session.access_key if not access_key else access_key
         secret_key = self.session.secret_key if not secret_key else secret_key
         debug = False if debug is None else debug
+        request_kwargs = {} if not request_kwargs else request_kwargs
 
         url = '{protocol}//archive.org/metadata/{identifier}'.format(
             protocol=self.session.protocol,
@@ -262,14 +322,13 @@ class Item(BaseItem):
             priority=priority,
             access_key=access_key,
             secret_key=secret_key,
-            append=append, )
+            append=append)
         if debug:
             return request
         prepared_request = request.prepare()
-        resp = self.session.send(prepared_request)
-        item_metadata = self.session.get_metadata(self.identifier)
+        resp = self.session.send(prepared_request, **request_kwargs)
         # Re-initialize the Item object with the updated metadata.
-        self.__init__(item_metadata, archive_session=self.session)
+        self.refresh()
         return resp
 
     # upload_file()
@@ -280,14 +339,15 @@ class Item(BaseItem):
                     headers=None,
                     access_key=None,
                     secret_key=None,
-                    queue_derive=True,
-                    verbose=False,
-                    verify=True,
-                    checksum=False,
-                    delete=False,
+                    queue_derive=None,
+                    verbose=None,
+                    verify=None,
+                    checksum=None,
+                    delete=None,
                     retries=None,
                     retries_sleep=None,
-                    debug=False, **kwargs):
+                    debug=None,
+                    request_kwargs=None):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -341,14 +401,21 @@ class Item(BaseItem):
             ...                  key='photos/image1.jpg')
             True
         """
-        # Defaults for empty params.
+        # Set defaults.
         headers = {} if headers is None else headers
         metadata = {} if metadata is None else metadata
         access_key = self.session.access_key if access_key is None else access_key
         secret_key = self.session.secret_key if secret_key is None else secret_key
+        queue_derive = True if queue_derive is None else queue_derive
+        verbose = False if verbose is None else verbose
+        verify = True if verify is None else verify
+        delete = False if delete is None else delete
+        # Set checksum after delete.
+        checksum = True if delete or checksum is None else checksum
         retries = 0 if retries is None else retries
         retries_sleep = 30 if retries_sleep is None else retries_sleep
-        checksum = True if delete or checksum else False
+        debug = False if debug is None else debug
+        request_kwargs = {} if request_kwargs is None else request_kwargs
 
         if not hasattr(body, 'read'):
             body = open(body, 'rb')
@@ -372,7 +439,7 @@ class Item(BaseItem):
             protocol=self.session.protocol,
             identifier=self.identifier)
         url = '{base_url}/{key}'.format(base_url=base_url,
-                                        key=urllib.parse.quote(key.lstrip('/')))
+                                        key=key.lstrip('/'))
 
         # Skip based on checksum.
         md5_sum = utils.get_md5(body)
@@ -380,7 +447,7 @@ class Item(BaseItem):
         if (checksum) and (not self.tasks) and (ia_file) and (ia_file.md5 == md5_sum):
             log.info('{f} already exists: {u}'.format(f=key, u=url))
             if verbose:
-                sys.stderr.write(' {f} already exists, skipping.\n'.format(f=key))
+                print(' {f} already exists, skipping.'.format(f=key), file=sys.stderr)
             if delete:
                 log.info(
                     '{f} successfully uploaded to https://archive.org/download/{i}/{f} '
@@ -396,12 +463,6 @@ class Item(BaseItem):
         if verify or delete:
             headers['Content-MD5'] = md5_sum
 
-        # Delete retries and sleep_retries from kwargs.
-        if 'retries' in kwargs:
-            del kwargs['retries']
-        if 'retries_sleep' in kwargs:
-            del kwargs['retries_sleep']
-
         def _build_request():
             body.seek(0, os.SEEK_SET)
             if verbose:
@@ -415,7 +476,7 @@ class Item(BaseItem):
                         label=' uploading {f}: '.format(f=key))
                     data = utils.IterableToFileAdapter(progress_generator, size)
                 except:
-                    sys.stderr.write(' uploading {f}: '.format(f=key))
+                    print(' uploading {f}: '.format(f=key), file=sys.stderr)
                     data = body
             else:
                 data = body
@@ -427,7 +488,7 @@ class Item(BaseItem):
                                           metadata=metadata,
                                           access_key=access_key,
                                           secret_key=secret_key,
-                                          queue_derive=queue_derive, **kwargs)
+                                          queue_derive=queue_derive)
             return request
 
         if debug:
@@ -443,16 +504,18 @@ class Item(BaseItem):
                             time.sleep(retries_sleep)
                             log.info(error_msg)
                             if verbose:
-                                sys.stderr.write(' warning: {0}\n'.format(error_msg))
+                                print(' warning: {0}'.format(error_msg), file=sys.stderr)
                             retries -= 1
                             continue
                     request = _build_request()
                     prepared_request = request.prepare()
-                    response = self.session.send(prepared_request, stream=True)
+                    response = self.session.send(prepared_request,
+                                                 stream=True,
+                                                 **request_kwargs)
                     if (response.status_code == 503) and (retries > 0):
                         log.info(error_msg)
                         if verbose:
-                            sys.stderr.write(' warning: {0}\n'.format(error_msg))
+                            print(' warning: {0}\n'.format(error_msg), file=sys.stderr)
                         time.sleep(retries_sleep)
                         retries -= 1
                         continue
@@ -478,7 +541,20 @@ class Item(BaseItem):
 
     # upload()
     # ____________________________________________________________________________________
-    def upload(self, files, **kwargs):
+    def upload(self, files,
+               metadata=None,
+               headers=None,
+               access_key=None,
+               secret_key=None,
+               queue_derive=None,
+               verbose=None,
+               verify=None,
+               checksum=None,
+               delete=None,
+               retries=None,
+               retries_sleep=None,
+               debug=None,
+               request_kwargs=None):
         """Upload files to an item. The item will be created if it
         does not exist.
 
@@ -501,7 +577,6 @@ class Item(BaseItem):
         :returns: True if the request was successful and all files were
                   uploaded, False otherwise.
         """
-
         def iter_directory(directory):
             for path, dir, files in os.walk(directory):
                 for f in files:
@@ -509,12 +584,11 @@ class Item(BaseItem):
                     key = os.path.relpath(filepath, directory)
                     yield (filepath, key)
 
+        queue_derive = True if queue_derive is None else queue_derive
         if isinstance(files, dict):
             files = files.items()
         if not isinstance(files, (list, tuple)):
             files = [files]
-
-        queue_derive = kwargs.get('queue_derive', True)
 
         responses = []
         file_index = 0
@@ -528,21 +602,34 @@ class Item(BaseItem):
                     fdir_index += 1
                     if queue_derive is True and file_index >= len(files) \
                         and fdir_index >= len(os.listdir(f)):
-                        kwargs['queue_derive'] = True
+                        queue_derive = True
                     else:
-                        kwargs['queue_derive'] = False
-
+                        queue_derive = False
                     if not f.endswith('/'):
                         key = '{0}/{1}'.format(f, key)
-                    resp = self.upload_file(filepath, key=key, **kwargs)
+                    resp = self.upload_file(filepath,
+                                            key=key,
+                                            metadata=metadata,
+                                            headers=headers,
+                                            access_key=access_key,
+                                            secret_key=secret_key,
+                                            queue_derive=queue_derive,
+                                            verbose=verbose,
+                                            verify=verify,
+                                            checksum=checksum,
+                                            delete=delete,
+                                            retries=retries,
+                                            retries_sleep=retries_sleep,
+                                            debug=debug,
+                                            request_kwargs=request_kwargs)
                     responses.append(resp)
             else:
                 # Set derive header if queue_derive is True,
                 # and this is the last request being made.
                 if queue_derive is True and file_index >= len(files):
-                    kwargs['queue_derive'] = True
+                    queue_derive = True
                 else:
-                    kwargs['queue_derive'] = False
+                    queue_derive = False
 
                 if not isinstance(f, (list, tuple)):
                     key, body = (None, f)
@@ -550,6 +637,20 @@ class Item(BaseItem):
                     key, body = f
                 if key and not isinstance(key, six.string_types):
                     key = str(key)
-                resp = self.upload_file(body, key=key, **kwargs)
+                resp = self.upload_file(body,
+                                        key=key,
+                                        metadata=metadata,
+                                        headers=headers,
+                                        access_key=access_key,
+                                        secret_key=secret_key,
+                                        queue_derive=queue_derive,
+                                        verbose=verbose,
+                                        verify=verify,
+                                        checksum=checksum,
+                                        delete=delete,
+                                        retries=retries,
+                                        retries_sleep=retries_sleep,
+                                        debug=debug,
+                                        request_kwargs=request_kwargs)
                 responses.append(resp)
         return responses

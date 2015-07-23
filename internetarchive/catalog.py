@@ -5,9 +5,9 @@ except ImportError:
 import six
 from six.moves.urllib.parse import parse_qsl
 
-import requests.sessions
+#import requests.sessions
 
-from . import session
+#from . import session
 from .utils import map2x
 
 
@@ -34,8 +34,13 @@ class Catalog(object):
 
     # init()
     # ____________________________________________________________________________________
-    def __init__(self, identifier=None, task_ids=None, params=None, config=None,
-                 verbose=None):
+    def __init__(self, archive_session,
+                 identifier=None,
+                 task_ids=None,
+                 params=None,
+                 config=None,
+                 verbose=None,
+                 request_kwargs=None):
         """Get tasks from the Archive.org catalog. ``internetarchive`` must be configured
         with your logged-in-* cookies to use this function. If no arguments are provided,
         all queued tasks for the user will be returned.
@@ -63,27 +68,24 @@ class Catalog(object):
         params = {} if not params else params
         config = {} if not config else config
         verbose = '1' if verbose is None or verbose is True else '0'
+        request_kwargs = {} if not request_kwargs else request_kwargs
 
-        self.session = session.ArchiveSession(config)
+        self.session = archive_session
+        self.request_kwargs = request_kwargs
         # Accessing the Archive.org catalog requires a users
         # logged-in-* cookies (i.e. you must be logged in).
         # Raise an exception if they are not set.
         if not self.session.cookies.get('logged-in-user'):
-            raise NameError('logged-in-user cookie not set. Use `ia configure --cookies` '
+            raise NameError('logged-in-user cookie not set. Use `ia configure` '
                             'to add your logged-in-user cookie to your internetarchive '
-                            'config file, or set the IA_LOGGED_IN_USER environment '
-                            'variable.')
+                            'config file.')
         elif not self.session.cookies.get('logged-in-sig'):
-            raise NameError('logged-in-sig cookie not set. Use `ia configure --cookies` '
+            raise NameError('logged-in-sig cookie not set. Use `ia configure` '
                             'to add your logged-in-sig cookie to your internetarchive '
-                            'config file, or set the IA_LOGGED_IN_SIG environment '
-                            'variable.')
-
-        self.http_session = requests.sessions.Session()
+                            'config file.')
 
         # Set cookies from config.
-        self.http_session.cookies = self.session.cookies
-        self.http_session.cookies['verbose'] = verbose
+        self.session.cookies['verbose'] = verbose
 
         # Params required to retrieve JSONP from the IA catalog.
         self.params = dict(
@@ -123,13 +125,11 @@ class Catalog(object):
     # _get_tasks()
     # ____________________________________________________________________________________
     def _get_tasks(self):
-        r = self.http_session.get(self.url, params=self.params)
+        r = self.session.get(self.url, params=self.params, **self.request_kwargs)
         content = r.content.decode('utf-8')
         # Convert JSONP to JSON (then parse the JSON).
         json_str = r.content[(content.index("(") + 1):content.rindex(")")]
-        return [
-            CatalogTask(t, http_session=self.http_session) for t in json.loads(json_str)
-        ]
+        return [CatalogTask(t) for t in json.loads(json_str)]
 
 
 # CatalogTask class
@@ -153,12 +153,7 @@ class CatalogTask(object):
 
     # init()
     # ____________________________________________________________________________________
-    def __init__(self, columns, http_session=None):
-        if not http_session:
-            self._http_session = requests.sessions.Session()
-        else:
-            self._http_session = http_session
-
+    def __init__(self, columns):
         for key, value in map2x(None, self.COLUMNS, columns):
             if key:
                 setattr(self, key, value)
@@ -197,6 +192,6 @@ class CatalogTask(object):
             raise ValueError('task_id is None')
         url = 'http://catalogd.archive.org/log/{0}'.format(self.task_id)
         p = dict(full=1)
-        r = self._http_session.get(url, params=p)
+        r = self.session.get(url, params=p, **self.request_kwargs)
         r.raise_for_status()
         return r.content.decode('utf-8')

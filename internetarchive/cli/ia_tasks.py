@@ -28,7 +28,7 @@ from internetarchive.cli.argparser import get_args_dict
 
 # ia_catalog()
 # ________________________________________________________________________________________
-def main(argv):
+def main(argv, session):
     args = docopt(__doc__, argv=argv)
     params = get_args_dict(args['--parameter'])
 

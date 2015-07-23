@@ -6,16 +6,36 @@ This module implements the Internetarchive API.
 
 :copyright: (c) 2015 Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
-
 """
+from six.moves import input
+from getpass import getpass
 
-from . import item, search, catalog
+from internetarchive.session import ArchiveSession
+from internetarchive.config import write_config_file
+
+
+# get_session()
+# ________________________________________________________________________________________
+def get_session(config=None, config_file=None, http_adapter_kwargs=None):
+    """Return a new ArchiveSession object
+
+    :type config: dict
+    :param config: A dictionary used to configure your session.
+
+    :type config_file: str
+    :param config_file: A path to a config file used to configure your session.
+    """
+    return ArchiveSession(config, config_file, http_adapter_kwargs)
 
 
 # get_item()
 # ________________________________________________________________________________________
-def get_item(identifier, metadata_timeout=None, config=None, max_retries=None,
-             archive_session=None):
+def get_item(identifier,
+             config=None,
+             config_file=None,
+             archive_session=None,
+             http_adapter_kwargs=None,
+             request_kwargs=None):
     """Get an :class:`Item` object.
 
     :type identifier: str
@@ -34,17 +54,20 @@ def get_item(identifier, metadata_timeout=None, config=None, max_retries=None,
     :type archive_session: :class:`ArchiveSession`
     :param archive_session: An :class:`ArchiveSession` object can be
                             provided via the `archive_session` parameter.
-
     """
-    _item = item.Item(identifier, metadata_timeout=metadata_timeout, config=config,
-                      max_retries=max_retries, archive_session=archive_session)
-    return _item
+    if not archive_session:
+        archive_session = get_session(config, config_file, http_adapter_kwargs)
+    return archive_session.get_item(identifier, request_kwargs=request_kwargs)
 
 
 # get_files()
 # ________________________________________________________________________________________
-def get_files(identifier, files=None, source=None, formats=None, glob_pattern=None,
-              **kwargs):
+def get_files(identifier,
+              files=None,
+              source=None,
+              formats=None,
+              glob_pattern=None,
+              **get_item_kwargs):
     """Get :class:`File` objects from an item.
 
     :type identifier: str
@@ -60,33 +83,23 @@ def get_files(identifier, files=None, source=None, formats=None, glob_pattern=No
     :param glob_pattern: (optional) Only return files matching the given glob pattern.
 
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
-
     """
-    item = get_item(identifier, **kwargs)
+    item = get_item(identifier, **get_item_kwargs)
     return item.get_files(files, source, formats, glob_pattern)
-
-
-# iter_files()
-# ________________________________________________________________________________________
-def iter_files(identifier, **kwargs):
-    """Generator for iterating over all files in an item.
-
-    :type identifier: str
-    :param identifier: The globally unique Archive.org identifier for a given item.
-
-    :param \*\*kwargs: Optional arguments that ``get_item`` takes.
-
-    """
-    _item = get_item(identifier, **kwargs)
-    return _item.iter_files()
 
 
 # modify_metadata()
 # ________________________________________________________________________________________
-def modify_metadata(identifier, metadata, target='metadata', append=False, priority=None,
-                    access_key=None, secret_key=None, debug=False, **kwargs):
+def modify_metadata(identifier, metadata,
+                    target='metadata',
+                    append=False,
+                    priority=None,
+                    access_key=None,
+                    secret_key=None,
+                    debug=False,
+                    request_kwargs=None,
+                    **get_item_kwargs):
     """Modify the metadata of an existing item on Archive.org.
-
 
     :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
@@ -118,18 +131,29 @@ def modify_metadata(identifier, metadata, target='metadata', append=False, prior
 
     :returns: :class:`requests.Response` object or :class:`requests.Request` object if
               debug is ``True``.
-
     """
-    item = get_item(identifier, **kwargs)
+    item = get_item(identifier, **get_item_kwargs)
     return item.modify_metadata(metadata, target, append, priority, access_key,
-                                secret_key, debug)
+                                secret_key, debug, request_kwargs)
 
 
 # upload()
 # ________________________________________________________________________________________
-def upload(identifier, files, metadata=None, headers=None, access_key=None,
-           secret_key=None, queue_derive=None, verbose=None, verify=None, checksum=None,
-           delete=None, retries=None, retries_sleep=None, debug=None, **kwargs):
+def upload(identifier, files,
+           metadata=None,
+           headers=None,
+           access_key=None,
+           secret_key=None,
+           queue_derive=None,
+           verbose=None,
+           verify=None,
+           checksum=None,
+           delete=None,
+           retries=None,
+           retries_sleep=None,
+           debug=None,
+           request_kwargs=None,
+           **get_item_kwargs):
     """Upload files to an item. The item will be created if it does not exist.
 
     :type identifier: str
@@ -178,17 +202,41 @@ def upload(identifier, files, metadata=None, headers=None, access_key=None,
                   sending the upload request.
 
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
-
     """
-    item = get_item(identifier)
-    return item.upload(files, **kwargs)
+    item = get_item(identifier, **get_item_kwargs)
+    return item.upload(files,
+                       metadata=metadata,
+                       headers=headers,
+                       access_key=access_key,
+                       secret_key=secret_key,
+                       queue_derive=queue_derive,
+                       verbose=verbose,
+                       verify=verify,
+                       checksum=checksum,
+                       delete=delete,
+                       retries=retries,
+                       retries_sleep=retries_sleep,
+                       debug=debug,
+                       request_kwargs=request_kwargs)
 
 
 # download()
 # ________________________________________________________________________________________
-def download(identifier, files=None, source=None, formats=None, glob_pattern=None,
-             dry_run=None, clobber=None, no_clobber=None, checksum=None, destdir=None,
-             no_directory=None, verbose=None, debug=None, **kwargs):
+def download(identifier,
+             files=None,
+             source=None,
+             formats=None,
+             glob_pattern=None,
+             dry_run=None,
+             clobber=None,
+             no_clobber=None,
+             checksum=None,
+             destdir=None,
+             no_directory=None,
+             verbose=None,
+             debug=None,
+             request_kwargs=None,
+             **get_item_kwargs):
     """Download files from an item.
 
     :type identifier: str
@@ -227,17 +275,34 @@ def download(identifier, files=None, source=None, formats=None, glob_pattern=Non
     :param verbose: (optional) Display download progress.
 
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
-
     """
-    item = get_item(identifier, **kwargs)
-    item.download(files, source, formats, glob_pattern, dry_run, clobber, no_clobber,
-                  checksum, destdir, no_directory, verbose, debug)
+    item = get_item(identifier, **get_item_kwargs)
+    item.download(files=files,
+                  source=source,
+                  formats=formats,
+                  glob_pattern=glob_pattern,
+                  dry_run=dry_run,
+                  clobber=clobber,
+                  no_clobber=no_clobber,
+                  checksum=checksum,
+                  destdir=destdir,
+                  no_directory=no_directory,
+                  verbose=verbose,
+                  debug=debug,
+                  request_kwargs=request_kwargs)
 
 
 # delete()
 # ________________________________________________________________________________________
-def delete(identifier, files=None, source=None, formats=None, glob_pattern=None,
-           cascade_delete=None, access_key=None, secret_key=None, verbose=None,
+def delete(identifier,
+           files=None,
+           source=None,
+           formats=None,
+           glob_pattern=None,
+           cascade_delete=None,
+           access_key=None,
+           secret_key=None,
+           verbose=None,
            debug=None, **kwargs):
     """Delete files from an item. Note: Some system files, such as <itemname>_meta.xml,
     cannot be deleted.
@@ -270,27 +335,32 @@ def delete(identifier, files=None, source=None, formats=None, glob_pattern=None,
     :type debug: bool
     :param debug: (optional) Set to True to print headers to stdout and exit exit without
                   sending the delete request.
-
     """
     files = get_files(identifier, files, source, formats, glob_pattern, **kwargs)
 
     responses = []
     for f in files:
-        r = f.delete(
-            cascade_delete=cascade_delete,
-            access_key=access_key,
-            secret_key=secret_key,
-            verbose=verbose,
-            debug=debug
-        )
+        r = f.delete(cascade_delete=cascade_delete,
+                     access_key=access_key,
+                     secret_key=secret_key,
+                     verbose=verbose,
+                     debug=debug)
         responses.append(r)
     return responses
 
 
 # get_tasks()
 # ________________________________________________________________________________________
-def get_tasks(identifier=None, task_ids=None, task_type=None, params=None, config=None,
-              verbose=None):
+def get_tasks(identifier=None,
+              task_ids=None,
+              task_type=None,
+              params=None,
+              config=None,
+              config_file=None,
+              verbose=None,
+              archive_session=None,
+              http_adapter_kwargs=None,
+              request_kwargs=None):
     """Get tasks from the Archive.org catalog. ``internetarchive`` must be configured
     with your logged-in-* cookies to use this function. If no arguments are provided,
     all queued tasks for the user will be returned.
@@ -320,19 +390,28 @@ def get_tasks(identifier=None, task_ids=None, task_type=None, params=None, confi
                     catalog task returned. verbose is set to ``True`` by default.
 
     :returns: A set of :class:`CatalogTask` objects.
-
     """
-    _catalog = catalog.Catalog(identifier=identifier, task_ids=task_ids, params=params,
-                               config=config, verbose=verbose)
-    if task_type:
-        return eval('_catalog.{0}_rows'.format(task_type.lower()))
-    else:
-        return _catalog.tasks
+    if not archive_session:
+        archive_session = get_session(config, config_file, http_adapter_kwargs)
+    return archive_session.get_tasks(identifier=identifier,
+                                     task_ids=task_ids,
+                                     params=params,
+                                     config=config,
+                                     verbose=verbose,
+                                     request_kwargs=request_kwargs)
 
 
 # search_items()
 # ________________________________________________________________________________________
-def search_items(query, fields=None, params=None, config=None, v2=None):
+def search_items(query,
+                 fields=None,
+                 params=None,
+                 v2=None,
+                 archive_session=None,
+                 config=None,
+                 config_file=None,
+                 http_adapter_kwargs=None,
+                 request_kwargs=None):
     """Search for items on Archive.org.
 
     :type query: str
@@ -354,6 +433,29 @@ def search_items(query, fields=None, params=None, config=None, v2=None):
     :param v2: To use the archive.org/v2 Advancedsearch API, set v2 to ``True``.
 
     :returns: A :class:`Search` object, yielding search results.
-
     """
-    return search.Search(query, fields=fields, params=params, config=config, v2=v2)
+    if not archive_session:
+        archive_session = get_session(config, config_file, http_adapter_kwargs)
+    return archive_session.search_items(query,
+                                        fields=fields,
+                                        params=params,
+                                        config=config,
+                                        v2=v2,
+                                        request_kwargs=request_kwargs)
+
+
+# configure()
+# ________________________________________________________________________________________
+def configure(username=None, password=None):
+    """Configure internetarchive with your Archive.org credentials.
+
+    :type username: str
+    :param username: The email address associated with your Archive.org account.
+
+    :type password: str
+    :param password: Your Archive.org password.
+    """
+    username = input('Email address: ') if not username else username
+    password = getpass('Password: ') if not password else password
+    config_file_path = write_config_file(username, password)
+    print('\nConfig saved to: {0}'.format(config_file_path))

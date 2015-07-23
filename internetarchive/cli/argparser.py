@@ -1,11 +1,15 @@
 from collections import defaultdict
+from xml.dom.minidom import parseString
 import re
 
 
 # get_xml_text()
 # ________________________________________________________________________________________
-def get_xml_text(elements, text=''):
-    """:todo: document ``get_xml_text()`` function."""
+def get_xml_text(xml_str, tag_name=None, text=None):
+    tag_name = 'Message' if not tag_name else tag_name
+    text = '' if not text else text
+    p = parseString(xml_str)
+    elements = p.getElementsByTagName(tag_name)
     for e in elements:
         for node in e.childNodes:
             if node.nodeType == node.TEXT_NODE:

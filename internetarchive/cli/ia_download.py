@@ -24,15 +24,14 @@ options:
 import os
 import sys
 
+import six
 from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
-
-from internetarchive import download
 
 
 # ia_download()
 # ________________________________________________________________________________________
-def main(argv):
+def main(argv, session):
     args = docopt(__doc__, argv=argv)
 
     valid_sources = ['original', 'derivative', 'metadata']
@@ -48,6 +47,10 @@ def main(argv):
         '<identifier>': str,
     })
 
+    # Filenames should be unicode literals. Support PY2 and PY3.
+    if six.PY2:
+        args['<file>'] = [f.decode('utf-8') for f in args['<file>']]
+
     try:
         args = s.validate(args)
     except SchemaError as exc:
@@ -57,8 +60,8 @@ def main(argv):
 
     verbose = False if args['--quiet'] or args['--dry-run'] else True
     no_clobber = True if not args['--clobber'] and not args['--checksum'] else False
-    responses = download(
-        args['<identifier>'],
+    item = session.get_item(args['<identifier>'])
+    responses = item.download(
         files=args['<file>'],
         source=args['--source'],
         formats=args['--format'],

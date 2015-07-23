@@ -22,7 +22,7 @@ def get_auth_config(username, password):
         u = 'https://archive.org/account/login.php'
         r = s.post(u, data=payload, cookies={'test-cookie': '1'})
 
-        if 'logged-in-sig' not in s.cookies:
+        if 'logged-in-sig' not in r.cookies:
             raise AuthenticationError(
                     'Authentication failed. Please check your credentials and try again.')
 
@@ -38,8 +38,8 @@ def get_auth_config(username, password):
                 'secret': j['key']['s3secretkey'],
             },
             'cookies': {
-                'logged-in-user': s.cookies['logged-in-user'],
-                'logged-in-sig': s.cookies['logged-in-sig'],
+                'logged-in-user': r.cookies['logged-in-user'],
+                'logged-in-sig': r.cookies['logged-in-sig'],
             }
         }
 
@@ -60,7 +60,6 @@ def write_config_file(username, password):
 
     # Cookies.
     cookies = auth_config.get('cookies', {})
-    cookies = dict((k, v.replace('%', '%%')) for k, v in cookies.items())
     config.set('cookies', 'logged-in-user', cookies.get('logged-in-user'))
     config.set('cookies', 'logged-in-sig', cookies.get('logged-in-sig'))
 
@@ -112,8 +111,11 @@ def get_config(config=None, config_file=None):
 
     config_dict = dict()
     for sec in config.sections():
-        _items = [(k, v) for k, v in config.items(sec) if k and v] 
-        config_dict[sec] = dict(_items)
+        try:
+            _items = [(k, v) for k, v in config.items(sec) if k and v] 
+            config_dict[sec] = dict(_items)
+        except TypeError:
+            pass
 
     # Recursive/deep update.
     deep_update(config_dict, _config)

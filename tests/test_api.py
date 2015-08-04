@@ -6,6 +6,7 @@ import shutil
 from time import time
 import json
 from copy import deepcopy
+import re
 
 import pytest
 import responses
@@ -268,17 +269,63 @@ def test_get_files_glob_pattern():
 
 # modify_metadata() ______________________________________________________________________
 def test_modify_metadata():
-    pass
+    with responses.RequestsMock(
+        assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, 'http://archive.org/metadata/test',
+                 body={},
+                 status=200)
+        rsps.add(responses.POST, 'http://archive.org/metadata/test',
+                 body='{"success":true,"task_id":423444944,"log":"https://catalogd.archive.org/log/423444944"}',
+                 status=200)
+        r = modify_metadata('test', dict(foo=1))
+        assert r.status_code == 200
+        assert r.json() == {u'task_id': 423444944, u'success': True, u'log': u'https://catalogd.archive.org/log/423444944'}
 
 
 # upload() _______________________________________________________________________________
 def test_upload():
-    pass
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        expected_s3_headers = {
+            'content-length': '7557',
+            'x-archive-queue-derive': '1',
+            'x-archive-meta00-scanner': 'uri(Internet%20Archive%20Python%20library',
+            'x-archive-size-hint': '7557',
+            'content-md5': '6f1834f5c70c0eabf93dea675ccf90c4',
+            'x-archive-auto-make-bucket': '1',
+            'authorization': 'LOW test_access:test_secret',
+        }
+        rsps.add(responses.PUT, re.compile(r'.*s3.us.archive.org/.*'),
+                 adding_headers=expected_s3_headers,
+                 status=200)
+        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+                 body={},
+                 status=200)
+        resp = upload('nasa', TEST_JSON_FILE, debug=True, access_key='test_access', secret_key='test_secret')
+        for r in resp:
+            p = r.prepare()
+            headers = dict((k.lower(), str(v)) for k, v in p.headers.items())
+            scanner_header = '%20'.join(
+                r.headers['x-archive-meta00-scanner'].split('%20')[:4])
+            headers['x-archive-meta00-scanner'] = scanner_header
+            assert headers == expected_s3_headers
+            assert p.url == 'http://s3.us.archive.org/nasa/nasa_meta.json'
 
 
 # download() _____________________________________________________________________________
-def test_download():
-    pass
+def test_download(tmpdir):
+    tmpdir.chdir()
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, 'http://archive.org/download/nasa/nasa_meta.xml',
+                 body='test content',
+                 status=200)
+        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+                 body=ITEM_METADATA,
+                 status=200)
+        r = download('nasa', 'nasa_meta.xml')
+        p = os.path.join(str(tmpdir), 'nasa')
+        assert len(os.listdir(p)) == 1
+        with open('nasa/nasa_meta.xml') as fh:
+            assert fh.read() == 'test content'
 
 
 # delete() _______________________________________________________________________________

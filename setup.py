@@ -38,8 +38,8 @@ setup(
     install_requires=[
         'requests==2.7.0',
         'jsonpatch==0.4',
-        'docopt==0.6.1',
-        'clint==0.3.3',
+        'docopt==0.6.2',
+        'clint==0.4.1',
         'six==1.9.0',
         'schema==0.3.1',
     ],

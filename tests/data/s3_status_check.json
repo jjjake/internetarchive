@@ -1,0 +1,16 @@
+{
+    "accesskey": "test_access", 
+    "bucket": "nasa", 
+    "detail": {
+        "accesskey_ration": 74, 
+        "accesskey_tasks_queued": 0, 
+        "bucket_ration": 24, 
+        "bucket_tasks_queued": 0, 
+        "limit_reason": "", 
+        "rationing_engaged": 0, 
+        "rationing_level": 1399, 
+        "total_global_limit": 1799, 
+        "total_tasks_queued": 1017
+    }, 
+    "over_limit": 0
+}

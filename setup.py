@@ -1,38 +1,48 @@
 from setuptools import setup
-import sys
+from codecs import open
+import re
+import ast
 
+
+_version_re = re.compile(r'__version__\s+=\s+(.*)')
+
+with open('internetarchive/__init__.py', 'rb') as f:
+    version = str(ast.literal_eval(_version_re.search(
+        f.read().decode('utf-8')).group(1)))
+
+with open('README.rst', 'r', 'utf-8') as f:
+    readme = f.read()
+with open('HISTORY.rst', 'r', 'utf-8') as f:
+    history = f.read()
 
 setup(
     name='internetarchive',
-    version='0.8.5',
+    version=version,
+    url='https://github.com/jjjake/internetarchive',
+    license='AGPL 3',
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
-    packages=['internetarchive', 'internetarchive.iacli'],
+    description='A python interface to archive.org.',
+    long_description=readme + '\n\n' + history,
+    include_package_data=True,
+    zip_safe=False,
+    packages=[
+        'internetarchive',
+        'internetarchive.cli',
+    ],
     entry_points = {
         'console_scripts': [
-            'ia = internetarchive.iacli.ia:main',
+            'ia = internetarchive.cli.ia:main',
         ],
     },
-    url='https://github.com/jjjake/ia-wrapper',
-    license='AGPL 3',
-    description='A python interface to archive.org.',
-    long_description=open('README.rst').read(),
     install_requires=[
         'requests==2.7.0',
         'jsonpatch==0.4',
-        'pytest==2.3.4',
-        'docopt==0.6.1',
-        'PyYAML==3.10',
-        'clint==0.3.3',
-        'six==1.4.1',
+        'docopt==0.6.2',
+        'clint==0.4.1',
+        'six==1.9.0',
+        'schema==0.3.1',
     ],
-    extras_require = {
-        'speedups': [
-            'ujson==1.33',
-            'Cython==0.18',
-            'gevent==1.0',
-        ],
-    },
     classifiers=(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

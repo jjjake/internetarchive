@@ -1,16 +1,12 @@
 .PHONY: docs
 
+VERSION=$(shell grep -m1 version internetarchive/__init__.py | cut -d\' -f2)
+
 init:
 	pip install -e .
 
-init-speedups:
-	pip install -e '.[speedups]'
-
 test:
-	py.test --verbose
-
-coverage:
-	py.test --verbose --cov-report html --cov=internetarchive
+	py.test --cov-report term-missing --cov internetarchive
 
 publish:
 	python setup.py register
@@ -24,28 +20,27 @@ docs:
 	@echo "\033[95m\n\nBuild successful! View the docs homepage at docs/build/html/index.html.\n\033[0m"
 
 pyyaml-egg:
-	pip install -d . pyyaml==3.11
-	tar -zxf PyYAML-3.11.tar.gz
-	cd PyYAML-3.11; \
+	pip install -d . pyyaml==3.10
+	tar -zxf PyYAML-3.10.tar.gz
+	cd PyYAML-3.10; \
 	sed -i '1i import setuptools' setup.py; \
-	python2.7 setup.py --without-libyaml bdist_egg
+	python2.7 setup.py --without-libyaml bdist_egg; \
+	python3.4 setup.py --without-libyaml bdist_egg
 	mkdir -p pex-dist
-	mv PyYAML-3.11/dist/*egg pex-dist/
+	mv PyYAML-3.10/dist/*egg pex-dist/
 
-ia-egg:
-	rm -rf build
-	git checkout pex; \
-	python2.7 setup.py bdist_egg
-	mv dist/internetarchive-*.egg pex-dist/
-
-clean-pex:
+pex-binary:
 	rm -fr ia-pex "$$HOME/.pex/install/*" "$$HOME/.pex/build/*"
+	rm -rf wheelhouse
+	pip2.7 wheel .
+	pip3.4 wheel .
+	mv wheelhouse/* pex-dist/
+	rmdir wheelhouse
+	pex --python-shebang='/usr/bin/env python2.7' --python=python2.7 --no-pypi --repo=pex-dist -r pex-requirements.txt --entry-point=internetarchive.cli.ia:main --output-file=ia-$(VERSION)-py2.pex
+	pex --python-shebang='/usr/bin/env python3.4' --python=python3.4 --no-pypi --repo=pex-dist -r pex-requirements.txt --entry-point=internetarchive.cli.ia:main --output-file=ia-$(VERSION)-py3.pex
+	#pex -vvv --python=python2.7 --repo=pex-dist --no-pypi -r internetarchive -r PyYAML -e internetarchive.cli.ia:main -p ia-$(VERSION).pex
+	#/Users/jake/github/jjjake/iamine/.venv/bin/pex -vvv --hashbang='#!/usr/bin/env python' --python=python2.7 --repo=pex-dist --no-pypi -r schema==0.3.1 -r internetarchive==1.0.0 -e internetarchive.cli.ia:main -p ia-$(VERSION).pex
 
-pex-binary: clean-pex pyyaml-egg ia-egg
-	pex -v --repo pex-dist/ -r PyYAML -r internetarchive -e internetarchive.iacli.ia:main -p ia-pex
-
-pex-binary3.4: clean-pex pyyaml-egg ia-egg
-	pex -v --python=python3.4 --repo pex-dist/ -r PyYAML -r internetarchive -e internetarchive.iacli.ia:main -p ia-pex
-
-pex-gevent-binary: clean-pex pyyaml-egg ia-egg
-	pex -v --python=python3.4 --repo pex-dist/ -r gevent -r PyYAML -r internetarchive -e internetarchive.iacli.ia:main -p ia-pex
+clean-pyc:
+	find . -name "*.pyc" -exec rm -f {} \;
+	find . -name "__pycache__" -exec rm -rf {} \;

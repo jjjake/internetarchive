@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+1.0.0 (?)
++++++++++
+- Deprecated `internetarchive.mine` (use: https://github.com/jjjake/iamine).
+- `ia` now looks for plugins installed under the 'internetarchive.cli.puglins'
+  entry_point, and the `internetarchive` module looks for plugins installed under
+  the 'internetarchive.plugins' entry_point.
+- `internetarchive.iacli` package renamed to `internetarchive.cli`.
+
 0.8.3 2015-05-18
 ++++++++++++++++
 - Fixed append to work like a standard metadata update if the metadata field

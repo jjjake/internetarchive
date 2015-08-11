@@ -1,8 +1,10 @@
 """Retrieve and modify metadata for items on archive.org.
 
 usage:
-    ia metadata [--modify=<key:value>...] [--target=<target>] [--priority=<priority>] <identifier>...
-    ia metadata [--spreadsheet=<metadata.csv>] [--priority=<priority>] [--modify=<key:value>...]
+    ia metadata [--modify=<key:value>...] [--target=<target>] [--priority=<priority>]
+                <identifier>...
+    ia metadata [--spreadsheet=<metadata.csv>] [--priority=<priority>]
+                [--modify=<key:value>...]
     ia metadata [--append=<key:value>...] [--priority=<priority>] <identifier>...
     ia metadata [--exists | --formats] <identifier>...
     ia metadata --help
@@ -12,10 +14,11 @@ options:
     -m, --modify=<key:value>          Modify the metadata of an item.
     -t, --target=<target>             The metadata target to modify.
     -a, --append=<key:value>          Append metadata to an element.
-    -s, --spreadsheet=<metadata.csv>  Modify metadata in bulk using a spreadsheet as input.
+    -s, --spreadsheet=<metadata.csv>  Modify metadata in bulk using a spreadsheet as
+                                      input.
     -e, --exists                      Check if an item exists
     -F, --formats                     Return the file-formats the given item contains.
-    -p, --priority=<priority>        Set the task priority.
+    -p, --priority=<priority>         Set the task priority.
 
 """
 import sys
@@ -27,8 +30,7 @@ import csv
 
 from docopt import docopt
 
-from internetarchive import get_item
-from internetarchive.iacli.argparser import get_args_dict
+from internetarchive.cli.argparser import get_args_dict
 
 
 # modify_metadata()
@@ -39,8 +41,8 @@ def modify_metadata(item, metadata, args):
                              priority=args['--priority'])
     if not r.json()['success']:
         error_msg = r.json()['error']
-        sys.stderr.write(u'{0} - error ({1}): {2}\n'.format(item.identifier, r.status_code,
-                                                           error_msg))
+        sys.stderr.write(u'{0} - error ({1}): {2}\n'.format(item.identifier,
+                                                            r.status_code, error_msg))
         return r
     sys.stdout.write('{0} - success: {1}\n'.format(item.identifier,
                                                    r.json()['log']))
@@ -49,23 +51,23 @@ def modify_metadata(item, metadata, args):
 
 # main()
 # ________________________________________________________________________________________
-def main(argv):
+def main(argv, session):
     args = docopt(__doc__, argv=argv)
 
     formats = set()
     responses = []
 
-    for i, _item in enumerate(args['<identifier>']):
-        item = get_item(_item)
+    for i, identifier in enumerate(args['<identifier>']):
+        item = session.get_item(identifier)
 
         # Check existence of item.
         if args['--exists']:
             if item.exists:
                 responses.append(True)
-                sys.stdout.write('{0} exists\n'.format(item.identifier))
+                sys.stdout.write('{0} exists\n'.format(identifier))
             else:
                 responses.append(False)
-                sys.stderr.write('{0} does not exist\n'.format(item.identifier))
+                sys.stderr.write('{0} does not exist\n'.format(identifier))
             if (i + 1) == len(args['<identifier>']):
                 if all(r is True for r in responses):
                     sys.exit(0)
@@ -85,7 +87,7 @@ def main(argv):
 
         # Get metadata.
         elif args['--formats']:
-            for f in item.iter_files():
+            for f in item.get_files():
                 formats.add(f.format)
             if (i + 1) == len(args['<identifier>']):
                 sys.stdout.write('\n'.join(formats) + '\n')
@@ -104,7 +106,7 @@ def main(argv):
         for row in spreadsheet:
             if not row['identifier']:
                 continue
-            item = get_item(row['identifier'])
+            item = session.get_item(row['identifier'])
             if row.get('file'):
                 del row['file']
             metadata = dict((k.lower(), v) for (k, v) in row.items() if v)

@@ -17,15 +17,40 @@ usage:
 """
 
 __title__ = 'internetarchive'
-__version__ = '0.8.8'
+__version__ = '1.0.0.dev1'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
 __copyright__ = 'Copyright 2015 Internet Archive'
 
-from .item import Item, File
+from .item import Item
+from .files import File
 from .search import Search
 from .catalog import Catalog
-from .api import *
+from .api import get_item, get_files, modify_metadata, upload, download, \
+    delete, get_tasks, search_items, get_session, configure
+
+
+__all__ = [
+    '__version__',
+
+    # Classes.
+    'Item',
+    'File',
+    'Search',
+    'Catalog',
+
+    # API.
+    'get_item',
+    'get_files',
+    'modify_metadata',
+    'upload',
+    'download',
+    'delete',
+    'get_tasks',
+    'search_items',
+    'get_session',
+    'configure',
+]
 
 
 # Set default logging handler to avoid "No handler found" warnings.
@@ -40,3 +65,13 @@ except ImportError:
 
 log = logging.getLogger('internetarchive')
 log.addHandler(NullHandler())
+
+
+from pkg_resources import iter_entry_points, load_entry_point
+for object in iter_entry_points(group='internetarchive.plugins', name=None):
+    try:
+        globals()[object.name] = load_entry_point(
+            object.dist, 'internetarchive.plugins', object.name)
+        __all__.append(object.name)
+    except ImportError:
+        log.warning('Failed to import plugin: {}'.format(object.name))

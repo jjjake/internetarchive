@@ -10,31 +10,33 @@ usage:
 
 options:
     -h, --help
-    -q, --quiet            Print status to stdout. 
+    -q, --quiet            Print status to stdout.
     -c, --cascade          Delete all derivative files associated with the given file.
     -a, --all              Delete all files in the given item (Note: Some files, such
                            as <identifier>_meta.xml and <identifier>_files.xml, cannot
                            be deleted)
-    -d, --dry-run          Output files to be deleted to stdout, but don't actually delete.
+    -d, --dry-run          Output files to be deleted to stdout, but don't actually
+                           delete.
     -g, --glob=<pattern>   Only return patterns match the given pattern.
 
 """
 import sys
-from xml.dom.minidom import parseString
 from fnmatch import fnmatch
 
 from docopt import docopt
 
 from internetarchive import get_item
-from internetarchive.iacli.argparser import get_xml_text
+from internetarchive.config import get_config
+from internetarchive.cli.argparser import get_xml_text
 
 
 # main()
-#_________________________________________________________________________________________
-def main(argv):
+# ________________________________________________________________________________________
+def main(argv, config_file=None):
     args = docopt(__doc__, argv=argv)
     verbose = True if not args['--quiet'] else False
-    item = get_item(args['<identifier>'])
+    config = get_config(config_file=config_file)
+    item = get_item(args['<identifier>'], config)
 
     # Files that cannot be deleted via S3.
     no_delete = ['_meta.xml', '_files.xml', '_meta.sqlite']
@@ -68,12 +70,11 @@ def main(argv):
         if any(f.name.endswith(s) for s in no_delete):
             continue
         if args['--dry-run']:
-            sys.stdout.write(' will delete: {0}/{1}\n'.format(item.identifier, 
-                                                             f.name.encode('utf-8')))
+            sys.stdout.write(' will delete: {0}/{1}\n'.format(item.identifier,
+                                                              f.name.encode('utf-8')))
             continue
         resp = f.delete(verbose=verbose, cascade_delete=args['--cascade'])
         if resp.status_code != 204:
-            error = parseString(resp.content)
-            msg = get_xml_text(error.getElementsByTagName('Message'))
+            msg = get_xml_text(resp.content)
             sys.stderr.write(' error: {0} ({1})\n'.format(msg, resp.status_code))
             sys.exit(1)

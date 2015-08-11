@@ -1,6 +1,34 @@
 import hashlib
 import os
 import re
+from itertools import starmap
+from six.moves import zip_longest
+import collections
+
+
+def deep_update(d, u):
+    for k, v in u.items():
+        if isinstance(v, collections.Mapping):
+            r = deep_update(d.get(k, {}), v)
+            d[k] = r
+        else:
+            d[k] = u[k]
+    return d
+
+
+def map2x(func, *iterables):
+    """map() function for Python 2/3 compatability"""
+    zipped = zip_longest(*iterables)
+    if func is None:
+        return zipped
+    return starmap(func, zipped)
+
+
+def validate_ia_identifier(string):
+    legal_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'
+    assert 80 >= len(string) >= 3
+    assert all(c in legal_chars for c in string)
+    return True
 
 
 def needs_quote(s):

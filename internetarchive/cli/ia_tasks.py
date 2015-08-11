@@ -23,12 +23,12 @@ import sys
 from docopt import docopt
 
 from internetarchive import Catalog, get_tasks
-from internetarchive.iacli.argparser import get_args_dict
+from internetarchive.cli.argparser import get_args_dict
 
 
 # ia_catalog()
-#_________________________________________________________________________________________
-def main(argv):
+# ________________________________________________________________________________________
+def main(argv, session):
     args = docopt(__doc__, argv=argv)
     params = get_args_dict(args['--parameter'])
 
@@ -50,7 +50,8 @@ def main(argv):
 
     try:
         if args['<identifier>']:
-            tasks = get_tasks(identifier=args['<identifier>'], task_type=task_type, params=params)
+            tasks = get_tasks(identifier=args['<identifier>'], task_type=task_type,
+                              params=params)
         elif args['--get-task-log']:
             task = get_tasks(task_ids=args['--get-task-log'], params=params)
             if task:
@@ -69,7 +70,7 @@ def main(argv):
 
         for t in tasks:
             task_info = [
-                t.identifier, t.task_id, t.server, t.time, t.command, 
+                t.identifier, t.task_id, t.server, t.time, t.command,
                 row_types[t.row_type],
             ]
             if args['--verbose']:

@@ -1,13 +1,15 @@
 #!/usr/bin/env python
-"""A command line interface for Archive.org.
+"""A command line interface to Archive.org.
 
 usage:
-    ia [--debug | --help | --version] [<command>] [<args>...]
+    ia [--help | --version]
+    ia [--config-file FILE] [--log] <command> [<args>]...
 
 options:
     -h, --help
     -v, --version
-    -d, --debug  [default: True]
+    -c, --config-file FILE  Use FILE as config file.
+    -l, --log               Turn on logging [default: False].
 
 commands:
     help      Retrieve help for subcommands.
@@ -17,13 +19,13 @@ commands:
     download  Download files from Archive.org.
     delete    Delete files from Archive.org.
     search    Search Archive.org.
-    mine      Download item metadata from Archive.org concurrently.
     tasks     Retrieve information about your Archive.org catalog tasks.
     list      List files in a given item.
 
 See 'ia help <command>' for more information on a specific command.
 
 """
+
 def suppress_keyboard_interrupt_message():
     """Register a new excepthook to suppress KeyboardInterrupt
     exception messages, and exit with status code 130.
@@ -41,25 +43,36 @@ def suppress_keyboard_interrupt_message():
 
 import sys
 suppress_keyboard_interrupt_message()
+import os
 from subprocess import call
 
-from docopt import docopt
+from docopt import docopt, printable_usage
+from schema import Schema, Use, Or, And, SchemaError
 
 from internetarchive import __version__
+from internetarchive import get_session
+from internetarchive.config import get_config
+from internetarchive.cli import *
 
 
 # main()
-#_________________________________________________________________________________________
+# ________________________________________________________________________________________
 def main():
-    """This script is the CLI driver for ia-wrapper. It dynamically
-    imports and calls the subcommand specified on the command line. It
-    depends on the ``internetarchive`` and ``iacli`` packages.
-
-    Subcommands can be arbitrarily added to the ``iacli`` package as
-    modules, and can be dynamically executed via this script, ``ia``.
-
-    """
+    """This is the CLI driver for ia-wrapper."""
     args = docopt(__doc__, version=__version__, options_first=True)
+
+    # Validate args.
+    s = Schema({str: bool,
+        '--config-file': Or(None, lambda f: os.path.exists(f),
+            error='--config-file should be a readable file.'),
+        '<args>': list,
+        '<command>': str,
+    })
+    try:
+        args = s.validate(args)
+    except SchemaError as exc:
+        sys.stderr.write('{0}\n{1}\n'.format(str(exc), printable_usage(__doc__)))
+        sys.exit(1)
 
     # Get subcommand.
     cmd = args['<command>']
@@ -69,30 +82,31 @@ def main():
         do='download',
         rm='delete',
         se='search',
-        mi='mine',
         ta='tasks',
         ls='list',
     )
     if cmd in aliases:
         cmd = aliases[cmd]
 
+    if (cmd == 'help') or (not cmd):
+        if not args['<args>']:
+            sys.exit(sys.stderr.write(__doc__.strip() + '\n'))
+        else:
+            sys.exit(call(['ia', args['<args>'][-1], '--help']))
+
     argv = [cmd] + args['<args>']
 
-    if cmd == 'help' or not cmd:
-        if not args['<args>']:
-            sys.stderr.write(__doc__.strip() + '\n')
-        sys.exit(1)
 
-    # Dynamically import and call subcommand module specified on the
-    # command line.
-    module = 'internetarchive.iacli.ia_{0}'.format(cmd)
     try:
-        globals()['ia_module'] = __import__(module, fromlist=['internetarchive.iacli'])
-    except ImportError:
+        ia_module = globals()['ia_{0}'.format(cmd)]
+    except KeyError:
+        sys.stderr.write(__doc__.strip() + '\n\n')
         sys.stderr.write('error: "{0}" is not an `ia` command!\n'.format(cmd))
         sys.exit(127)
 
-    ia_module.main(argv)
+    config = {'logging': {'level': 'INFO'}} if args['--log'] else None
+    session = get_session(config_file=args['--config-file'], config=config)
+    sys.exit(ia_module.main(argv, session))
 
 if __name__ == '__main__':
     main()

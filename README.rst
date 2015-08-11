@@ -21,13 +21,6 @@ You can install this module via pip:
 
 ``pip install internetarchive``
 
-Alternatively, you can install a few extra dependencies to help speed things up a bit:
-
-``pip install "internetarchive[speedups]"``
-
-This will install `ujson <https://pypi.python.org/pypi/ujson>`__ for faster JSON parsing,
-and `gevent <https://pypi.python.org/pypi/gevent>`__ for concurrent downloads.
-
 If you want to install this module globally on your system instead of inside a ``virtualenv``, use sudo:
 
 ``sudo pip install internetarchive``
@@ -113,10 +106,6 @@ You can also modify metadata after `configuring ia <https://github.com/jjjake/in
 
     $ ia metadata <identifier> --modify="foo:bar" --modify="baz:foooo"
 
-Data Mining
-~~~~~~~~~~~
-
-IA Mine can be used for data mining Archive.org metadata and search results: `https://github.com/jjjake/iamine <https://github.com/jjjake/iamine>`__.
 
 Searching
 ~~~~~~~~~

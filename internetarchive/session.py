@@ -68,13 +68,14 @@ class ArchiveSession(requests.sessions.Session):
         fh.setFormatter(formatter)
         self.log.addHandler(fh)
 
+    _ITEM_MEDIATYPE_TABLE={'collection':item.Collection}
     # get_item()
     # ____________________________________________________________________________________
     def get_item(self, identifier, item_metadata=None, request_kwargs=None):
         request_kwargs = {} if not request_kwargs else request_kwargs
         if not item_metadata:
             item_metadata = self.get_metadata(identifier, request_kwargs)
-        return internetarchive.item.Item(self, identifier, item_metadata)
+        return self._ITEM_MEDIATYPE_TABLE.get(item_metadata.get('metadata',{}).get('mediatype',''), item.Item)(self, identifier, item_metadata)
 
     # get_metadata()
     # ____________________________________________________________________________________

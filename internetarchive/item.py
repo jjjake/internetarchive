@@ -654,3 +654,27 @@ class Item(BaseItem):
                                         request_kwargs=request_kwargs)
                 responses.append(resp)
         return responses
+
+# Collection class
+# ________________________________________________________________________________________
+class Collection(Item):
+    """This class represents an archive.org collection.
+    """
+    def __init__(self, *args, **kwargs):
+        self.searches = {}
+        if isinstance(args[0], Item):
+            orig=args[0]
+            args = (orig.session, orig.identifier, orig.item_metadata)
+        super(Collection, self).__init__(*args, **kwargs)
+        if self.item_metadata.get(u'metadata',{}).get(u'mediatype',u'collection') != u'collection':
+            raise ValueError('mediatype is not "collection"!')
+        self._make_search('contents', "collection:{0.identifier}")
+        self._make_search('subcollections', "collection:{0.identifier} AND mediatype:collection")
+
+    def _do_search(self, query, name):
+        rtn = self.searches.setdefault(name, self.session.search_items(query, fields=[u'identifier'])).iter_as_items()
+        if not hasattr(self, name+"_count"):
+            setattr(self, name+"_count", self.searches[name].num_found)
+
+    def _make_search(self, name, query):
+        setattr(self, name, lambda :self._do_search(query.format(self), name))

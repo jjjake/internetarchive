@@ -64,7 +64,7 @@ class Search(object):
     def _get_search_info(self):
         info_params = self.params.copy()
         info_params['rows'] = 0
-        r = self.session.get(self.url, params=self.params, **self.request_kwargs)
+        r = self.session.get(self.url, params=info_params, **self.request_kwargs)
         results = r.json()
         del results['response']['docs']
         return results

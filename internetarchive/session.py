@@ -8,11 +8,9 @@ from requests.exceptions import HTTPError
 import requests.adapters
 
 from .config import get_config
-#import internetarchive.item
-#import internetarchive.search
-from .item import Item
-from .search import Search
-from .catalog import Catalog
+import internetarchive.item
+import internetarchive.search
+import internetarchive.catalog
 
 
 class ArchiveSession(requests.sessions.Session):
@@ -79,7 +77,7 @@ class ArchiveSession(requests.sessions.Session):
         request_kwargs = {} if not request_kwargs else request_kwargs
         if not item_metadata:
             item_metadata = self.get_metadata(identifier, request_kwargs)
-        return Item(self, identifier, item_metadata)
+        return internetarchive.item.Item(self, identifier, item_metadata)
 
     # get_metadata()
     # ____________________________________________________________________________________
@@ -137,7 +135,7 @@ class ArchiveSession(requests.sessions.Session):
         :returns: A :class:`Search` object, yielding search results.
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
-        return Search(self, query,
+        return internetarchive.search.Search(self, query,
                       fields=fields,
                       params=params,
                       config=config,
@@ -185,7 +183,7 @@ class ArchiveSession(requests.sessions.Session):
         :returns: A set of :class:`CatalogTask` objects.
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
-        _catalog = Catalog(self,
+        _catalog = internetarchive.catalog.Catalog(self,
                            identifier=identifier,
                            task_ids=task_ids,
                            params=params,

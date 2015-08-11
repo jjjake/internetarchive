@@ -7,12 +7,8 @@ import requests.cookies
 from requests.exceptions import HTTPError
 import requests.adapters
 
-from .config import get_config
-#import internetarchive.item
-#import internetarchive.search
-from .item import Item
-from .search import Search
-from .catalog import Catalog
+from . import config as config_module
+from . import item, search, catalog
 
 
 class ArchiveSession(requests.sessions.Session):
@@ -32,26 +28,25 @@ class ArchiveSession(requests.sessions.Session):
         super(ArchiveSession, self).__init__()
         http_adapter_kwargs = {} if not http_adapter_kwargs else http_adapter_kwargs
 
-        config = get_config(config, config_file)
-        s3_config = config.get('s3', {})
+        self.config = config_module.get_config(config, config_file)
+        s3_config = self.config.get('s3', {})
         max_retries = http_adapter_kwargs.get('max_retries', 10)
 
-        self.config = config
-        self.cookies.update(config.get('cookies', {}))
-        self.secure = config.get('secure', False)
+        self.cookies.update(self.config.get('cookies', {}))
+        self.secure = self.config.get('secure', False)
         self.protocol = 'https:' if self.secure else 'http:'
-        self.access_key = config.get('s3', {}).get('access')
-        self.secret_key = config.get('s3', {}).get('secret')
+        self.access_key = self.config.get('s3', {}).get('access')
+        self.secret_key = self.config.get('s3', {}).get('secret')
         self.log = logging.getLogger(__name__)
 
         max_retries_adapter = requests.adapters.HTTPAdapter(**http_adapter_kwargs)
         self.mount('{0}//'.format(self.protocol), max_retries_adapter)
 
-        logging_config = config.get('logging', {})
+        logging_config = self.config.get('logging', {})
         if logging_config:    
-            level = self.log_level[logging_config.get('level', 'NOTSET')]
-            log_file = config.get
-            self.set_file_logger(level, logging_config.get('file', 'internetarchive.log'))
+            self.set_file_logger(
+                self.log_level[logging_config.get('level', 'NOTSET')],
+                logging_config.get('file', 'internetarchive.log'))
 
     def set_file_logger(self, log_level, path, logger_name='internetarchive'):
         """Convenience function to quickly configure any level of
@@ -73,13 +68,14 @@ class ArchiveSession(requests.sessions.Session):
         fh.setFormatter(formatter)
         self.log.addHandler(fh)
 
+    _ITEM_MEDIATYPE_TABLE={'collection':item.Collection}
     # get_item()
     # ____________________________________________________________________________________
     def get_item(self, identifier, item_metadata=None, request_kwargs=None):
         request_kwargs = {} if not request_kwargs else request_kwargs
         if not item_metadata:
             item_metadata = self.get_metadata(identifier, request_kwargs)
-        return Item(self, identifier, item_metadata)
+        return self._ITEM_MEDIATYPE_TABLE.get(item_metadata.get('metadata',{}).get('mediatype',''), item.Item)(self, identifier, item_metadata)
 
     # get_metadata()
     # ____________________________________________________________________________________
@@ -137,7 +133,7 @@ class ArchiveSession(requests.sessions.Session):
         :returns: A :class:`Search` object, yielding search results.
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
-        return Search(self, query,
+        return search.Search(self, query,
                       fields=fields,
                       params=params,
                       config=config,
@@ -185,7 +181,7 @@ class ArchiveSession(requests.sessions.Session):
         :returns: A set of :class:`CatalogTask` objects.
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
-        _catalog = Catalog(self,
+        _catalog = catalog.Catalog(self,
                            identifier=identifier,
                            task_ids=task_ids,
                            params=params,

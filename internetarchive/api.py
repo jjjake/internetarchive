@@ -10,8 +10,8 @@ This module implements the Internetarchive API.
 from six.moves import input
 from getpass import getpass
 
-from internetarchive.session import ArchiveSession
-from internetarchive.config import write_config_file
+from . import session
+from . import config as config_module
 
 
 # get_session()
@@ -25,7 +25,7 @@ def get_session(config=None, config_file=None, http_adapter_kwargs=None):
     :type config_file: str
     :param config_file: A path to a config file used to configure your session.
     """
-    return ArchiveSession(config, config_file, http_adapter_kwargs)
+    return session.ArchiveSession(config, config_file, http_adapter_kwargs)
 
 
 # get_item()
@@ -457,5 +457,5 @@ def configure(username=None, password=None):
     """
     username = input('Email address: ') if not username else username
     password = getpass('Password: ') if not password else password
-    config_file_path = write_config_file(username, password)
+    config_file_path = config_module.write_config_file(username, password)
     print('\nConfig saved to: {0}'.format(config_file_path))

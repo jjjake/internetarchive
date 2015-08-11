@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals, print_function
 
+import itertools
 
 # Search class
 # ________________________________________________________________________________________
@@ -80,3 +81,8 @@ class Search(object):
             results = r.json()
             for doc in results['response']['docs']:
                 yield doc
+
+    def iter_as_items(self):
+        if not any(v=='identifier' and k.startswith('fl[') for (k,v) in self.params.iteritems()):
+            raise KeyError('This search did not include item identifiers!')
+        return itertools.imap(lambda x:self.session.get_item(x[u'identifier']), iter(self))

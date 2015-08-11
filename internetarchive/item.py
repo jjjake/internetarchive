@@ -12,7 +12,7 @@ import six
 
 from . import iarequest, utils
 #from .session import ArchiveSession
-from .files import File
+from . import files
 from . import __version__
 
 log = logging.getLogger(__name__)
@@ -143,7 +143,7 @@ class Item(BaseItem):
         :rtype: :class:`internetarchive.File <File>`
         :returns: An :class:`internetarchive.File <File>` object.
         """
-        return File(self, file_name)
+        return files.File(self, file_name)
 
     # get_files()
     # ____________________________________________________________________________________

@@ -20,7 +20,7 @@ with open(TEST_JSON_FILE) as fh:
 
 def test_ia_search_sort_asc(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&sort%5B0%5D=identifier+asc&output=json&rows=100',
+        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc',
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
@@ -44,7 +44,7 @@ def test_ia_search_sort_asc(capsys):
 def test_ia_search_multi_page(capsys):
     j = json.loads(TEST_SEARCH_RESPONSE)
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=25&fl%5B0%5D=identifier',
+        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0&fl%5B0%5D=identifier',
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
@@ -86,7 +86,7 @@ def test_ia_search_multi_page(capsys):
 
 def test_ia_search_itemlist(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=100',
+        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0',
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
@@ -101,7 +101,6 @@ def test_ia_search_itemlist(capsys):
         except SystemExit as exc:
             assert not exc.code
 
-    #j = json.loads(TEST_SEARCH_RESPONSE)
     out, err = capsys.readouterr()
     j = json.loads(TEST_SEARCH_RESPONSE)
     expected_output = '\n'.join([d['identifier'] for d in j['response']['docs']]) + '\n'
@@ -110,7 +109,7 @@ def test_ia_search_itemlist(capsys):
 
 def test_ia_search_num_found(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=100',
+        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0',
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)

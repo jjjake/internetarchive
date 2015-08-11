@@ -26,7 +26,6 @@ def test_ia_metadata_formats():
     stdout, stderr = proc.communicate()
     test_output_set = set([
         "Text",
-        "Archive BitTorrent",
         "Metadata",
         "Unknown",
     ])

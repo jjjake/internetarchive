@@ -48,8 +48,8 @@ class BaseItem(object):
     # __repr__()
     # ____________________________________________________________________________________
     def __repr__(self):
-        return ('Item(identifier={identifier!r}, '
-                'exists={exists!r})'.format(**self.__dict__))
+        return ('{0.__class__.__name__}(identifier={identifier!r}, '
+                'exists={exists!r})'.format(self, **self.__dict__))
 
     # load()
     # ____________________________________________________________________________________

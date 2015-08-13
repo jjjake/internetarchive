@@ -1,2 +1,2 @@
-include README.rst LICENSE requirements.txt
+include README.rst LICENSE requirements.txt HISTORY.rst
 recursive-include tests *.py

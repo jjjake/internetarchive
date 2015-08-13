@@ -22,7 +22,7 @@ def get_auth_config(username, password):
         u = 'https://archive.org/account/login.php'
         r = s.post(u, data=payload, cookies={'test-cookie': '1'})
 
-        if 'logged-in-sig' not in r.cookies:
+        if 'logged-in-sig' not in s.cookies:
             raise AuthenticationError(
                     'Authentication failed. Please check your credentials and try again.')
 
@@ -38,8 +38,8 @@ def get_auth_config(username, password):
                 'secret': j['key']['s3secretkey'],
             },
             'cookies': {
-                'logged-in-user': r.cookies['logged-in-user'],
-                'logged-in-sig': r.cookies['logged-in-sig'],
+                'logged-in-user': s.cookies['logged-in-user'],
+                'logged-in-sig': s.cookies['logged-in-sig'],
             }
         }
 

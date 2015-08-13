@@ -46,6 +46,3 @@ pex-binary: clean-pex pyyaml-egg ia-egg
 
 pex-binary3.4: clean-pex pyyaml-egg ia-egg
 	pex -v --python=python3.4 --repo pex-dist/ -r PyYAML -r internetarchive -e internetarchive.iacli.ia:main -p ia-pex
-
-pex-gevent-binary: clean-pex pyyaml-egg ia-egg
-	pex -v --python=python3.4 --repo pex-dist/ -r gevent -r PyYAML -r internetarchive -e internetarchive.iacli.ia:main -p ia-pex

@@ -4,10 +4,20 @@ Release History
 ---------------
 
 
-0.8.4 (2015-06-18)
+0.8.8 (2015-07-13)
 ++++++++++++++++++
 
 **Bugfixes**
+
+- Updated docopt to v0.6.2 and PyYAML to v3.11.
+- Updated setup.py to automatically pull version from `__init__`.
+
+
+0.8.5 (2015-07-13)
+++++++++++++++++++
+
+**Bugfixes**
+
 - Fixed UnicodeEncodeError in `ia metadata --append`.
 
 **Features and Improvements**

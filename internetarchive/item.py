@@ -57,13 +57,16 @@ class BaseItem(object):
         if item_metadata:
             self.item_metadata = item_metadata
 
-        if not self.identifier:
-            self.identifier = item_metadata.get('metadata', {}).get('identifier')
-
         self.exists = True if self.item_metadata else False
 
         for key in self.item_metadata:
             setattr(self, key, self.item_metadata[key])
+
+        if not self.identifier:
+            self.identifier = self.metadata.get('identifier')
+
+        mc = self.metadata.get('collection',[])
+        self.collection = IdentifierListAsItems(mc if isinstance(mc, list) else [mc], self.session)
 
 
 # Item class
@@ -679,3 +682,23 @@ class Collection(Item):
 
     def _make_search(self, name, query):
         setattr(self, name, lambda :self._do_search(query.format(self), name))
+
+
+class IdentifierListAsItems(object):
+
+    def __init__(self, id_lst, session):
+        self.ids = id_lst
+        self._items = [None]*len(self.ids)
+        self.session = session
+
+    def __len__(self):
+        return len(self.ids)
+
+    def __getitem__(self, idx):
+        for i in (range(*idx.indices(len(self))) if isinstance(idx, slice) else [idx]):
+            if self._items[i] is None:
+                self._items[i] = self.session.get_item(self.ids[i])
+        return self._items[idx]
+
+    def __repr__(self):
+        return '{0.__class__.__name__}({0.ids!r})'.format(self)

@@ -73,6 +73,9 @@ class Search(object):
     # __iter__()
     # ____________________________________________________________________________________
     def __iter__(self):
+        return SearchIterator(self, self.iter_as_results())
+
+    def iter_as_results(self):
         """Generator for iterating over search results"""
         total_pages = ((self.num_found / int(self.params['rows'])) + 2)
         for page in range(1, total_pages):
@@ -85,4 +88,26 @@ class Search(object):
     def iter_as_items(self):
         if not any(v=='identifier' and k.startswith('fl[') for (k,v) in self.params.iteritems()):
             raise KeyError('This search did not include item identifiers!')
-        return itertools.imap(lambda x:self.session.get_item(x[u'identifier']), iter(self))
+        return SearchIterator(self, itertools.imap(lambda x:self.session.get_item(x[u'identifier']), self.iter_as_results()))
+
+    def __len__(self):
+        return self.num_found
+
+
+class SearchIterator(object):
+
+    def __init__(self, search, iterator):
+        self.search = search
+        self.iterator = iterator
+
+    def __len__(self):
+        return self.search.num_found
+
+    def next(self):
+        return self.iterator.next()
+
+    def __iter__(self):
+        return self
+
+    def __repr__(self):
+        return '{0.__class__.__name__}({0.search!r}, {0.iterator!r})'.format(self)

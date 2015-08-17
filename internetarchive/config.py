@@ -26,6 +26,10 @@ def get_auth_config(username, password):
         r = s.get(u, params=p)
         j = r.json()
 
+        if not j or not j.get('key'):
+            raise requests.exceptions.HTTPError(
+                'Authorization failed. Please check your credentials and try again.')
+
         auth_config = {
             's3': {
                 'access_key': j['key']['s3accesskey'],

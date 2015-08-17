@@ -13,6 +13,7 @@ from getpass import getpass
 
 from docopt import docopt
 import yaml
+from requests.exceptions import HTTPError
 
 from internetarchive.config import get_auth_config
 
@@ -28,7 +29,11 @@ def main(argv):
     username=raw_input('Email address: '),
     password=getpass('Password: '),
 
-    config = get_auth_config(username, password)
+    try:
+        config = get_auth_config(username, password)
+    except HTTPError as exc:
+        sys.stderr.write('\n{0}\n'.format(str(exc)))
+        sys.exit(1)
 
     configfile = yaml.dump(config, default_flow_style=False)
     configdir = os.path.join(os.environ['HOME'], '.config')

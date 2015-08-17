@@ -8,6 +8,13 @@ Release History
 
 **Bugfixes**
 
+- Added error message for failed `ia configure` calls due to invalid creds. 
+
+0.9.1 (2015-08-13)
+++++++++++++++++++
+
+**Bugfixes**
+
 - Updated docopt to v0.6.2 and PyYAML to v3.11.
 - Updated setup.py to automatically pull version from `__init__`.
 

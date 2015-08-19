@@ -25,9 +25,9 @@ def test_ia_metadata_formats():
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
     test_output_set = set([
-        "Text",
-        "Metadata",
-        "Unknown",
+        'Text',
+        'Metadata',
+        'Unknown',
     ])
     assert set(stdout[:-1].split('\n')) == test_output_set
 

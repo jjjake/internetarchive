@@ -675,6 +675,7 @@ class Collection(Item):
         rtn = self.searches.setdefault(name, self.session.search_items(query, fields=[u'identifier'])).iter_as_items()
         if not hasattr(self, name+"_count"):
             setattr(self, name+"_count", self.searches[name].num_found)
+        return rtn
 
     def _make_search(self, name, query):
         setattr(self, name, lambda :self._do_search(query.format(self), name))

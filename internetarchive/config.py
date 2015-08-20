@@ -74,7 +74,7 @@ def write_config_file(username, password):
 # parse_config_file()
 # ________________________________________________________________________________________
 def parse_config_file(config_file=None):
-    config = configparser.ConfigParser()
+    config = configparser.RawConfigParser()
 
     if not config_file:
         config_dir = os.path.expanduser('~/.config')

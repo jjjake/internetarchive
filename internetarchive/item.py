@@ -50,8 +50,7 @@ class BaseItem(object):
     # __repr__()
     # ____________________________________________________________________________________
     def __repr__(self):
-        return ('{0.__class__.__name__}(identifier={identifier!r}, '
-                'exists={exists!r})'.format(self, **self.__dict__))
+        return ('{0.__class__.__name__}(identifier={0.identifier!r}{notloaded})'.format(self, notloaded=', item_metadata={}' if not self.exists else ''))
 
     # load()
     # ____________________________________________________________________________________
@@ -150,8 +149,12 @@ class Item(BaseItem):
         self._make_URL('metadata')
         self._make_URL('download')
         self._make_URL('history', 'https://catalogd.archive.org/{path}/{0.identifier}')
-        self._make_URL('editxml', 'https://archive.org/{path}.php?type={0.metadata[mediatype]}&edit_item={0.identifier}')
+        if self.metadata.get('mediatype'):
+            self._make_URL('editxml', 'https://archive.org/{path}.php?type={0.metadata[mediatype]}&edit_item={0.identifier}')
         self._make_URL('item_mgr', 'https://archive.org/item-mgr.php?identifier={0.identifier}')
+
+        if self.metadata.get('title'):
+            self.wikilink = '* [{0.urls.details} {0.identifier}] -- {0.metadata[title]}'.format(self)
 
     def _make_URL(self, path, url_format='https://archive.org/{path}/{0.identifier}'):
         setattr(self.urls, path, url_format.format(self, path=path))

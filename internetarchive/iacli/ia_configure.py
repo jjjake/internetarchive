@@ -10,6 +10,7 @@ options:
 import os
 import sys
 from getpass import getpass
+from six.moves import input
 
 from docopt import docopt
 import yaml
@@ -26,8 +27,9 @@ def main(argv):
 
     sys.stdout.write('Please enter your Archive.org credentials below to have your\n'
                      'Archive.org cookies and IA-S3 keys added to your config file.\n\n')
-    username=raw_input('Email address: '),
-    password=getpass('Password: '),
+
+    username = input('Email address: ')
+    password = getpass('Password: ')
 
     try:
         config = get_auth_config(username, password)
@@ -35,7 +37,7 @@ def main(argv):
         sys.stderr.write('\n{0}\n'.format(str(exc)))
         sys.exit(1)
 
-    configfile = yaml.dump(config, default_flow_style=False)
+    configfile = yaml.dump(config, default_flow_style=False).encode('utf-8')
     configdir = os.path.join(os.environ['HOME'], '.config')
     if not os.path.isdir(configdir) and not os.path.isfile(configdir):
         os.mkdir(configdir)
@@ -47,9 +49,9 @@ def main(argv):
         filename = os.path.join(os.environ['HOME'], '.internetarchive.yml')
 
     if os.path.exists(filename):
-        overwrite = raw_input('\nYou already have an ia config file: '
-                              '{0} \n\nWould you like to overwrite it?'
-                              '[y/n] '.format(filename).lower())
+        overwrite = input('\nYou already have an ia config file: '
+                          '{0} \n\nWould you like to overwrite it?'
+                          '[y/n] '.format(filename).lower())
         if overwrite not in ['y', 'yes']:
             sys.stdout.write('\nExiting without overwriting config file!\n')
             sys.exit(1)

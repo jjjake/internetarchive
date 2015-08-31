@@ -3,7 +3,14 @@
 Release History
 ---------------
 
-0.9.1 (2015-08-13)
+0.9.3 (?)
++++++++++
+
+**Bugfixes**
+
+- Made `ia configure` Python 3 compatabile.
+
+0.9.2 (2015-08-17)
 ++++++++++++++++++
 
 **Bugfixes**

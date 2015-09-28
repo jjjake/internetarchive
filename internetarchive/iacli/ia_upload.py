@@ -46,6 +46,7 @@ import csv
 
 from docopt import docopt, printable_usage
 from requests.exceptions import HTTPError
+import six
 
 from internetarchive.session import ArchiveSession
 from internetarchive import get_item
@@ -123,6 +124,7 @@ def _upload_files(args, identifier, local_file, upload_kwargs, prev_identifier=N
             )
             sys.exit(1)
 
+
 # main()
 # ________________________________________________________________________________________
 def main(argv):
@@ -130,13 +132,17 @@ def main(argv):
 
     metadata = get_args_dict(args['--metadata'])
     # Make sure the collection being uploaded to exists.
-    collection_id = metadata.get('collection')
-    if collection_id and not args['--no-collection-check'] and not args['--status-check']:
-        collection = get_item(collection_id) 
+    collection_ids = metadata.get('collection', [])
+    if isinstance(collection_ids, six.string_types):
+        collection_ids = [collection_ids]
+    for cid in collection_ids:
+        if args['--no-collection-check'] or args['--status-check']:
+            break
+        collection = get_item(cid) 
         if not collection.exists:
             sys.stderr.write(
                     'You must upload to a collection that exists. '
-                    '"{0}" does not exist.\n{1}\n'.format(collection_id,
+                    '"{0}" does not exist.\n{1}\n'.format(collection.identifier,
                                                           printable_usage(__doc__)))
             sys.exit(1)
 

@@ -3,12 +3,25 @@
 Release History
 ---------------
 
-0.9.1 (2015-08-13)
+0.9.3 (2015-09-28)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Added ability to download items from an itemlist or search query in `ia download`.
+
+**Bugfixes**
+
+- Fixed bug in `ia upload` where uploading an item with more than one collection specified caused the collection check to fail.
+
+
+0.9.2 (2015-08-17)
 ++++++++++++++++++
 
 **Bugfixes**
 
 - Added error message for failed `ia configure` calls due to invalid creds. 
+
 
 0.9.1 (2015-08-13)
 ++++++++++++++++++

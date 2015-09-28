@@ -9,6 +9,7 @@ Release History
 **Features and Improvements**
 
 - Added ability to download items from an itemlist or search query in `ia download`.
+- Made `ia configure` Python 3 compatabile.
 
 **Bugfixes**
 

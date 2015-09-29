@@ -11,6 +11,7 @@ from requests import Response
 from clint.textui import progress
 import six
 import six.moves.urllib as urllib
+from lazytable import LazyTable
 
 from . import __version__, session, iarequest, utils
 
@@ -193,7 +194,7 @@ class Item(object):
     # ____________________________________________________________________________________
     def download(self, concurrent=None, source=None, formats=None, glob_pattern=None,
                  dry_run=None, verbose=None, ignore_existing=None, checksum=None,
-                 destdir=None, no_directory=None):
+                 destdir=None, no_directory=None, sync_db=None):
         """Download the entire item into the current working directory.
 
         :type concurrent: bool
@@ -285,6 +286,9 @@ class Item(object):
                 f.download(path, verbose, ignore_existing, checksum, destdir)
         if concurrent:
             pool.join()
+        if sync_db:
+            db = LazyTable(sync_db, 'items-downloaded')
+            db.upsert({'identifier': self.identifier}, {'identifier': self.identifier})
         return True
 
     # modify_metadata()
@@ -705,7 +709,7 @@ class File(object):
     # download()
     # ____________________________________________________________________________________
     def download(self, file_path=None, verbose=None, ignore_existing=None, checksum=None,
-                 destdir=None):
+                 destdir=None, sync_db=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -731,6 +735,13 @@ class File(object):
             if os.path.isfile(destdir):
                 raise IOError('{} is not a directory!'.format(destdir))
             file_path = os.path.join(destdir, file_path)
+
+        if sync_db:
+            db = LazyTable(sync_db, 'files-downloaded')
+            db.upsert({'identifier': self.identifier}, {'identifier': self.identifier})
+            if db.get_one({'file_path': file_path}):
+                print(' skipping {0}: already exists.'.format(file_path))
+                return
 
         if os.path.exists(file_path):
             if ignore_existing is False and checksum is False:
@@ -760,6 +771,12 @@ class File(object):
                 if chunk:
                     f.write(chunk)
                     f.flush()
+        # Update DB.
+        if sync_db:
+            db_id = '{0}/{1}'.format(self.identifier, self.name)
+            db.upsert({'file_path': file_path},
+                      {'id': db_id, 'file_path': file_path, 'md5': self.md5})
+
         log.info('downloaded {0}/{1} to {2}'.format(self.identifier,
                                                     self.name.encode('utf-8'),
                                                     file_path))

@@ -36,6 +36,7 @@ setup(
         'PyYAML==3.11',
         'clint==0.3.3',
         'six==1.4.1',
+        'lazytable==0.4.0',
     ],
     extras_require = {
         'speedups': [

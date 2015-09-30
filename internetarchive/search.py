@@ -64,8 +64,14 @@ class Search(object):
         del results['response']['docs']
         return results
 
+    def _get_item_from_search_result(self, search_result):
+        return self.session.get_item(search_result[u'identifier'])
+
     def __iter__(self):
         return SearchIterator(self, self.iter_as_results())
+
+    def __len__(self):
+        return self.num_found
 
     def iter_as_results(self):
         """Generator for iterating over search results"""
@@ -84,12 +90,6 @@ class Search(object):
         item_iterator = itertools.imap(self._get_item_from_search_result,
                                        self.iter_as_results())
         return SearchIterator(self, item_iterator)
-
-    def __len__(self):
-        return self.num_found
-
-    def _get_item_from_search_result(self, search_result):
-        return self.session.get_item(search_result[u'identifier'])
 
 class SearchIterator(object):
 

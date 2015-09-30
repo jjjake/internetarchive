@@ -86,7 +86,8 @@ class Search(object):
                 yield doc
 
     def iter_as_items(self):
-        if not any(v=='identifier' and k.startswith('fl[') for (k,v) in self.params.iteritems()):
+        fields = [v for (k,v) in self.params.iteritems() if k.startswith('fl[')]
+        if fields and not any(f=='identifier' for f in fields):
             raise KeyError('This search did not include item identifiers!')
         return SearchIterator(self, itertools.imap(lambda x:self.session.get_item(x[u'identifier']), self.iter_as_results()))
 

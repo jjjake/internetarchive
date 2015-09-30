@@ -4,21 +4,23 @@ import sys
 from fnmatch import fnmatch
 import logging
 import time
+import functools
+import json
 
 from requests.exceptions import HTTPError
 from requests import Response
 from clint.textui import progress
 import six
 
-from . import iarequest, utils
+from . import iarequest, utils, files
 #from .session import ArchiveSession
-from . import files
 from . import __version__
 
 log = logging.getLogger(__name__)
 
-
+@functools.total_ordering
 class BaseItem(object):
+    EXCLUDED_ITEM_METADATA_KEYS = (u'workable_servers', u'server')
     # __init__()
     # ____________________________________________________________________________________
     def __init__(self, identifier=None, item_metadata=None):
@@ -48,8 +50,7 @@ class BaseItem(object):
     # __repr__()
     # ____________________________________________________________________________________
     def __repr__(self):
-        return ('{0.__class__.__name__}(identifier={identifier!r}, '
-                'exists={exists!r})'.format(self, **self.__dict__))
+        return ('{0.__class__.__name__}(identifier={0.identifier!r}{notloaded})'.format(self, notloaded=', item_metadata={}' if not self.exists else ''))
 
     # load()
     # ____________________________________________________________________________________
@@ -57,13 +58,27 @@ class BaseItem(object):
         if item_metadata:
             self.item_metadata = item_metadata
 
-        if not self.identifier:
-            self.identifier = item_metadata.get('metadata', {}).get('identifier')
-
         self.exists = True if self.item_metadata else False
 
         for key in self.item_metadata:
             setattr(self, key, self.item_metadata[key])
+
+        if not self.identifier:
+            self.identifier = self.metadata.get('identifier')
+
+        mc = self.metadata.get('collection',[])
+        self.collection = utils.IdentifierListAsItems(mc if isinstance(mc, list) else [mc], self.session)
+
+    def __eq__(self, other):
+        return self.item_metadata == other.item_metadata or \
+            (self.item_metadata.keys() == other.item_metadata.keys() and
+             all(self.item_metadata[x]==other.item_metadata[x] for x in self.item_metadata if x not in self.EXCLUDED_ITEM_METADATA_KEYS))
+
+    def __le__(self, other):
+        return self.identifier <= other.identifier
+
+    def __hash__(self):
+        return hash(json.dumps({k:v for (k,v) in self.item_metadata.items() if k not in self.EXCLUDED_ITEM_METADATA_KEYS}, sort_keys=True, check_circular=False))
 
 
 # Item class
@@ -127,6 +142,22 @@ class Item(BaseItem):
         #    item_metadata = self.session.get_metadata(identifier, **kwargs)
 
         super(Item, self).__init__(identifier, item_metadata)
+        class URLs:
+            pass
+        self.urls = URLs()
+        self._make_URL('details')
+        self._make_URL('metadata')
+        self._make_URL('download')
+        self._make_URL('history', 'https://catalogd.archive.org/{path}/{0.identifier}')
+        if self.metadata.get('mediatype'):
+            self._make_URL('editxml', 'https://archive.org/{path}.php?type={0.metadata[mediatype]}&edit_item={0.identifier}')
+        self._make_URL('item_mgr', 'https://archive.org/item-mgr.php?identifier={0.identifier}')
+
+        if self.metadata.get('title'):
+            self.wikilink = '* [{0.urls.details} {0.identifier}] -- {0.metadata[title]}'.format(self)
+
+    def _make_URL(self, path, url_format='https://archive.org/{path}/{0.identifier}'):
+        setattr(self.urls, path, url_format.format(self, path=path))
 
     # refresh()
     # ____________________________________________________________________________________
@@ -668,8 +699,13 @@ class Collection(Item):
         super(Collection, self).__init__(*args, **kwargs)
         if self.item_metadata.get(u'metadata',{}).get(u'mediatype',u'collection') != u'collection':
             raise ValueError('mediatype is not "collection"!')
-        self._make_search('contents', "collection:{0.identifier}")
-        self._make_search('subcollections', "collection:{0.identifier} AND mediatype:collection")
+        self._make_search('contents', self.item_metadata.get(u'metadata',{}).get(u'search_collection', "collection:{0.identifier}".format(self)))
+        self._make_search('subcollections', "collection:{0.identifier} AND mediatype:collection".format(self))
+        self._make_URL_tab('about')
+        self._make_URL_tab('collection')
+
+    def _make_URL_tab(self, tab):
+        self._make_URL(tab, self.urls.details+"&tab={tab}".format(tab=tab))
 
     def _do_search(self, query, name):
         rtn = self.searches.setdefault(name, self.session.search_items(query, fields=[u'identifier'])).iter_as_items()
@@ -678,4 +714,4 @@ class Collection(Item):
         return rtn
 
     def _make_search(self, name, query):
-        setattr(self, name, lambda :self._do_search(query.format(self), name))
+        setattr(self, name, lambda :self._do_search(query, name))

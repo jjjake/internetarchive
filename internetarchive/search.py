@@ -81,11 +81,15 @@ class Search(object):
         fields = [v for (k,v) in self.params.iteritems() if k.startswith('fl[')]
         if fields and not any(f=='identifier' for f in fields):
             raise KeyError('This search did not include item identifiers!')
-        return SearchIterator(self, itertools.imap(lambda x:self.session.get_item(x[u'identifier']), self.iter_as_results()))
+        item_iterator = itertools.imap(self._get_item_from_search_result,
+                                       self.iter_as_results())
+        return SearchIterator(self, item_iterator)
 
     def __len__(self):
         return self.num_found
 
+    def _get_item_from_search_result(self, search_result):
+        return self.session.get_item(search_result[u'identifier'])
 
 class SearchIterator(object):
 

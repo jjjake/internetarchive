@@ -2,8 +2,6 @@ from __future__ import absolute_import, unicode_literals, print_function
 
 import itertools
 
-# Search class
-# ________________________________________________________________________________________
 class Search(object):
     """This class represents an archive.org item search. You can use
     this class to search for archive.org items using the advanced

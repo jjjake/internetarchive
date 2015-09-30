@@ -84,6 +84,7 @@ class Search(object):
                 yield doc
 
     def iter_as_items(self):
+        """Returns iterator of search results as full Items"""
         fields = [v for (k,v) in self.params.iteritems() if k.startswith('fl[')]
         if fields and not any(f=='identifier' for f in fields):
             raise KeyError('This search did not include item identifiers!')
@@ -92,7 +93,10 @@ class Search(object):
         return SearchIterator(self, item_iterator)
 
 class SearchIterator(object):
+    """This class is an iterator wrapper for search results.
 
+    It provides access to the underlying Search, and supports
+    len() (since that is known initially)."""
     def __init__(self, search, iterator):
         self.search = search
         self.iterator = iterator

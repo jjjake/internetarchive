@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+0.9.4 (2015-10-01)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Added `internetarchive.api.get_username()` for retrieving a username with an S3 key-pair.
+- Added ability to sync downloads via an sqlite database.
+
 0.9.3 (2015-09-28)
 ++++++++++++++++++
 

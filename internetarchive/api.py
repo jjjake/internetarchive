@@ -1,4 +1,6 @@
-from . import item, search, catalog
+import requests
+
+from . import item, search, catalog, auth, exceptions
 
 
 # get_item()
@@ -160,3 +162,18 @@ def search_items(query, **kwargs):
 def get_data_miner(identifiers, **kwargs):
     from . import mine
     return mine.Mine(identifiers, **kwargs)
+
+
+# get_username()
+# ________________________________________________________________________________________
+def get_username(access_key, secret_key):
+    u = 'https://s3.us.archive.org'
+    p = dict(check_auth=1)
+    r = requests.get(u, params=p, auth=auth.S3Auth(access_key, secret_key))
+    r.raise_for_status()
+    j = r.json()
+    username = j.get('username')
+    if username:
+        return username
+    else:
+        raise exceptions.AuthenticationError(j.get('error'))

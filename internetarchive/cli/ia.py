@@ -55,8 +55,6 @@ from internetarchive.config import get_config
 from internetarchive.cli import *
 
 
-# main()
-# ________________________________________________________________________________________
 def main():
     """This is the CLI driver for ia-wrapper."""
     args = docopt(__doc__, version=__version__, options_first=True)

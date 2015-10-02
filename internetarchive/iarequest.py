@@ -60,8 +60,6 @@ class S3PreparedRequest(requests.models.PreparedRequest):
     def __init__(self):
         super(S3PreparedRequest, self).__init__()
 
-    # prepare()
-    # ____________________________________________________________________________________
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, queue_derive=None,
                 metadata={}):
@@ -77,8 +75,6 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         # This MUST go after prepare_auth. Authenticators could add a hook
         self.prepare_hooks(hooks)
 
-    # prepare_headers()
-    # ____________________________________________________________________________________
     def prepare_headers(self, headers, metadata, queue_derive=True):
         """Convert a dictionary of metadata into S3 compatible HTTP
         headers, and append headers to ``headers``.
@@ -175,8 +171,6 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
     def __init__(self):
         super(MetadataPreparedRequest, self).__init__()
 
-    # prepare()
-    # ____________________________________________________________________________________
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, metadata={},
                 source_metadata=None, target=None, priority=None, append=None):

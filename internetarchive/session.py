@@ -69,16 +69,12 @@ class ArchiveSession(requests.sessions.Session):
         self.log.addHandler(fh)
 
     _ITEM_MEDIATYPE_TABLE={'collection':item.Collection}
-    # get_item()
-    # ____________________________________________________________________________________
     def get_item(self, identifier, item_metadata=None, request_kwargs=None):
         request_kwargs = {} if not request_kwargs else request_kwargs
         if not item_metadata:
             item_metadata = self.get_metadata(identifier, request_kwargs)
         return self._ITEM_MEDIATYPE_TABLE.get(item_metadata.get('metadata',{}).get('mediatype',''), item.Item)(self, identifier, item_metadata)
 
-    # get_metadata()
-    # ____________________________________________________________________________________
     def get_metadata(self, identifier, request_kwargs=None):
         """Get an item's metadata from the `Metadata API
         <http://blog.archive.org/2013/07/04/metadata-api/>`__
@@ -102,8 +98,6 @@ class ArchiveSession(requests.sessions.Session):
             raise HTTPError(error_msg)
         return resp.json()
 
-    # s3_is_overloaded()
-    # ____________________________________________________________________________________
     def search_items(self, query,
                      fields=None,
                      params=None,
@@ -140,8 +134,6 @@ class ArchiveSession(requests.sessions.Session):
                       v2=v2,
                       request_kwargs=request_kwargs)
 
-    # get_tasks()
-    # ________________________________________________________________________________________
     def get_tasks(self,
                   identifier=None,
                   task_ids=None,
@@ -193,8 +185,6 @@ class ArchiveSession(requests.sessions.Session):
         else:
             return _catalog.tasks
 
-    # s3_is_overloaded()
-    # ____________________________________________________________________________________
     def s3_is_overloaded(self, identifier=None, access_key=None):
         u = '{protocol}//s3.us.archive.org'.format(protocol=self.protocol)
         p = dict(

@@ -3,8 +3,6 @@ from xml.dom.minidom import parseString
 import re
 
 
-# get_xml_text()
-# ________________________________________________________________________________________
 def get_xml_text(xml_str, tag_name=None, text=None):
     tag_name = 'Message' if not tag_name else tag_name
     text = '' if not text else text
@@ -17,8 +15,6 @@ def get_xml_text(xml_str, tag_name=None, text=None):
     return text
 
 
-# get_args_dict()
-# ________________________________________________________________________________________
 def get_args_dict(args):
     # Convert args list into a metadata dict.
     args = [] if not args else args

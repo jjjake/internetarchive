@@ -29,8 +29,6 @@ from docopt import docopt
 from internetarchive import search_items
 
 
-# main()
-# ________________________________________________________________________________________
 def main(argv, session=None):
     args = docopt(__doc__, argv=argv)
 

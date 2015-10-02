@@ -67,8 +67,6 @@ class File(BaseFile):
     <https://archive.org/account/s3.php>`__
 
     """
-    # init()
-    # ____________________________________________________________________________________
     def __init__(self, item, name):
         """
         :type item: Item
@@ -87,8 +85,6 @@ class File(BaseFile):
         )
         self.url = '{protocol}//archive.org/download/{id}/{name}'.format(**url_parts)
 
-    # __repr__()
-    # ____________________________________________________________________________________
     def __repr__(self):
         return ('File(identifier={identifier!r}, '
                 'filename={name!r}, '
@@ -96,8 +92,6 @@ class File(BaseFile):
                 'source={source!r}, '
                 'format={format!r})'.format(**self.__dict__))
 
-    # download()
-    # ____________________________________________________________________________________
     def download(self, file_path=None, clobber=None, checksum=None, destdir=None,
                  verbose=None, debug=None, request_kwargs=None):
         """Download the file into the current working directory.
@@ -182,8 +176,6 @@ class File(BaseFile):
                                                     file_path))
         return response
 
-    # delete()
-    # ____________________________________________________________________________________
     def delete(self, cascade_delete=None, access_key=None, secret_key=None, verbose=None,
                debug=None):
         """Delete a file from the Archive. Note: Some files -- such as

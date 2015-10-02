@@ -29,8 +29,6 @@ from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
 
 
-# ia_download()
-# ________________________________________________________________________________________
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
 

@@ -17,8 +17,6 @@ class Search(object):
         ...     print(result['identifier'])
 
     """
-    # init()
-    # ____________________________________________________________________________________
     def __init__(self, archive_session, query,
                  fields=None,
                  params=None,
@@ -54,14 +52,10 @@ class Search(object):
         self.num_found = self._search_info['response']['numFound']
         self.query = self._search_info['responseHeader']['params']['q']
 
-    # __repr__()
-    # ____________________________________________________________________________________
     def __repr__(self):
         return ('Search(query={query!r}, '
                 'num_found={num_found!r})'.format(**self.__dict__))
 
-    # _get_search_info()
-    # ____________________________________________________________________________________
     def _get_search_info(self):
         info_params = self.params.copy()
         info_params['rows'] = 0
@@ -70,8 +64,6 @@ class Search(object):
         del results['response']['docs']
         return results
 
-    # __iter__()
-    # ____________________________________________________________________________________
     def __iter__(self):
         """Generator for iterating over search results"""
         total_pages = ((self.num_found / int(self.params['rows'])) + 2)

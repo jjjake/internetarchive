@@ -33,8 +33,6 @@ from docopt import docopt
 from internetarchive.cli.argparser import get_args_dict
 
 
-# modify_metadata()
-# ________________________________________________________________________________________
 def modify_metadata(item, metadata, args):
     append = True if args['--append'] else False
     r = item.modify_metadata(metadata, target=args['--target'], append=append,
@@ -49,8 +47,6 @@ def modify_metadata(item, metadata, args):
     return r
 
 
-# main()
-# ________________________________________________________________________________________
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
 

@@ -49,8 +49,6 @@ from internetarchive.cli.argparser import get_args_dict, get_xml_text
 from internetarchive.utils import validate_ia_identifier
 
 
-# _upload_files()
-# ________________________________________________________________________________________
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None,
                   responses=None):
     """Helper function for calling :meth:`Item.upload`"""
@@ -89,8 +87,6 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
     return responses
 
 
-# main()
-# ________________________________________________________________________________________
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
 

@@ -19,8 +19,6 @@ log = logging.getLogger(__name__)
 
 
 class BaseItem(object):
-    # __init__()
-    # ____________________________________________________________________________________
     def __init__(self, identifier=None, item_metadata=None):
         # Default attributes.
         self.identifier = identifier
@@ -45,14 +43,10 @@ class BaseItem(object):
         # Load item.
         self.load()
 
-    # __repr__()
-    # ____________________________________________________________________________________
     def __repr__(self):
         return ('{0.__class__.__name__}(identifier={identifier!r}, '
                 'exists={exists!r})'.format(self, **self.__dict__))
 
-    # load()
-    # ____________________________________________________________________________________
     def load(self, item_metadata=None):
         if item_metadata:
             self.item_metadata = item_metadata
@@ -95,8 +89,6 @@ class Item(BaseItem):
     <https://archive.org/account/s3.php>`__
     """
 
-    # init()
-    # ____________________________________________________________________________________
     def __init__(self, archive_session, identifier, item_metadata=None, **kwargs):
         """
         :type archive_session: :class:`ArchiveSession <ArchiveSession>`
@@ -128,15 +120,11 @@ class Item(BaseItem):
 
         super(Item, self).__init__(identifier, item_metadata)
 
-    # refresh()
-    # ____________________________________________________________________________________
     def refresh(self, item_metadata=None, **kwargs):
         if not item_metadata:
             item_metadata = self.session.get_metadata(self.identifier, **kwargs)
         self.load(item_metadata)
 
-    # file()
-    # ____________________________________________________________________________________
     def get_file(self, file_name):
         """Get a :class:`File <File>` object for the named file.
 
@@ -145,8 +133,6 @@ class Item(BaseItem):
         """
         return files.File(self, file_name)
 
-    # get_files()
-    # ____________________________________________________________________________________
     def get_files(self, files=None, source=None, formats=None, glob_pattern=None):
         files = [] if not files else files
         source = [] if not source else source
@@ -179,8 +165,6 @@ class Item(BaseItem):
                     if fnmatch(f.get('name', ''), p):
                         yield self.get_file(f.get('name'))
 
-    # download()
-    # ____________________________________________________________________________________
     def download(self,
                  files=None,
                  source=None,
@@ -268,8 +252,6 @@ class Item(BaseItem):
                     raise (exc)
         return responses
 
-    # modify_metadata()
-    # ____________________________________________________________________________________
     def modify_metadata(self, metadata,
                         target=None,
                         append=None,
@@ -331,8 +313,6 @@ class Item(BaseItem):
         self.refresh()
         return resp
 
-    # upload_file()
-    # ____________________________________________________________________________________
     def upload_file(self, body,
                     key=None,
                     metadata=None,
@@ -539,8 +519,6 @@ class Item(BaseItem):
                 log.error(error_msg)
                 raise
 
-    # upload()
-    # ____________________________________________________________________________________
     def upload(self, files,
                metadata=None,
                headers=None,

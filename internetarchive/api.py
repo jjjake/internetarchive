@@ -14,8 +14,6 @@ from . import session
 from . import config as config_module
 
 
-# get_session()
-# ________________________________________________________________________________________
 def get_session(config=None, config_file=None, http_adapter_kwargs=None):
     """Return a new ArchiveSession object
 
@@ -28,8 +26,6 @@ def get_session(config=None, config_file=None, http_adapter_kwargs=None):
     return session.ArchiveSession(config, config_file, http_adapter_kwargs)
 
 
-# get_item()
-# ________________________________________________________________________________________
 def get_item(identifier,
              config=None,
              config_file=None,
@@ -60,8 +56,6 @@ def get_item(identifier,
     return archive_session.get_item(identifier, request_kwargs=request_kwargs)
 
 
-# get_files()
-# ________________________________________________________________________________________
 def get_files(identifier,
               files=None,
               source=None,
@@ -88,8 +82,6 @@ def get_files(identifier,
     return item.get_files(files, source, formats, glob_pattern)
 
 
-# modify_metadata()
-# ________________________________________________________________________________________
 def modify_metadata(identifier, metadata,
                     target='metadata',
                     append=False,
@@ -137,8 +129,6 @@ def modify_metadata(identifier, metadata,
                                 secret_key, debug, request_kwargs)
 
 
-# upload()
-# ________________________________________________________________________________________
 def upload(identifier, files,
            metadata=None,
            headers=None,
@@ -220,8 +210,6 @@ def upload(identifier, files,
                        request_kwargs=request_kwargs)
 
 
-# download()
-# ________________________________________________________________________________________
 def download(identifier,
              files=None,
              source=None,
@@ -292,8 +280,6 @@ def download(identifier,
                   request_kwargs=request_kwargs)
 
 
-# delete()
-# ________________________________________________________________________________________
 def delete(identifier,
            files=None,
            source=None,
@@ -349,8 +335,6 @@ def delete(identifier,
     return responses
 
 
-# get_tasks()
-# ________________________________________________________________________________________
 def get_tasks(identifier=None,
               task_ids=None,
               task_type=None,
@@ -401,8 +385,6 @@ def get_tasks(identifier=None,
                                      request_kwargs=request_kwargs)
 
 
-# search_items()
-# ________________________________________________________________________________________
 def search_items(query,
                  fields=None,
                  params=None,
@@ -444,8 +426,6 @@ def search_items(query,
                                         request_kwargs=request_kwargs)
 
 
-# configure()
-# ________________________________________________________________________________________
 def configure(username=None, password=None):
     """Configure internetarchive with your Archive.org credentials.
 

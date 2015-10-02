@@ -25,8 +25,6 @@ from docopt import docopt
 #from internetarchive import get_item
 
 
-# main()
-# ________________________________________________________________________________________
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
     item = session.get_item(args['<identifier>'])

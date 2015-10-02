@@ -30,8 +30,6 @@ from internetarchive.config import get_config
 from internetarchive.cli.argparser import get_xml_text
 
 
-# main()
-# ________________________________________________________________________________________
 def main(argv, config_file=None):
     args = docopt(__doc__, argv=argv)
     verbose = True if not args['--quiet'] else False

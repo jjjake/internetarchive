@@ -14,8 +14,6 @@ from internetarchive import configure
 from internetarchive.exceptions import AuthenticationError
 
 
-# ia_configure()
-# ________________________________________________________________________________________
 def main(argv, session):
     docopt(__doc__, argv=argv)
 

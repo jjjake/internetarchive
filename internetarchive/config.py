@@ -7,8 +7,6 @@ from .exceptions import AuthenticationError
 from .utils import deep_update
 
 
-# get_config()
-# ________________________________________________________________________________________
 def get_auth_config(username, password):
     payload = dict(
         username=username,
@@ -46,8 +44,6 @@ def get_auth_config(username, password):
     return auth_config
 
 
-# write_config_file()
-# ________________________________________________________________________________________
 def write_config_file(username, password):
     config_file, config = parse_config_file()
     auth_config = get_auth_config(username, password)
@@ -71,8 +67,6 @@ def write_config_file(username, password):
     return config_file
 
 
-# parse_config_file()
-# ________________________________________________________________________________________
 def parse_config_file(config_file=None):
     config = configparser.RawConfigParser()
 
@@ -100,8 +94,6 @@ def parse_config_file(config_file=None):
     return (config_file, config)
 
 
-# get_config()
-# ________________________________________________________________________________________
 def get_config(config=None, config_file=None):
     _config = {} if not config else config
     config_file, config = parse_config_file(config_file)

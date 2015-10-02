@@ -32,8 +32,6 @@ class Catalog(object):
         purple=-1,
     )
 
-    # init()
-    # ____________________________________________________________________________________
     def __init__(self, archive_session,
                  identifier=None,
                  task_ids=None,
@@ -122,8 +120,6 @@ class Catalog(object):
             rows = [t for t in self.tasks if t.row_type == self.ROW_TYPES[key]]
             setattr(self, '{0}_rows'.format(key), rows)
 
-    # _get_tasks()
-    # ____________________________________________________________________________________
     def _get_tasks(self):
         r = self.session.get(self.url, params=self.params, **self.request_kwargs)
         content = r.content.decode('utf-8')
@@ -151,8 +147,6 @@ class CatalogTask(object):
         'row_type'
     )
 
-    # init()
-    # ____________________________________________________________________________________
     def __init__(self, columns):
         for key, value in map2x(None, self.COLUMNS, columns):
             if key:
@@ -161,8 +155,6 @@ class CatalogTask(object):
         if isinstance(self.args, six.string_types):
             self.args = dict(x for x in parse_qsl(self.args.encode('utf-8')))
 
-    # __repr__()
-    # ____________________________________________________________________________________
     def __repr__(self):
         return ('CatalogTask(identifier={identifier},'
                 ' task_id={task_id!r}, server={server!r},'
@@ -170,8 +162,6 @@ class CatalogTask(object):
                 ' submitter={submitter!r},'
                 ' row_type={row_type})'.format(**self.__dict__))
 
-    # __getitem__()
-    # ____________________________________________________________________________________
     def __getitem__(self, key):
         """Dict-like access provided as backward compatibility."""
         if key in self.COLUMNS:
@@ -179,8 +169,6 @@ class CatalogTask(object):
         else:
             raise KeyError(key)
 
-    # task_log()
-    # ____________________________________________________________________________________
     def task_log(self):
         """Get task log.
 

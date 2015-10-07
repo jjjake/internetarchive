@@ -8,10 +8,17 @@ import internetarchive.config
 import internetarchive.session
 from internetarchive.exceptions import AuthenticationError
 
+# import logging
+# logging.basicConfig(level=logging.DEBUG)
+
+# import cookielib
+# cookielib.debug = True
+
 @responses.activate
 def test_get_auth_config():
     headers = {'set-cookie': 'logged-in-user=test@archive.org',
-               'set-cookie': 'logged-in-sig=test-sig;'}
+               'set-cookie2': 'logged-in-sig=test-sig; version=0'}
+    # set-cookie2: Ugly hack to workaround responses lack of support for multiple headers
     responses.add(responses.POST, 'https://archive.org/account/login.php',
                   adding_headers=headers)
 

@@ -71,7 +71,8 @@ class IterableToFileAdapter(object):
 
 
 class IdentifierListAsItems(object):
-
+    """This class is a lazily-loaded list of Items, accessible by index or identifier.
+    """
     def __init__(self, id_lst, session):
         self.ids = id_lst
         self._items = [None]*len(self.ids)

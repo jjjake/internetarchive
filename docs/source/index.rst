@@ -9,19 +9,16 @@ Welcome to internetarchive's documentation!
 This documentation is a work in progress. 
 Please report any issues on `Github <https://github.com/jjjake/ia-wrapper/issues>`__.
 
+.. automodule:: internetarchive
+
 .. toctree::
    :maxdepth: 2
 
-.. automodule:: internetarchive
-
-
+   install
+   api
+   internetarchive
 
 Indices and tables
 ==================
-.. toctree::
-   :maxdepth: 2
-
-   internetarchive
-
 * :ref:`genindex`
 * :ref:`search`

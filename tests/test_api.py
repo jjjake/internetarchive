@@ -341,14 +341,19 @@ def test_get_tasks():
 # search_items() _________________________________________________________________________
 def test_search_items():
     search_response_str = json.dumps(SEARCH_RESPONSE)
-    with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, 'http://archive.org/advancedsearch.php',
                  body=search_response_str,
                  status=200)
         r = search_items('identifier:nasa')
+        expected_results = [{'identifier': 'nasa'}]
         assert r.num_found == 1
-        assert list(r) == [{'identifier': 'nasa'}]
+        assert len(r) == 1
+        assert iter(r).search == r
+        assert len(iter(r)) == 1
+        assert len(r.iter_as_results()) == 1
+        assert list(r) == expected_results
+        assert list(r.iter_as_results()) == expected_results
 
 
 def test_search_items_with_fields():
@@ -365,3 +370,18 @@ def test_search_items_with_fields():
         r = search_items('identifier:nasa', fields=['identifier', 'title'])
         assert r.num_found == 1
         assert list(r) == [{'identifier': 'nasa', 'title': 'NASA Images'}]
+
+def test_search_items_as_items():
+    search_response_str = json.dumps(SEARCH_RESPONSE)
+    with responses.RequestsMock(
+        assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php',
+                 body=search_response_str,
+                 status=200)
+        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+                 body=ITEM_METADATA,
+                 status=200)
+        r = search_items('identifier:nasa')
+        assert [x.identifier for x in r.iter_as_items()] == ['nasa']
+        assert r.iter_as_items().search == r
+

@@ -1,4 +1,7 @@
-import json
+try:
+    import ujson as json
+except ImportError:
+    import json
 import types
 import re
 import os
@@ -614,8 +617,8 @@ def test_modify_metadata():
         expected_data = {
             'priority': 0,
             '-target': 'metadata',
-            '-patch':
-            '[{"add": "/foo", "value": "bar"}, {"add": "/foo11", "value": "bar"}]'
+            '-patch':json.dumps(
+                [{"add":"/foo","value":"bar"},{"add":"/foo11","value":"bar"}])
         }
         assert p.data == expected_data
 
@@ -632,7 +635,7 @@ def test_modify_metadata():
         expected_data = {
             'priority': 0,
             '-target': 'metadata',
-            '-patch': '[{"remove": "/title"}]'
+            '-patch': json.dumps([{"remove": "/title"}])
         }
         assert p.data == expected_data
 
@@ -643,7 +646,7 @@ def test_modify_metadata():
         expected_data = {
             'priority': 0,
             '-target': 'metadata',
-            '-patch': '[{"add": "/subject", "value": ["one", "two", "last"]}]'
+            '-patch': json.dumps([{"add": "/subject", "value": ["one", "two", "last"]}])
         }
         assert p.data == expected_data
 
@@ -655,7 +658,7 @@ def test_modify_metadata():
         expected_data = {
             'priority': 0,
             '-target': 'metadata',
-            '-patch': '[{"value": "new first", "replace": "/subject/2"}]'
+            '-patch': json.dumps([{"value": "new first", "replace": "/subject/2"}])
         }
         assert p.data == expected_data
 

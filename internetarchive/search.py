@@ -66,12 +66,12 @@ class Search(object):
         return self.session.get_item(search_result[u'identifier'])
 
     def __iter__(self):
-        return SearchIterator(self, self.iter_as_results())
+        return self.iter_as_results()
 
     def __len__(self):
         return self.num_found
 
-    def iter_as_results(self):
+    def make_results_generator(self):
         """Generator for iterating over search results"""
         total_pages = ((self.num_found / int(self.params['rows'])) + 2)
         for page in range(1, total_pages):
@@ -81,14 +81,16 @@ class Search(object):
             for doc in results['response']['docs']:
                 yield doc
 
+    def iter_as_results(self):
+        return SearchIterator(self, self.make_results_generator())
+
     def iter_as_items(self):
         """Returns iterator of search results as full Items"""
         fields = [v for (k,v) in self.params.iteritems() if k.startswith('fl[')]
         if fields and not any(f=='identifier' for f in fields):
             raise KeyError('This search did not include item identifiers!')
-        item_iterator = itertools.imap(self._get_item_from_search_result,
-                                       self.iter_as_results())
-        return SearchIterator(self, item_iterator)
+        return SearchIterator(self, itertools.imap(self._get_item_from_search_result,
+                                                   self.make_results_generator()))
 
 class SearchIterator(object):
     """This class is an iterator wrapper for search results.

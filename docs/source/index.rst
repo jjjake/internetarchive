@@ -22,5 +22,6 @@ Indices and tables
    :maxdepth: 2
 
    internetarchive
+
 * :ref:`genindex`
 * :ref:`search`

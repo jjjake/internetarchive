@@ -60,7 +60,7 @@ class BaseItem(object):
             self.identifier = self.metadata.get('identifier')
 
         mc = self.metadata.get('collection',[])
-        self.collection = utils.IdentifierListAsItems(mc if isinstance(mc, list) else [mc], self.session)
+        self.collection = utils.IdentifierListAsItems(mc, self.session)
 
 
 # Item class

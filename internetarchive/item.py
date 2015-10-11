@@ -59,6 +59,9 @@ class BaseItem(object):
         for key in self.item_metadata:
             setattr(self, key, self.item_metadata[key])
 
+        mc = self.metadata.get('collection',[])
+        self.collection = utils.IdentifierListAsItems(mc if isinstance(mc, list) else [mc], self.session)
+
 
 # Item class
 # ________________________________________________________________________________________

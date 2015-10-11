@@ -51,13 +51,13 @@ class BaseItem(object):
         if item_metadata:
             self.item_metadata = item_metadata
 
-        if not self.identifier:
-            self.identifier = item_metadata.get('metadata', {}).get('identifier')
-
         self.exists = True if self.item_metadata else False
 
         for key in self.item_metadata:
             setattr(self, key, self.item_metadata[key])
+
+        if not self.identifier:
+            self.identifier = self.metadata.get('identifier')
 
         mc = self.metadata.get('collection',[])
         self.collection = utils.IdentifierListAsItems(mc if isinstance(mc, list) else [mc], self.session)

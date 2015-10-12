@@ -16,9 +16,6 @@ from internetarchive import get_session
 import internetarchive.files
 
 
-ROOT_DIR = os.getcwd()
-TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
-
 DOWNLOAD_URL_RE = re.compile(r'http://archive.org/download/.*')
 S3_URL_RE = re.compile(r'.*s3.us.archive.org/.*')
 EXPECTED_S3_HEADERS = {
@@ -30,28 +27,6 @@ EXPECTED_S3_HEADERS = {
     'x-archive-auto-make-bucket': '1',
     'authorization': 'LOW test_access:test_secret',
 }
-
-
-
-# Helper functions _______________________________________________________________________
-@pytest.fixture
-def session():
-    return get_session()
-
-@pytest.fixture
-def testitem_metadata():
-    with open(TEST_JSON_FILE, 'r') as fh:
-        return fh.read().strip().decode('utf-8')
-
-
-@pytest.fixture
-@responses.activate
-def testitem(testitem_metadata, session):
-    responses.add(responses.GET, 'http://archive.org/metadata/nasa',
-                  body=testitem_metadata,
-                  status=200,
-                  content_type='application/json')
-    return session.get_item('nasa')
 
 
 # get_item() _____________________________________________________________________________
@@ -216,8 +191,12 @@ def test_download_clobber(tmpdir, testitem):
         with open('nasa/nasa_meta.xml', 'r') as fh:
             assert fh.read() == 'new test content'
 
+@pytest.fixture
+def nasa_meta_xml():
+    with open(os.path.join(os.path.dirname(__file__), 'data/nasa_meta.xml'), 'r') as fh:
+        return fh.read()
 
-def test_download_checksum(tmpdir, testitem):
+def test_download_checksum(tmpdir, testitem, nasa_meta_xml):
     tmpdir.chdir()
 
     # test overwrite based on checksum.
@@ -235,8 +214,6 @@ def test_download_checksum(tmpdir, testitem):
             assert fh.read() == 'overwrite based on md5'
 
     # test no overwrite based on checksum.
-    with open(os.path.join(ROOT_DIR, 'tests/data/nasa_meta.xml'), 'r') as fh:
-        nasa_meta_xml = fh.read()
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body=nasa_meta_xml, status=200)
         testitem.download(files='nasa_meta.xml', checksum=True)
@@ -333,12 +310,12 @@ def test_download_dark_item(tmpdir, capsys, session):
 
 
 # upload() _______________________________________________________________________________
-def test_upload(testitem):
+def test_upload(testitem, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=EXPECTED_S3_HEADERS,
                  status=200)
-        resp = testitem.upload(TEST_JSON_FILE,
+        resp = testitem.upload(json_filename,
                            access_key='test_access',
                            secret_key='test_secret',
                            debug=True)
@@ -352,7 +329,7 @@ def test_upload(testitem):
             assert p.url == 'http://s3.us.archive.org/nasa/nasa_meta.json'
 
 
-def test_upload_secure_session(testitem_metadata):
+def test_upload_secure_session(testitem_metadata, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         s = get_session(config=dict(secure=True))
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
@@ -362,11 +339,11 @@ def test_upload_secure_session(testitem_metadata):
         with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
             rsps.add(responses.PUT, S3_URL_RE, status=200)
-            r = item.upload(TEST_JSON_FILE)
+            r = item.upload(json_filename)
             assert r[0].url == 'https://s3.us.archive.org/nasa/nasa_meta.json'
 
 
-def test_upload_metadata(testitem):
+def test_upload_metadata(testitem, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         del _expected_headers['x-archive-meta00-scanner']
@@ -377,7 +354,7 @@ def test_upload_metadata(testitem):
                  adding_headers=_expected_headers,
                  status=200)
         md = dict(foo='bar', subject=['first', 'second'])
-        resp = testitem.upload(TEST_JSON_FILE,
+        resp = testitem.upload(json_filename,
                            metadata=md,
                            access_key='test_access',
                            secret_key='test_secret',
@@ -389,7 +366,7 @@ def test_upload_metadata(testitem):
             assert headers == _expected_headers
 
 
-def test_upload_503(capsys, testitem):
+def test_upload_503(capsys, testitem, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         rsps.add(responses.GET, S3_URL_RE,
@@ -399,7 +376,7 @@ def test_upload_503(capsys, testitem):
                  adding_headers=_expected_headers,
                  status=503)
         try:
-            resp = testitem.upload(TEST_JSON_FILE,
+            resp = testitem.upload(json_filename,
                                access_key='test_access',
                                secret_key='test_secret',
                                retries=1,
@@ -411,12 +388,12 @@ def test_upload_503(capsys, testitem):
             assert 'warning: s3 is overloaded' in err
 
 
-def test_upload_file_keys(testitem):
+def test_upload_file_keys(testitem, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=EXPECTED_S3_HEADERS,
                  status=200)
-        files = {'new_key.txt': TEST_JSON_FILE, 222: TEST_JSON_FILE}
+        files = {'new_key.txt': json_filename, 222: json_filename}
         resp = testitem.upload(files,
                            access_key='test_access',
                            secret_key='test_secret',
@@ -467,7 +444,7 @@ def test_upload_dir(tmpdir, testitem):
         #shutil.rmtree(os.path.join(str(tmpdir), 'dir_test'))
 
 
-def test_upload_queue_derive(testitem):
+def test_upload_queue_derive(testitem, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         _expected_headers['x-archive-queue-derive'] = '1'
@@ -475,7 +452,7 @@ def test_upload_queue_derive(testitem):
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=_expected_headers,
                  status=200)
-        resp = testitem.upload(TEST_JSON_FILE,
+        resp = testitem.upload(json_filename,
                            access_key='test_access',
                            secret_key='test_secret',
                            queue_derive=True)

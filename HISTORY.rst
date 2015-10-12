@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+0.9.5 (2015-10-12)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Added skip based on mtime and length if no other clobber/skip options specified in `download()` and `ia download`.
+
 0.9.4 (2015-10-01)
 ++++++++++++++++++
 

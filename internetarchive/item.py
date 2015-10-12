@@ -3,6 +3,7 @@ import sys
 from fnmatch import fnmatch
 import logging
 import time
+from datetime import datetime
 
 import requests.sessions
 from requests.adapters import HTTPAdapter
@@ -691,8 +692,11 @@ class File(object):
         self.source = None
         self.format = None
         self.md5 = None
+        self.mtime = None
         for key in _file:
             setattr(self, key, _file[key])
+        self.mtime = float(self.mtime) if self.mtime else 0
+        self.size = int(self.size) if self.size  else 0
         base_url = '{protocol}//archive.org/download/{identifier}'.format(**item.__dict__)
         self.url = '{base_url}/{name}'.format(base_url=base_url,
                                               name=urllib.parse.quote(name.encode('utf-8')))
@@ -736,6 +740,17 @@ class File(object):
                 raise IOError('{} is not a directory!'.format(destdir))
             file_path = os.path.join(destdir, file_path)
 
+        # Skip based on mtime and length if no other clobber/skip options specified.
+        if os.path.exists(file_path) and ignore_existing is False and checksum is False:
+            st = os.stat(file_path)
+            if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
+                    or self.name.endswith('_files.xml') and st.st_size != 0:
+                if verbose:
+                    print(' skipping {0}: already exists.'.format(file_path))
+                log.info('not downloading file {0}, '
+                         'file already exists.'.format(file_path))
+                return
+
         if sync_db:
             db = LazyTable(sync_db, 'files-downloaded')
             db.upsert({'identifier': self.identifier}, {'identifier': self.identifier})
@@ -750,9 +765,9 @@ class File(object):
                 md5_sum = utils.get_md5(open(file_path))
                 if md5_sum == self.md5:
                     log.info('not downloading file {0}, '
-                             'file already exists.'.format(file_path))
+                             'file already exists based on checksum.'.format(file_path))
                     if verbose:
-                        sys.stdout.write(' skipping {0}: already exists.\n'.format(file_path))
+                        sys.stdout.write(' skipping {0}: already exists based on checksum.\n'.format(file_path))
                     return
 
         if verbose:
@@ -771,6 +786,10 @@ class File(object):
                 if chunk:
                     f.write(chunk)
                     f.flush()
+
+        # Set mtime with mtime from files.xml.
+        os.utime(file_path, (0, self.mtime))
+
         # Update DB.
         if sync_db:
             db_id = '{0}/{1}'.format(self.identifier, self.name)

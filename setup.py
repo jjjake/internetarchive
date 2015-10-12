@@ -29,6 +29,7 @@ setup(
     license='AGPL 3',
     description='A python interface to archive.org.',
     long_description=readme + '\n\n' + history,
+    dependency_links=['http://github.com/jjjake/lazytable/tarball/master#egg=lazytable-0.4.1'],
     install_requires=[
         'requests==2.7.0',
         'jsonpatch==0.4',
@@ -36,7 +37,7 @@ setup(
         'PyYAML==3.11',
         'clint==0.3.3',
         'six==1.4.1',
-        'lazytable==0.4.0',
+        'lazytable==0.4.1',
     ],
     extras_require = {
         'speedups': [

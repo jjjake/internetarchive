@@ -60,3 +60,5 @@ def test_IdentifierListAsItems(session, testitem_metadata):
 
 def test_IdentifierListAsItems_len(session):
     assert len(internetarchive.utils.IdentifierListAsItems(['foo', 'bar'], session)) == 2
+
+#TODO: Add test of slice access to IdenfierListAsItems

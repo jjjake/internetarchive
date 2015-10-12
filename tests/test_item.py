@@ -48,6 +48,7 @@ def test_get_item(testitem_metadata, testitem, session):
     assert testitem.uniq == 2131998567
     assert testitem.updated == 1427273788
     assert testitem.tasks == None
+    assert len(testitem.collection) == 1
 
 
 # get_file() _____________________________________________________________________________

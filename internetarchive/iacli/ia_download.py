@@ -3,7 +3,7 @@
 usage:
     ia download [--quiet] [--log] [--dry-run] [--ignore-existing] [--checksum]
                 [--destdir=<dir>] [--no-directories] [--source=<source>... | --original]
-                [--glob=<pattern> | --format=<format>...] [--concurrent] [--sync=<database>]
+                [--glob=<pattern> | --format=<format>...] [--concurrent] [--sync-db=<database>]
                 (<identifier> | --itemlist=<itemlist> | --search=<query>) [<file>...]
     ia download --help
 
@@ -27,7 +27,7 @@ options:
 
                                     ia metadata --formats <identifier>
 
-    --sync=<database>           Sync downloads using <database>.
+    --sync-db=<database>        Sync downloads using <database>.
     --no-directories            Download files into working directory. Do not
                                 create item directories.
     --destdir=<dir>             The destination directory to download files
@@ -80,12 +80,12 @@ def main(argv):
     else:
         files = None
 
-    if args['--sync']:
+    if args['--sync-db']:
         args['--checksum'] = True
-        db = LazyTable(args['--sync'], 'items-downloaded')
+        db = LazyTable(args['--sync-db'], 'items-downloaded')
 
     for identifier in ids:
-        if args['--sync']:
+        if args['--sync-db']:
             if db.get_one({'identifier': identifier}):
                 print('{0}:'.format(identifier))
                 print(' skipping, item already downloaded.')
@@ -114,7 +114,7 @@ def main(argv):
                     sys.stdout.write(f.url + '\n')
                 else:
                     f.download(path, verbose, args['--ignore-existing'],
-                               args['--checksum'], args['--destdir'], args['--sync'])
+                               args['--checksum'], args['--destdir'], args['--sync-db'])
             sys.exit(0)
 
         # Otherwise, download the entire item.
@@ -136,6 +136,6 @@ def main(argv):
             checksum=args['--checksum'],
             destdir=args['--destdir'],
             no_directory=args['--no-directories'],
-            sync_db=args['--sync'],
+            sync_db=args['--sync-db'],
         )
     sys.exit(0)

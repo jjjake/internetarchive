@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+0.9.6 (2015-10-12)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Removed sync-db features for now, as lazytaable is not playing nicely with setup.py right now.
+
 0.9.5 (2015-10-12)
 ++++++++++++++++++
 

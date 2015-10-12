@@ -3,14 +3,14 @@
 usage:
     ia download [--quiet] [--log] [--dry-run] [--ignore-existing] [--checksum]
                 [--destdir=<dir>] [--no-directories] [--source=<source>... | --original]
-                [--glob=<pattern> | --format=<format>...] [--concurrent] [--sync-db=<database>]
+                [--glob=<pattern> | --format=<format>...] [--concurrent]
                 (<identifier> | --itemlist=<itemlist> | --search=<query>) [<file>...]
     ia download --help
 
 options:
     -h, --help
     -q, --quiet                 Turn off ia's output [default: False].
-    -l, --log                   Log download results to file.
+    -l, --log                   Log download results to file. 
     -d, --dry-run               Print URLs to stdout and exit.
     -i, --ignore-existing       Clobber files already downloaded.
     -C, --checksum              Skip files based on checksum [default: False].
@@ -27,7 +27,6 @@ options:
 
                                     ia metadata --formats <identifier>
 
-    --sync-db=<database>        Sync downloads using <database>.
     --no-directories            Download files into working directory. Do not
                                 create item directories.
     --destdir=<dir>             The destination directory to download files
@@ -41,7 +40,6 @@ import os
 import sys
 
 from docopt import docopt
-from lazytable import LazyTable
 
 from internetarchive import get_item, search_items
 
@@ -57,7 +55,7 @@ def search_ids(query):
 
 
 # ia_download()
-# ________________________________________________________________________________________
+#_________________________________________________________________________________________
 def main(argv):
     args = docopt(__doc__, argv=argv)
     config = {} if not args['--log'] else {'logging': {'level': 'INFO'}}
@@ -80,17 +78,7 @@ def main(argv):
     else:
         files = None
 
-    if args['--sync-db']:
-        args['--checksum'] = True
-        db = LazyTable(args['--sync-db'], 'items-downloaded')
-
     for identifier in ids:
-        if args['--sync-db']:
-            if db.get_one({'identifier': identifier}):
-                print('{0}:'.format(identifier))
-                print(' skipping, item already downloaded.')
-                continue
-
         item = get_item(identifier, config=config)
         if (args['--quiet'] is False) and (args['--dry-run'] is False):
             verbose = True
@@ -114,7 +102,7 @@ def main(argv):
                     sys.stdout.write(f.url + '\n')
                 else:
                     f.download(path, verbose, args['--ignore-existing'],
-                               args['--checksum'], args['--destdir'], args['--sync-db'])
+                               args['--checksum'], args['--destdir'])
             sys.exit(0)
 
         # Otherwise, download the entire item.
@@ -136,6 +124,5 @@ def main(argv):
             checksum=args['--checksum'],
             destdir=args['--destdir'],
             no_directory=args['--no-directories'],
-            sync_db=args['--sync-db'],
         )
     sys.exit(0)

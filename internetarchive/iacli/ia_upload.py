@@ -185,7 +185,7 @@ def main(argv):
         prev_identifier = None
         for row in spreadsheet:
             local_file = row['file']
-            identifier = row['identifier']
+            identifier = row['identifier'].strip()
             del row['file']
             del row['identifier']
             if (not identifier) and (prev_identifier):

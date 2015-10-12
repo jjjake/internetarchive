@@ -215,7 +215,10 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             prepared_metadata = prepare_metadata(metadata, source_metadata, append)
             destination_metadata.update(prepared_metadata)
         else:
-            raise ValueError('"{0}" is not a supported metadata target.'.format(target))
+            destination_metadata = source_metadata.copy()
+            prepared_metadata = prepare_metadata(metadata, source_metadata, append)
+            destination_metadata.update(prepared_metadata)
+            #raise ValueError('"{0}" is not a supported metadata target.'.format(target))
 
         # Delete metadata items where value is REMOVE_TAG.
         destination_metadata = dict(

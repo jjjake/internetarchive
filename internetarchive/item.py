@@ -264,7 +264,7 @@ class Item(object):
                 log.warning('skipping item {0}, item is dark'.format(self.identifier))
                 return
             elif self.metadata == {}:
-                print('skipping, item does not exist.', end='')
+                print('skipping, item does not exist.')
                 log.warning('skipping, {0}, item does not exist.'.format(self.identifier))
                 return
 
@@ -521,7 +521,6 @@ class Item(object):
                     progress_generator = progress.bar(chunks, expected_size=expected_size,
                                                       label=' uploading {f}: '.format(f=key))
                     data = utils.IterableToFileAdapter(progress_generator, size)
-                    assert 1 == 2
                 except:
                     print(' uploading {f}'.format(f=key))
                     data = body

@@ -26,7 +26,8 @@ Alternatively, you can install a few extra dependencies to help speed things up 
 ``pip install "internetarchive[speedups]"``
 
 This will install `ujson <https://pypi.python.org/pypi/ujson>`__ for faster JSON parsing,
-and `gevent <https://pypi.python.org/pypi/gevent>`__ for concurrent downloads.
+and `gevent <https://pypi.python.org/pypi/gevent>`__ for concurrent downloads. (You may need
+to install OS packages such as 'gcc' and 'python-dev' to get this to work.)
 
 If you want to install this module globally on your system instead of inside a ``virtualenv``, use sudo:
 

@@ -1,13 +1,14 @@
+from __future__ import print_function
 import os
 import sys
 from fnmatch import fnmatch
 import logging
 import time
-from datetime import datetime
 
 import requests.sessions
 from requests.adapters import HTTPAdapter
-from requests.exceptions import HTTPError
+from requests.packages.urllib3 import Retry
+from requests.exceptions import HTTPError, RetryError
 from requests import Response
 from clint.textui import progress
 import six
@@ -50,7 +51,7 @@ class Item(object):
     """
     # init()
     # ____________________________________________________________________________________
-    def __init__(self, identifier, metadata_timeout=None, config=None, max_retries=1,
+    def __init__(self, identifier, metadata_timeout=None, config=None, max_retries=None,
                  archive_session=None):
         """
         :type identifier: str
@@ -77,8 +78,10 @@ class Item(object):
         self.session = archive_session if archive_session else session.get_session(config)
         self.protocol = 'https:' if self.session.secure else 'http:'
         self.http_session = requests.sessions.Session()
-        max_retries_adapter = HTTPAdapter(max_retries=max_retries)
-        self.http_session.mount('{0}//'.format(self.protocol), max_retries_adapter)
+        self.max_retries = 2 if not max_retries else max_retries
+
+        self._mount_http_adapter()
+
         self.http_session.cookies = self.session.cookies
         self.identifier = identifier
 
@@ -105,6 +108,21 @@ class Item(object):
     def __repr__(self):
         return ('Item(identifier={identifier!r}, '
                 'exists={exists!r})'.format(**self.__dict__))
+
+    def _mount_http_adapter(self, protocol=None, max_retries=None, status_forcelist=None):
+        if not status_forcelist:
+            status_forcelist = [500, 501, 502, 503, 504, 400, 408]
+        if max_retries and max_retries is not None:
+            max_retries = Retry(total=max_retries,
+                                connect=max_retries,
+                                read=max_retries,
+                                redirect=False,
+                                method_whitelist=Retry.DEFAULT_METHOD_WHITELIST,
+                                status_forcelist=status_forcelist,
+                                backoff_factor=.1)
+
+        max_retries_adapter = HTTPAdapter(max_retries=max_retries)
+        self.http_session.mount('{0}//'.format(self.protocol), max_retries_adapter)
 
     # get_metadata()
     # ____________________________________________________________________________________
@@ -192,9 +210,10 @@ class Item(object):
 
     # download()
     # ____________________________________________________________________________________
-    def download(self, concurrent=None, source=None, formats=None, glob_pattern=None,
-                 dry_run=None, verbose=None, ignore_existing=None, checksum=None,
-                 destdir=None, no_directory=None):
+    def download(self, files=None, concurrent=None, source=None, formats=None,
+                 glob_pattern=None, dry_run=None, verbose=None, ignore_existing=None,
+                 checksum=None, destdir=None, no_directory=None, retries=None,
+                 item_index=None, ignore_errors=None):
         """Download the entire item into the current working directory.
 
         :type concurrent: bool
@@ -230,19 +249,24 @@ class Item(object):
         dry_run = False if dry_run is None else dry_run
         verbose = False if verbose is None else verbose
         ignore_existing = False if ignore_existing is None else ignore_existing
+        ignore_errors = False if not ignore_errors else ignore_errors
         checksum = False if checksum is None else checksum
         no_directory = False if no_directory is None else no_directory
 
         if verbose:
-            sys.stdout.write('{0}:\n'.format(self.identifier))
+            if item_index:
+                print('{0} ({1})'.format(self.identifier, item_index), end=': ')
+            else:
+                print(self.identifier, end=': ')
+            sys.stdout.flush()
             if self._json.get('is_dark') is True:
-                sys.stdout.write(' skipping: item is dark.\n')
-                log.warning('Not downloading item {0}, '
-                            'item is dark'.format(self.identifier))
+                print('skipping, item is dark.')
+                log.warning('skipping item {0}, item is dark'.format(self.identifier))
+                return
             elif self.metadata == {}:
-                sys.stdout.write(' skipping: item does not exist.\n')
-                log.warning('Not downloading item {0}, '
-                            'item does not exist.'.format(self.identifier))
+                print('skipping, item does not exist.', end='')
+                log.warning('skipping, {0}, item does not exist.'.format(self.identifier))
+                return
 
         if concurrent:
             try:
@@ -261,7 +285,10 @@ class Item(object):
 
                     """)
 
-        files = self.iter_files()
+        if files:
+            files = self.get_files(files)
+        else:
+            files = self.iter_files()
         if source:
             files = self.get_files(source=source)
         if formats:
@@ -270,7 +297,7 @@ class Item(object):
             files = self.get_files(glob_pattern=glob_pattern)
 
         if not files and verbose:
-            sys.stdout.write(' no matching files found, nothing downloaded.\n')
+            print('skipping, no matching files found.', end='')
         for f in files:
             fname = f.name.encode('utf-8')
             if no_directory:
@@ -278,14 +305,19 @@ class Item(object):
             else:
                 path = os.path.join(self.identifier, fname)
             if dry_run:
-                sys.stdout.write(f.url + '\n')
+                print(f.url)
                 continue
             if concurrent:
-                pool.spawn(f.download, path, verbose, ignore_existing, checksum, destdir)
+                pool.spawn(f.download, path, verbose, ignore_existing, checksum, destdir,
+                           retries, ignore_errors)
             else:
-                f.download(path, verbose, ignore_existing, checksum, destdir)
+                f.download(path, verbose, ignore_existing, checksum, destdir, retries,
+                           ignore_errors)
         if concurrent:
             pool.join()
+        if verbose:
+            print('')
+            sys.stdout.flush()
         return True
 
     # modify_metadata()
@@ -457,7 +489,7 @@ class Item(object):
         if (checksum) and (not self.tasks) and (ia_file) and (ia_file.md5 == md5_sum):
             log.info('{f} already exists: {u}'.format(f=key, u=url))
             if verbose:
-                sys.stdout.write(' {f} already exists, skipping.\n'.format(f=key))
+                print(' {f} already exists, skipping.'.format(f=key))
             if delete:
                 log.info(
                     '{f} successfully uploaded to https://archive.org/download/{i}/{f} '
@@ -489,8 +521,9 @@ class Item(object):
                     progress_generator = progress.bar(chunks, expected_size=expected_size,
                                                       label=' uploading {f}: '.format(f=key))
                     data = utils.IterableToFileAdapter(progress_generator, size)
+                    assert 1 == 2
                 except:
-                    sys.stdout.write(' uploading {f}: '.format(f=key))
+                    print(' uploading {f}'.format(f=key))
                     data = body
             else:
                 data = body
@@ -521,7 +554,7 @@ class Item(object):
                             time.sleep(retries_sleep)
                             log.info(error_msg)
                             if verbose:
-                                sys.stderr.write(' warning: {0}\n'.format(error_msg))
+                                print(' warning: {0}'.format(error_msg), file=sys.stderr)
                             retries -= 1
                             continue
                     request = _build_request()
@@ -530,7 +563,7 @@ class Item(object):
                     if (response.status_code == 503) and (retries > 0):
                         log.info(error_msg)
                         if verbose:
-                            sys.stderr.write(' warning: {0}\n'.format(error_msg))
+                            print(' warning: {0}'.format(error_msg), file=sys.stderr)
                         time.sleep(retries_sleep)
                         retries -= 1
                         continue
@@ -553,7 +586,7 @@ class Item(object):
                              '{2}'.format(key, self.identifier, exc))
                 log.error(error_msg)
                 if verbose:
-                    sys.stderr.write(error_msg + '\n')
+                    print(error_msg, file=sys.stderr)
                 # Raise HTTPError with error message.
                 raise type(exc)(error_msg)
 
@@ -692,7 +725,7 @@ class File(object):
         for key in _file:
             setattr(self, key, _file[key])
         self.mtime = float(self.mtime) if self.mtime else 0
-        self.size = int(self.size) if self.size  else 0
+        self.size = int(self.size) if self.size else 0
         base_url = '{protocol}//archive.org/download/{identifier}'.format(**item.__dict__)
         self.url = '{base_url}/{name}'.format(base_url=base_url,
                                               name=urllib.parse.quote(name.encode('utf-8')))
@@ -709,7 +742,7 @@ class File(object):
     # download()
     # ____________________________________________________________________________________
     def download(self, file_path=None, verbose=None, ignore_existing=None, checksum=None,
-                 destdir=None):
+                 destdir=None, retries=None, ignore_errors=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -726,7 +759,10 @@ class File(object):
         verbose = False if verbose is None else verbose
         ignore_existing = False if ignore_existing is None else ignore_existing
         checksum = False if checksum is None else checksum
+        retries = 2 if not retries else retries
+        ignore_errors = False if not ignore_errors else ignore_errors
 
+        self._item._mount_http_adapter(max_retries=retries)
         file_path = self.name if not file_path else file_path
 
         if destdir:
@@ -736,31 +772,31 @@ class File(object):
                 raise IOError('{} is not a directory!'.format(destdir))
             file_path = os.path.join(destdir, file_path)
 
-        # Skip based on mtime and length if no other clobber/skip options specified.
-        if os.path.exists(file_path) and ignore_existing is False and checksum is False:
-            st = os.stat(file_path)
-            if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
-                    or self.name.endswith('_files.xml') and st.st_size != 0:
-                if verbose:
-                    print(' skipping {0}: already exists.'.format(file_path))
-                log.info('not downloading file {0}, '
-                         'file already exists.'.format(file_path))
-                return
-
         if os.path.exists(file_path):
-            if ignore_existing is False and checksum is False:
-                raise IOError('file already downloaded: {0}'.format(file_path))
-            if checksum:
+            if ignore_existing:
+                if verbose:
+                    print('s', end='')
+                    sys.stdout.flush()
+                return
+            elif checksum:
                 md5_sum = utils.get_md5(open(file_path))
                 if md5_sum == self.md5:
-                    log.info('not downloading file {0}, '
+                    log.info('skipping {0}, '
                              'file already exists based on checksum.'.format(file_path))
                     if verbose:
-                        sys.stdout.write(' skipping {0}: already exists based on checksum.\n'.format(file_path))
+                        print('s', end='')
+                        sys.stdout.flush()
+                    return
+            else:
+                st = os.stat(file_path)
+                if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
+                        or self.name.endswith('_files.xml') and st.st_size != 0:
+                    log.info('skipping {0}, file already exists.'.format(file_path))
+                    if verbose:
+                        print('s', end='')
+                        sys.stdout.flush()
                     return
 
-        if verbose:
-            sys.stdout.write(' downloading: {0}\n'.format(file_path))
         parent_dir = os.path.dirname(file_path)
         if parent_dir != '' and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
@@ -768,17 +804,41 @@ class File(object):
         try:
             response = self._item.http_session.get(self.url, stream=True)
             response.raise_for_status()
-        except HTTPError as e:
-            raise HTTPError('error downloading {0}, {1}'.format(self.url, e))
-        with open(file_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-                    f.flush()
+        except (RetryError, HTTPError) as exc:
+            if verbose:
+                print('e', end='')
+                sys.stdout.flush()
+            log.error('error downloading file {0}, '
+                      'exception raised: {1}'.format(file_path, exc))
+            if ignore_errors is True:
+                return
+            else:
+                raise exc
+        chunk_size = 2048
+        _i = 1
+        try:
+            with open(file_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=chunk_size):
+                    if chunk:
+                        f.write(chunk)
+                        f.flush()
+                        _i += 1
+                        if verbose:
+                            _m = '{0}\b'.format(progress.MILL_CHARS[(_i // 1) %
+                                                len(progress.MILL_CHARS)])
+                            print(_m, end='', file=sys.stderr)
+                            sys.stderr.flush()
+        except:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            raise
 
         # Set mtime with mtime from files.xml.
         os.utime(file_path, (0, self.mtime))
 
+        if verbose:
+            print('d', end='')
+            sys.stdout.flush()
         log.info('downloaded {0}/{1} to {2}'.format(self.identifier,
                                                     self.name.encode('utf-8'),
                                                     file_path))
@@ -818,9 +878,7 @@ class File(object):
             if verbose:
                 msg = ' deleting: {0}'.format(self.name.encode('utf-8'))
                 if cascade_delete:
-                    msg += ' and all derivative files.\n'
-                else:
-                    msg += '\n'
-                sys.stdout.write(msg)
+                    msg += ' and all derivative files.'
+                print(msg)
             prepared_request = request.prepare()
             return self._item.http_session.send(prepared_request)

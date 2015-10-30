@@ -126,6 +126,8 @@ class Item(object):
         except HTTPError as e:
             error_msg = 'Error retrieving metadata from {0}, {1}'.format(resp.url, e)
             log.error(error_msg)
+            if e.response.status_code == 503:
+                time.sleep(2.0)
             raise HTTPError(error_msg)
         metadata = resp.json()
         for key in metadata:

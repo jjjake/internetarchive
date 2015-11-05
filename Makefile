@@ -41,7 +41,7 @@ clean-pex:
 
 pex-binary: clean-pex pyyaml-egg
 	pip wheel .
-	find wheelhouse -name 'PyYAML-3.11*' -delete
+	find wheelhouse -name 'PyYAML-3.11*whl' -delete
 	pex -v --repo wheelhouse/ -r pex-requirements.txt  -e internetarchive.iacli.ia:main -o ia-$(VERSION)-py2.pex --no-pypi
 
 publish-binary: pex-binary

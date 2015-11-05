@@ -3,6 +3,24 @@
 Release History
 ---------------
 
+0.9.7 (2015-11-05)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Cleanup partially downloaded files when `download()` fails.
+
+**Features and Improvements**
+
+- Added `--format` option to `ia delete`.
+- Refactored `download()` and `ia download` to behave more like rsync. Files are now clobbered by default,
+  `ignore_existing` and `--ignore-existing` now skip over files already downloaded without making a request.
+- Added retry support to `download()` and `ia download`.
+- Added `files` kwarg to `Item.download()` for downloading specific files.
+- Added `ignore_errors` option to `File.download()` for ignoring (but logging) exceptions.
+- Added default timeouts to metadata and download requests.
+- Less verbose output in `ia download` by default, use `ia download --verbose` for old style output.
+
 0.9.6 (2015-10-12)
 ++++++++++++++++++
 

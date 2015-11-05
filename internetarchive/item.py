@@ -8,7 +8,7 @@ import time
 import requests.sessions
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3 import Retry
-from requests.exceptions import HTTPError, RetryError
+from requests.exceptions import HTTPError, RetryError, ConnectTimeout, ConnectionError
 from requests import Response
 from clint.textui import progress
 import six
@@ -138,6 +138,7 @@ class Item(object):
 
         """
         url = '{protocol}//archive.org/metadata/{identifier}'.format(**self.__dict__)
+        metadata_timeout = 6 if not metadata_timeout else metadata_timeout
         try:
             resp = self.http_session.get(url, timeout=metadata_timeout)
             resp.raise_for_status()
@@ -189,6 +190,7 @@ class Item(object):
             source = [source]
         if not isinstance(formats, (list, tuple, set)):
             formats = [formats]
+        files = [f.decode('utf-8') for f in files if not isinstance(f, six.text_type)]
 
         file_objects = []
         for f in self.iter_files():
@@ -211,9 +213,9 @@ class Item(object):
     # download()
     # ____________________________________________________________________________________
     def download(self, files=None, concurrent=None, source=None, formats=None,
-                 glob_pattern=None, dry_run=None, verbose=None, ignore_existing=None,
-                 checksum=None, destdir=None, no_directory=None, retries=None,
-                 item_index=None, ignore_errors=None):
+                 glob_pattern=None, dry_run=None, verbose=None, silent=None,
+                 ignore_existing=None, checksum=None, destdir=None, no_directory=None,
+                 retries=None, item_index=None, ignore_errors=None):
         """Download the entire item into the current working directory.
 
         :type concurrent: bool
@@ -248,25 +250,38 @@ class Item(object):
         concurrent = False if concurrent is None else concurrent
         dry_run = False if dry_run is None else dry_run
         verbose = False if verbose is None else verbose
+        silent = False if silent is None else silent
         ignore_existing = False if ignore_existing is None else ignore_existing
         ignore_errors = False if not ignore_errors else ignore_errors
         checksum = False if checksum is None else checksum
         no_directory = False if no_directory is None else no_directory
 
-        if verbose:
-            if item_index:
-                print('{0} ({1})'.format(self.identifier, item_index), end=': ')
-            else:
+        if not dry_run:
+            if item_index and verbose is True:
+                print('{0} ({1}):'.format(self.identifier, item_index))
+            elif item_index and silent is False:
+                print('{0} ({1}): '.format(self.identifier, item_index), end='')
+            elif item_index is None and verbose is True:
+                print('{0}:'.format(self.identifier))
+            elif item_index is None and silent is False:
                 print(self.identifier, end=': ')
-            sys.stdout.flush()
-            if self._json.get('is_dark') is True:
-                print('skipping, item is dark.')
-                log.warning('skipping item {0}, item is dark'.format(self.identifier))
-                return
-            elif self.metadata == {}:
-                print('skipping, item does not exist.')
-                log.warning('skipping, {0}, item does not exist.'.format(self.identifier))
-                return
+
+        if self._json.get('is_dark') is True:
+            msg = 'skipping {0}, item is dark'.format(self.identifier)
+            log.warning(msg)
+            if verbose:
+                print(' ' + msg)
+            elif silent is False:
+                print(msg)
+            return
+        elif self.metadata == {}:
+            msg = 'skipping {0}, item does not exist.'.format(self.identifier)
+            log.warning(msg)
+            if verbose:
+                print(' ' + msg)
+            elif silent is False:
+                print(msg)
+            return
 
         if concurrent:
             try:
@@ -296,28 +311,40 @@ class Item(object):
         if glob_pattern:
             files = self.get_files(glob_pattern=glob_pattern)
 
-        if not files and verbose:
-            print('skipping, no matching files found.', end='')
+        if not files:
+            msg = 'skipping {0}, no matching files found.'.format(self.identifier)
+            log.info(msg)
+            if verbose:
+                print(' ' + msg)
+            elif silent is False:
+                print(msg, end='')
+
+        errors = False
         for f in files:
             fname = f.name.encode('utf-8')
             if no_directory:
                 path = fname
             else:
-                path = os.path.join(self.identifier, fname)
+                path = os.path.join(self.identifier, f.name)
             if dry_run:
                 print(f.url)
                 continue
             if concurrent:
-                pool.spawn(f.download, path, verbose, ignore_existing, checksum, destdir,
-                           retries, ignore_errors)
+                pool.spawn(f.download, path, verbose, silent, ignore_existing, checksum,
+                           destdir, retries, ignore_errors)
             else:
-                f.download(path, verbose, ignore_existing, checksum, destdir, retries,
-                           ignore_errors)
+                r = f.download(path, verbose, silent, ignore_existing, checksum, destdir,
+                               retries, ignore_errors)
+                if r is False:
+                    errors = True
         if concurrent:
             pool.join()
-        if verbose:
-            print('')
-            sys.stdout.flush()
+        if silent is False and verbose is False and dry_run is False:
+            if errors:
+                print(' - errors')
+            else:
+                print(' - success')
+            #sys.stdout.flush()
         return True
 
     # modify_metadata()
@@ -740,8 +767,8 @@ class File(object):
 
     # download()
     # ____________________________________________________________________________________
-    def download(self, file_path=None, verbose=None, ignore_existing=None, checksum=None,
-                 destdir=None, retries=None, ignore_errors=None):
+    def download(self, file_path=None, verbose=None, silent=None, ignore_existing=None,
+                 checksum=None, destdir=None, retries=None, ignore_errors=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -756,6 +783,7 @@ class File(object):
 
         """
         verbose = False if verbose is None else verbose
+        silent = False if silent is None else silent
         ignore_existing = False if ignore_existing is None else ignore_existing
         checksum = False if checksum is None else checksum
         retries = 2 if not retries else retries
@@ -773,26 +801,38 @@ class File(object):
 
         if os.path.exists(file_path):
             if ignore_existing:
+                msg = 'skipping {0}, file already exists.'.format(
+                        file_path.encode('utf-8'))
+                log.info(msg)
                 if verbose:
-                    print('s', end='')
+                    print(' ' + msg)
+                elif silent is False:
+                    print('.', end='')
                     sys.stdout.flush()
                 return
             elif checksum:
                 md5_sum = utils.get_md5(open(file_path))
                 if md5_sum == self.md5:
-                    log.info('skipping {0}, '
-                             'file already exists based on checksum.'.format(file_path))
+                    msg = 'skipping {0}, file already exists based on checksum.'.format(
+                            file_path.encode('utf-8'))
+                    log.info(msg)
                     if verbose:
-                        print('s', end='')
+                        print(' ' + msg)
+                    elif silent is False:
+                        print('.', end='')
                         sys.stdout.flush()
                     return
             else:
                 st = os.stat(file_path)
                 if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
                         or self.name.endswith('_files.xml') and st.st_size != 0:
-                    log.info('skipping {0}, file already exists.'.format(file_path))
+                    msg = ('skipping {0}, file already exists '
+                           'based on length and date.'.format(file_path.encode('utf-8')))
+                    log.info(msg)
                     if verbose:
-                        print('s', end='')
+                        print(' ' + msg)
+                    elif silent is False:
+                        print('.', end='')
                         sys.stdout.flush()
                     return
 
@@ -801,18 +841,22 @@ class File(object):
             os.makedirs(parent_dir)
 
         try:
-            response = self._item.http_session.get(self.url, stream=True)
+            response = self._item.http_session.get(self.url, stream=True, timeout=6)
             response.raise_for_status()
-        except (RetryError, HTTPError) as exc:
+        except (RetryError, HTTPError, ConnectTimeout, ConnectionError) as exc:
+            msg = ('error downloading file {0}, '
+                   'exception raised: {1}'.format(file_path, exc))
+            log.error(msg)
             if verbose:
+                print(' ' + msg)
+            elif silent is False:
                 print('e', end='')
                 sys.stdout.flush()
-            log.error('error downloading file {0}, '
-                      'exception raised: {1}'.format(file_path, exc))
             if ignore_errors is True:
-                return
+                return False
             else:
                 raise exc
+
         chunk_size = 2048
         _i = 1
         try:
@@ -822,7 +866,7 @@ class File(object):
                         f.write(chunk)
                         f.flush()
                         _i += 1
-                        if verbose:
+                        if silent is False and verbose is False:
                             _m = '{0}\b'.format(progress.MILL_CHARS[(_i // 1) %
                                                 len(progress.MILL_CHARS)])
                             print(_m, end='', file=sys.stderr)
@@ -835,12 +879,16 @@ class File(object):
         # Set mtime with mtime from files.xml.
         os.utime(file_path, (0, self.mtime))
 
+        msg = 'downloaded {0}/{1} to {2}'.format(self.identifier,
+                                                 self.name.encode('utf-8'),
+                                                 file_path.encode('utf-8'))
+        log.info(msg)
         if verbose:
+            print(' ' + msg)
+        elif silent is False:
             print('d', end='')
             sys.stdout.flush()
-        log.info('downloaded {0}/{1} to {2}'.format(self.identifier,
-                                                    self.name.encode('utf-8'),
-                                                    file_path))
+        return True
 
     # delete()
     # ____________________________________________________________________________________

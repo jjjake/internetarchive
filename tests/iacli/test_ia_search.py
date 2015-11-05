@@ -10,7 +10,7 @@ import internetarchive
 
 
 def test_ia_search():
-    cmd = 'ia search iacli-test-item --sort=date:asc'
+    cmd = 'ia search iacli --sort=date:asc'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
     assert proc.returncode == 0

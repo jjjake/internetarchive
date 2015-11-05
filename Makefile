@@ -15,6 +15,8 @@ coverage:
 	py.test --verbose --cov-report html --cov=internetarchive
 
 publish:
+	git tag -a v$(VERSION) -m 'version $(VERSION)'
+	git push --tags
 	python setup.py register
 	python setup.py sdist upload
 

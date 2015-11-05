@@ -4,19 +4,20 @@ IA-S3 Documentation: https://archive.org/help/abouts3.txt
 
 usage:
     ia delete [--quiet] [--debug] [--dry-run] [--cascade] <identifier> <file>...
+    ia delete [--quiet] [--debug] [--dry-run] [--cascade] [--glob=<pattern> | --format=<format>...] <identifier>
     ia delete [--quiet] [--debug] [--dry-run] --all <identifier>
-    ia delete [--quiet] [--debug] [--dry-run] --glob=<pattern> <identifier>
     ia delete --help
 
 options:
     -h, --help
-    -q, --quiet            Print status to stdout. 
-    -c, --cascade          Delete all derivative files associated with the given file.
-    -a, --all              Delete all files in the given item (Note: Some files, such
-                           as <identifier>_meta.xml and <identifier>_files.xml, cannot
-                           be deleted)
-    -d, --dry-run          Output files to be deleted to stdout, but don't actually delete.
-    -g, --glob=<pattern>   Only return patterns match the given pattern.
+    -q, --quiet                Print status to stdout. 
+    -c, --cascade              Delete all derivative files associated with the given file.
+    -a, --all                  Delete all files in the given item (Note: Some files, such
+                               as <identifier>_meta.xml and <identifier>_files.xml, cannot
+                               be deleted)
+    -d, --dry-run              Output files to be deleted to stdout, but don't actually delete.
+    -g, --glob=<pattern>       Only delete files matching the given pattern.
+    -f, --format=<format>...   Only only delete files matching the specified format(s).
 
 """
 import sys
@@ -47,6 +48,8 @@ def main(argv):
         args['--cacade'] = True
     elif args['--glob']:
         files = item.get_files(glob_pattern=args['--glob'])
+    elif args['--format']:
+        files = item.get_files(formats=args['--format'])
     else:
         fnames = []
         if args['<file>'] == ['-']:

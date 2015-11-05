@@ -11,3 +11,6 @@ TAGS
 *csv
 htmlcov
 *log
+*.pex
+wheelhouse
+*gz

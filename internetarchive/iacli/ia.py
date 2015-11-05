@@ -78,25 +78,23 @@ def main():
 
     argv = [cmd] + args['<args>']
 
+    if cmd == 'help' or not cmd:
+        if not args['<args>']:
+            sys.exit(sys.stderr.write(__doc__.strip() + '\n'))
+        else:
+            call(['python', __file__.replace('.pyc', '.py'), args['<args>'][0], '--help'])
+            sys.exit()
+
     # Dynamically import and call subcommand module specified on the
     # command line.
-    if cmd == 'help':
-        if args['<args>']:
-            module = 'internetarchive.iacli.ia_{0}'.format(args['<args>'][0])
-        else:
-            sys.exit(sys.stderr.write(__doc__.strip() + '\n'))
-    else:
-        module = 'internetarchive.iacli.ia_{0}'.format(cmd)
+    module = 'internetarchive.iacli.ia_{0}'.format(cmd)
     try:
         globals()['ia_module'] = __import__(module, fromlist=['internetarchive.iacli'])
     except ImportError:
         sys.stderr.write('error: "{0}" is not an `ia` command!\n'.format(cmd))
         sys.exit(127)
 
-    if cmd == 'help':
-        sys.exit(sys.stderr.write(ia_module.__doc__.strip() + '\n'))
-    else:
-        ia_module.main(argv)
+    ia_module.main(argv)
 
 if __name__ == '__main__':
     main()

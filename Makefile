@@ -1,5 +1,7 @@
 .PHONY: docs
 
+VERSION=$(shell grep version internetarchive/__init__.py | cut -d"'" -f2)
+
 init:
 	pip install -e .
 
@@ -24,25 +26,22 @@ docs:
 	@echo "\033[95m\n\nBuild successful! View the docs homepage at docs/build/html/index.html.\n\033[0m"
 
 pyyaml-egg:
-	pip install -d . pyyaml==3.11
+	pip install --no-use-wheel -d . pyyaml==3.11
 	tar -zxf PyYAML-3.11.tar.gz
 	cd PyYAML-3.11; \
-	sed -i '1i import setuptools' setup.py; \
+	gsed -i '1i import setuptools' setup.py; \
 	python2.7 setup.py --without-libyaml bdist_egg
-	mkdir -p pex-dist
-	mv PyYAML-3.11/dist/*egg pex-dist/
-
-ia-egg:
-	rm -rf build
-	git checkout pex; \
-	python2.7 setup.py bdist_egg
-	mv dist/internetarchive-*.egg pex-dist/
+	mkdir -p wheelhouse
+	mv PyYAML-3.11/dist/*egg wheelhouse/
 
 clean-pex:
 	rm -fr ia-pex "$$HOME/.pex/install/*" "$$HOME/.pex/build/*"
 
-pex-binary: clean-pex pyyaml-egg ia-egg
-	pex -v --repo pex-dist/ -r PyYAML -r internetarchive -e internetarchive.iacli.ia:main -p ia-pex
+pex-binary: clean-pex pyyaml-egg
+	pip wheel .
+	find wheelhouse -name 'PyYAML-3.11*' -delete
+	pex -v --repo wheelhouse/ -r pex-requirements.txt  -e internetarchive.iacli.ia:main -o ia-$(VERSION)-py2.pex --no-pypi
 
-pex-binary3.4: clean-pex pyyaml-egg ia-egg
-	pex -v --python=python3.4 --repo pex-dist/ -r PyYAML -r internetarchive -e internetarchive.iacli.ia:main -p ia-pex
+publish-binary: pex-binary
+	./ia-$(VERSION)-py2.pex upload ia-pex ia-$(VERSION)-py2.pex
+	./ia-$(VERSION)-py2.pex upload ia-pex ia-$(VERSION)-py2.pex --remote-name=ia

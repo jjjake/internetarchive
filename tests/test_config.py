@@ -8,32 +8,50 @@ import internetarchive.config
 import internetarchive.session
 from internetarchive.exceptions import AuthenticationError
 
+# import logging
+# logging.basicConfig(level=logging.DEBUG)
+
+# import cookielib
+# cookielib.debug = True
 
 @responses.activate
 def test_get_auth_config():
-    def request_callback(request):
-        headers = {'set-cookie': 'logged-in-user=test%40archive.org; logged-in-sig=test-sig;'}
-        return (200, headers, '')
-
+    headers = {'set-cookie': 'logged-in-user=test@archive.org',
+               'set-cookie2': 'logged-in-sig=test-sig; version=0'}
+    # set-cookie2: Ugly hack to workaround responses lack of support for multiple headers
     responses.add(responses.POST, 'https://archive.org/account/login.php',
-                  adding_headers={'set-cookie': 'logged-in-user=test%40archive.org; logged-in-sig=test-sig;'})
-    #responses.add_callback(responses.POST, 'https://archive.org/account/login.php', request_callback)
-              #adding_headers={'set-cookie': 'logged-in-user=test%40archive.org; logged-in-sig=test-sig;'})
+                  adding_headers=headers)
 
     test_body = """{
         "key": {
             "s3secretkey": "test-secret",
             "s3accesskey": "test-access"
-        }, 
+        },
         "success": 1
     }"""
     responses.add(responses.GET, 'https://archive.org/account/s3.php',
-              status=200,
-              body=test_body,
-              adding_headers={'set-cookie': 'logged-in-user=test%40archive.org; logged-in-sig=test-sig;'},
-              content_type='application/json')
+                  status=200, body=test_body, adding_headers=headers,
+                  content_type='application/json')
 
+    import httplib, StringIO, requests.adapters, mock
+
+    class UglyHack(httplib.HTTPResponse):
+        def __init__(self, headers):
+            self.fp = True
+            self.msg = httplib.HTTPMessage(StringIO.StringIO())
+            for (k,v) in headers.items():
+                self.msg[k] = v
+
+    original_func = requests.adapters.HTTPAdapter.build_response
+    def ugly_hack_build_response(self, req, resp):
+        resp._original_response = UglyHack(resp.getheaders())
+        response = original_func(self, req, resp)
+        return response
+
+    ugly_hack = mock.patch('requests.adapters.HTTPAdapter.build_response', ugly_hack_build_response)
+    ugly_hack.start()
     r = internetarchive.config.get_auth_config('test@example.com', 'password1')
+    ugly_hack.stop()
     assert r['s3']['access'] == 'test-access'
     assert r['s3']['secret'] == 'test-secret'
     assert r['cookies']['logged-in-user'] == 'test@archive.org'
@@ -66,7 +84,7 @@ def test_get_config_with_config_file(tmpdir):
     tmpdir.chdir()
     with open('ia_test.ini', 'w') as fp:
         fp.write(test_conf)
-        
+
     config = internetarchive.config.get_config(config_file='ia_test.ini',
                                                config={'custom': 'test'})
     assert config['cookies']['logged-in-sig'] == 'test-sig'
@@ -134,7 +152,7 @@ def test_get_config_config_and_config_file(tmpdir):
 
     with open('ia_test.ini', 'w') as fp:
         fp.write(test_conf)
-        
+
     test_conf = {
         's3': {
             'access': 'custom-access',

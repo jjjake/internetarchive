@@ -6,12 +6,18 @@ API Documentation
 .. module:: internetarchive
 
 .. autofunction:: get_item
+ :noindex:
 .. autofunction:: get_files
-.. autofunction:: iter_files
+ :noindex:
 .. autofunction:: modify_metadata
+ :noindex:
 .. autofunction:: upload
+ :noindex:
 .. autofunction:: download
+ :noindex:
 .. autofunction:: delete
+ :noindex:
 .. autofunction:: get_tasks
+ :noindex:
 .. autofunction:: search_items
-.. autofunction:: get_data_miner
+ :noindex:

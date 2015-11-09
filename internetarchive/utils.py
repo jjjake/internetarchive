@@ -68,3 +68,33 @@ class IterableToFileAdapter(object):
 
     def __len__(self):
         return self.length
+
+
+class IdentifierListAsItems(object):
+    """This class is a lazily-loaded list of Items, accessible by index or identifier.
+    """
+    def __init__(self, id_list_or_single_id, session):
+        self.ids = id_list_or_single_id \
+            if isinstance(id_list_or_single_id, list) \
+            else [id_list_or_single_id]
+
+        self._items = [None]*len(self.ids)
+        self.session = session
+
+    def __len__(self):
+        return len(self.ids)
+
+    def __getitem__(self, idx):
+        for i in (range(*idx.indices(len(self))) if isinstance(idx, slice) else [idx]):
+            if self._items[i] is None:
+                self._items[i] = self.session.get_item(self.ids[i])
+        return self._items[idx]
+
+    def __getattr__(self, name):
+        try:
+            return self[self.ids.index(name)]
+        except ValueError:
+            raise AttributeError
+
+    def __repr__(self):
+        return '{0.__class__.__name__}({0.ids!r})'.format(self)

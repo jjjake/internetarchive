@@ -6,7 +6,10 @@ sys.path.insert(0, inc_path)
 
 import six
 
+import responses
+
 import internetarchive.utils
+from internetarchive import get_session
 
 
 def test_utils():
@@ -44,3 +47,18 @@ def test_map2x():
         assert key == value
     for key, value in internetarchive.utils.map2x(lambda k, v: [k, v], keys, columns):
         assert key == value
+
+@responses.activate
+def test_IdentifierListAsItems(session, testitem_metadata):
+    responses.add(responses.GET, 'http://archive.org/metadata/nasa',
+                  body=testitem_metadata,
+                  status=200,
+                  content_type='application/json')
+    it = internetarchive.utils.IdentifierListAsItems('nasa', session)
+    assert it[0].identifier == 'nasa'
+    assert it.nasa.identifier == 'nasa'
+
+def test_IdentifierListAsItems_len(session):
+    assert len(internetarchive.utils.IdentifierListAsItems(['foo', 'bar'], session)) == 2
+
+#TODO: Add test of slice access to IdenfierListAsItems

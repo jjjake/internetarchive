@@ -16,9 +16,6 @@ from internetarchive import get_session
 import internetarchive.files
 
 
-ROOT_DIR = os.getcwd()
-TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
-
 DOWNLOAD_URL_RE = re.compile(r'http://archive.org/download/.*')
 S3_URL_RE = re.compile(r'.*s3.us.archive.org/.*')
 EXPECTED_S3_HEADERS = {
@@ -32,62 +29,37 @@ EXPECTED_S3_HEADERS = {
 }
 
 
-
-# Helper functions _______________________________________________________________________
-def get_test_item_md():
-    with open(TEST_JSON_FILE, 'r') as fh:
-        item_metadata = fh.read().strip().decode('utf-8')
-    return item_metadata
-
-
-@responses.activate
-def get_session_and_item(item_metadata=None):
-    if not item_metadata:
-        item_metadata = get_test_item_md()
-    s = get_session()
-    responses.add(responses.GET, 'http://archive.org/metadata/nasa',
-                  body=item_metadata,
-                  status=200,
-                  content_type='application/json')
-    item = s.get_item('nasa')
-    return s, item, item_metadata
-
-
 # get_item() _____________________________________________________________________________
-def test_get_item():
-    s, item, item_metadata = get_session_and_item()
-
-    assert item.item_metadata == json.loads(item_metadata)
-    assert item.identifier == 'nasa'
-    assert item.exists == True
-    assert item.session == s
-    assert isinstance(item.metadata, dict)
-    assert isinstance(item.files, list)
-    assert isinstance(item.reviews, list)
-    assert item.created == 1427273784
-    assert item.d1 == 'ia902606.us.archive.org'
-    assert item.d2 == 'ia802606.us.archive.org'
-    assert item.dir == '/7/items/nasa'
-    assert item.files_count == 6
-    assert item.item_size == 114030
-    assert item.server == 'ia902606.us.archive.org'
-    assert item.uniq == 2131998567
-    assert item.updated == 1427273788
-    assert item.tasks == None
+def test_get_item(testitem_metadata, testitem, session):
+    assert testitem.item_metadata == json.loads(testitem_metadata)
+    assert testitem.identifier == 'nasa'
+    assert testitem.exists == True
+    assert testitem.session == session
+    assert isinstance(testitem.metadata, dict)
+    assert isinstance(testitem.files, list)
+    assert isinstance(testitem.reviews, list)
+    assert testitem.created == 1427273784
+    assert testitem.d1 == 'ia902606.us.archive.org'
+    assert testitem.d2 == 'ia802606.us.archive.org'
+    assert testitem.dir == '/7/items/nasa'
+    assert testitem.files_count == 6
+    assert testitem.item_size == 114030
+    assert testitem.server == 'ia902606.us.archive.org'
+    assert testitem.uniq == 2131998567
+    assert testitem.updated == 1427273788
+    assert testitem.tasks == None
+    assert len(testitem.collection) == 1
 
 
 # get_file() _____________________________________________________________________________
-def test_get_file():
-    s, item, item_metadata = get_session_and_item()
-    _file = item.get_file('nasa_meta.xml')
+def test_get_file(testitem):
+    _file = testitem.get_file('nasa_meta.xml')
     assert type(_file) == internetarchive.files.File
     assert _file.name == 'nasa_meta.xml'
 
 
-def test_get_files():
-    s, item, item_metadata = get_session_and_item()
-
-    files = item.get_files()
+def test_get_files(testitem):
+    files = testitem.get_files()
     assert type(files) == types.GeneratorType
 
     expected_files = set(['NASAarchiveLogo.jpg',
@@ -100,21 +72,17 @@ def test_get_files():
     assert files == expected_files
 
 
-def test_get_files_by_name():
-    s, item, item_metadata = get_session_and_item()
-
-    files = item.get_files('globe_west_540.jpg')
+def test_get_files_by_name(testitem):
+    files = testitem.get_files('globe_west_540.jpg')
     assert set(f.name for f in files) == set(['globe_west_540.jpg'])
 
-    files = item.get_files(['globe_west_540.jpg', 'nasa_meta.xml'])
+    files = testitem.get_files(['globe_west_540.jpg', 'nasa_meta.xml'])
     assert set(f.name
                for f in files) == set(['globe_west_540.jpg', 'nasa_meta.xml'])
 
 
-def test_get_files_by_source():
-    s, item, item_metadata = get_session_and_item()
-
-    files = set(f.name for f in item.get_files(source='metadata'))
+def test_get_files_by_source(testitem):
+    files = set(f.name for f in testitem.get_files(source='metadata'))
     expected_files = set(['nasa_reviews.xml',
                           'nasa_meta.xml',
                           'nasa_archive.torrent',
@@ -122,7 +90,7 @@ def test_get_files_by_source():
     assert files == expected_files
 
     files = set(f.name
-                for f in item.get_files(source=['metadata', 'original']))
+                for f in testitem.get_files(source=['metadata', 'original']))
     expected_files = set(['nasa_reviews.xml',
                           'nasa_meta.xml',
                           'nasa_archive.torrent',
@@ -132,40 +100,34 @@ def test_get_files_by_source():
     assert files == expected_files
 
 
-def test_get_files_by_formats():
-    s, item, item_metadata = get_session_and_item()
-
-    files = set(f.name for f in item.get_files(formats='Archive BitTorrent'))
+def test_get_files_by_formats(testitem):
+    files = set(f.name for f in testitem.get_files(formats='Archive BitTorrent'))
     expected_files = set(['nasa_archive.torrent'])
     assert files == expected_files
 
     files = set(
-        f.name for f in item.get_files(formats=['Archive BitTorrent', 'JPEG']))
+        f.name for f in testitem.get_files(formats=['Archive BitTorrent', 'JPEG']))
     expected_files = set(['nasa_archive.torrent', 'globe_west_540.jpg', ])
     assert files == expected_files
 
 
-def test_get_files_by_glob():
-    s, item, item_metadata = get_session_and_item()
-
-    files = set(f.name for f in item.get_files(glob_pattern='*jpg|*torrent'))
+def test_get_files_by_glob(testitem):
+    files = set(f.name for f in testitem.get_files(glob_pattern='*jpg|*torrent'))
     expected_files = set(['NASAarchiveLogo.jpg',
                           'globe_west_540.jpg',
                           'nasa_archive.torrent', ])
     assert files == expected_files
 
     files = set(f.name
-                for f in item.get_files(glob_pattern=['*jpg', '*torrent']))
+                for f in testitem.get_files(glob_pattern=['*jpg', '*torrent']))
     expected_files = set(['NASAarchiveLogo.jpg',
                           'globe_west_540.jpg',
                           'nasa_archive.torrent', ])
     assert files == expected_files
 
 
-def test_get_files_with_multiple_filters():
-    s, item, item_metadata = get_session_and_item()
-
-    files = set(f.name for f in item.get_files(formats='JPEG',
+def test_get_files_with_multiple_filters(testitem):
+    files = set(f.name for f in testitem.get_files(formats='JPEG',
                                                glob_pattern='*xml'))
     expected_files = set(['globe_west_540.jpg',
                           'nasa_reviews.xml',
@@ -174,71 +136,68 @@ def test_get_files_with_multiple_filters():
     assert files == expected_files
 
 
-def test_get_files_no_matches():
-    s, item, item_metadata = get_session_and_item()
-
-    assert list(item.get_files(formats='none')) == []
+def test_get_files_no_matches(testitem):
+    assert list(testitem.get_files(formats='none')) == []
 
 
 # download() _____________________________________________________________________________
-def test_download(tmpdir):
-    s, item, item_metadata = get_session_and_item()
+def test_download(tmpdir, testitem):
     tmpdir.chdir()
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content', status=200)
-        item.download(files='nasa_meta.xml')
+        testitem.download(files='nasa_meta.xml')
         assert len(tmpdir.listdir()) == 1
 
 
-def test_download_io_error(tmpdir):
-    s, item, item_metadata = get_session_and_item()
+def test_download_io_error(tmpdir, testitem):
     tmpdir.chdir()
     try:
         with responses.RequestsMock() as rsps:
             rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content', status=200)
-            item.download(files='nasa_meta.xml')
-            item.download(files='nasa_meta.xml')
+            testitem.download(files='nasa_meta.xml')
+            testitem.download(files='nasa_meta.xml')
     except Exception as exc:
         assert isinstance(exc, IOError)
 
 
-def test_download_no_clobber(tmpdir):
-    s, item, item_metadata = get_session_and_item()
+def test_download_no_clobber(tmpdir, testitem):
     tmpdir.chdir()
     with responses.RequestsMock(
         assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='test content',
                  status=200)
-        item.download(files='nasa_meta.xml', no_clobber=True)
+        testitem.download(files='nasa_meta.xml', no_clobber=True)
 
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='new test content',
                  status=200)
-        item.download(files='nasa_meta.xml', no_clobber=True)
+        testitem.download(files='nasa_meta.xml', no_clobber=True)
         with open('nasa/nasa_meta.xml', 'r') as fh:
             assert fh.read() == 'test content'
 
 
-def test_download_clobber(tmpdir):
-    s, item, item_metadata = get_session_and_item()
+def test_download_clobber(tmpdir, testitem):
     tmpdir.chdir()
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='test content',
                  status=200)
-        item.download(files='nasa_meta.xml', clobber=True)
+        testitem.download(files='nasa_meta.xml', clobber=True)
 
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='new test content',
                  status=200)
-        item.download(files='nasa_meta.xml', clobber=True)
+        testitem.download(files='nasa_meta.xml', clobber=True)
         with open('nasa/nasa_meta.xml', 'r') as fh:
             assert fh.read() == 'new test content'
 
+@pytest.fixture
+def nasa_meta_xml():
+    with open(os.path.join(os.path.dirname(__file__), 'data/nasa_meta.xml'), 'r') as fh:
+        return fh.read()
 
-def test_download_checksum(tmpdir):
-    s, item, item_metadata = get_session_and_item()
+def test_download_checksum(tmpdir, testitem, nasa_meta_xml):
     tmpdir.chdir()
 
     # test overwrite based on checksum.
@@ -246,50 +205,45 @@ def test_download_checksum(tmpdir):
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='test content',
                  status=200)
-        item.download(files='nasa_meta.xml', clobber=True)
+        testitem.download(files='nasa_meta.xml', clobber=True)
 
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='overwrite based on md5',
                  status=200)
-        item.download(files='nasa_meta.xml', checksum=True)
+        testitem.download(files='nasa_meta.xml', checksum=True)
         with open('nasa/nasa_meta.xml', 'r') as fh:
             assert fh.read() == 'overwrite based on md5'
 
     # test no overwrite based on checksum.
-    with open(os.path.join(ROOT_DIR, 'tests/data/nasa_meta.xml'), 'r') as fh:
-        nasa_meta_xml = fh.read()
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body=nasa_meta_xml, status=200)
-        item.download(files='nasa_meta.xml', checksum=True)
-        r = item.download(files='nasa_meta.xml', checksum=True)
+        testitem.download(files='nasa_meta.xml', checksum=True)
+        r = testitem.download(files='nasa_meta.xml', checksum=True)
         assert r[0] is None
 
 
-def test_download_destdir(tmpdir):
-    s, item, item_metadata = get_session_and_item()
+def test_download_destdir(tmpdir, testitem):
     tmpdir.chdir()
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='new destdir', status=200)
         dest = os.path.join(str(tmpdir), 'new destdir')
-        item.download(files='nasa_meta.xml', destdir=dest)
+        testitem.download(files='nasa_meta.xml', destdir=dest)
         assert 'nasa' in os.listdir(dest)
         with open(os.path.join(dest, 'nasa/nasa_meta.xml'), 'r') as fh:
             assert fh.read() == 'new destdir'
 
 
-def test_download_no_directory(tmpdir):
-    s, item, item_metadata = get_session_and_item()
+def test_download_no_directory(tmpdir, testitem):
     url_re = re.compile(r'http://archive.org/download/.*')
     tmpdir.chdir()
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, url_re, body='no dest dir', status=200)
-        item.download(files='nasa_meta.xml', no_directory=True)
+        testitem.download(files='nasa_meta.xml', no_directory=True)
         with open(os.path.join(str(tmpdir), 'nasa_meta.xml'), 'r') as fh:
             assert fh.read() == 'no dest dir'
 
 
-def test_download_dry_run(tmpdir, capsys):
-    s, item, item_metadata = get_session_and_item()
+def test_download_dry_run(tmpdir, capsys, testitem):
     tmpdir.chdir()
     with responses.RequestsMock(
         assert_all_requests_are_fired=False) as rsps:
@@ -297,15 +251,14 @@ def test_download_dry_run(tmpdir, capsys):
                  body='no dest dir',
                  status=200,
                  adding_headers={'content-length': '100'})
-        item.download(source='original', dry_run=True)
+        testitem.download(source='original', dry_run=True)
         out, err = capsys.readouterr()
         expected_output = ('http://archive.org/download/nasa/NASAarchiveLogo.jpg\n'
                            'http://archive.org/download/nasa/globe_west_540.jpg\n')
         assert expected_output == out
 
 
-def test_download_verbose(tmpdir, capsys):
-    s, item, item_metadata = get_session_and_item()
+def test_download_verbose(tmpdir, capsys, testitem):
     tmpdir.chdir()
     with responses.RequestsMock(
         assert_all_requests_are_fired=False) as rsps:
@@ -313,17 +266,16 @@ def test_download_verbose(tmpdir, capsys):
                  body='no dest dir',
                  status=200,
                  adding_headers={'content-length': '100'})
-        item.download(files='nasa_meta.xml', clobber=True, verbose=True)
+        testitem.download(files='nasa_meta.xml', clobber=True, verbose=True)
         out, err = capsys.readouterr()
         assert 'nasa:' in err
 
 
-def test_download_dark_item(tmpdir, capsys):
-    s, item, item_metadata = get_session_and_item()
+def test_download_dark_item(tmpdir, capsys, testitem_metadata, session):
     tmpdir.chdir()
     with responses.RequestsMock(
         assert_all_requests_are_fired=False) as rsps:
-        _item_metadata = json.loads(item_metadata)
+        _item_metadata = json.loads(testitem_metadata)
         _item_metadata['metadata']['identifier'] = 'dark-item'
         _item_metadata['is_dark'] = True
         _item_metadata = json.dumps(_item_metadata)
@@ -331,7 +283,7 @@ def test_download_dark_item(tmpdir, capsys):
                       body=_item_metadata,
                       status=200,
                       content_type='application/json')
-        _item = s.get_item('dark-item')
+        _item = session.get_item('dark-item')
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='no dest dir',
                  status=403,
@@ -341,8 +293,7 @@ def test_download_dark_item(tmpdir, capsys):
         assert 'skipping: item is dark.' in err
 
 
-def test_download_dark_item(tmpdir, capsys):
-    s, item, item_metadata = get_session_and_item()
+def test_download_dark_item(tmpdir, capsys, session):
     tmpdir.chdir()
     with responses.RequestsMock(
         assert_all_requests_are_fired=False) as rsps:
@@ -350,7 +301,7 @@ def test_download_dark_item(tmpdir, capsys):
                       body='{}',
                       status=200,
                       content_type='application/json')
-        _item = s.get_item('idontexist')
+        _item = session.get_item('idontexist')
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='no dest dir',
                  status=404)
@@ -360,13 +311,12 @@ def test_download_dark_item(tmpdir, capsys):
 
 
 # upload() _______________________________________________________________________________
-def test_upload():
-    s, item, item_metadata = get_session_and_item()
+def test_upload(testitem, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=EXPECTED_S3_HEADERS,
                  status=200)
-        resp = item.upload(TEST_JSON_FILE,
+        resp = testitem.upload(json_filename,
                            access_key='test_access',
                            secret_key='test_secret',
                            debug=True)
@@ -380,22 +330,21 @@ def test_upload():
             assert p.url == 'http://s3.us.archive.org/nasa/nasa_meta.json'
 
 
-def test_upload_secure_session():
+def test_upload_secure_session(testitem_metadata, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         s = get_session(config=dict(secure=True))
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
-                 body=get_test_item_md(),
+                 body=testitem_metadata,
                  status=200)
         item = s.get_item('nasa')
         with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
             rsps.add(responses.PUT, S3_URL_RE, status=200)
-            r = item.upload(TEST_JSON_FILE)
+            r = item.upload(json_filename)
             assert r[0].url == 'https://s3.us.archive.org/nasa/nasa_meta.json'
 
 
-def test_upload_metadata():
-    s, item, item_metadata = get_session_and_item()
+def test_upload_metadata(testitem, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         del _expected_headers['x-archive-meta00-scanner']
@@ -406,7 +355,7 @@ def test_upload_metadata():
                  adding_headers=_expected_headers,
                  status=200)
         md = dict(foo='bar', subject=['first', 'second'])
-        resp = item.upload(TEST_JSON_FILE,
+        resp = testitem.upload(json_filename,
                            metadata=md,
                            access_key='test_access',
                            secret_key='test_secret',
@@ -418,8 +367,7 @@ def test_upload_metadata():
             assert headers == _expected_headers
 
 
-def test_upload_503(capsys):
-    s, item, item_metadata = get_session_and_item()
+def test_upload_503(capsys, testitem, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         rsps.add(responses.GET, S3_URL_RE,
@@ -429,7 +377,7 @@ def test_upload_503(capsys):
                  adding_headers=_expected_headers,
                  status=503)
         try:
-            resp = item.upload(TEST_JSON_FILE,
+            resp = testitem.upload(json_filename,
                                access_key='test_access',
                                secret_key='test_secret',
                                retries=1,
@@ -441,14 +389,13 @@ def test_upload_503(capsys):
             assert 'warning: s3 is overloaded' in err
 
 
-def test_upload_file_keys():
-    s, item, item_metadata = get_session_and_item()
+def test_upload_file_keys(testitem, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=EXPECTED_S3_HEADERS,
                  status=200)
-        files = {'new_key.txt': TEST_JSON_FILE, 222: TEST_JSON_FILE}
-        resp = item.upload(files,
+        files = {'new_key.txt': json_filename, 222: json_filename}
+        resp = testitem.upload(files,
                            access_key='test_access',
                            secret_key='test_secret',
                            debug=True)
@@ -458,8 +405,7 @@ def test_upload_file_keys():
                              'http://s3.us.archive.org/nasa/222']
 
 
-def test_upload_dir(tmpdir):
-    s, item, item_metadata = get_session_and_item()
+def test_upload_dir(tmpdir, testitem):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=EXPECTED_S3_HEADERS,
@@ -472,7 +418,7 @@ def test_upload_dir(tmpdir):
             fh.write('hi 2')
 
         # Test no-slash upload, dir is not in key name.
-        resp = item.upload(os.path.join(str(tmpdir), 'dir_test') + '/',
+        resp = testitem.upload(os.path.join(str(tmpdir), 'dir_test') + '/',
                            access_key='test_access',
                            secret_key='test_secret',
                            debug=True)
@@ -485,7 +431,7 @@ def test_upload_dir(tmpdir):
             assert p.url in expected_eps
 
         # Test slash upload, dir is in key name.
-        resp = item.upload(os.path.join(str(tmpdir), 'dir_test'),
+        resp = testitem.upload(os.path.join(str(tmpdir), 'dir_test'),
                            access_key='test_access',
                            secret_key='test_secret',
                            debug=True)
@@ -499,8 +445,7 @@ def test_upload_dir(tmpdir):
         #shutil.rmtree(os.path.join(str(tmpdir), 'dir_test'))
 
 
-def test_upload_queue_derive():
-    s, item, item_metadata = get_session_and_item()
+def test_upload_queue_derive(testitem, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         _expected_headers['x-archive-queue-derive'] = '1'
@@ -508,7 +453,7 @@ def test_upload_queue_derive():
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=_expected_headers,
                  status=200)
-        resp = item.upload(TEST_JSON_FILE,
+        resp = testitem.upload(json_filename,
                            access_key='test_access',
                            secret_key='test_secret',
                            queue_derive=True)
@@ -518,8 +463,7 @@ def test_upload_queue_derive():
             assert headers == _expected_headers
 
 
-def test_upload_delete(tmpdir):
-    s, item, item_metadata = get_session_and_item()
+def test_upload_delete(tmpdir, testitem):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         del _expected_headers['x-archive-meta00-scanner']
@@ -533,7 +477,7 @@ def test_upload_delete(tmpdir):
                  adding_headers=_expected_headers,
                  status=400)
         try:
-            resp = item.upload(test_file,
+            resp = testitem.upload(test_file,
                                access_key='test_access',
                                secret_key='test_secret',
                                delete=True,
@@ -553,7 +497,7 @@ def test_upload_delete(tmpdir):
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=_expected_headers,
                  status=200)
-        resp = item.upload(test_file,
+        resp = testitem.upload(test_file,
                            access_key='test_access',
                            secret_key='test_secret',
                            delete=True,
@@ -565,8 +509,7 @@ def test_upload_delete(tmpdir):
             assert len(tmpdir.listdir()) == 0
 
 
-def test_upload_checksum(tmpdir):
-    s, item, item_metadata = get_session_and_item()
+def test_upload_checksum(tmpdir, testitem):
     with responses.RequestsMock() as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         del _expected_headers['x-archive-meta00-scanner']
@@ -579,7 +522,7 @@ def test_upload_checksum(tmpdir):
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=_expected_headers,
                  status=200)
-        resp = item.upload(test_file,
+        resp = testitem.upload(test_file,
                            access_key='test_access',
                            secret_key='test_secret',
                            checksum=True)
@@ -590,10 +533,10 @@ def test_upload_checksum(tmpdir):
             assert r.status_code == 200
 
         # Skip.
-        item.item_metadata['files'].append(
+        testitem.item_metadata['files'].append(
             dict(name=u'checksum_test.txt',
                  md5=u'33213e7683c1e6d15b2a658f3c567717'))
-        resp = item.upload(test_file,
+        resp = testitem.upload(test_file,
                            access_key='test_access',
                            secret_key='test_secret',
                            checksum=True)
@@ -603,16 +546,14 @@ def test_upload_checksum(tmpdir):
 
 
 # modify_metadata() ______________________________________________________________________
-def test_modify_metadata():
-    s, item, item_metadata = get_session_and_item()
-
+def test_modify_metadata(testitem, testitem_metadata):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.POST, 'http://archive.org/metadata/nasa',
                  status=200)
 
         # Test simple add.
         md = {'foo': 'bar', 'foo11': 'bar'}
-        r = item.modify_metadata(md, debug=True)
+        r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
         expected_data = {
             'priority': 0,
@@ -624,13 +565,13 @@ def test_modify_metadata():
 
         # Test no changes.
         md = {'title': 'NASA Images'}
-        r = item.modify_metadata(md, debug=True)
+        r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
         expected_data = {'priority': 0, '-target': 'metadata', '-patch': '[]'}
         assert p.data == expected_data
 
         md = {'title': 'REMOVE_TAG'}
-        r = item.modify_metadata(md, debug=True)
+        r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
         expected_data = {
             'priority': 0,
@@ -641,7 +582,7 @@ def test_modify_metadata():
 
         # Test add array.
         md = {'subject': ['one', 'two', 'last']}
-        r = item.modify_metadata(md, debug=True)
+        r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
         expected_data = {
             'priority': 0,
@@ -651,9 +592,9 @@ def test_modify_metadata():
         assert p.data == expected_data
 
         # Test indexed mod.
-        item.item_metadata['metadata']['subject'] = ['first', 'middle', 'last']
+        testitem.item_metadata['metadata']['subject'] = ['first', 'middle', 'last']
         md = {'subject[2]': 'new first'}
-        r = item.modify_metadata(md, debug=True)
+        r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
         expected_data = {
             'priority': 0,
@@ -664,14 +605,14 @@ def test_modify_metadata():
 
         # Test priority.
         md = {'title': 'NASA Images'}
-        r = item.modify_metadata(md, priority=3, debug=True)
+        r = testitem.modify_metadata(md, priority=3, debug=True)
         p = r.prepare()
         expected_data = {'priority': 3, '-target': 'metadata', '-patch': '[]'}
         assert p.data == expected_data
 
         # Test auth.
         md = {'title': 'NASA Images'}
-        r = item.modify_metadata(md,
+        r = testitem.modify_metadata(md,
                                  access_key='test_access',
                                  secret_key='test_secret',
                                  debug=True)
@@ -682,14 +623,14 @@ def test_modify_metadata():
 
         # Test change.
         md = {'title': 'new title'}
-        _item_metadata = json.loads(item_metadata)
+        _item_metadata = json.loads(testitem_metadata)
         _item_metadata['metadata']['title'] = 'new title'
         _item_metadata = json.dumps(_item_metadata)
         rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
                       body=_item_metadata,
                       status=200)
-        r = item.modify_metadata(md,
+        r = testitem.modify_metadata(md,
                                   access_key='test_access',
                                   secret_key='test_secret')
         # Test that item re-initializes
-        assert item.metadata['title'] == 'new title'
+        assert testitem.metadata['title'] == 'new title'

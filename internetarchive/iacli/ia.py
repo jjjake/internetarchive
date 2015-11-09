@@ -48,6 +48,16 @@ from docopt import docopt
 from internetarchive import __version__
 
 
+def load_ia_module(cmd):
+    """Dynamically import ia module."""
+    module = 'internetarchive.iacli.ia_{0}'.format(cmd)
+    try:
+        globals()['ia_module'] = __import__(module, fromlist=['internetarchive.iacli'])
+    except ImportError:
+        sys.stderr.write('error: "{0}" is not an `ia` command!\n'.format(cmd))
+        sys.exit(127)
+
+
 # main()
 #_________________________________________________________________________________________
 def main():
@@ -82,18 +92,10 @@ def main():
         if not args['<args>']:
             sys.exit(sys.stderr.write(__doc__.strip() + '\n'))
         else:
-            call(['python', __file__.replace('.pyc', '.py'), args['<args>'][0], '--help'])
-            sys.exit()
+            load_ia_module(args['<args>'][0])
+            sys.exit(sys.stderr.write(ia_module.__doc__.strip() + '\n'))
 
-    # Dynamically import and call subcommand module specified on the
-    # command line.
-    module = 'internetarchive.iacli.ia_{0}'.format(cmd)
-    try:
-        globals()['ia_module'] = __import__(module, fromlist=['internetarchive.iacli'])
-    except ImportError:
-        sys.stderr.write('error: "{0}" is not an `ia` command!\n'.format(cmd))
-        sys.exit(127)
-
+    load_ia_module(cmd)
     ia_module.main(argv)
 
 if __name__ == '__main__':

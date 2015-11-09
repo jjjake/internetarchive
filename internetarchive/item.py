@@ -344,7 +344,6 @@ class Item(object):
                 print(' - errors')
             else:
                 print(' - success')
-            #sys.stdout.flush()
         return True
 
     # modify_metadata()
@@ -843,23 +842,9 @@ class File(object):
         try:
             response = self._item.http_session.get(self.url, stream=True, timeout=6)
             response.raise_for_status()
-        except (RetryError, HTTPError, ConnectTimeout, ConnectionError) as exc:
-            msg = ('error downloading file {0}, '
-                   'exception raised: {1}'.format(file_path, exc))
-            log.error(msg)
-            if verbose:
-                print(' ' + msg)
-            elif silent is False:
-                print('e', end='')
-                sys.stdout.flush()
-            if ignore_errors is True:
-                return False
-            else:
-                raise exc
 
-        chunk_size = 2048
-        _i = 1
-        try:
+            chunk_size = 2048
+            _i = 1
             with open(file_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:
@@ -871,10 +856,21 @@ class File(object):
                                                 len(progress.MILL_CHARS)])
                             print(_m, end='', file=sys.stderr)
                             sys.stderr.flush()
-        except:
+        except (RetryError, HTTPError, ConnectTimeout, ConnectionError) as exc:
+            msg = ('error downloading file {0}, '
+                   'exception raised: {1}'.format(file_path, exc))
+            log.error(msg)
             if os.path.exists(file_path):
                 os.remove(file_path)
-            raise
+            if verbose:
+                print(' ' + msg)
+            elif silent is False:
+                print('e', end='')
+                sys.stdout.flush()
+            if ignore_errors is True:
+                return False
+            else:
+                raise exc
 
         # Set mtime with mtime from files.xml.
         os.utime(file_path, (0, self.mtime))

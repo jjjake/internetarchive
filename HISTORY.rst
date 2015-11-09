@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+0.9.8 (2015-11-09)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed `ia help` bug.
+- Fixed bug in `File.download()` where connection errors weren't being caught/retried correctly.
+
 0.9.7 (2015-11-05)
 ++++++++++++++++++
 

@@ -26,7 +26,7 @@ class Search(object):
         self.url = 'http://archive.org/advancedsearch.php'
         default_params = dict(
             q=query,
-            rows=100,
+            rows=500,
         )
 
         # Sort by identifier if no other sort is provided.

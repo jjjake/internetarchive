@@ -98,7 +98,7 @@ def main(argv):
         else:
             ia_source = None
 
-        r = item.download(
+        errors = item.download(
             files=files,
             concurrent=args['--concurrent'],
             source=ia_source,
@@ -115,4 +115,8 @@ def main(argv):
             item_index=item_index,
             ignore_errors=True
         )
-    sys.exit(0)
+    if errors:
+        #TODO: add option for a summary/report.
+        sys.exit(1)
+    else:
+        sys.exit(0)

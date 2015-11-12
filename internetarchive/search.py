@@ -29,6 +29,10 @@ class Search(object):
             rows=100,
         )
 
+        # Sort by identifier if no other sort is provided.
+        if not any(k.startswith('sort') for k, v in params.items()):
+            default_params['sort[0]'] = 'identifier asc'
+
         if v2:
             # Use "1" as value to not confuse IA analytics.
             self.session.cookies['ui3'] = '1'

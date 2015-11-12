@@ -319,7 +319,7 @@ class Item(object):
             elif silent is False:
                 print(msg, end='')
 
-        errors = False
+        errors = list()
         for f in files:
             fname = f.name.encode('utf-8')
             if no_directory:
@@ -336,7 +336,7 @@ class Item(object):
                 r = f.download(path, verbose, silent, ignore_existing, checksum, destdir,
                                retries, ignore_errors)
                 if r is False:
-                    errors = True
+                    errors.append(f.name)
         if concurrent:
             pool.join()
         if silent is False and verbose is False and dry_run is False:
@@ -344,7 +344,7 @@ class Item(object):
                 print(' - errors')
             else:
                 print(' - success')
-        return True
+        return errors
 
     # modify_metadata()
     # ____________________________________________________________________________________
@@ -851,11 +851,15 @@ class File(object):
                         f.write(chunk)
                         f.flush()
                         _i += 1
-                        if silent is False and verbose is False:
-                            _m = '{0}\b'.format(progress.MILL_CHARS[(_i // 1) %
-                                                len(progress.MILL_CHARS)])
-                            print(_m, end='', file=sys.stderr)
-                            sys.stderr.flush()
+                        if (silent is False and verbose is False and
+                            sys.stdout.isatty() and
+                            not os.environ.get('INSIDE_EMACS')):
+
+                            if _i % 5:
+                                _m = '{0}\b'.format(progress.MILL_CHARS[(_i // 1) %
+                                                    len(progress.MILL_CHARS)])
+                                print(_m, end='', file=sys.stderr)
+                                sys.stderr.flush()
         except (RetryError, HTTPError, ConnectTimeout, ConnectionError) as exc:
             msg = ('error downloading file {0}, '
                    'exception raised: {1}'.format(file_path, exc))

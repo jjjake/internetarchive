@@ -647,7 +647,7 @@ class Collection(Item):
             orig=args[0]
             args = (orig.session, orig.identifier, orig.item_metadata)
         super(Collection, self).__init__(*args, **kwargs)
-        if self.item_metadata.get(u'metadata',{}).get(u'mediatype',u'collection') != u'collection':
+        if self.metadata.get(u'mediatype',u'collection') != u'collection':
             raise ValueError('mediatype is not "collection"!')
         self._make_search('contents', "collection:{0.identifier}")
         self._make_search('subcollections', "collection:{0.identifier} AND mediatype:collection")

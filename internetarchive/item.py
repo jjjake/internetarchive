@@ -649,8 +649,10 @@ class Collection(Item):
         super(Collection, self).__init__(*args, **kwargs)
         if self.metadata.get(u'mediatype',u'collection') != u'collection':
             raise ValueError('mediatype is not "collection"!')
-        self._make_search('contents', "collection:{0.identifier}")
-        self._make_search('subcollections', "collection:{0.identifier} AND mediatype:collection")
+
+        default_contents_search = "collection:{0.identifier}".format(self)
+        self._make_search('contents', self.metadata.get(u'search_collection', default_contents_search))
+        self._make_search('subcollections', default_contents_search + " AND mediatype:collection")
 
     def _do_search(self, name, query):
         rtn = self.searches.setdefault(name, self.session.search_items(query, fields=[u'identifier'])).iter_as_items()
@@ -659,4 +661,4 @@ class Collection(Item):
         return rtn
 
     def _make_search(self, name, query):
-        setattr(self, name, lambda :self._do_search(name, query.format(self)))
+        setattr(self, name, lambda :self._do_search(name, query))

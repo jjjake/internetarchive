@@ -64,8 +64,8 @@ class BaseItem(object):
         self.load()
 
     def __repr__(self):
-        return ('{0.__class__.__name__}(identifier={identifier!r}, '
-                'exists={exists!r})'.format(self, **self.__dict__))
+        return ('{0.__class__.__name__}(identifier={0.identifier!r}{notloaded})'.format(
+            self, notloaded=', item_metadata={}' if not self.exists else ''))
 
     def load(self, item_metadata=None):
         if item_metadata:

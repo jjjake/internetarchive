@@ -3,6 +3,7 @@
 VERSION=$(shell grep -m1 version internetarchive/__init__.py | cut -d\' -f2)
 
 init:
+	pip install responses==0.5.0 pytest-cov
 	pip install -e .
 
 test:

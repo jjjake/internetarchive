@@ -1,4 +1,7 @@
 import os
+import sys
+inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, inc_path)
 import shutil
 from subprocess import Popen, PIPE
 

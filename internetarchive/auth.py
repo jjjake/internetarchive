@@ -1,7 +1,17 @@
-import requests.auth
+# -*- coding: utf-8 -*-
+"""
+internetarchive.auth
+~~~~~~~~~~~~~~~~~~~~
+
+This module contains the Archive.org authentication handlers for Requests.
+
+:copyright: (c) 2015 by Internet Archive.
+:license: AGPL 3, see LICENSE for more details.
+"""
+from requests.auth import AuthBase
 
 
-class S3Auth(requests.auth.AuthBase):
+class S3Auth(AuthBase):
     """Attaches S3 Basic Authentication to the given Request object."""
     def __init__(self, access_key=None, secret_key=None):
         self.access_key = access_key
@@ -13,7 +23,7 @@ class S3Auth(requests.auth.AuthBase):
         return r
 
 
-class MetadataAuth(requests.auth.AuthBase):
+class MetadataAuth(AuthBase):
     """Attaches S3 Basic Authentication to the given Request object."""
     def __init__(self, access_key=None, secret_key=None):
         self.access_key = access_key

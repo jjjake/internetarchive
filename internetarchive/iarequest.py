@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+internetarchive.iarequest
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:copyright: (c) 2015 by Internet Archive.
+:license: AGPL 3, see LICENSE for more details.
+"""
+from __future__ import absolute_import
+
 try:
     import ujson as json
 except ImportError:
@@ -11,17 +21,17 @@ import requests
 from jsonpatch import make_patch
 import six
 
-from . import auth
+from internetarchive import auth
 from internetarchive.utils import needs_quote
 
 
 class S3Request(requests.models.Request):
     def __init__(self,
-        metadata=None,
-        queue_derive=True,
-        access_key=None,
-        secret_key=None,
-        **kwargs):
+                 metadata=None,
+                 queue_derive=True,
+                 access_key=None,
+                 secret_key=None,
+                 **kwargs):
 
         super(S3Request, self).__init__(**kwargs)
 
@@ -60,8 +70,6 @@ class S3PreparedRequest(requests.models.PreparedRequest):
     def __init__(self):
         super(S3PreparedRequest, self).__init__()
 
-    # prepare()
-    # ____________________________________________________________________________________
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, queue_derive=None,
                 metadata={}):
@@ -77,8 +85,6 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         # This MUST go after prepare_auth. Authenticators could add a hook
         self.prepare_hooks(hooks)
 
-    # prepare_headers()
-    # ____________________________________________________________________________________
     def prepare_headers(self, headers, metadata, queue_derive=True):
         """Convert a dictionary of metadata into S3 compatible HTTP
         headers, and append headers to ``headers``.
@@ -125,14 +131,14 @@ class S3PreparedRequest(requests.models.PreparedRequest):
 
 class MetadataRequest(requests.models.Request):
     def __init__(self,
-        metadata=None,
-        source_metadata=None,
-        target=None,
-        priority=None,
-        access_key=None,
-        secret_key=None,
-        append=None,
-        **kwargs):
+                 metadata=None,
+                 source_metadata=None,
+                 target=None,
+                 priority=None,
+                 access_key=None,
+                 secret_key=None,
+                 append=None,
+                 **kwargs):
 
         super(MetadataRequest, self).__init__(**kwargs)
 
@@ -175,8 +181,6 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
     def __init__(self):
         super(MetadataPreparedRequest, self).__init__()
 
-    # prepare()
-    # ____________________________________________________________________________________
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, metadata={},
                 source_metadata=None, target=None, priority=None, append=None):
@@ -288,6 +292,15 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
 
     # Index all items which contain an index.
     for key in metadata:
+        # Parse string bools to proper bools.
+        try:
+            if metadata[key].lower() == 'true':
+                metadata[key] = True
+            elif metadata[key].lower() == 'false':
+                metadata[key] = False
+        except AttributeError:
+            pass
+
         # Insert values from indexed keys into prepared_metadata dict.
         if (rm_index(key) in indexed_keys):
             try:

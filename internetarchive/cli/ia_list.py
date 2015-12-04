@@ -1,9 +1,8 @@
 """List files in a given item.
 
 usage:
-    ia list [-v] [--glob=<pattern>] [--location] [--source=<source>] 
+    ia list [-v] [--glob=<pattern>] [--location] [--source=<source>]
             [--columns <column1,column2> | --all] <identifier>
-    ia metadata --help
 
 options:
     -h, --help
@@ -23,29 +22,26 @@ import six
 
 from docopt import docopt
 
-from internetarchive import get_item
 
-
-# main()
-#_________________________________________________________________________________________
-def main(argv):
+def main(argv, session):
     args = docopt(__doc__, argv=argv)
-    item = get_item(args['<identifier>'])
+    item = session.get_item(args['<identifier>'])
 
     files = item.files
     if args.get('--all'):
         columns = list(set(chain.from_iterable(k for k in files)))
     else:
         columns = args['--columns'].split(',')
-        if not isinstance(columns, list):
-            columns = [columns]
 
-    dict_writer = csv.DictWriter(sys.stdout, columns, delimiter='\t')
+    # Make "name" the first column always.
+    if 'name' in columns:
+        columns.remove('name')
+        columns.insert(0, 'name')
+
+    dict_writer = csv.DictWriter(sys.stdout, columns, delimiter='\t', lineterminator='\n')
 
     if args.get('--glob'):
         patterns = args['--glob'].split('|')
-        if not isinstance(patterns, list):
-            patterns = [patterns]
         files = [f for f in files if any(fnmatch(f['name'], p) for p in patterns)]
     elif args.get('--source'):
         files = [f.__dict__ for f in item.get_files(source=args['--source'])]
@@ -67,5 +63,5 @@ def main(argv):
     if args['--verbose']:
         dict_writer.writer.writerow(columns)
     if all(x == {} for x in output):
-        sys.exit(0)
+        sys.exit(1)
     dict_writer.writerows(output)

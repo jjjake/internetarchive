@@ -1,10 +1,12 @@
-"""Retrieve and modify metadata for items on archive.org.
+"""Retrieve and modify Archive.org metadata.
 
 usage:
-    ia metadata [--modify=<key:value>...] [--target=<target>] [--priority=<priority>] <identifier>...
-    ia metadata [--spreadsheet=<metadata.csv>] [--priority=<priority>] [--modify=<key:value>...]
-    ia metadata [--append=<key:value>...] [--priority=<priority>] <identifier>...
-    ia metadata [--exists | --formats] <identifier>...
+    ia metadata <identifier>... [--modify=<key:value>...] [--target=<target>]
+                                [--priority=<priority>]
+    ia metadata <identifier>... [--append=<key:value>...] [--priority=<priority>]
+    ia metadata <identifier>... [--exists | --formats]
+    ia metadata --spreadsheet=<metadata.csv> [--priority=<priority>]
+                                             [--modify=<key:value>...]
     ia metadata --help
 
 options:
@@ -12,60 +14,76 @@ options:
     -m, --modify=<key:value>          Modify the metadata of an item.
     -t, --target=<target>             The metadata target to modify.
     -a, --append=<key:value>          Append metadata to an element.
-    -s, --spreadsheet=<metadata.csv>  Modify metadata in bulk using a spreadsheet as input.
+    -s, --spreadsheet=<metadata.csv>  Modify metadata in bulk using a spreadsheet as
+                                      input.
     -e, --exists                      Check if an item exists
     -F, --formats                     Return the file-formats the given item contains.
-    -p, --priority=<priority>        Set the task priority.
-
+    -p, --priority=<priority>         Set the task priority.
 """
+from __future__ import absolute_import, unicode_literals, print_function
 import sys
+import os
 try:
     import ujson as json
 except ImportError:
     import json
 import csv
 
-from docopt import docopt
+from docopt import docopt, printable_usage
+from schema import Schema, SchemaError, Or, And
+import six
 
-from internetarchive import get_item
-from internetarchive.iacli.argparser import get_args_dict
+from internetarchive.cli.argparser import get_args_dict
 
 
-# modify_metadata()
-# ________________________________________________________________________________________
 def modify_metadata(item, metadata, args):
     append = True if args['--append'] else False
     r = item.modify_metadata(metadata, target=args['--target'], append=append,
                              priority=args['--priority'])
     if not r.json()['success']:
         error_msg = r.json()['error']
-        sys.stderr.write(u'{0} - error ({1}): {2}\n'.format(item.identifier, r.status_code,
-                                                           error_msg))
+        sys.stderr.write(u'{0} - error ({1}): {2}\n'.format(item.identifier,
+                                                            r.status_code, error_msg))
         return r
     sys.stdout.write('{0} - success: {1}\n'.format(item.identifier,
                                                    r.json()['log']))
     return r
 
 
-# main()
-# ________________________________________________________________________________________
-def main(argv):
+def main(argv, session):
     args = docopt(__doc__, argv=argv)
+
+    # Validate args.
+    s = Schema({
+        six.text_type: bool,
+        '<identifier>': list,
+        '--modify': list,
+        '--append': list,
+        '--spreadsheet': Or(None, And(lambda f: os.path.exists(f),
+                            error='<file> should be a readable file or directory.')),
+        '--target': Or(None, str),
+        '--priority': None,
+    })
+    try:
+        args = s.validate(args)
+    except SchemaError as exc:
+        print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
+        sys.exit(1)
 
     formats = set()
     responses = []
 
-    for i, _item in enumerate(args['<identifier>']):
-        item = get_item(_item)
+    for i, identifier in enumerate(args['<identifier>']):
+        item = session.get_item(identifier)
 
         # Check existence of item.
         if args['--exists']:
             if item.exists:
                 responses.append(True)
-                sys.stdout.write('{0} exists\n'.format(item.identifier))
+                sys.stdout.write('{0} exists\n'.format(identifier))
             else:
                 responses.append(False)
-                sys.stderr.write('{0} does not exist\n'.format(item.identifier))
+                sys.stderr.write('{0} does not exist\n'.format(identifier))
             if (i + 1) == len(args['<identifier>']):
                 if all(r is True for r in responses):
                     sys.exit(0)
@@ -85,14 +103,14 @@ def main(argv):
 
         # Get metadata.
         elif args['--formats']:
-            for f in item.iter_files():
+            for f in item.get_files():
                 formats.add(f.format)
             if (i + 1) == len(args['<identifier>']):
                 sys.stdout.write('\n'.join(formats) + '\n')
 
         # Dump JSON to stdout.
         else:
-            metadata = json.dumps(item._json)
+            metadata = json.dumps(item.item_metadata)
             sys.stdout.write(metadata + '\n')
 
     # Edit metadata for items in bulk, using a spreadsheet as input.
@@ -104,7 +122,7 @@ def main(argv):
         for row in spreadsheet:
             if not row['identifier']:
                 continue
-            item = get_item(row['identifier'])
+            item = session.get_item(row['identifier'])
             if row.get('file'):
                 del row['file']
             metadata = dict((k.lower(), v) for (k, v) in row.items() if v)

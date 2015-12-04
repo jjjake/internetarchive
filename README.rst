@@ -113,11 +113,6 @@ You can also modify metadata after `configuring ia <https://github.com/jjjake/in
 
     $ ia metadata <identifier> --modify="foo:bar" --modify="baz:foooo"
 
-Data Mining
-~~~~~~~~~~~
-
-IA Mine can be used for data mining Archive.org metadata and search results: `https://github.com/jjjake/iamine <https://github.com/jjjake/iamine>`__.
-
 Searching
 ~~~~~~~~~
 

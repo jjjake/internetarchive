@@ -1,17 +1,15 @@
-"""Download files from archive.org.
+"""Download files from Archive.org.
 
 usage:
-    ia download [--verbose] [--silent] [--log] [--dry-run] [--ignore-existing] [--checksum]
-                [--destdir=<dir>] [--no-directories] [--source=<source>... | --original]
-                [--glob=<pattern> | --format=<format>...] [--concurrent] [--retries=<retries>]
-                (<identifier> | --itemlist=<itemlist> | --search=<query>) [<file>...]
+    ia download <identifier> [<file>]... [options]...
+    ia download --itemlist=<itemlist> [options]...
+    ia download --search=<query> [options]...
     ia download --help
 
 options:
     -h, --help
     -v, --verbose               Turn on verbose output [default: False].
     -q, --silent                Turn off ia's output [default: False].
-    -l, --log                   Log download results to file. 
     -d, --dry-run               Print URLs to stdout and exit.
     -i, --ignore-existing       Clobber files already downloaded.
     -C, --checksum              Skip files based on checksum [default: False].
@@ -33,19 +31,17 @@ options:
                                 create item directories.
     --destdir=<dir>             The destination directory to download files
                                 and item directories to.
-    -c, --concurrent            Download files concurrently using the Python
-                                gevent networking library (gevent must be
-                                installed).
-
 """
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 import os
 import sys
-import logging
 
-from docopt import docopt
+import six
+from docopt import docopt, printable_usage
+from schema import Schema, Use, Or, And, SchemaError
+from requests.exceptions import ConnectTimeout
 
-from internetarchive import get_item, search_items
+from internetarchive import search_items
 
 
 def itemlist_ids(itemlist):
@@ -57,9 +53,36 @@ def search_ids(query):
     for doc in search_items(query):
         yield doc.get('identifier')
 
-def main(argv):
+
+def main(argv, session):
     args = docopt(__doc__, argv=argv)
-    config = {} if not args['--log'] else {'logging': {'level': 'INFO'}}
+
+    valid_sources = ['original', 'derivative', 'metadata']
+    s = Schema({str: Use(bool),
+        '--destdir': Or([], And(Use(lambda d: d[0]), lambda d: os.path.exists(d)),
+            error='--destdir must be a valid path to a directory.'),
+        '--format': list,
+        '--glob': Use(lambda l: l[0] if l else None),
+        '--source': And(list,
+            lambda l: all(s in valid_sources for s in l) if l else list,
+            error='--source must be "original", "derivative", or "metadata".'),
+        '<file>': list,
+        '--search': Or(str, None),
+        '--itemlist': Or(str, None),
+        '<identifier>': Or(str, None),
+    })
+
+    # Filenames should be unicode literals. Support PY2 and PY3.
+    if six.PY2:
+        args['<file>'] = [f.decode('utf-8') for f in args['<file>']]
+
+    try:
+        args = s.validate(args)
+    except SchemaError as exc:
+        sys.stderr.write('{0}\n{1}\n'.format(
+            str(exc), printable_usage(__doc__)))
+        sys.exit(1)
+
     retries = int(args['--retries'])
 
     if args['--itemlist']:
@@ -83,12 +106,18 @@ def main(argv):
     else:
         files = None
 
+    errors = list()
     for i, identifier in enumerate(ids):
         if total_ids > 1:
             item_index = '{0}/{1}'.format((i + 1), total_ids)
         else:
             item_index = None
-        item = get_item(identifier, config=config)
+
+        try:
+            item = session.get_item(identifier)
+        except ConnectTimeout as exc:
+            print('{0}: failed to retrieve item metadata - errors'.format(identifier))
+            continue
 
         # Otherwise, download the entire item.
         if args['--source']:
@@ -98,9 +127,8 @@ def main(argv):
         else:
             ia_source = None
 
-        errors = item.download(
+        _errors = item.download(
             files=files,
-            concurrent=args['--concurrent'],
             source=ia_source,
             formats=args['--format'],
             glob_pattern=args['--glob'],
@@ -115,8 +143,10 @@ def main(argv):
             item_index=item_index,
             ignore_errors=True
         )
+        if _errors:
+            errors.append(_errors)
     if errors:
-        #TODO: add option for a summary/report.
+        # TODO: add option for a summary/report.
         sys.exit(1)
     else:
         sys.exit(0)

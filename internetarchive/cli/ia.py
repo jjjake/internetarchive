@@ -1,0 +1,108 @@
+#!/usr/bin/env python
+"""A command line interface to Archive.org.
+
+usage:
+    ia [--help | --version]
+    ia [--config-file FILE] [--log] <command> [<args>]...
+
+options:
+    -h, --help
+    -v, --version
+    -c, --config-file FILE  Use FILE as config file.
+    -l, --log               Turn on logging [default: False].
+
+commands:
+    help      Retrieve help for subcommands.
+    configure Configure `ia`.
+    metadata  Retrieve and modify metadata for items on Archive.org.
+    upload    Upload items to Archive.org.
+    download  Download files from Archive.org.
+    delete    Delete files from Archive.org.
+    search    Search Archive.org.
+    tasks     Retrieve information about your Archive.org catalog tasks.
+    list      List files in a given item.
+
+See 'ia help <command>' for more information on a specific command.
+"""
+from __future__ import absolute_import, unicode_literals, print_function
+
+import sys
+import os
+import difflib
+
+from docopt import docopt, printable_usage
+from schema import Schema, Or, SchemaError
+import six
+
+from internetarchive import __version__
+from internetarchive.api import get_session
+from internetarchive.utils import suppress_keyboard_interrupt_message
+suppress_keyboard_interrupt_message()
+
+
+cmd_aliases = dict(
+    co='configure',
+    md='metadata',
+    up='upload',
+    do='download',
+    rm='delete',
+    se='search',
+    ta='tasks',
+    ls='list',
+)
+
+
+def load_ia_module(cmd):
+    """Dynamically import ia module."""
+    module = 'internetarchive.cli.ia_{0}'.format(cmd)
+    try:
+        globals()['ia_module'] = __import__(module, fromlist=['internetarchive.cli'])
+    except ImportError:
+        print("error: '{0}' is not an ia command! See 'ia help'".format(cmd),
+              file=sys.stderr)
+        matches = '\t'.join(difflib.get_close_matches(cmd, cmd_aliases.values()))
+        if matches:
+            print('\nDid you mean one of these?\n\t{0}'.format(matches))
+        sys.exit(127)
+
+
+def main():
+    """This is the CLI driver for ia-wrapper."""
+    args = docopt(__doc__, version=__version__, options_first=True)
+
+    # Validate args.
+    s = Schema({
+        six.text_type: bool,
+        '--config-file': Or(None, lambda f: os.path.exists(f),
+                            error='--config-file should be a readable file.'),
+        '<args>': list,
+        '<command>': Or(str, lambda _: 'help'),
+    })
+    try:
+        args = s.validate(args)
+    except SchemaError as exc:
+        print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
+        sys.exit(1)
+
+    # Get subcommand.
+    cmd = args['<command>']
+    if cmd in cmd_aliases:
+        cmd = cmd_aliases[cmd]
+
+    if (cmd == 'help') or (not cmd):
+        if not args['<args>']:
+            sys.exit(print(__doc__.strip(), file=sys.stderr))
+        else:
+            load_ia_module(args['<args>'][0])
+            sys.exit(print(ia_module.__doc__.strip(), file=sys.stderr))
+
+    argv = [cmd] + args['<args>']
+
+    config = {'logging': {'level': 'INFO'}} if args['--log'] else None
+    session = get_session(config_file=args['--config-file'], config=config)
+
+    load_ia_module(cmd)
+    sys.exit(ia_module.main(argv, session))
+
+if __name__ == '__main__':
+    main()

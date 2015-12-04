@@ -1,11 +1,20 @@
+# -*- coding: utf-8 -*-
+"""
+internetarchive.cli.argparser
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:copyright: (c) 2015 Internet Archive.
+:license: AGPL 3, see LICENSE for more details.
+"""
 from collections import defaultdict
-import re
+from xml.dom.minidom import parseString
 
 
-# get_xml_text()
-#_________________________________________________________________________________________
-def get_xml_text(elements, text=''):
-    """:todo: document ``get_xml_text()`` function."""
+def get_xml_text(xml_str, tag_name=None, text=None):
+    tag_name = 'Message' if not tag_name else tag_name
+    text = '' if not text else text
+    p = parseString(xml_str)
+    elements = p.getElementsByTagName(tag_name)
     for e in elements:
         for node in e.childNodes:
             if node.nodeType == node.TEXT_NODE:
@@ -13,17 +22,16 @@ def get_xml_text(elements, text=''):
     return text
 
 
-# get_args_dict()
-#_________________________________________________________________________________________
 def get_args_dict(args):
     # Convert args list into a metadata dict.
+    args = [] if not args else args
     metadata = defaultdict(list)
     for md in args:
         key, value = md.split(':', 1)
+        assert value
         if value not in metadata[key]:
             metadata[key].append(value)
 
-    #for _key, value in metadata.items():
     for key in metadata:
         # Flatten single item lists.
         if len(metadata[key]) <= 1:

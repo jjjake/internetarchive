@@ -1,17 +1,20 @@
 .. _api:
 
-API Documentation
-=================
+Developer Interface
+===================
 
 .. module:: internetarchive
 
+Main Interface
+--------------
+.. autofunction:: get_session
 .. autofunction:: get_item
 .. autofunction:: get_files
-.. autofunction:: iter_files
 .. autofunction:: modify_metadata
 .. autofunction:: upload
 .. autofunction:: download
 .. autofunction:: delete
 .. autofunction:: get_tasks
 .. autofunction:: search_items
-.. autofunction:: get_data_miner
+.. autofunction:: configure
+.. autofunction:: get_username

@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import sys
+inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, inc_path)
 from internetarchive.cli.argparser import get_args_dict, get_xml_text
 
 

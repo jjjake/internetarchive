@@ -16,7 +16,7 @@ from internetarchive import get_session
 import internetarchive.files
 
 
-DOWNLOAD_URL_RE = re.compile(r'http://archive.org/download/.*')
+DOWNLOAD_URL_RE = re.compile(r'https://archive.org/download/.*')
 S3_URL_RE = re.compile(r'.*s3.us.archive.org/.*')
 EXPECTED_S3_HEADERS = {
     'content-length': '7557',
@@ -248,7 +248,7 @@ def test_download_destdir(tmpdir, testitem):
 
 
 def test_download_no_directory(tmpdir, testitem):
-    url_re = re.compile(r'http://archive.org/download/.*')
+    url_re = re.compile(r'https://archive.org/download/.*')
     tmpdir.chdir()
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, url_re, body='no dest dir', status=200)
@@ -267,8 +267,8 @@ def test_download_dry_run(tmpdir, capsys, testitem):
                  adding_headers={'content-length': '100'})
         testitem.download(source='original', dry_run=True)
         out, err = capsys.readouterr()
-        expected_output = ('http://archive.org/download/nasa/NASAarchiveLogo.jpg\n'
-                           'http://archive.org/download/nasa/globe_west_540.jpg\n')
+        expected_output = ('https://archive.org/download/nasa/NASAarchiveLogo.jpg\n'
+                           'https://archive.org/download/nasa/globe_west_540.jpg\n')
         assert expected_output == out
 
 
@@ -293,7 +293,7 @@ def test_download_dark_item(tmpdir, capsys, testitem_metadata, session):
         _item_metadata['metadata']['identifier'] = 'dark-item'
         _item_metadata['is_dark'] = True
         _item_metadata = json.dumps(_item_metadata)
-        rsps.add(responses.GET, 'http://archive.org/metadata/dark-item',
+        rsps.add(responses.GET, 'https://archive.org/metadata/dark-item',
                       body=_item_metadata,
                       status=200,
                       content_type='application/json')
@@ -324,7 +324,7 @@ def test_upload(testitem, json_filename):
                 r.headers['x-archive-meta00-scanner'].split('%20')[:4])
             headers['x-archive-meta00-scanner'] = scanner_header
             assert headers == EXPECTED_S3_HEADERS
-            assert p.url == 'http://s3.us.archive.org/nasa/nasa_meta.json'
+            assert p.url == 'https://s3.us.archive.org/nasa/nasa_meta.json'
 
 
 def test_upload_secure_session(testitem_metadata, json_filename):
@@ -398,8 +398,8 @@ def test_upload_file_keys(testitem, json_filename):
                            debug=True)
         for r in resp:
             p = r.prepare()
-            assert p.url in ['http://s3.us.archive.org/nasa/new_key.txt',
-                             'http://s3.us.archive.org/nasa/222']
+            assert p.url in ['https://s3.us.archive.org/nasa/new_key.txt',
+                             'https://s3.us.archive.org/nasa/222']
 
 
 def test_upload_dir(tmpdir, testitem):
@@ -422,8 +422,8 @@ def test_upload_dir(tmpdir, testitem):
         for r in resp:
             p = r.prepare()
             expected_eps = [
-                    'http://s3.us.archive.org/nasa/foo.txt',
-                    'http://s3.us.archive.org/nasa/foo2.txt',
+                    'https://s3.us.archive.org/nasa/foo.txt',
+                    'https://s3.us.archive.org/nasa/foo2.txt',
             ]
             assert p.url in expected_eps
 
@@ -435,8 +435,8 @@ def test_upload_dir(tmpdir, testitem):
         for r in resp:
             p = r.prepare()
             expected_eps = [
-                'http://s3.us.archive.org/nasa{0}/dir_test/{1}'.format(str(tmpdir), 'foo.txt'),
-                'http://s3.us.archive.org/nasa{0}/dir_test/{1}'.format(str(tmpdir), 'foo2.txt'),
+                'https://s3.us.archive.org/nasa{0}/dir_test/{1}'.format(str(tmpdir), 'foo.txt'),
+                'https://s3.us.archive.org/nasa{0}/dir_test/{1}'.format(str(tmpdir), 'foo2.txt'),
             ]
             assert p.url in expected_eps
         #shutil.rmtree(os.path.join(str(tmpdir), 'dir_test'))
@@ -545,7 +545,7 @@ def test_upload_checksum(tmpdir, testitem):
 # modify_metadata() ______________________________________________________________________
 def test_modify_metadata(testitem, testitem_metadata):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.POST, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.POST, 'https://archive.org/metadata/nasa',
                  status=200)
 
         # Test simple add.
@@ -623,7 +623,7 @@ def test_modify_metadata(testitem, testitem_metadata):
         _item_metadata = json.loads(testitem_metadata)
         _item_metadata['metadata']['title'] = 'new title'
         _item_metadata = json.dumps(_item_metadata)
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                       body=_item_metadata,
                       status=200)
         r = testitem.modify_metadata(md,

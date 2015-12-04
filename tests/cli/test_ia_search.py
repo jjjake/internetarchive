@@ -23,12 +23,12 @@ with open(TEST_JSON_FILE) as fh:
 
 def test_ia_search_sort_asc(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc',
+        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc',
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
-        #rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&sort%5B0%5D=identifier+asc&output=json&rows=100&page=1',
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=500&sort%5B0%5D=identifier+asc&page=1',
+        #rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&sort%5B0%5D=identifier+asc&output=json&rows=100&page=1',
+        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=500&sort%5B0%5D=identifier+asc&page=1',
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
@@ -48,25 +48,25 @@ def test_ia_search_sort_asc(capsys):
 def test_ia_search_multi_page(capsys):
     j = json.loads(TEST_SEARCH_RESPONSE)
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
+        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
         _j = deepcopy(j)
         _j['response']['docs'] = j['response']['docs'][:25] 
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=25&page=1&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
+        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=25&page=1&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
                  body=json.dumps(_j),
                  status=200,
                  match_querystring=True)
         _j = deepcopy(j)
         _j['response']['docs'] = j['response']['docs'][25:] 
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=25&page=2&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
+        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=25&page=2&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
                  body=json.dumps(_j),
                  status=200,
                  match_querystring=True)
         _j = deepcopy(j)
         _j['response']['docs'] = []
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=25&page=3&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
+        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=25&page=3&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
                  body=json.dumps(_j),
                  status=200,
                  match_querystring=True)
@@ -90,11 +90,11 @@ def test_ia_search_multi_page(capsys):
 
 def test_ia_search_itemlist(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Aattentionkmartshoppers&output=json&rows=0&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
+        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Aattentionkmartshoppers&output=json&rows=0&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?fl%5B0%5D=identifier&rows=500&sort%5B0%5D=identifier+asc&q=collection%3Aattentionkmartshoppers&output=json&page=1',
+        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?fl%5B0%5D=identifier&rows=500&sort%5B0%5D=identifier+asc&q=collection%3Aattentionkmartshoppers&output=json&page=1',
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
@@ -113,7 +113,7 @@ def test_ia_search_itemlist(capsys):
 
 def test_ia_search_num_found(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc',
+        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc',
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)

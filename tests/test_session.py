@@ -26,7 +26,6 @@ CONFIG = {
         'level': 'INFO',
         'file': 'test.log',
     },
-    'secure': True
 }
 
 
@@ -52,7 +51,7 @@ def test_get_item(tmpdir):
         item_metadata = fh.read().strip().decode('utf-8')
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=item_metadata,
                  status=200,
                  content_type='application/json')

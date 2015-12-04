@@ -32,7 +32,7 @@ NASA_FILES = set([
 
 def test_ia_list(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
 
@@ -44,7 +44,7 @@ def test_ia_list(capsys):
 
 def test_ia_list_verbose(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
         ia_list.main(['list', '--verbose', 'nasa'], SESSION)
@@ -57,7 +57,7 @@ def test_ia_list_verbose(capsys):
 
 def test_ia_list_all(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
         ia_list.main(['list', '--all', 'nasa'], SESSION)
@@ -71,7 +71,7 @@ def test_ia_list_all(capsys):
 
 def test_ia_list_location(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
         ia_list.main(['list', '--location', '--glob', '*meta.xml', 'nasa'], SESSION)
@@ -82,7 +82,7 @@ def test_ia_list_location(capsys):
 
 def test_ia_list_columns(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
         ia_list.main(['list', '--columns', 'name,md5', '--glob', '*meta.xml', 'nasa'],
@@ -92,7 +92,7 @@ def test_ia_list_columns(capsys):
     assert out == 'nasa_meta.xml\t0e339f4a29a8bc42303813cbec9243e5\n'
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
         ia_list.main(['list', '--columns', 'md5', '--glob', '*meta.xml', 'nasa'], SESSION)
@@ -103,7 +103,7 @@ def test_ia_list_columns(capsys):
 
 def test_ia_list_glob(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
         ia_list.main(['list', '--glob', '*torrent', 'nasa'], SESSION)
@@ -114,7 +114,7 @@ def test_ia_list_glob(capsys):
 
 def test_ia_list_source(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
         ia_list.main(['list', '--source', 'metadata', 'nasa'], SESSION)
@@ -131,7 +131,7 @@ def test_ia_list_source(capsys):
 
 def test_ia_list_non_existing(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body="{}",
                  status=200)
         try:

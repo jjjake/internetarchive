@@ -50,7 +50,7 @@ def test_map2x():
 
 @responses.activate
 def test_IdentifierListAsItems(session, testitem_metadata):
-    responses.add(responses.GET, 'http://archive.org/metadata/nasa',
+    responses.add(responses.GET, 'https://archive.org/metadata/nasa',
                   body=testitem_metadata,
                   status=200,
                   content_type='application/json')

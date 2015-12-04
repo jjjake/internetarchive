@@ -24,11 +24,11 @@ def test_ia_upload(tmpdir):
         fh.write('foo')
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200,
                  content_type='application/json')
-        rsps.add(responses.PUT, 'http://s3.us.archive.org/nasa/test.txt',
+        rsps.add(responses.PUT, 'https://s3.us.archive.org/nasa/test.txt',
                  body='',
                  status=200,
                  content_type='text/plain')
@@ -39,12 +39,12 @@ def test_ia_upload(tmpdir):
             assert not exc.code
 
     with open('internetarchive.log', 'r') as fh:
-        assert 'uploaded test.txt to http://s3.us.archive.org/nasa/test.txt' in fh.read()
+        assert 'uploaded test.txt to https://s3.us.archive.org/nasa/test.txt' in fh.read()
 
 
 def test_ia_upload_status_check(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://s3.us.archive.org',
+        rsps.add(responses.GET, 'https://s3.us.archive.org',
                  body=STATUS_CHECK_RESPONSE,
                  status=200,
                  content_type='application/json')
@@ -60,7 +60,7 @@ def test_ia_upload_status_check(capsys):
 
         j = json.loads(STATUS_CHECK_RESPONSE)
         j['over_limit'] = 1
-        rsps.add(responses.GET, 'http://s3.us.archive.org',
+        rsps.add(responses.GET, 'https://s3.us.archive.org',
                  body=json.dumps(j),
                  status=200,
                  content_type='application/json')
@@ -78,7 +78,7 @@ def test_ia_upload_status_check(capsys):
 
 def test_ia_upload_debug(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200,
                  content_type='application/json')
@@ -91,7 +91,7 @@ def test_ia_upload_debug(capsys):
     out, err = capsys.readouterr()
     assert out == ('nasa:\n'
                    'Endpoint:\n'
-                   ' http://s3.us.archive.org/nasa/test.txt\n\n'
+                   ' https://s3.us.archive.org/nasa/test.txt\n\n'
                    'HTTP Headers:\n'
                    ' x-archive-size-hint:3\n'
                    ' Content-MD5:acbd18db4cc2f85cedef654fccc4a4d8\n')
@@ -109,11 +109,11 @@ def test_ia_upload_403(capsys):
                 '</Error>')
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200,
                  content_type='application/json')
-        rsps.add(responses.PUT, 'http://s3.us.archive.org/nasa/test_ia_upload.py',
+        rsps.add(responses.PUT, 'https://s3.us.archive.org/nasa/test_ia_upload.py',
                  body=s3_error,
                  status=403,
                  content_type='text/plain')
@@ -140,7 +140,7 @@ def test_ia_upload_invalid_cmd(capsys):
 
 def test_ia_upload_size_hint(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200,
                  content_type='application/json')
@@ -153,7 +153,7 @@ def test_ia_upload_size_hint(capsys):
     out, err = capsys.readouterr()
     assert out == ('nasa:\n'
                    'Endpoint:\n'
-                   ' http://s3.us.archive.org/nasa/test.txt\n\n'
+                   ' https://s3.us.archive.org/nasa/test.txt\n\n'
                    'HTTP Headers:\n'
                    ' x-archive-size-hint:30\n'
                    ' Content-MD5:acbd18db4cc2f85cedef654fccc4a4d8\n')
@@ -165,11 +165,11 @@ def test_ia_upload_remote_name(tmpdir):
         fh.write('foo')
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200,
                  content_type='application/json')
-        rsps.add(responses.PUT, 'http://s3.us.archive.org/nasa/hi.txt',
+        rsps.add(responses.PUT, 'https://s3.us.archive.org/nasa/hi.txt',
                  body='',
                  status=200,
                  content_type='text/plain')
@@ -180,4 +180,4 @@ def test_ia_upload_remote_name(tmpdir):
             assert not exc.code
 
     with open('internetarchive.log', 'r') as fh:
-        assert 'uploaded hi.txt to http://s3.us.archive.org/nasa/hi.txt' in fh.read()
+        assert 'uploaded hi.txt to https://s3.us.archive.org/nasa/hi.txt' in fh.read()

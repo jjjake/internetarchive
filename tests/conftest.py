@@ -26,7 +26,7 @@ def testitem_metadata(json_filename):
 @pytest.fixture
 @responses.activate
 def testitem(testitem_metadata, session):
-    responses.add(responses.GET, 'http://archive.org/metadata/nasa',
+    responses.add(responses.GET, 'https://archive.org/metadata/nasa',
                   body=testitem_metadata,
                   status=200,
                   content_type='application/json')
@@ -41,7 +41,7 @@ def session_with_logging():
 @pytest.fixture
 @responses.activate
 def testitem_with_logging(testitem_metadata, session_with_logging):
-    responses.add(responses.GET, 'http://archive.org/metadata/nasa',
+    responses.add(responses.GET, 'https://archive.org/metadata/nasa',
                   body=testitem_metadata,
                   status=200,
                   content_type='application/json')

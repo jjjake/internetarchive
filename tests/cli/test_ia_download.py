@@ -47,13 +47,13 @@ def test_dry_run():
     cmd = 'ia download --dry-run nasa'
     exit_code, stdout, stderr = call(cmd)
     test_output_set = set([
-        "http://archive.org/download/nasa/NASAarchiveLogo.jpg",
-        "http://archive.org/download/nasa/globe_west_540.jpg",
-        "http://archive.org/download/nasa/nasa_reviews.xml",
-        "http://archive.org/download/nasa/nasa_meta.xml",
-        "http://archive.org/download/nasa/nasa_archive.torrent",
-        "http://archive.org/download/nasa/nasa_files.xml",
-        "http://archive.org/download/nasa/globe_west_540_thumb.jpg",
+        "https://archive.org/download/nasa/NASAarchiveLogo.jpg",
+        "https://archive.org/download/nasa/globe_west_540.jpg",
+        "https://archive.org/download/nasa/nasa_reviews.xml",
+        "https://archive.org/download/nasa/nasa_meta.xml",
+        "https://archive.org/download/nasa/nasa_archive.torrent",
+        "https://archive.org/download/nasa/nasa_files.xml",
+        "https://archive.org/download/nasa/globe_west_540_thumb.jpg",
     ])
     assert parse_output(stdout) == test_output_set
     assert exit_code == 0

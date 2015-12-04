@@ -6,7 +6,7 @@ python:
 install: 
   - 'pip install -e .'
   - 'pip install responses==0.5.0'
-script: "{envpython} setup.py develop && py.test"
+script: "python setup.py develop && py.test"
 branches:
   only:
       - master  

@@ -1,4 +1,5 @@
 from setuptools import setup
+import sys
 from codecs import open
 import re
 import ast
@@ -14,6 +15,17 @@ with open('README.rst', 'r', 'utf-8') as f:
     readme = f.read()
 with open('HISTORY.rst', 'r', 'utf-8') as f:
     history = f.read()
+
+install_requires = [
+    'requests>=2.0.0,<3.0.0',
+    'jsonpatch==0.4',
+    'docopt>=0.6.0,<0.7.0',
+    'clint>=0.4.0,<0.5.0',
+    'six>=1.0.0,<2.0.0',
+    'schema>=0.4.0,<0.5.0',
+]
+if sys.version_info <= (2, 7):
+    install_requires.append(['pyopenssl', 'ndg-httpsclient', 'pyasn1'])
 
 setup(
     name='internetarchive',
@@ -35,14 +47,7 @@ setup(
             'ia = internetarchive.cli.ia:main',
         ],
     },
-    install_requires=[
-        'requests>=2.0.0,<3.0.0',
-        'jsonpatch==0.4',
-        'docopt>=0.6.0,<0.7.0',
-        'clint>=0.4.0,<0.5.0',
-        'six>=1.0.0,<2.0.0',
-        'schema>=0.4.0,<0.5.0',
-    ],
+    install_requires=install_requires,
     classifiers=(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

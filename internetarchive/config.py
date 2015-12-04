@@ -122,4 +122,4 @@ def get_config(config=None, config_file=None):
     # Recursive/deep update.
     deep_update(config_dict, _config)
 
-    return dict((k, v) for k, v in config_dict.items() if v)
+    return dict((k, v) for k, v in config_dict.items() if v is not None)

@@ -71,7 +71,7 @@ class ArchiveSession(requests.sessions.Session):
 
         self.config = get_config(config, config_file)
         self.cookies.update(self.config.get('cookies', {}))
-        self.secure = self.config.get('secure', False)
+        self.secure = self.config.get('secure', True)
         self.protocol = 'https:' if self.secure else 'http:'
         self.access_key = self.config.get('s3', {}).get('access')
         self.secret_key = self.config.get('s3', {}).get('secret')

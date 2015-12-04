@@ -3,13 +3,14 @@
 
 usage:
     ia [--help | --version]
-    ia [--config-file FILE] [--log] <command> [<args>]...
+    ia [--config-file FILE] [--log] [--insecure] <command> [<args>]...
 
 options:
     -h, --help
     -v, --version
     -c, --config-file FILE  Use FILE as config file.
     -l, --log               Turn on logging [default: False].
+    -i, --insecure          Use HTTP for all requests instead of HTTPS [default: false]
 
 commands:
     help      Retrieve help for subcommands.
@@ -98,7 +99,12 @@ def main():
 
     argv = [cmd] + args['<args>']
 
-    config = {'logging': {'level': 'INFO'}} if args['--log'] else None
+    config = dict()
+    if args['--log']:
+        config['logging'] = {'level': 'INFO'}
+    if args['--insecure']:
+        config['secure'] = False
+
     session = get_session(config_file=args['--config-file'], config=config)
 
     load_ia_module(cmd)

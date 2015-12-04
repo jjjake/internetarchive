@@ -130,7 +130,7 @@ If you have the GNU ``parallel`` tool intalled, then you can combine ``ia search
 
 .. code:: bash
 
-    $ ia search 'subject:"collection:prelinger' --itemlist | parallel -j10 'ia metadata {} > {}_meta.json'
+    $ ia search 'collection:prelinger' --itemlist | parallel -j10 'ia metadata {} > {}_meta.json'
 
 
 

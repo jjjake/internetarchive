@@ -28,7 +28,7 @@ def test_ia_search_sort_asc(capsys):
                  status=200,
                  match_querystring=True)
         #rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&sort%5B0%5D=identifier+asc&output=json&rows=100&page=1',
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=500&sort%5B0%5D=identifier+asc&page=1',
+        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=250&sort%5B0%5D=identifier+asc&page=1',
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
@@ -94,7 +94,7 @@ def test_ia_search_itemlist(capsys):
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?fl%5B0%5D=identifier&rows=500&sort%5B0%5D=identifier+asc&q=collection%3Aattentionkmartshoppers&output=json&page=1',
+        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?fl%5B0%5D=identifier&rows=250&sort%5B0%5D=identifier+asc&q=collection%3Aattentionkmartshoppers&output=json&page=1',
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)

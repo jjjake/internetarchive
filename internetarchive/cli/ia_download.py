@@ -70,6 +70,7 @@ def main(argv, session):
         '--search': Or(str, None),
         '--itemlist': Or(str, None),
         '<identifier>': Or(str, None),
+        '--retries': Use(lambda x: x[0]),
     })
 
     # Filenames should be unicode literals. Support PY2 and PY3.

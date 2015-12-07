@@ -45,8 +45,15 @@ class Search(object):
         self.url = '{0}//archive.org/advancedsearch.php'.format(self.session.protocol)
         default_params = dict(
             q=query,
-            rows=500,
+            rows=250,
         )
+
+        # Set timeout.
+        if 'timeout' not in request_kwargs:
+            request_kwargs['timeout'] = 6
+
+        # Set retries.
+        self.session._mount_http_adapter(max_retries=4)
 
         # Sort by identifier if no other sort is provided.
         if not any(k.startswith('sort') for k, v in params.items()):

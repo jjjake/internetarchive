@@ -115,7 +115,7 @@ def main(argv, session):
 
         try:
             item = session.get_item(identifier)
-        except ConnectTimeout as exc:
+        except Exception as exc:
             print('{0}: failed to retrieve item metadata - errors'.format(identifier))
             continue
 

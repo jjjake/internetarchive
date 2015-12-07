@@ -20,7 +20,7 @@ from internetarchive import auth
 from internetarchive.exceptions import AuthenticationError
 
 
-def get_session(config=None, config_file=None, http_adapter_kwargs=None):
+def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=None):
     """Return a new :class:`ArchiveSession` object.
 
     :type config: dict
@@ -40,7 +40,7 @@ def get_session(config=None, config_file=None, http_adapter_kwargs=None):
         >>> s.access_key
         'foo'
     """
-    return session.ArchiveSession(config, config_file, http_adapter_kwargs)
+    return session.ArchiveSession(config, config_file, debug, http_adapter_kwargs)
 
 
 def get_item(identifier,

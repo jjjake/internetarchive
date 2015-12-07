@@ -181,21 +181,11 @@ class File(BaseFile):
             response.raise_for_status()
 
             chunk_size = 2048
-            _i = 1
             with open(file_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:
                         f.write(chunk)
                         f.flush()
-                        _i += 1
-                        if (silent is False and verbose is False and
-                            sys.stdout.isatty() and
-                            not os.environ.get('INSIDE_EMACS')):
-
-                            if _i % 5:
-                                _m = '{0}\b'.format(progress.MILL_CHARS[(_i // 1) %
-                                                    len(progress.MILL_CHARS)])
-                                print(_m, end='', file=sys.stderr)
         except (RetryError, HTTPError, ConnectTimeout, ConnectionError) as exc:
             msg = ('error downloading file {0}, '
                    'exception raised: {1}'.format(file_path, exc))

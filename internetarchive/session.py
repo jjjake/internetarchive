@@ -21,6 +21,7 @@ from requests.utils import default_headers
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3 import Retry
 from requests.exceptions import HTTPError, ConnectTimeout
+import httplib
 
 from internetarchive import __version__
 from internetarchive.config import get_config
@@ -50,7 +51,11 @@ class ArchiveSession(requests.sessions.Session):
         'collection': Collection,
     }
 
-    def __init__(self, config=None, config_file=None, http_adapter_kwargs=None):
+    def __init__(self,
+                 config=None,
+                 config_file=None,
+                 debug=None,
+                 http_adapter_kwargs=None):
         """Initialize :class:`ArchiveSession <ArchiveSession>` object with config.
 
         :type config: dict
@@ -68,6 +73,7 @@ class ArchiveSession(requests.sessions.Session):
         """
         super(ArchiveSession, self).__init__()
         http_adapter_kwargs = {} if not http_adapter_kwargs else http_adapter_kwargs
+        debug = False if not debug else True
 
         self.config = get_config(config, config_file)
         self.cookies.update(self.config.get('cookies', {}))
@@ -85,6 +91,10 @@ class ArchiveSession(requests.sessions.Session):
         if logging_config.get('level'):
             self.set_file_logger(logging_config.get('level', 'NOTSET'),
                                  logging_config.get('file', 'internetarchive.log'))
+            if debug:
+               self.set_file_logger(logging_config.get('level', 'NOTSET'),
+                                    logging_config.get('file', 'internetarchive.log'),
+                                    'requests.packages.urllib3')
 
     def _get_user_agent_string(self):
         """Generate a User-Agent string to be sent with every request."""
@@ -198,7 +208,7 @@ class ArchiveSession(requests.sessions.Session):
         try:
             resp = self.get(url, **request_kwargs)
             resp.raise_for_status()
-        except (ConnectTimeout, HTTPError) as exc:
+        except Exception as exc:
             error_msg = 'Error retrieving metadata from {0}, {1}'.format(url, exc)
             logger.error(error_msg)
             raise type(exc)(error_msg)

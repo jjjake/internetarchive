@@ -3,13 +3,14 @@
 
 usage:
     ia [--help | --version]
-    ia [--config-file FILE] [--log] [--insecure] <command> [<args>]...
+    ia [--config-file FILE] [--log | --debug] [--insecure] <command> [<args>]...
 
 options:
     -h, --help
     -v, --version
     -c, --config-file FILE  Use FILE as config file.
     -l, --log               Turn on logging [default: False].
+    -d, --debug             Turn on verbose logging [default: False].
     -i, --insecure          Use HTTP for all requests instead of HTTPS [default: false]
 
 commands:
@@ -102,10 +103,13 @@ def main():
     config = dict()
     if args['--log']:
         config['logging'] = {'level': 'INFO'}
+    elif args['--debug']:
+        config['logging'] = {'level': 'DEBUG'}
+
     if args['--insecure']:
         config['secure'] = False
 
-    session = get_session(config_file=args['--config-file'], config=config)
+    session = get_session(config_file=args['--config-file'], config=config, debug=args['--debug'])
 
     load_ia_module(cmd)
     sys.exit(ia_module.main(argv, session))

@@ -50,7 +50,7 @@ class Search(object):
 
         # Set timeout.
         if 'timeout' not in request_kwargs:
-            request_kwargs['timeout'] = 6
+            request_kwargs['timeout'] = 12
 
         # Set retries.
         self.session._mount_http_adapter(max_retries=4)

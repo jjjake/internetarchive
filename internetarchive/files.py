@@ -177,7 +177,7 @@ class File(BaseFile):
             os.makedirs(parent_dir)
 
         try:
-            response = self.item.session.get(self.url, stream=True, timeout=3)
+            response = self.item.session.get(self.url, stream=True, timeout=12)
             response.raise_for_status()
 
             chunk_size = 2048

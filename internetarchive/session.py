@@ -124,7 +124,7 @@ class ArchiveSession(requests.sessions.Session):
                                 redirect=False,
                                 method_whitelist=Retry.DEFAULT_METHOD_WHITELIST,
                                 status_forcelist=status_forcelist,
-                                backoff_factor=.1)
+                                backoff_factor=1)
         self.http_adapter_kwargs['max_retries'] = max_retries
         max_retries_adapter = HTTPAdapter(**self.http_adapter_kwargs)
         self.mount('{0}//'.format(self.protocol), max_retries_adapter)
@@ -204,7 +204,7 @@ class ArchiveSession(requests.sessions.Session):
         url = '{protocol}//archive.org/metadata/{identifier}'.format(
                 protocol=self.protocol, identifier=identifier)
         if 'timeout' not in request_kwargs:
-            request_kwargs['timeout'] = 3
+            request_kwargs['timeout'] = 12
         try:
             resp = self.get(url, **request_kwargs)
             resp.raise_for_status()

@@ -47,6 +47,7 @@ def get_item(identifier,
              config=None,
              config_file=None,
              archive_session=None,
+             debug=None,
              http_adapter_kwargs=None,
              request_kwargs=None):
     """Get an :class:`Item` object.
@@ -79,7 +80,7 @@ def get_item(identifier,
         121084
     """
     if not archive_session:
-        archive_session = get_session(config, config_file, http_adapter_kwargs)
+        archive_session = get_session(config, config_file, debug, http_adapter_kwargs)
     return archive_session.get_item(identifier, request_kwargs=request_kwargs)
 
 

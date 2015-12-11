@@ -53,7 +53,7 @@ class Search(object):
             request_kwargs['timeout'] = 12
 
         # Set retries.
-        self.session._mount_http_adapter(max_retries=4)
+        self.session._mount_http_adapter(max_retries=5)
 
         # Sort by identifier if no other sort is provided.
         if not any(k.startswith('sort') for k, v in params.items()):

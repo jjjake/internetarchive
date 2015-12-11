@@ -127,7 +127,9 @@ class ArchiveSession(requests.sessions.Session):
                                 backoff_factor=1)
         self.http_adapter_kwargs['max_retries'] = max_retries
         max_retries_adapter = HTTPAdapter(**self.http_adapter_kwargs)
-        self.mount('{0}//'.format(self.protocol), max_retries_adapter)
+        # Don't mount on s3.us.archive.org, only archive.org!
+        # IA-S3 requires a more complicated retry workflow.
+        self.mount('{0}//archive.org'.format(self.protocol), max_retries_adapter)
 
     def set_file_logger(self, log_level, path, logger_name='internetarchive'):
         """Convenience function to quickly configure any level of

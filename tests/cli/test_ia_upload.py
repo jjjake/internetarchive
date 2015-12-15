@@ -17,7 +17,6 @@ with open(os.path.join(ROOT_DIR, 'tests/data/s3_status_check.json'), 'r') as fh:
     STATUS_CHECK_RESPONSE = fh.read().strip().decode('utf-8')
 
 
-
 def test_ia_upload(tmpdir):
     tmpdir.chdir()
     with open('test.txt', 'w') as fh:
@@ -69,7 +68,7 @@ def test_ia_upload_status_check(capsys):
         try:
             r = ia.main()
         except SystemExit as exc:
-            assert not exc.code
+            assert exc.code == 1
 
         out, err = capsys.readouterr()
         assert ('warning: nasa is over limit, and not accepting requests. '
@@ -173,7 +172,8 @@ def test_ia_upload_remote_name(tmpdir):
                  body='',
                  status=200,
                  content_type='text/plain')
-        sys.argv = ['ia', '--log', 'upload', 'nasa', 'test.txt', '--remote-name', 'hi.txt']
+        sys.argv = ['ia', '--log', 'upload', 'nasa', 'test.txt', '--remote-name',
+                    'hi.txt']
         try:
             r = ia.main()
         except SystemExit as exc:

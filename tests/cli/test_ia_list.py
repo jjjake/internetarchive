@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 from subprocess import Popen, PIPE
 import subprocess
 from time import time

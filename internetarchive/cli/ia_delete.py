@@ -32,6 +32,11 @@ from internetarchive.utils import validate_ia_identifier
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
 
+    # Validation error messages.
+    invalid_id_msg = ('<identifier> should be between 3 and 80 characters in length, and '
+                      'can only contain alphanumeric characters, underscores ( _ ), or '
+                      'dashes ( - )')
+
     # Validate args.
     s = Schema({
         text_type: Use(lambda x: bool(x)),
@@ -39,10 +44,7 @@ def main(argv, session):
         '--format': list,
         '--glob': list,
         'delete': bool,
-        '<identifier>': Or(None, And(str, validate_ia_identifier,
-            error=('<identifier> should be between 3 and 80 characters in length, and '
-                   'can only contain alphanumeric characters, underscores ( _ ), or '
-                   'dashes ( - )'))),
+        '<identifier>': Or(None, And(str, validate_ia_identifier, error=invalid_id_msg)),
     })
     try:
         args = s.validate(args)

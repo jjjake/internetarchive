@@ -109,7 +109,9 @@ def main():
     if args['--insecure']:
         config['secure'] = False
 
-    session = get_session(config_file=args['--config-file'], config=config, debug=args['--debug'])
+    session = get_session(config_file=args['--config-file'],
+                          config=config,
+                          debug=args['--debug'])
 
     load_ia_module(cmd)
     sys.exit(ia_module.main(argv, session))

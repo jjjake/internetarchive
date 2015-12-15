@@ -10,6 +10,7 @@ import re
 
 import pytest
 import responses
+from requests.packages import urllib3
 
 import internetarchive.config
 from internetarchive import get_session
@@ -31,23 +32,23 @@ with open(TEST_JSON_FILE, 'r') as fh:
 
 SEARCH_RESPONSE = {
     "responseHeader": {
-        "status":0,
-        "QTime":1,
+        "status": 0,
+        "QTime": 1,
         "params": {
             "json.wrf": "callback",
-            "wt":"json",
-            "rows":"50",
-            "qin":"identifier:nasa",
-            "fl":"identifier",
-            "start":"0",
-            "q":"identifier:nasa"
+            "wt": "json",
+            "rows": "50",
+            "qin": "identifier:nasa",
+            "fl": "identifier",
+            "start": "0",
+            "q": "identifier:nasa"
         }
     },
     "response": {
-        "numFound":1,
-        "start":0,
-        "docs":[
-            {"identifier":"nasa"}
+        "numFound": 1,
+        "start": 0,
+        "docs": [
+            {"identifier": "nasa"},
         ]
     }
 }
@@ -110,12 +111,12 @@ def test_get_item_with_archive_session():
 
 def test_get_item_with_kwargs():
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
         item = get_item('nasa', http_adapter_kwargs={'max_retries': 13})
-        assert item.session.adapters['https://'].max_retries.total == 13
+        assert isinstance(item.session.adapters['https://'].max_retries, urllib3.Retry)
 
     try:
         item = get_item('nasa', request_kwargs={'timeout': .0000000000001})
@@ -125,7 +126,7 @@ def test_get_item_with_kwargs():
 
 def test_get_files():
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
@@ -144,7 +145,7 @@ def test_get_files():
 def test_get_files_with_get_item_kwargs(tmpdir):
     tmpdir.chdir()
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
@@ -184,7 +185,7 @@ def test_get_files_with_get_item_kwargs(tmpdir):
 
 def test_get_files_non_existing():
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
@@ -194,7 +195,7 @@ def test_get_files_non_existing():
 
 def test_get_files_multiple():
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
@@ -203,9 +204,10 @@ def test_get_files_multiple():
         for f in files:
             assert f.name in _files
 
+
 def test_get_files_source():
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
@@ -227,7 +229,7 @@ def test_get_files_source():
 
 def test_get_files_formats():
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
@@ -246,7 +248,7 @@ def test_get_files_formats():
 
 def test_get_files_glob_pattern():
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
@@ -266,16 +268,21 @@ def test_get_files_glob_pattern():
 
 def test_modify_metadata():
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, 'https://archive.org/metadata/test',
                  body={},
                  status=200)
         rsps.add(responses.POST, 'https://archive.org/metadata/test',
-                 body='{"success":true,"task_id":423444944,"log":"https://catalogd.archive.org/log/423444944"}',
+                 body=('{"success":true,"task_id":423444944,'
+                       '"log":"https://catalogd.archive.org/log/423444944"}'),
                  status=200)
         r = modify_metadata('test', dict(foo=1))
         assert r.status_code == 200
-        assert r.json() == {u'task_id': 423444944, u'success': True, u'log': u'https://catalogd.archive.org/log/423444944'}
+        assert r.json() == {
+            u'task_id': 423444944,
+            u'success': True,
+            u'log': u'https://catalogd.archive.org/log/423444944'
+        }
 
 
 def test_upload():
@@ -295,7 +302,10 @@ def test_upload():
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body={},
                  status=200)
-        resp = upload('nasa', TEST_JSON_FILE, debug=True, access_key='test_access', secret_key='test_secret')
+        resp = upload('nasa', TEST_JSON_FILE,
+                      debug=True,
+                      access_key='test_access',
+                      secret_key='test_secret')
         for r in resp:
             p = r.prepare()
             headers = dict((k.lower(), str(v)) for k, v in p.headers.items())
@@ -354,7 +364,7 @@ def test_search_items_with_fields():
     ]
     search_response_str = json.dumps(search_r)
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, 'https://archive.org/advancedsearch.php',
                  body=search_response_str,
                  status=200)
@@ -362,10 +372,11 @@ def test_search_items_with_fields():
         assert r.num_found == 1
         assert list(r) == [{'identifier': 'nasa', 'title': 'NASA Images'}]
 
+
 def test_search_items_as_items():
     search_response_str = json.dumps(SEARCH_RESPONSE)
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, 'https://archive.org/advancedsearch.php',
                  body=search_response_str,
                  status=200)
@@ -375,4 +386,3 @@ def test_search_items_as_items():
         r = search_items('identifier:nasa')
         assert [x.identifier for x in r.iter_as_items()] == ['nasa']
         assert r.iter_as_items().search == r
-

@@ -11,6 +11,7 @@ from __future__ import absolute_import, unicode_literals, print_function
 import os
 import sys
 import logging
+import socket
 
 from requests.exceptions import HTTPError, RetryError, ConnectTimeout, ConnectionError
 from clint.textui import progress
@@ -149,8 +150,8 @@ class File(BaseFile):
             elif checksum:
                 md5_sum = utils.get_md5(open(file_path))
                 if md5_sum == self.md5:
-                    msg = 'skipping {0}, file already exists based on checksum.'.format(
-                            file_path)
+                    msg = ('skipping {0}, '
+                           'file already exists based on checksum.'.format(file_path))
                     log.info(msg)
                     if verbose:
                         print(' ' + msg)
@@ -186,7 +187,8 @@ class File(BaseFile):
                     if chunk:
                         f.write(chunk)
                         f.flush()
-        except (RetryError, HTTPError, ConnectTimeout, ConnectionError) as exc:
+        except (RetryError, HTTPError, ConnectTimeout,
+                ConnectionError, socket.error) as exc:
             msg = ('error downloading file {0}, '
                    'exception raised: {1}'.format(file_path, exc))
             log.error(msg)

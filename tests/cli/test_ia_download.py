@@ -149,7 +149,8 @@ def test_no_directories():
     rm('nasa_meta.xml')
 
 
-def test_destdir():
+def test_destdir(tmpdir):
+    tmpdir.chdir()
     rm('thisdirdoesnotexist')
 
     cmd = 'ia download --destdir=thisdirdoesnotexist/ nasa nasa_meta.xml'
@@ -157,14 +158,16 @@ def test_destdir():
     assert '--destdir must be a valid path to a directory.' in stderr
     assert exit_code == 1
 
-    os.mkdir('thisdirdoesnotexist/')
+    tmpdir.mkdir('thisdirdoesnotexist/')
     exit_code, stdout, stderr = call(cmd)
-    assert 'nasa_meta.xml' in os.listdir('thisdirdoesnotexist/nasa/')
+    assert 'nasa_meta.xml' in os.listdir(os.path.join(str(tmpdir),
+                                         'thisdirdoesnotexist/nasa'))
     assert exit_code == 0
 
     cmd = 'ia download --no-directories --destdir=thisdirdoesnotexist/ nasa nasa_meta.xml'
     exit_code, stdout, stderr = call(cmd)
-    assert 'nasa_meta.xml' in os.listdir('thisdirdoesnotexist/')
+    assert 'nasa_meta.xml' in os.listdir(os.path.join(str(tmpdir),
+                                         'thisdirdoesnotexist/'))
     assert exit_code == 0
 
     rm('thisdirdoesnotexist')

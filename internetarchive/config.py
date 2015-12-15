@@ -31,8 +31,8 @@ def get_auth_config(username, password):
         r = s.post(u, data=payload, cookies={'test-cookie': '1'})
 
         if 'logged-in-sig' not in s.cookies:
-            raise AuthenticationError(
-                    'Authentication failed. Please check your credentials and try again.')
+            raise AuthenticationError('Authentication failed. '
+                                      'Please check your credentials and try again.')
 
         # Get S3 keys.
         u = 'https://archive.org/account/s3.php'

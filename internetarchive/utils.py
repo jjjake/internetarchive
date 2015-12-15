@@ -105,7 +105,7 @@ class IdentifierListAsItems(object):
             if isinstance(id_list_or_single_id, list) \
             else [id_list_or_single_id]
 
-        self._items = [None]*len(self.ids)
+        self._items = [None] * len(self.ids)
         self.session = session
 
     def __len__(self):

@@ -3,11 +3,14 @@
 VERSION=$(shell grep -m1 version internetarchive/__init__.py | cut -d\' -f2)
 
 init:
-	pip install responses==0.5.0 pytest-cov
+	pip install responses==0.5.0 pytest-cov pytest-pep8
 	pip install -e .
 
+pep8-test:
+	py.test --pep8 -m pep8 --cov-report term-missing --cov internetarchive
+
 test:
-	py.test -v --cov-report term-missing --cov internetarchive
+	py.test --pep8 --cov-report term-missing --cov internetarchive
 
 publish:
 	git tag -a v$(VERSION) -m 'version $(VERSION)'

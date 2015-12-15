@@ -92,9 +92,9 @@ class ArchiveSession(requests.sessions.Session):
             self.set_file_logger(logging_config.get('level', 'NOTSET'),
                                  logging_config.get('file', 'internetarchive.log'))
             if debug:
-               self.set_file_logger(logging_config.get('level', 'NOTSET'),
-                                    logging_config.get('file', 'internetarchive.log'),
-                                    'requests.packages.urllib3')
+                self.set_file_logger(logging_config.get('level', 'NOTSET'),
+                                     logging_config.get('file', 'internetarchive.log'),
+                                     'requests.packages.urllib3')
 
     def _get_user_agent_string(self):
         """Generate a User-Agent string to be sent with every request."""
@@ -147,11 +147,11 @@ class ArchiveSession(requests.sessions.Session):
         """
         _log_level = {
             'CRITICAL': 50,
-            'ERROR':    40,
-            'WARNING':  30,
-            'INFO':     20,
-            'DEBUG':    10,
-            'NOTSET':   0,
+            'ERROR': 40,
+            'WARNING': 30,
+            'INFO': 20,
+            'DEBUG': 10,
+            'NOTSET': 0,
         }
 
         log_format = u'%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -203,8 +203,7 @@ class ArchiveSession(requests.sessions.Session):
         :returns: Metadat API response.
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
-        url = '{protocol}//archive.org/metadata/{identifier}'.format(
-                protocol=self.protocol, identifier=identifier)
+        url = '{0}//archive.org/metadata/{1}'.format(self.protocol, identifier)
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12
         try:

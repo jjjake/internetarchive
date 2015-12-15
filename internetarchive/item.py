@@ -20,7 +20,7 @@ from clint.textui import progress
 from requests.exceptions import HTTPError
 
 from internetarchive.utils import IdentifierListAsItems, get_md5, chunk_generator, \
-        IterableToFileAdapter
+    IterableToFileAdapter
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
 from internetarchive import __version__
@@ -102,7 +102,7 @@ class Item(BaseItem):
     <https://archive.org/account/s3.php>`__
     """
 
-    def __init__(self, archive_session, identifier, item_metadata=None, **kwargs):
+    def __init__(self, archive_session, identifier, item_metadata=None):
         """
         :type archive_session: :class:`ArchiveSession <ArchiveSession>`
 
@@ -121,9 +121,9 @@ class Item(BaseItem):
                            accessing or referring to the item.
 
         :type item_metadata: dict
-        :param item_metadata: The Archive.org item metadata used to initialize this item.
-                              If no item metadata is provided, it will be retrieved from
-                              Archive.org using the provided identifier.
+        :param item_metadata: (optional) The Archive.org item metadata used to initialize
+                              this item.  If no item metadata is provided, it will be
+                              retrieved from Archive.org using the provided identifier.
         """
         self.session = archive_session
         super(Item, self).__init__(identifier, item_metadata)
@@ -624,7 +624,7 @@ class Item(BaseItem):
                     # and this is the last request being made.
                     fdir_index += 1
                     if queue_derive is True and file_index >= len(files) \
-                        and fdir_index >= len(os.listdir(f)):
+                            and fdir_index >= len(os.listdir(f)):
                         queue_derive = True
                     else:
                         queue_derive = False
@@ -698,7 +698,7 @@ class Collection(Item):
         _search = self.session.search_items(query, fields=['identifier'])
         rtn = self.searches.setdefault(name, _search).iter_as_items()
         if not hasattr(self, name + '_count'):
-            setattr(self, name+"_count", self.searches[name].num_found)
+            setattr(self, name + "_count", self.searches[name].num_found)
         return rtn
 
     def _make_search(self, name, query):

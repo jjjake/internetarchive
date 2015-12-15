@@ -29,11 +29,10 @@ EXPECTED_S3_HEADERS = {
 }
 
 
-# get_item() _____________________________________________________________________________
 def test_get_item(testitem_metadata, testitem, session):
     assert testitem.item_metadata == json.loads(testitem_metadata)
     assert testitem.identifier == 'nasa'
-    assert testitem.exists == True
+    assert testitem.exists is True
     assert testitem.session == session
     assert isinstance(testitem.metadata, dict)
     assert isinstance(testitem.files, list)
@@ -47,11 +46,10 @@ def test_get_item(testitem_metadata, testitem, session):
     assert testitem.server == 'ia902606.us.archive.org'
     assert testitem.uniq == 2131998567
     assert testitem.updated == 1427273788
-    assert testitem.tasks == None
+    assert testitem.tasks is None
     assert len(testitem.collection) == 1
 
 
-# get_file() _____________________________________________________________________________
 def test_get_file(testitem):
     _file = testitem.get_file('nasa_meta.xml')
     assert type(_file) == internetarchive.files.File
@@ -60,7 +58,7 @@ def test_get_file(testitem):
 
 def test_get_files(testitem):
     files = testitem.get_files()
-    assert type(files) == types.GeneratorType
+    assert isinstance(files, types.GeneratorType)
 
     expected_files = set(['NASAarchiveLogo.jpg',
                           'globe_west_540.jpg',
@@ -128,7 +126,7 @@ def test_get_files_by_glob(testitem):
 
 def test_get_files_with_multiple_filters(testitem):
     files = set(f.name for f in testitem.get_files(formats='JPEG',
-                                               glob_pattern='*xml'))
+                                                   glob_pattern='*xml'))
     expected_files = set(['globe_west_540.jpg',
                           'nasa_reviews.xml',
                           'nasa_meta.xml',
@@ -163,6 +161,7 @@ def test_download_io_error(tmpdir, testitem):
     except Exception as exc:
         assert isinstance(exc, IOError)
 
+
 def test_download_ignore_errors(tmpdir, testitem):
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content', status=200)
@@ -173,7 +172,7 @@ def test_download_ignore_errors(tmpdir, testitem):
 def test_download_ignore_existing(tmpdir, testitem):
     tmpdir.chdir()
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='test content',
                  status=200)
@@ -231,7 +230,7 @@ def test_download_checksum(tmpdir, testitem_with_logging, nasa_meta_xml):
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body=nasa_meta_xml, status=200)
         testitem_with_logging.download(files='nasa_meta.xml', checksum=True)
         testitem_with_logging.download(files='nasa_meta.xml', checksum=True)
-        msg =  'skipping nasa/nasa_meta.xml, file already exists based on checksum.'
+        msg = 'skipping nasa/nasa_meta.xml, file already exists based on checksum.'
         with open(log_file, 'r') as fh:
             assert msg in fh.read()
 
@@ -260,7 +259,7 @@ def test_download_no_directory(tmpdir, testitem):
 def test_download_dry_run(tmpdir, capsys, testitem):
     tmpdir.chdir()
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='no dest dir',
                  status=200,
@@ -275,7 +274,7 @@ def test_download_dry_run(tmpdir, capsys, testitem):
 def test_download_verbose(tmpdir, capsys, testitem):
     tmpdir.chdir()
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='no dest dir',
                  status=200,
@@ -288,15 +287,15 @@ def test_download_verbose(tmpdir, capsys, testitem):
 def test_download_dark_item(tmpdir, capsys, testitem_metadata, session):
     tmpdir.chdir()
     with responses.RequestsMock(
-        assert_all_requests_are_fired=False) as rsps:
+            assert_all_requests_are_fired=False) as rsps:
         _item_metadata = json.loads(testitem_metadata)
         _item_metadata['metadata']['identifier'] = 'dark-item'
         _item_metadata['is_dark'] = True
         _item_metadata = json.dumps(_item_metadata)
         rsps.add(responses.GET, 'https://archive.org/metadata/dark-item',
-                      body=_item_metadata,
-                      status=200,
-                      content_type='application/json')
+                 body=_item_metadata,
+                 status=200,
+                 content_type='application/json')
         _item = session.get_item('dark-item')
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='no dest dir',
@@ -307,16 +306,15 @@ def test_download_dark_item(tmpdir, capsys, testitem_metadata, session):
         assert 'skipping dark-item, item is dark' in out
 
 
-# upload() _______________________________________________________________________________
 def test_upload(testitem, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=EXPECTED_S3_HEADERS,
                  status=200)
         resp = testitem.upload(json_filename,
-                           access_key='test_access',
-                           secret_key='test_secret',
-                           debug=True)
+                               access_key='test_access',
+                               secret_key='test_secret',
+                               debug=True)
         for r in resp:
             p = r.prepare()
             headers = dict((k.lower(), str(v)) for k, v in p.headers.items())
@@ -335,7 +333,7 @@ def test_upload_secure_session(testitem_metadata, json_filename):
                  status=200)
         item = s.get_item('nasa')
         with responses.RequestsMock(
-            assert_all_requests_are_fired=False) as rsps:
+                assert_all_requests_are_fired=False) as rsps:
             rsps.add(responses.PUT, S3_URL_RE, status=200)
             r = item.upload(json_filename)
             assert r[0].url == 'https://s3.us.archive.org/nasa/nasa_meta.json'
@@ -353,10 +351,10 @@ def test_upload_metadata(testitem, json_filename):
                  status=200)
         md = dict(foo='bar', subject=['first', 'second'])
         resp = testitem.upload(json_filename,
-                           metadata=md,
-                           access_key='test_access',
-                           secret_key='test_secret',
-                           debug=True)
+                               metadata=md,
+                               access_key='test_access',
+                               secret_key='test_secret',
+                               debug=True)
         for r in resp:
             p = r.prepare()
             del p.headers['x-archive-meta00-scanner']
@@ -375,11 +373,11 @@ def test_upload_503(capsys, testitem, json_filename):
                  status=503)
         try:
             resp = testitem.upload(json_filename,
-                               access_key='test_access',
-                               secret_key='test_secret',
-                               retries=1,
-                               retries_sleep=.1,
-                               verbose=True)
+                                   access_key='test_access',
+                                   secret_key='test_secret',
+                                   retries=1,
+                                   retries_sleep=.1,
+                                   verbose=True)
         except Exception as exc:
             assert '503' in str(exc)
             out, err = capsys.readouterr()
@@ -393,9 +391,9 @@ def test_upload_file_keys(testitem, json_filename):
                  status=200)
         files = {'new_key.txt': json_filename, 222: json_filename}
         resp = testitem.upload(files,
-                           access_key='test_access',
-                           secret_key='test_secret',
-                           debug=True)
+                               access_key='test_access',
+                               secret_key='test_secret',
+                               debug=True)
         for r in resp:
             p = r.prepare()
             assert p.url in ['https://s3.us.archive.org/nasa/new_key.txt',
@@ -416,27 +414,29 @@ def test_upload_dir(tmpdir, testitem):
 
         # Test no-slash upload, dir is not in key name.
         resp = testitem.upload(os.path.join(str(tmpdir), 'dir_test') + '/',
-                           access_key='test_access',
-                           secret_key='test_secret',
-                           debug=True)
+                               access_key='test_access',
+                               secret_key='test_secret',
+                               debug=True)
         for r in resp:
             p = r.prepare()
             expected_eps = [
-                    'https://s3.us.archive.org/nasa/foo.txt',
-                    'https://s3.us.archive.org/nasa/foo2.txt',
+                'https://s3.us.archive.org/nasa/foo.txt',
+                'https://s3.us.archive.org/nasa/foo2.txt',
             ]
             assert p.url in expected_eps
 
         # Test slash upload, dir is in key name.
         resp = testitem.upload(os.path.join(str(tmpdir), 'dir_test'),
-                           access_key='test_access',
-                           secret_key='test_secret',
-                           debug=True)
+                               access_key='test_access',
+                               secret_key='test_secret',
+                               debug=True)
         for r in resp:
             p = r.prepare()
             expected_eps = [
-                'https://s3.us.archive.org/nasa{0}/dir_test/{1}'.format(str(tmpdir), 'foo.txt'),
-                'https://s3.us.archive.org/nasa{0}/dir_test/{1}'.format(str(tmpdir), 'foo2.txt'),
+                'https://s3.us.archive.org/nasa{0}/dir_test/{1}'.format(
+                    str(tmpdir), 'foo.txt'),
+                'https://s3.us.archive.org/nasa{0}/dir_test/{1}'.format(
+                    str(tmpdir), 'foo2.txt'),
             ]
             assert p.url in expected_eps
         #shutil.rmtree(os.path.join(str(tmpdir), 'dir_test'))
@@ -451,9 +451,9 @@ def test_upload_queue_derive(testitem, json_filename):
                  adding_headers=_expected_headers,
                  status=200)
         resp = testitem.upload(json_filename,
-                           access_key='test_access',
-                           secret_key='test_secret',
-                           queue_derive=True)
+                               access_key='test_access',
+                               secret_key='test_secret',
+                               queue_derive=True)
         for r in resp:
             headers = dict((k.lower(), str(v)) for k, v in r.headers.items())
             del headers['content-type']
@@ -475,10 +475,10 @@ def test_upload_delete(tmpdir, testitem):
                  status=400)
         try:
             resp = testitem.upload(test_file,
-                               access_key='test_access',
-                               secret_key='test_secret',
-                               delete=True,
-                               queue_derive=True)
+                                   access_key='test_access',
+                                   secret_key='test_secret',
+                                   delete=True,
+                                   queue_derive=True)
         except Exception as exc:
             assert isinstance(exc, HTTPError)
         assert len(tmpdir.listdir()) == 1
@@ -495,10 +495,10 @@ def test_upload_delete(tmpdir, testitem):
                  adding_headers=_expected_headers,
                  status=200)
         resp = testitem.upload(test_file,
-                           access_key='test_access',
-                           secret_key='test_secret',
-                           delete=True,
-                           queue_derive=True)
+                               access_key='test_access',
+                               secret_key='test_secret',
+                               delete=True,
+                               queue_derive=True)
         for r in resp:
             headers = dict((k.lower(), str(v)) for k, v in r.headers.items())
             del headers['content-type']
@@ -520,9 +520,9 @@ def test_upload_checksum(tmpdir, testitem):
                  adding_headers=_expected_headers,
                  status=200)
         resp = testitem.upload(test_file,
-                           access_key='test_access',
-                           secret_key='test_secret',
-                           checksum=True)
+                               access_key='test_access',
+                               secret_key='test_secret',
+                               checksum=True)
         for r in resp:
             headers = dict((k.lower(), str(v)) for k, v in r.headers.items())
             del headers['content-type']
@@ -534,15 +534,14 @@ def test_upload_checksum(tmpdir, testitem):
             dict(name=u'checksum_test.txt',
                  md5=u'33213e7683c1e6d15b2a658f3c567717'))
         resp = testitem.upload(test_file,
-                           access_key='test_access',
-                           secret_key='test_secret',
-                           checksum=True)
+                               access_key='test_access',
+                               secret_key='test_secret',
+                               checksum=True)
         for r in resp:
             headers = dict((k.lower(), str(v)) for k, v in r.headers.items())
             assert r.status_code is None
 
 
-# modify_metadata() ______________________________________________________________________
 def test_modify_metadata(testitem, testitem_metadata):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.POST, 'https://archive.org/metadata/nasa',
@@ -552,11 +551,14 @@ def test_modify_metadata(testitem, testitem_metadata):
         md = {'foo': 'bar', 'foo11': 'bar'}
         r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
+        _patch = json.dumps([
+            {"add": "/foo", "value": "bar"},
+            {"add": "/foo11", "value": "bar"},
+        ])
         expected_data = {
             'priority': 0,
             '-target': 'metadata',
-            '-patch':json.dumps(
-                [{"add":"/foo","value":"bar"},{"add":"/foo11","value":"bar"}])
+            '-patch': _patch,
         }
         assert p.data == expected_data
 
@@ -610,9 +612,9 @@ def test_modify_metadata(testitem, testitem_metadata):
         # Test auth.
         md = {'title': 'NASA Images'}
         r = testitem.modify_metadata(md,
-                                 access_key='test_access',
-                                 secret_key='test_secret',
-                                 debug=True)
+                                     access_key='test_access',
+                                     secret_key='test_secret',
+                                     debug=True)
         p = r.prepare()
         expected_data = {'priority': 0, '-target': 'metadata', '-patch': '[]'}
         assert r.auth.access_key == 'test_access'
@@ -624,10 +626,10 @@ def test_modify_metadata(testitem, testitem_metadata):
         _item_metadata['metadata']['title'] = 'new title'
         _item_metadata = json.dumps(_item_metadata)
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
-                      body=_item_metadata,
-                      status=200)
+                 body=_item_metadata,
+                 status=200)
         r = testitem.modify_metadata(md,
-                                  access_key='test_access',
-                                  secret_key='test_secret')
+                                     access_key='test_access',
+                                     secret_key='test_secret')
         # Test that item re-initializes
         assert testitem.metadata['title'] == 'new title'

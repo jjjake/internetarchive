@@ -22,13 +22,14 @@ from internetarchive.utils import map2x
 
 class Catalog(object):
     """This class represents the Archive.org catalog. You can use this class to access
-    tasks from the catalog::
+    tasks from the catalog.
 
+    Usage::
         >>> import internetarchive
-        >>> c = internetarchive.Catalog(identifier='jstor_ejc')
-        >>> c.tasks[-1]
-        CatalogTask(identifier=jstor_ejc, task_id=143919540, server=u'ia601503', command=u'archiv', submitter=u'jake@archive.org', row_type=-1)
-
+        >>> c = internetarchive.Catalog(internetarchive.session.ArchiveSession(),
+        ...                             identifier='jstor_ejc')
+        >>> c.tasks[-1].task_id
+        143919540
     """
 
     ROW_TYPES = dict(

@@ -1,18 +1,19 @@
-import os, sys, shutil
+import os
+import sys
+import shutil
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
+import httplib
+import StringIO
+import mock
 
 import responses
+import requests.adapters
 
 import internetarchive.config
 import internetarchive.session
 from internetarchive.exceptions import AuthenticationError
 
-# import logging
-# logging.basicConfig(level=logging.DEBUG)
-
-# import cookielib
-# cookielib.debug = True
 
 @responses.activate
 def test_get_auth_config():
@@ -33,22 +34,22 @@ def test_get_auth_config():
                   status=200, body=test_body, adding_headers=headers,
                   content_type='application/json')
 
-    import httplib, StringIO, requests.adapters, mock
-
     class UglyHack(httplib.HTTPResponse):
         def __init__(self, headers):
             self.fp = True
             self.msg = httplib.HTTPMessage(StringIO.StringIO())
-            for (k,v) in headers.items():
+            for (k, v) in headers.items():
                 self.msg[k] = v
 
     original_func = requests.adapters.HTTPAdapter.build_response
+
     def ugly_hack_build_response(self, req, resp):
         resp._original_response = UglyHack(resp.getheaders())
         response = original_func(self, req, resp)
         return response
 
-    ugly_hack = mock.patch('requests.adapters.HTTPAdapter.build_response', ugly_hack_build_response)
+    ugly_hack = mock.patch('requests.adapters.HTTPAdapter.build_response',
+                           ugly_hack_build_response)
     ugly_hack.start()
     r = internetarchive.config.get_auth_config('test@example.com', 'password1')
     ugly_hack.stop()
@@ -65,7 +66,8 @@ def test_get_auth_config_auth_fail():
     try:
         r = internetarchive.config.get_auth_config('test@example.com', 'password1')
     except AuthenticationError as exc:
-        assert str(exc) == 'Authentication failed. Please check your credentials and try again.'
+        assert str(exc) == ('Authentication failed. Please check your credentials '
+                            'and try again.')
 
 
 def test_get_config():
@@ -164,7 +166,8 @@ def test_get_config_config_and_config_file(tmpdir):
         },
     }
     del test_conf['s3']['access']
-    config = internetarchive.config.get_config(config_file='ia_test.ini', config=test_conf)
+    config = internetarchive.config.get_config(config_file='ia_test.ini',
+                                               config=test_conf)
     assert config['cookies']['logged-in-sig'] == 'test-sig'
     assert config['cookies']['logged-in-user'] == 'test@archive.org'
     assert config['s3']['access'] == 'test-access'

@@ -18,7 +18,7 @@ Usage::
 from __future__ import absolute_import
 
 __title__ = 'internetarchive'
-__version__ = '1.0.0.dev4'
+__version__ = '1.0.0.dev5'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
 __copyright__ = 'Copyright 2015 Internet Archive'
@@ -29,8 +29,7 @@ from internetarchive.search import Search
 from internetarchive.catalog import Catalog
 from internetarchive.session import ArchiveSession
 from internetarchive.api import get_item, get_files, modify_metadata, upload, \
-                                download, delete, get_tasks, search_items, \
-                                get_session, configure
+    download, delete, get_tasks, search_items, get_session, configure
 
 
 __all__ = [

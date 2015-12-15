@@ -111,11 +111,9 @@ def get_files(identifier,
 
     Usage::
         >>> from internetarchive import get_files
-        >>> files = get_files('nasa', glob_pattern='*xml')
-        >>> list(files)
-        [File(identifier='nasa', filename='nasa_reviews.xml', size=877, source='metadata', format='Metadata'),
-         File(identifier='nasa', filename='nasa_meta.xml', size=7852, source='metadata', format='Metadata'),
-         File(identifier='nasa', filename='nasa_files.xml', size=0, source='metadata', format='Metadata')]
+        >>> fnames = [f.name for f in get_files('nasa', glob_pattern='*xml')]
+        >>> print(fnames)
+        ['nasa_reviews.xml', 'nasa_meta.xml', 'nasa_files.xml']
     """
     item = get_item(identifier, **get_item_kwargs)
     return item.get_files(files, source, formats, glob_pattern)

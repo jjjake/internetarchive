@@ -22,13 +22,16 @@ with open(TEST_JSON_FILE) as fh:
 
 
 def test_ia_search_sort_asc(capsys):
+    url1 = ('https://archive.org/advancedsearch.php?'
+            'q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc')
+    url2 = ('https://archive.org/advancedsearch.php?'
+            'q=collection%3Anasa&output=json&rows=250&sort%5B0%5D=identifier+asc&page=1')
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc',
+        rsps.add(responses.GET, url1,
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
-        #rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&sort%5B0%5D=identifier+asc&output=json&rows=100&page=1',
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=250&sort%5B0%5D=identifier+asc&page=1',
+        rsps.add(responses.GET, url2,
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
@@ -47,31 +50,44 @@ def test_ia_search_sort_asc(capsys):
 
 def test_ia_search_multi_page(capsys):
     j = json.loads(TEST_SEARCH_RESPONSE)
+    url1 = ('https://archive.org/advancedsearch.php?'
+            'q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc&'
+            'fl%5B0%5D=identifier')
+    url2 = ('https://archive.org/advancedsearch.php?'
+            'q=collection%3Anasa&output=json&rows=25&page=1&sort%5B0%5D=identifier+asc&'
+            'fl%5B0%5D=identifier')
+    url3 = ('https://archive.org/advancedsearch.php?'
+            'q=collection%3Anasa&output=json&rows=25&page=2&sort%5B0%5D=identifier+asc&'
+            'fl%5B0%5D=identifier')
+    url4 = ('https://archive.org/advancedsearch.php?'
+            'q=collection%3Anasa&output=json&rows=25&page=3&sort%5B0%5D=identifier+asc&'
+            'fl%5B0%5D=identifier')
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
+        rsps.add(responses.GET, url1,
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
         _j = deepcopy(j)
-        _j['response']['docs'] = j['response']['docs'][:25] 
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=25&page=1&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
+        _j['response']['docs'] = j['response']['docs'][:25]
+        rsps.add(responses.GET, url2,
                  body=json.dumps(_j),
                  status=200,
                  match_querystring=True)
         _j = deepcopy(j)
-        _j['response']['docs'] = j['response']['docs'][25:] 
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=25&page=2&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
+        _j['response']['docs'] = j['response']['docs'][25:]
+        rsps.add(responses.GET, url3,
                  body=json.dumps(_j),
                  status=200,
                  match_querystring=True)
         _j = deepcopy(j)
         _j['response']['docs'] = []
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=25&page=3&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
+        rsps.add(responses.GET, url4,
                  body=json.dumps(_j),
                  status=200,
                  match_querystring=True)
 
-        sys.argv = ['ia', 'search', 'collection:nasa', '-p', 'rows:25', '-f', 'identifier']
+        sys.argv = ['ia', 'search', 'collection:nasa', '-p', 'rows:25', '-f',
+                    'identifier']
         try:
             r = ia.main()
         except SystemExit as exc:
@@ -90,11 +106,17 @@ def test_ia_search_multi_page(capsys):
 
 def test_ia_search_itemlist(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Aattentionkmartshoppers&output=json&rows=0&sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier',
+        url1 = ('https://archive.org/advancedsearch.php?'
+                'q=collection%3Aattentionkmartshoppers&output=json&rows=0&'
+                'sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier')
+        url2 = ('https://archive.org/advancedsearch.php?'
+                'fl%5B0%5D=identifier&rows=250&sort%5B0%5D=identifier+asc&'
+                'q=collection%3Aattentionkmartshoppers&output=json&page=1')
+        rsps.add(responses.GET, url1,
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?fl%5B0%5D=identifier&rows=250&sort%5B0%5D=identifier+asc&q=collection%3Aattentionkmartshoppers&output=json&page=1',
+        rsps.add(responses.GET, url2,
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)
@@ -113,7 +135,9 @@ def test_ia_search_itemlist(capsys):
 
 def test_ia_search_num_found(capsys):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php?q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc',
+        url = ('https://archive.org/advancedsearch.php?'
+               'q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc')
+        rsps.add(responses.GET, url,
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
                  match_querystring=True)

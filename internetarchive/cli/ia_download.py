@@ -54,18 +54,35 @@ def search_ids(query):
         yield doc.get('identifier')
 
 
+def validate_sources(sources):
+    valid_sources = ['original', 'derivative', 'metadata']
+    for s in sources:
+        if s not in valid_sources:
+            return False
+    return True
+
+
+def dir_exists(dir):
+    if os.path.exists(dir):
+        return True
+    else:
+        return False
+
+
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
 
-    valid_sources = ['original', 'derivative', 'metadata']
-    s = Schema({str: Use(bool),
-        '--destdir': Or([], And(Use(lambda d: d[0]), lambda d: os.path.exists(d)),
-            error='--destdir must be a valid path to a directory.'),
+    # Validation error messages.
+    destdir_msg = '--destdir must be a valid path to a directory.'
+    src_msg = '--source must be "original", "derivative", or "metadata".'
+
+    # Validate args.
+    s = Schema({
+        str: Use(bool),
+        '--destdir': Or([], And(Use(lambda d: d[0]), dir_exists), error=destdir_msg),
         '--format': list,
         '--glob': Use(lambda l: l[0] if l else None),
-        '--source': And(list,
-            lambda l: all(s in valid_sources for s in l) if l else list,
-            error='--source must be "original", "derivative", or "metadata".'),
+        '--source': And(list, validate_sources, error=src_msg),
         '<file>': list,
         '--search': Or(str, None),
         '--itemlist': Or(str, None),

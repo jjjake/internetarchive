@@ -42,7 +42,7 @@ setup(
         'internetarchive',
         'internetarchive.cli',
     ],
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'ia = internetarchive.cli.ia:main',
         ],

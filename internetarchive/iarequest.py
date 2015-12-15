@@ -111,8 +111,8 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                 meta_value = json.dumps(meta_value)
             # Convert the metadata value into a list if it is not already
             # iterable.
-            if (isinstance(meta_value, six.string_types)
-                    or not hasattr(meta_value, '__iter__')):
+            if (isinstance(meta_value, six.string_types) or
+                    not hasattr(meta_value, '__iter__')):
                 meta_value = [meta_value]
             # Convert metadata items into HTTP headers and add to
             # ``headers`` dict.
@@ -263,15 +263,24 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
     prepared_metadata = {}
 
     # Functions for dealing with metadata keys containing indexes.
-    contains_index = lambda k: re.search(r'\[\d+\]', k)
-    get_index = lambda k: int(re.search(r'(?<=\[)\d+(?=\])', k).group())
-    rm_index = lambda k: k.split('[')[0]
+    def get_index(key):
+        match = re.search(r'(?<=\[)\d+(?=\])', key)
+        if match is not None:
+            return int(match.group())
+
+    def rm_index(key):
+        return key.split('[')[0]
+
+    #contains_index = lambda k: re.search(r'\[\d+\]', k)
+    #get_index = lambda k: int(re.search(r'(?<=\[)\d+(?=\])', k).group())
+    #rm_index = lambda k: k.split('[')[0]
 
     # Create indexed_keys counter dict. i.e.: {'subject': 3} -- subject
     # (with the index removed) appears 3 times in the metadata dict.
     indexed_keys = {}
     for key in metadata:
-        if not contains_index(key):
+        print(get_index(key))
+        if not get_index(key):
             continue
         count = len([x for x in metadata if rm_index(x) == rm_index(key)])
         indexed_keys[rm_index(key)] = count
@@ -324,7 +333,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
         if key not in _done:
             indexes = []
             for k in metadata:
-                if not contains_index(k):
+                if not get_index(k):
                     continue
                 elif not rm_index(k) == key:
                     continue
@@ -338,4 +347,5 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
                 del prepared_metadata[key][i]
             _done.append(key)
 
+    print(prepared_metadata)
     return prepared_metadata

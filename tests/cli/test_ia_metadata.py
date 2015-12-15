@@ -23,6 +23,7 @@ def test_ia_metadata_exists():
     stdout, stderr = proc.communicate()
     assert proc.returncode == 0
 
+
 def test_ia_metadata_formats():
     cmd = 'ia metadata --formats iacli-test-item60'
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
@@ -34,11 +35,12 @@ def test_ia_metadata_formats():
     ])
     assert set(stdout[:-1].split('\n')) == test_output_set
 
+
 @pytest.mark.skipif('internetarchive.config.get_config().get("s3") == None',
                     reason='requires authorization.')
 def test_ia_metadata_modify():
     # Modify test item.
-    valid_key = "foo-{k}".format(k=int(time())) 
+    valid_key = "foo-{k}".format(k=int(time()))
     cmd = 'ia metadata --modify="{k}:test_value" iacli-test-item60'.format(k=valid_key)
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()

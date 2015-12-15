@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-
-import os, sys, shutil, string
+import os
+import sys
+import shutil
+import string
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
 
@@ -20,7 +22,8 @@ def test_utils():
 
 
 def test_needs_quote():
-    notascii = 'ȧƈƈḗƞŧḗḓ ŧḗẋŧ ƒǿř ŧḗşŧīƞɠ, ℛℯα∂α♭ℓℯ ♭ʊ☂ η☺т Ѧ$☾ℐℐ, ¡ooʇ ןnɟǝsn sı uʍop-ǝpısdn'
+    notascii = ('ȧƈƈḗƞŧḗḓ ŧḗẋŧ ƒǿř ŧḗşŧīƞɠ, ℛℯα∂α♭ℓℯ ♭ʊ☂ η☺т Ѧ$☾ℐℐ, '
+                '¡ooʇ ןnɟǝsn sı uʍop-ǝpısdn')
     assert internetarchive.utils.needs_quote(notascii)
     assert internetarchive.utils.needs_quote(string.whitespace)
     assert not internetarchive.utils.needs_quote(string.ascii_letters + string.digits)
@@ -48,6 +51,7 @@ def test_map2x():
     for key, value in internetarchive.utils.map2x(lambda k, v: [k, v], keys, columns):
         assert key == value
 
+
 @responses.activate
 def test_IdentifierListAsItems(session, testitem_metadata):
     responses.add(responses.GET, 'https://archive.org/metadata/nasa',
@@ -58,7 +62,8 @@ def test_IdentifierListAsItems(session, testitem_metadata):
     assert it[0].identifier == 'nasa'
     assert it.nasa.identifier == 'nasa'
 
+
 def test_IdentifierListAsItems_len(session):
     assert len(internetarchive.utils.IdentifierListAsItems(['foo', 'bar'], session)) == 2
 
-#TODO: Add test of slice access to IdenfierListAsItems
+# TODO: Add test of slice access to IdenfierListAsItems

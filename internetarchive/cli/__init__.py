@@ -9,7 +9,7 @@ internetarchive.cli
 from pkg_resources import iter_entry_points, load_entry_point
 
 from internetarchive.cli import ia, ia_configure, ia_delete, ia_download, ia_list, \
-                                ia_metadata, ia_search, ia_tasks, ia_upload, argparser
+    ia_metadata, ia_search, ia_tasks, ia_upload, argparser
 
 
 __all__ = [

@@ -30,7 +30,7 @@ options:
     -l, --log                         Log upload results to file.
     --status-check                    Check if S3 is accepting requests to the given item.
 """
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import os
 from tempfile import TemporaryFile
@@ -51,7 +51,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
     """Helper function for calling :meth:`Item.upload`"""
     responses = [] if not responses else responses
     if (upload_kwargs['verbose']) and (prev_identifier != item.identifier):
-        sys.stdout.write('{0}:\n'.format(item.identifier))
+        print('{0}:'.format(item.identifier))
 
     try:
         response = item.upload(files, **upload_kwargs)
@@ -63,12 +63,12 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
         if upload_kwargs['debug']:
             for i, r in enumerate(responses):
                 if i != 0:
-                    sys.stdout.write('---\n')
+                    print('---')
                 headers = '\n'.join(
                     [' {0}:{1}'.format(k, v) for (k, v) in r.headers.items()]
                 )
-                sys.stdout.write('Endpoint:\n {0}\n\n'.format(r.url))
-                sys.stdout.write('HTTP Headers:\n{0}\n'.format(headers))
+                print('Endpoint:\n {0}\n'.format(r.url))
+                print('HTTP Headers:\n{0}'.format(headers))
                 return
 
         # Format error message for any non 200 responses that
@@ -76,10 +76,10 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
         if responses and responses[-1] and responses[-1].status_code != 200:
             filename = responses[-1].request.url.split('/')[-1]
             msg = get_xml_text(responses[-1].content)
-            sys.stderr.write(
-                ' * error uploading {0} ({1}): {2}\n'.format(filename,
-                    responses[-1].status_code, msg)
-            )
+            print(' * error uploading '
+                  '{0} ({1}): {2}'.format(filename, responses[-1].status_code, msg),
+                  file=sys.stderr)
+
     return responses
 
 
@@ -87,7 +87,8 @@ def main(argv, session):
     args = docopt(__doc__, argv=argv)
 
     # Validate args.
-    s = Schema({six.text_type: Use(bool),
+    s = Schema({
+        six.text_type: Use(bool),
         '<identifier>': Or(None, And(str, validate_ia_identifier,
             error=('<identifier> should be between 3 and 80 characters in length, and '
                    'can only contain alphanumeric characters, underscores ( _ ), or '
@@ -113,18 +114,19 @@ def main(argv, session):
     try:
         args = s.validate(args)
     except SchemaError as exc:
-        sys.stderr.write('{0}\n{1}\n'.format(str(exc), printable_usage(__doc__)))
+        print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
         sys.exit(1)
 
     # Status check.
     if args['--status-check']:
         if session.s3_is_overloaded():
-            sys.exit(sys.stderr.write(
-                'warning: {0} is over limit, and not accepting requests. '
-                'Expect 503 SlowDown errors.\n'.format(args['<identifier>'])))
+            print('warning: {0} is over limit, and not accepting requests. '
+                  'Expect 503 SlowDown errors.'.format(args['<identifier>']),
+                  file=sys.stderr)
+            sys.exit(1)
         else:
-            sys.exit(sys.stdout.write(
-                'success: {0} is accepting requests.\n'.format(args['<identifier>'])))
+            print('success: {0} is accepting requests.'.format(args['<identifier>']))
+            sys.exit()
 
     elif args['<identifier>']:
         item = session.get_item(args['<identifier>'])

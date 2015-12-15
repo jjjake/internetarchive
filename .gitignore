@@ -14,3 +14,4 @@ htmlcov
 wheelhouse
 *gz
 .venv*
+.cache

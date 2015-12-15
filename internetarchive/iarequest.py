@@ -279,7 +279,6 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
     # (with the index removed) appears 3 times in the metadata dict.
     indexed_keys = {}
     for key in metadata:
-        print(get_index(key))
         if not get_index(key):
             continue
         count = len([x for x in metadata if rm_index(x) == rm_index(key)])
@@ -347,5 +346,4 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
                 del prepared_metadata[key][i]
             _done.append(key)
 
-    print(prepared_metadata)
     return prepared_metadata

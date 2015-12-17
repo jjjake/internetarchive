@@ -476,6 +476,14 @@ def configure(username=None, password=None):
 
 
 def get_username(access_key, secret_key):
+    """Returns an Archive.org username given an IA-S3 key pair.
+
+    :type access_key: str
+    :param access_key: IA-S3 access_key to use when making the given request.
+
+    :type secret_key: str
+    :param secret_key: IA-S3 secret_key to use when making the given request.
+    """
     u = 'https://s3.us.archive.org'
     p = dict(check_auth=1)
     r = requests.get(u, params=p, auth=auth.S3Auth(access_key, secret_key))

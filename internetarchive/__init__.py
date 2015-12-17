@@ -68,13 +68,3 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 log.addHandler(NullHandler())
-
-
-from pkg_resources import iter_entry_points, load_entry_point
-for object in iter_entry_points(group='internetarchive.plugins', name=None):
-    try:
-        globals()[object.name] = load_entry_point(
-            object.dist, 'internetarchive.plugins', object.name)
-        __all__.append(object.name)
-    except ImportError:
-        log.warning('Failed to import plugin: {}'.format(object.name))

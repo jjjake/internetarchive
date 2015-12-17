@@ -31,6 +31,7 @@ from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import os
 import difflib
+from pkg_resources import iter_entry_points, load_entry_point, DistributionNotFound
 
 from docopt import docopt, printable_usage
 from schema import Schema, Or, SchemaError
@@ -56,10 +57,14 @@ cmd_aliases = dict(
 
 def load_ia_module(cmd):
     """Dynamically import ia module."""
-    module = 'internetarchive.cli.ia_{0}'.format(cmd)
     try:
-        globals()['ia_module'] = __import__(module, fromlist=['internetarchive.cli'])
-    except ImportError:
+        if cmd in cmd_aliases.keys() + cmd_aliases.values():
+            _module = 'internetarchive.cli.ia_{0}'.format(cmd)
+            return __import__(_module, fromlist=['internetarchive.cli'])
+        else:
+            _module = 'ia_{0}'.format(cmd)
+            return load_entry_point(_module, 'internetarchive.cli.plugins', _module)
+    except (ImportError, DistributionNotFound):
         print("error: '{0}' is not an ia command! See 'ia help'".format(cmd),
               file=sys.stderr)
         matches = '\t'.join(difflib.get_close_matches(cmd, cmd_aliases.values()))
@@ -95,7 +100,7 @@ def main():
         if not args['<args>']:
             sys.exit(print(__doc__.strip(), file=sys.stderr))
         else:
-            load_ia_module(args['<args>'][0])
+            ia_module = load_ia_module(args['<args>'][0])
             sys.exit(print(ia_module.__doc__.strip(), file=sys.stderr))
 
     argv = [cmd] + args['<args>']
@@ -113,7 +118,7 @@ def main():
                           config=config,
                           debug=args['--debug'])
 
-    load_ia_module(cmd)
+    ia_module = load_ia_module(cmd)
     sys.exit(ia_module.main(argv, session))
 
 if __name__ == '__main__':

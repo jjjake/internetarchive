@@ -3,9 +3,13 @@ import sys
 import shutil
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
-import httplib
-import StringIO
-import mock
+import six
+from six.moves import http_client as httplib
+from six import StringIO
+try:
+    import mock
+except ImportError:
+    from unittest import mock
 
 import responses
 import requests.adapters
@@ -37,7 +41,10 @@ def test_get_auth_config():
     class UglyHack(httplib.HTTPResponse):
         def __init__(self, headers):
             self.fp = True
-            self.msg = httplib.HTTPMessage(StringIO.StringIO())
+            if six.PY2:
+                self.msg = httplib.HTTPMessage(StringIO())
+            else:
+                self.msg = httplib.HTTPMessage()
             for (k, v) in headers.items():
                 self.msg[k] = v
 

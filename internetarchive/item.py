@@ -609,7 +609,7 @@ class Item(BaseItem):
 
         queue_derive = True if queue_derive is None else queue_derive
         if isinstance(files, dict):
-            files = files.items()
+            files = list(files.items())
         if not isinstance(files, (list, tuple)):
             files = [files]
 

@@ -58,7 +58,7 @@ def test_dry_run():
         "https://archive.org/download/nasa/nasa_files.xml",
         "https://archive.org/download/nasa/globe_west_540_thumb.jpg",
     ])
-    assert parse_output(stdout) == test_output_set
+    assert parse_output(stdout.decode('utf-8')) == test_output_set
     assert exit_code == 0
 
 
@@ -116,7 +116,7 @@ def test_clobber():
 
     exit_code, stdout, stderr = call(cmd)
     assert os.listdir('nasa') == ['nasa_meta.xml']
-    assert 'nasa: . - success\n' == stdout
+    assert 'nasa: . - success\n' == stdout.decode('utf-8')
     assert exit_code == 0
 
     rm('nasa')
@@ -132,7 +132,7 @@ def test_checksum():
 
     cmd = 'ia download --checksum nasa nasa_meta.xml'
     exit_code, stdout, stderr = call(cmd)
-    assert 'nasa: . - success\n' == stdout
+    assert 'nasa: . - success\n' == stdout.decode('utf-8')
     assert exit_code == 0
 
     rm('nasa')
@@ -155,7 +155,7 @@ def test_destdir(tmpdir):
 
     cmd = 'ia download --destdir=thisdirdoesnotexist/ nasa nasa_meta.xml'
     exit_code, stdout, stderr = call(cmd)
-    assert '--destdir must be a valid path to a directory.' in stderr
+    assert '--destdir must be a valid path to a directory.' in stderr.decode('utf-8')
     assert exit_code == 1
 
     tmpdir.mkdir('thisdirdoesnotexist/')

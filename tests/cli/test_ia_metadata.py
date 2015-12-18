@@ -33,7 +33,7 @@ def test_ia_metadata_formats():
         "Metadata",
         "Unknown",
     ])
-    assert set(stdout[:-1].split('\n')) == test_output_set
+    assert set(stdout.decode('utf-8')[:-1].split('\n')) == test_output_set
 
 
 @pytest.mark.skipif('internetarchive.config.get_config().get("s3") == None',

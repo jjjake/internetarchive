@@ -13,6 +13,8 @@ from __future__ import absolute_import, unicode_literals
 
 import itertools
 
+import six
+
 
 class Search(object):
     """This class represents an archive.org item search. You can use
@@ -94,7 +96,7 @@ class Search(object):
 
     def make_results_generator(self):
         """Generator for iterating over search results"""
-        total_pages = ((self.num_found / int(self.params['rows'])) + 2)
+        total_pages = int((self.num_found / int(self.params['rows'])) + 2)
         for page in range(1, total_pages):
             self.params['page'] = page
             r = self.session.get(self.url, params=self.params, **self.request_kwargs)
@@ -107,11 +109,15 @@ class Search(object):
 
     def iter_as_items(self):
         """Returns iterator of search results as full Items"""
-        fields = [v for (k, v) in self.params.iteritems() if k.startswith('fl[')]
+        fields = [v for (k, v) in self.params.items() if k.startswith('fl[')]
         if fields and not any(f == 'identifier' for f in fields):
             raise KeyError('This search did not include item identifiers!')
-        return SearchIterator(self, itertools.imap(self._get_item_from_search_result,
-                                                   self.make_results_generator()))
+        if six.PY2:
+            _map = itertools.imap(self._get_item_from_search_result,
+                                  self.make_results_generator())
+        else:
+            _map = map(self._get_item_from_search_result, self.make_results_generator())
+        return SearchIterator(self, _map)
 
 
 class SearchIterator(object):
@@ -125,6 +131,9 @@ class SearchIterator(object):
 
     def __len__(self):
         return self.search.num_found
+
+    def __next__(self):
+        return self.iterator.__next__()
 
     def next(self):
         return self.iterator.next()

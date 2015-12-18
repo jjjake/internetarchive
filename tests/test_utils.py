@@ -39,7 +39,7 @@ def test_validate_ia_identifier():
 
 
 def test_get_md5():
-    md5 = internetarchive.utils.get_md5(open(__file__))
+    md5 = internetarchive.utils.get_md5(open(__file__, 'rb'))
     assert isinstance(md5, six.string_types)
 
 

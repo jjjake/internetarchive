@@ -548,19 +548,21 @@ def test_modify_metadata(testitem, testitem_metadata):
                  status=200)
 
         # Test simple add.
-        md = {'foo': 'bar', 'foo11': 'bar'}
+        md = {'foo': 'bar'}
         r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
         _patch = json.dumps([
             {"add": "/foo", "value": "bar"},
-            {"add": "/foo11", "value": "bar"},
         ])
         expected_data = {
             'priority': 0,
             '-target': 'metadata',
             '-patch': _patch,
         }
-        assert p.data == expected_data
+        assert set(p.data.keys()) == set(expected_data.keys())
+        assert p.data['priority'] == expected_data['priority']
+        assert p.data['-target'] == expected_data['-target']
+        assert p.data['-patch'] == expected_data['-patch']
 
         # Test no changes.
         md = {'title': 'NASA Images'}

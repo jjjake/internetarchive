@@ -50,7 +50,7 @@ def test_get_item(tmpdir):
     tmpdir.chdir()
 
     with open(TEST_JSON_FILE, 'r') as fh:
-        item_metadata = fh.read().strip().decode('utf-8')
+        item_metadata = fh.read().strip()
 
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',

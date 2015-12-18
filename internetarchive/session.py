@@ -21,7 +21,6 @@ from requests.utils import default_headers
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3 import Retry
 from requests.exceptions import HTTPError, ConnectTimeout
-import httplib
 
 from internetarchive import __version__
 from internetarchive.config import get_config

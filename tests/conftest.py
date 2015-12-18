@@ -20,7 +20,7 @@ def session():
 @pytest.fixture
 def testitem_metadata(json_filename):
     with open(json_filename, 'r') as fh:
-        return fh.read().strip().decode('utf-8')
+        return fh.read().strip()
 
 
 @pytest.fixture

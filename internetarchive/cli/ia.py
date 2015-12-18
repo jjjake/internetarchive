@@ -58,7 +58,7 @@ cmd_aliases = dict(
 def load_ia_module(cmd):
     """Dynamically import ia module."""
     try:
-        if cmd in cmd_aliases.keys() + cmd_aliases.values():
+        if cmd in list(cmd_aliases.keys()) + list(cmd_aliases.values()):
             _module = 'internetarchive.cli.ia_{0}'.format(cmd)
             return __import__(_module, fromlist=['internetarchive.cli'])
         else:

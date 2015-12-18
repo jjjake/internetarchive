@@ -12,9 +12,9 @@ ROOT_DIR = os.getcwd()
 TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
 
 with open(TEST_JSON_FILE, 'r') as fh:
-    ITEM_METADATA = fh.read().strip().decode('utf-8')
+    ITEM_METADATA = fh.read().strip()
 with open(os.path.join(ROOT_DIR, 'tests/data/s3_status_check.json'), 'r') as fh:
-    STATUS_CHECK_RESPONSE = fh.read().strip().decode('utf-8')
+    STATUS_CHECK_RESPONSE = fh.read().strip()
 
 
 def test_ia_upload(tmpdir):
@@ -88,12 +88,15 @@ def test_ia_upload_debug(capsys):
             assert not exc.code
 
     out, err = capsys.readouterr()
-    assert out == ('nasa:\n'
-                   'Endpoint:\n'
-                   ' https://s3.us.archive.org/nasa/test.txt\n\n'
-                   'HTTP Headers:\n'
-                   ' x-archive-size-hint:3\n'
-                   ' Content-MD5:acbd18db4cc2f85cedef654fccc4a4d8\n')
+    print(set(out.split('\n')))
+    assert set(out.split('\n')) == set([
+        '',
+        'Endpoint:',
+        ' Content-MD5:acbd18db4cc2f85cedef654fccc4a4d8',
+        ' https://s3.us.archive.org/nasa/test.txt',
+        'HTTP Headers:',
+        ' x-archive-size-hint:3',
+        'nasa:'])
 
 
 def test_ia_upload_403(capsys):
@@ -150,12 +153,10 @@ def test_ia_upload_size_hint(capsys):
             assert not exc.code
 
     out, err = capsys.readouterr()
-    assert out == ('nasa:\n'
-                   'Endpoint:\n'
-                   ' https://s3.us.archive.org/nasa/test.txt\n\n'
-                   'HTTP Headers:\n'
-                   ' x-archive-size-hint:30\n'
-                   ' Content-MD5:acbd18db4cc2f85cedef654fccc4a4d8\n')
+    assert set(out.split('\n')) == set(['', ' x-archive-size-hint:30',
+                                        ' Content-MD5:acbd18db4cc2f85cedef654fccc4a4d8',
+                                        'Endpoint:', 'HTTP Headers:', 'nasa:',
+                                        ' https://s3.us.archive.org/nasa/test.txt'])
 
 
 def test_ia_upload_remote_name(tmpdir):

@@ -19,7 +19,7 @@ ROOT_DIR = os.getcwd()
 TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
 SESSION = get_session()
 with open(TEST_JSON_FILE, 'r') as fh:
-    ITEM_METADATA = fh.read().strip().decode('utf-8')
+    ITEM_METADATA = fh.read().strip()
 
 NASA_FILES = set([
     'NASAarchiveLogo.jpg',

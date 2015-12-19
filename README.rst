@@ -19,18 +19,23 @@ Installation
 
 You can install this module via pip:
 
-``pip install internetarchive``
+.. code:: bash
 
-Alternatively, you can install a few extra dependencies to help speed things up a bit:
-
-``pip install "internetarchive[speedups]"``
-
-This will install `ujson <https://pypi.python.org/pypi/ujson>`__ for faster JSON parsing,
-and `gevent <https://pypi.python.org/pypi/gevent>`__ for concurrent downloads.
+    $ pip install internetarchive
 
 If you want to install this module globally on your system instead of inside a ``virtualenv``, use sudo:
 
-``sudo pip install internetarchive``
+.. code:: bash
+
+    $ sudo pip install internetarchive
+
+Binaries of the command-line tool are also available:
+
+.. code:: bash
+
+    $ curl -LO https://archive.org/download/ia-pex/ia
+    $ chmod +x ia
+    $ ./ia help
 
 
 Configuring

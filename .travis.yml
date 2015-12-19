@@ -1,6 +1,5 @@
 language: python
 sudo: false
-python: "2.7"
 install: 
   - pip install tox
 env:
@@ -13,3 +12,9 @@ script:
 branches:
   only:
       - master  
+addons:
+  apt:
+    sources:
+      - deadsnakes
+    packages:
+      - python3.5

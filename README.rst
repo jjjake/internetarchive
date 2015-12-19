@@ -52,8 +52,18 @@ on your computer that contains your Archive.org S3 keys for uploading and modify
 
 Command-Line Usage
 ------------------
-Help is available by typing ``ia --help``. You can also get help on a command: ``ia <command> --help``.
-Available subcommands are ``configure``, ``metadata``, ``upload``, ``download``, ``search``, ``delete``, ``list``, and ``catalog``.
+Help is available via ``ia help``. You can also get help on a specific command: ``ia help <command>``.
+Available commands::
+
+    help      Retrieve help for subcommands.
+    configure Configure `ia`.
+    metadata  Retrieve and modify metadata for items on Archive.org.
+    upload    Upload items to Archive.org.
+    download  Download files from Archive.org.
+    delete    Delete files from Archive.org.
+    search    Search items on Archive.org.
+    tasks     Retrieve information about your Archive.org catalog tasks.
+    list      List files in a given item.
 
 
 Downloading
@@ -69,23 +79,26 @@ To download the entire `TripDown1905 <https://archive.org/details/TripDown1905>`
 
 .. code:: bash
 
-    #download just the mp4 files using ``--glob``
-    $ ia download TripDown1905 --glob='*.mp4'
+    # download just the mp4 files using ``--glob``
+    $ ia download TripDown1905 --glob='\*.mp4'
 
-    #download all the mp4 files using ``--formats``:
+    # download all the mp4 files using ``--formats``:
     $ ia download TripDown1905 --format='512Kb MPEG4'
 
-    #download multiple formats from an item:
+    # download multiple formats from an item:
     $ ia download TripDown1905 --format='512Kb MPEG4' --format='Ogg Video'
 
-    #list all the formats in an item:
+    # list all the formats in an item:
     $ ia metadata --formats TripDown1905
 
-    #download a single file from an item:
+    # download a single file from an item:
     $ ia download TripDown1905 TripDown1905_512kb.mp4
 
-    #download multiple files from an item:
+    # download multiple files from an item:
     $ ia download TripDown1905 TripDown1905_512kb.mp4 TripDown1905.ogv
+
+    # download an entire collection:
+    $ ia download --search 'collection:freemusicarchive'
 
 
 Uploading
@@ -96,10 +109,10 @@ you can upload files like so:
 
 .. code:: bash
 
-    #upload files:
+    # upload files:
     $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
 
-    #upload from `stdin`:
+    # upload from `stdin`:
     $ curl http://dumps.wikimedia.org/kywiki/20130927/kywiki-20130927-pages-logging.xml.gz |
       ia upload <identifier> - --remote-name=kywiki-20130927-pages-logging.xml.gz --metadata="title:Uploaded from stdin."
 

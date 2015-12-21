@@ -6,6 +6,10 @@ init:
 	pip install responses==0.5.0 pytest-cov pytest-pep8
 	pip install -e .
 
+clean:
+	find . -type f -name '*\.pyc' -delete
+	find . -type d -name '__pycache__' -delete
+
 pep8-test:
 	py.test --pep8 -m pep8 --cov-report term-missing --cov internetarchive
 

@@ -1,15 +1,13 @@
+import os
+import sys
+inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, inc_path)
 try:
     import ujson as json
 except ImportError:
     import json
-import types
-import sys
-import re
-import os
 from copy import deepcopy
-import shutil
 
-import pytest
 import responses
 
 from internetarchive.cli import ia
@@ -38,7 +36,7 @@ def test_ia_search_sort_asc(capsys):
 
         sys.argv = ['ia', 'search', 'collection:nasa', '--sort', 'identifier:asc']
         try:
-            r = ia.main()
+            ia.main()
         except SystemExit as exc:
             assert not exc.code
 
@@ -89,7 +87,7 @@ def test_ia_search_multi_page(capsys):
         sys.argv = ['ia', 'search', 'collection:nasa', '-p', 'rows:25', '-f',
                     'identifier']
         try:
-            r = ia.main()
+            ia.main()
         except SystemExit as exc:
             assert not exc.code
 
@@ -123,7 +121,7 @@ def test_ia_search_itemlist(capsys):
 
         sys.argv = ['ia', 'search', 'collection:attentionkmartshoppers', '--itemlist']
         try:
-            r = ia.main()
+            ia.main()
         except SystemExit as exc:
             assert not exc.code
 
@@ -144,10 +142,9 @@ def test_ia_search_num_found(capsys):
 
         sys.argv = ['ia', 'search', 'collection:nasa', '--num-found']
         try:
-            r = ia.main()
+            ia.main()
         except SystemExit as exc:
             assert not exc.code
 
-    #j = json.loads(TEST_SEARCH_RESPONSE)
     out, err = capsys.readouterr()
     assert out == '50\n'

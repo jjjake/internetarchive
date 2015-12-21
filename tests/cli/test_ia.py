@@ -1,16 +1,8 @@
 import os
 import sys
-from subprocess import Popen, PIPE
-import subprocess
-from time import time
-from copy import deepcopy
-
-import pytest
-import responses
-
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
-import internetarchive.config
+
 from internetarchive.cli import ia
 from internetarchive import get_session
 
@@ -58,15 +50,3 @@ def test_ia(capsys):
         ia.main()
     except SystemExit as exc:
         assert not exc.code
-
-
-def ia_list(capsys):
-    with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'http://archive.org/metadata/nasa',
-                 body=ITEM_METADATA,
-                 status=200)
-
-        ia_list.main(['list', 'nasa'], SESSION)
-
-    out, err = capsys.readouterr()
-    assert set([l for l in out.split('\n') if l]) == NASA_FILES

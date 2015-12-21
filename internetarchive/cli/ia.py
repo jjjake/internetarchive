@@ -31,7 +31,7 @@ from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import os
 import difflib
-from pkg_resources import iter_entry_points, load_entry_point, DistributionNotFound
+from pkg_resources import load_entry_point, DistributionNotFound
 
 from docopt import docopt, printable_usage
 from schema import Schema, Or, SchemaError

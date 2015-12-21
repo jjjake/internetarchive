@@ -1,8 +1,9 @@
 import os
 import sys
+inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, inc_path)
 import json
 
-import requests
 import responses
 
 from internetarchive.cli import ia
@@ -33,7 +34,7 @@ def test_ia_upload(tmpdir):
                  content_type='text/plain')
         sys.argv = ['ia', '--log', 'upload', 'nasa', 'test.txt']
         try:
-            r = ia.main()
+            ia.main()
         except SystemExit as exc:
             assert not exc.code
 
@@ -50,7 +51,7 @@ def test_ia_upload_status_check(capsys):
 
         sys.argv = ['ia', 'upload', 'nasa', '--status-check']
         try:
-            r = ia.main()
+            ia.main()
         except SystemExit as exc:
             assert not exc.code
 
@@ -66,7 +67,7 @@ def test_ia_upload_status_check(capsys):
 
         sys.argv = ['ia', 'upload', 'nasa', '--status-check']
         try:
-            r = ia.main()
+            ia.main()
         except SystemExit as exc:
             assert exc.code == 1
 
@@ -83,7 +84,7 @@ def test_ia_upload_debug(capsys):
                  content_type='application/json')
         sys.argv = ['ia', 'upload', '--debug', 'nasa', 'test.txt']
         try:
-            r = ia.main()
+            ia.main()
         except SystemExit as exc:
             assert not exc.code
 
@@ -121,7 +122,7 @@ def test_ia_upload_403(capsys):
                  content_type='text/plain')
         sys.argv = ['ia', 'upload', 'nasa', __file__]
         try:
-            r = ia.main()
+            ia.main()
         except SystemExit as exc:
             assert exc.code == 1
 
@@ -132,7 +133,7 @@ def test_ia_upload_403(capsys):
 def test_ia_upload_invalid_cmd(capsys):
     sys.argv = ['ia', 'upload', 'nasa', 'nofile.txt']
     try:
-        r = ia.main()
+        ia.main()
     except SystemExit as exc:
         assert exc.code == 1
 
@@ -148,7 +149,7 @@ def test_ia_upload_size_hint(capsys):
                  content_type='application/json')
         sys.argv = ['ia', 'upload', '--debug', 'nasa', '--size-hint', '30', 'test.txt']
         try:
-            r = ia.main()
+            ia.main()
         except SystemExit as exc:
             assert not exc.code
 
@@ -176,7 +177,7 @@ def test_ia_upload_remote_name(tmpdir):
         sys.argv = ['ia', '--log', 'upload', 'nasa', 'test.txt', '--remote-name',
                     'hi.txt']
         try:
-            r = ia.main()
+            ia.main()
         except SystemExit as exc:
             assert not exc.code
 

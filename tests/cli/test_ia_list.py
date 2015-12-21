@@ -1,17 +1,12 @@
 import os
 import sys
-from subprocess import Popen, PIPE
-import subprocess
-from time import time
-from copy import deepcopy
-
-import pytest
-import responses
-
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
-import internetarchive.config
-from internetarchive.cli import ia, ia_list
+from copy import deepcopy
+
+import responses
+
+from internetarchive.cli import ia_list
 from internetarchive import get_session
 
 

@@ -2,8 +2,6 @@ import os
 import sys
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
-import shutil
-from time import time
 import json
 from copy import deepcopy
 import re
@@ -13,20 +11,18 @@ import pytest
 import responses
 from requests.packages import urllib3
 
-import internetarchive.config
 from internetarchive import get_session
 from internetarchive import get_item
 from internetarchive import get_files
 from internetarchive import modify_metadata
 from internetarchive import upload
 from internetarchive import download
-from internetarchive import delete
-from internetarchive import get_tasks
 from internetarchive import search_items
 
 
 ROOT_DIR = os.getcwd()
 TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
+PY3 = six.PY3
 
 with open(TEST_JSON_FILE, 'r') as fh:
     ITEM_METADATA = fh.read().strip()
@@ -267,7 +263,7 @@ def test_get_files_glob_pattern():
         assert set([f.name for f in files]) == expected_files
 
 
-@pytest.mark.skipif('six.PY3 is True', reason='responses not working with PY3.')
+@pytest.mark.skipif('PY3 is True', reason='responses not working with PY3.')
 def test_modify_metadata():
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
@@ -287,7 +283,7 @@ def test_modify_metadata():
         }
 
 
-@pytest.mark.skipif('six.PY3 is True', reason='responses not working with PY3.')
+@pytest.mark.skipif('PY3 is True', reason='responses not working with PY3.')
 def test_upload():
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         expected_s3_headers = {
@@ -328,7 +324,7 @@ def test_download(tmpdir):
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=ITEM_METADATA,
                  status=200)
-        r = download('nasa', 'nasa_meta.xml')
+        download('nasa', 'nasa_meta.xml')
         p = os.path.join(str(tmpdir), 'nasa')
         assert len(os.listdir(p)) == 1
         with open('nasa/nasa_meta.xml') as fh:

@@ -1,9 +1,7 @@
 import os
 import sys
-import shutil
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
-from logging import Logger
 
 import responses
 
@@ -72,7 +70,7 @@ def test_get_item(tmpdir):
         s = internetarchive.session.ArchiveSession(CONFIG)
         try:
             item = s.get_item('nasa')
-        except Exception as exc:
+        except Exception:
             with open('test.log') as fh:
                 assert '400 Client Error' in fh.read()
 

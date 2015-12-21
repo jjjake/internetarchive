@@ -14,7 +14,6 @@ import logging
 import socket
 
 from requests.exceptions import HTTPError, RetryError, ConnectTimeout, ConnectionError
-from clint.textui import progress
 import six.moves.urllib as urllib
 
 from internetarchive import iarequest, utils

@@ -2,53 +2,71 @@ import os
 import sys
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
-from subprocess import Popen, PIPE
 from time import time
 
-import pytest
+import responses
 
-inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, inc_path)
-import internetarchive.config
+from internetarchive.cli import ia
 
 
-def test_ia_metadata_exists():
-    cmd = 'ia metadata --exists iacli_test-doesnotexist'
-    proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = proc.communicate()
-    assert proc.returncode == 1
+def test_ia_metadata_exists(capsys, testitem_metadata):
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+                 body=testitem_metadata,
+                 status=200)
+        sys.argv = ['ia', 'metadata', '--exists', 'nasa']
+        try:
+            ia.main()
+        except SystemExit as exc:
+            assert exc.code == 0
+        out, err = capsys.readouterr()
+        assert out == 'nasa exists\n'
 
-    cmd = 'ia metadata --exists nasa'
-    proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = proc.communicate()
-    assert proc.returncode == 0
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+                 body='{}',
+                 status=200)
+        sys.argv = ['ia', 'metadata', '--exists', 'nasa']
+        try:
+            ia.main()
+        except SystemExit as exc:
+            assert exc.code == 1
+        out, err = capsys.readouterr()
+        assert err == 'nasa does not exist\n'
 
 
-def test_ia_metadata_formats():
-    cmd = 'ia metadata --formats iacli-test-item60'
-    proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = proc.communicate()
-    test_output_set = set([
-        "Text",
-        "Metadata",
-        "Unknown",
-    ])
-    assert set(stdout.decode('utf-8')[:-1].split('\n')) == test_output_set
+def test_ia_metadata_formats(capsys, testitem_metadata):
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+                 body=testitem_metadata,
+                 status=200)
+        sys.argv = ['ia', 'metadata', '--formats', 'nasa']
+        try:
+            ia.main()
+        except SystemExit as exc:
+            assert exc.code == 0
+        out, err = capsys.readouterr()
+        assert out == 'Collection Header\nArchive BitTorrent\nJPEG\nMetadata\n'
 
 
-@pytest.mark.skipif('internetarchive.config.get_config().get("s3") == None',
-                    reason='requires authorization.')
-def test_ia_metadata_modify():
-    # Modify test item.
-    valid_key = "foo-{k}".format(k=int(time()))
-    cmd = 'ia metadata --modify="{k}:test_value" iacli-test-item60'.format(k=valid_key)
-    proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = proc.communicate()
-    assert proc.returncode == 0
-
-    # Submit illegal modification.
-    cmd = 'ia metadata --modify="-foo:test_value" iacli-test-item60'
-    proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = proc.communicate()
-    assert proc.returncode == 1
-    assert "Illegal tag name" in stderr
+def test_ia_metadata_modify(capsys, testitem_metadata):
+    md_rsp = ('{"success":true,"task_id":447613301,'
+              '"log":"https://catalogd.archive.org/log/447613301"}')
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+                 body=testitem_metadata,
+                 status=200)
+        rsps.add(responses.POST, 'https://archive.org/metadata/nasa',
+                 body=md_rsp,
+                 status=200)
+        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+                 body=testitem_metadata,
+                 status=200)
+        valid_key = "foo-{k}".format(k=int(time()))
+        sys.argv = ['ia', 'metadata', '--modify', '{0}:test_value'.format(valid_key),
+                    'nasa']
+        try:
+            ia.main()
+        except SystemExit as exc:
+            assert exc.code == 0
+        out, err = capsys.readouterr()
+        assert out == 'nasa - success: https://catalogd.archive.org/log/447613301\n'

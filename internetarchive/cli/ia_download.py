@@ -39,7 +39,6 @@ import sys
 import six
 from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
-from requests.exceptions import ConnectTimeout
 
 from internetarchive import search_items
 

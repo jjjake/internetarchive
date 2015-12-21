@@ -1,6 +1,5 @@
 import os
 import sys
-import shutil
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
 import six
@@ -71,7 +70,7 @@ def test_get_auth_config_auth_fail():
     # No logged-in-sig cookie set raises AuthenticationError.
     responses.add(responses.POST, 'https://archive.org/account/login.php', status=200)
     try:
-        r = internetarchive.config.get_auth_config('test@example.com', 'password1')
+        internetarchive.config.get_auth_config('test@example.com', 'password1')
     except AuthenticationError as exc:
         assert str(exc) == ('Authentication failed. Please check your credentials '
                             'and try again.')

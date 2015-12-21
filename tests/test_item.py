@@ -6,7 +6,6 @@ import types
 import re
 import os
 from copy import deepcopy
-import shutil
 
 import pytest
 import responses
@@ -217,7 +216,7 @@ def test_download_checksum(tmpdir, testitem_with_logging, nasa_meta_xml):
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='test content',
                  status=200)
-        r = testitem_with_logging.download(files='nasa_meta.xml')
+        testitem_with_logging.download(files='nasa_meta.xml')
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='overwrite based on md5',
                  status=200)
@@ -372,12 +371,12 @@ def test_upload_503(capsys, testitem, json_filename):
                  adding_headers=_expected_headers,
                  status=503)
         try:
-            resp = testitem.upload(json_filename,
-                                   access_key='test_access',
-                                   secret_key='test_secret',
-                                   retries=1,
-                                   retries_sleep=.1,
-                                   verbose=True)
+            testitem.upload(json_filename,
+                            access_key='test_access',
+                            secret_key='test_secret',
+                            retries=1,
+                            retries_sleep=.1,
+                            verbose=True)
         except Exception as exc:
             assert '503' in str(exc)
             out, err = capsys.readouterr()
@@ -439,7 +438,6 @@ def test_upload_dir(tmpdir, testitem):
                     str(tmpdir), 'foo2.txt'),
             ]
             assert p.url in expected_eps
-        #shutil.rmtree(os.path.join(str(tmpdir), 'dir_test'))
 
 
 def test_upload_queue_derive(testitem, json_filename):

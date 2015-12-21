@@ -29,7 +29,7 @@ from internetarchive.search import Search
 from internetarchive.catalog import Catalog
 from internetarchive.session import ArchiveSession
 from internetarchive.api import get_item, get_files, modify_metadata, upload, \
-    download, delete, get_tasks, search_items, get_session, configure
+    download, delete, get_tasks, search_items, get_session, configure, get_username
 
 
 __all__ = [
@@ -53,6 +53,7 @@ __all__ = [
     'search_items',
     'get_session',
     'configure',
+    'get_username',
 ]
 
 

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 try:
     import ujson as json
 except ImportError:
@@ -529,8 +530,8 @@ def test_upload_checksum(tmpdir, testitem):
 
         # Skip.
         testitem.item_metadata['files'].append(
-            dict(name=u'checksum_test.txt',
-                 md5=u'33213e7683c1e6d15b2a658f3c567717'))
+            dict(name='checksum_test.txt',
+                 md5='33213e7683c1e6d15b2a658f3c567717'))
         resp = testitem.upload(test_file,
                                access_key='test_access',
                                secret_key='test_secret',

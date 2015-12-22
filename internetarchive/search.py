@@ -86,7 +86,7 @@ class Search(object):
         return results
 
     def _get_item_from_search_result(self, search_result):
-        return self.session.get_item(search_result[u'identifier'])
+        return self.session.get_item(search_result['identifier'])
 
     def __iter__(self):
         return self.iter_as_results()

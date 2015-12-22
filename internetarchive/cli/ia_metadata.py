@@ -42,11 +42,10 @@ def modify_metadata(item, metadata, args):
                              priority=args['--priority'])
     if not r.json()['success']:
         error_msg = r.json()['error']
-        sys.stderr.write(u'{0} - error ({1}): {2}\n'.format(item.identifier,
-                                                            r.status_code, error_msg))
+        print('{0} - error ({1}): {2}'.format(item.identifier, r.status_code, error_msg),
+              file=sys.stderr)
         return r
-    sys.stdout.write('{0} - success: {1}\n'.format(item.identifier,
-                                                   r.json()['log']))
+    print('{0} - success: {1}'.format(item.identifier, r.json()['log']))
     return r
 
 
@@ -80,10 +79,10 @@ def main(argv, session):
         if args['--exists']:
             if item.exists:
                 responses.append(True)
-                sys.stdout.write('{0} exists\n'.format(identifier))
+                print('{0} exists'.format(identifier))
             else:
                 responses.append(False)
-                sys.stderr.write('{0} does not exist\n'.format(identifier))
+                print('{0} does not exist'.format(identifier), file=sys.stderr)
             if (i + 1) == len(args['<identifier>']):
                 if all(r is True for r in responses):
                     sys.exit(0)
@@ -106,12 +105,12 @@ def main(argv, session):
             for f in item.get_files():
                 formats.add(f.format)
             if (i + 1) == len(args['<identifier>']):
-                sys.stdout.write('\n'.join(formats) + '\n')
+                print('\n'.join(formats))
 
         # Dump JSON to stdout.
         else:
             metadata = json.dumps(item.item_metadata)
-            sys.stdout.write(metadata + '\n')
+            print(metadata)
 
     # Edit metadata for items in bulk, using a spreadsheet as input.
     if args['--spreadsheet']:

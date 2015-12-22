@@ -59,7 +59,7 @@ class File(BaseFile):
         >>> item = internetarchive.Item('stairs')
         >>> file = internetarchive.File(item, 'stairs.avi')
         >>> print(f.format, f.size)
-        (u'Cinepack', u'3786730')
+        ('Cinepack', '3786730')
 
     Or to download a file::
 

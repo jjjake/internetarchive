@@ -9,7 +9,7 @@ settings across the internetarchive package.
 :copyright: (c) 2015 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import os
 import locale
@@ -152,7 +152,7 @@ class ArchiveSession(requests.sessions.Session):
             'NOTSET': 0,
         }
 
-        log_format = u'%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
         _log = logging.getLogger(logger_name)
         _log.setLevel(logging.DEBUG)

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import os
 import sys
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -277,9 +278,9 @@ def test_modify_metadata():
         r = modify_metadata('test', dict(foo=1))
         assert r.status_code == 200
         assert r.json() == {
-            u'task_id': 423444944,
-            u'success': True,
-            u'log': u'https://catalogd.archive.org/log/423444944'
+            'task_id': 423444944,
+            'success': True,
+            'log': 'https://catalogd.archive.org/log/423444944'
         }
 
 

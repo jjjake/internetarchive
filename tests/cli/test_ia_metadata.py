@@ -45,7 +45,8 @@ def test_ia_metadata_formats(capsys, testitem_metadata):
         except SystemExit as exc:
             assert exc.code == 0
         out, err = capsys.readouterr()
-        assert out == 'Collection Header\nArchive BitTorrent\nJPEG\nMetadata\n'
+        assert set(out.split('\n')) == set(['Collection Header', 'Archive BitTorrent',
+                                            'JPEG', 'Metadata', ''])
 
 
 def test_ia_metadata_modify(capsys, testitem_metadata):

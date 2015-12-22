@@ -1,5 +1,5 @@
-A python interface to archive.org
----------------------------------
+A Python and Command-Line Interface to Archive.org
+--------------------------------------------------
 
 .. image:: https://travis-ci.org/jjjake/internetarchive.svg
     :target: https://travis-ci.org/jjjake/internetarchive
@@ -7,11 +7,9 @@ A python interface to archive.org
 .. image:: https://img.shields.io/pypi/dm/internetarchive.svg
     :target: https://pypi.python.org/pypi/internetarchive
 
-This package installs a CLI tool named ``ia`` for using archive.org from the command-line.
-It also installs the ``internetarchive`` python module for programatic access to archive.org.
+This package installs a command-line tool named ``ia`` for using Archive.org from the command-line.
+It also installs the ``internetarchive`` Python module for programatic access to archive.org.
 Please report all bugs and issues on `Github <https://github.com/jjjake/ia-wrapper/issues>`__.
-
-.. contents:: Table of Contents:
 
 
 Installation
@@ -22,12 +20,6 @@ You can install this module via pip:
 .. code:: bash
 
     $ pip install internetarchive
-
-If you want to install this module globally on your system instead of inside a ``virtualenv``, use sudo:
-
-.. code:: bash
-
-    $ sudo pip install internetarchive
 
 Binaries of the command-line tool are also available:
 
@@ -66,60 +58,10 @@ Available commands::
     list      List files in a given item.
 
 
-Downloading
-~~~~~~~~~~~
-
-To download the entire `TripDown1905 <https://archive.org/details/TripDown1905>`__ item:
-
-.. code:: bash
-
-    $ ia download TripDown1905
-
-``ia download`` usage examples:
-
-.. code:: bash
-
-    # download just the mp4 files using ``--glob``
-    $ ia download TripDown1905 --glob='\*.mp4'
-
-    # download all the mp4 files using ``--formats``:
-    $ ia download TripDown1905 --format='512Kb MPEG4'
-
-    # download multiple formats from an item:
-    $ ia download TripDown1905 --format='512Kb MPEG4' --format='Ogg Video'
-
-    # list all the formats in an item:
-    $ ia metadata --formats TripDown1905
-
-    # download a single file from an item:
-    $ ia download TripDown1905 TripDown1905_512kb.mp4
-
-    # download multiple files from an item:
-    $ ia download TripDown1905 TripDown1905_512kb.mp4 TripDown1905.ogv
-
-    # download an entire collection:
-    $ ia download --search 'collection:freemusicarchive'
-
-
-Uploading
-~~~~~~~~~
-
-You can use the provided ``ia`` command-line tool to upload items. After `configuring ia <https://github.com/jjjake/internetarchive#configuring>`__,
-you can upload files like so:
-
-.. code:: bash
-
-    # upload files:
-    $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
-
-    # upload from `stdin`:
-    $ curl http://dumps.wikimedia.org/kywiki/20130927/kywiki-20130927-pages-logging.xml.gz |
-      ia upload <identifier> - --remote-name=kywiki-20130927-pages-logging.xml.gz --metadata="title:Uploaded from stdin."
-
 Metadata
 ~~~~~~~~
 
-You can use the ``ia`` command-line tool to download item metadata in JSON format:
+You can use ``ia`` to read and write metadata from Archive.org. To retrieve all of an items metadata in JSON, simply:
 
 .. code:: bash
 
@@ -131,32 +73,168 @@ You can also modify metadata after `configuring ia <https://github.com/jjjake/in
 
     $ ia metadata <identifier> --modify="foo:bar" --modify="baz:foooo"
 
-Searching
-~~~~~~~~~
+See ``ia help metadata`` for more details.
 
-You can search using the provided ``ia`` command-line script:
+
+Upload
+~~~~~~
+
+``ia`` cand also be used to upload items to Archive.org. After `configuring ia <https://github.com/jjjake/internetarchive#configuring>`__,
+you can upload files like so:
+
+.. code:: bash
+
+    $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
+
+You can upload files from ``stdin``:
+
+.. code:: bash
+
+    $ curl http://dumps.wikimedia.org/kywiki/20130927/kywiki-20130927-pages-logging.xml.gz \
+      | ia upload <identifier> - --remote-name=kywiki-20130927-pages-logging.xml.gz --metadata="title:Uploaded from stdin."
+
+You can use the ``--retries`` parameter to retry on errors (i.e. if IA-S3 is overloaded):
+
+.. code:: bash
+    
+    $ ia upload <identifier> file1 --retries 10
+
+See ``ia help upload`` for more details.
+
+
+Download
+~~~~~~~~
+
+Download an entire item:
+
+.. code:: bash
+
+    $ ia download TripDown1905
+
+Download specific files from an item:
+
+.. code:: bash
+
+    $ ia download TripDown1905 TripDown1905_512kb.mp4 TripDown1905.ogv
+
+Download specific files matching a glob pattern:
+
+.. code:: bash
+
+    $ ia download TripDown1905 --glob='\\*.mp4'
+
+Download only files of a specific format:
+
+.. code:: bash
+
+    $ ia download TripDown1905 --format='512Kb MPEG4'
+
+You can get a list of the formats a given item like so:
+
+.. code:: bash
+
+    $ ia metadata --formats TripDown1905
+
+Download an entire collection:
+
+.. code:: bash
+
+    $ ia download --search 'collection:freemusicarchive'
+
+Download from an itemlist:
+
+.. code:: bash
+
+    $ ia download --itemlist itemlist.txt
+
+See ``ia help download`` for more details.
+
+
+Delete
+~~~~~~
+
+You can use ``ia`` to delete files from Archive.org items:
+
+.. code:: bash
+
+    $ ia delete <identifier> <file>
+
+Delete a file *and* all files derived from the specified file:
+
+.. code:: bash
+
+    $ ia delete <identifier> <file> --cascade
+
+Delete all files in an item:
+
+.. code:: bash
+
+    $ ia delete <identifier> --all
+
+See ``ia help delete`` for more details.
+
+
+Search
+~~~~~~
+
+``ia`` can also be used for retrieving Archive.org search results in JSON:
 
 .. code:: bash
 
     $ ia search 'subject:"market street" collection:prelinger'
 
-
-Parallel Downloading
-~~~~~~~~~~~~~~~~~~~~
-
-If you have the GNU ``parallel`` tool intalled, then you can combine ``ia search`` and ``ia metadata`` to quickly retrieve data for many items in parallel:
+You can use ``ia search`` to create an itemlist:
 
 .. code:: bash
 
-    $ ia search 'collection:prelinger' --itemlist | parallel -j10 'ia metadata {} > {}_meta.json'
+    $ ia search 'collection:freemusicarchive' --itemlist > itemlist.txt
 
+You can pipe your itemlist into a GNU Parallel command to download items concurrently:
+
+.. code:: bash
+
+    $ ia search 'collection:freemusicarchive' --itemlist | parallel 'ia download {}'
+
+See ``ia help search`` for more details.
+
+
+Tasks
+~~~~~
+
+You can also use ``ia`` to retrieve information about your catalog tasks, after `configuring ia <https://github.com/jjjake/internetarchive#configuring>`__.
+To retrieve the task history for an item, simply run:
+
+.. code:: bash
+
+    $ ia tasks <identifier>
+
+View all of your queued and running Archive.org tasks:
+
+.. code:: bash
+
+    $ ia tasks
+
+See ``ia help tasks`` for more details.
+
+
+List
+~~~~
+
+You can list files in an item like so:
+
+.. code:: bash
+
+    $ ia list goodytwoshoes00newyiala
+
+See ``ia help list`` for more details.
 
 
 Python module usage
 -------------------
 
 Below is brief overview of the ``internetarchive`` Python library.
-Please refer to the `API documentation <http://ia-wrapper.readthedocs.org/en/latest/>`__ for more specific details.
+Please refer to the `API documentation <http://internetarchive.readthedocs.org/en/latest/>`__ for more specific details.
+
 
 Downloading from Python
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -182,15 +260,9 @@ or you can download just a particular file:
 .. code:: python
 
     >>> f = item.get_file('glogo.png')
-    >>> f.download() #writes to disk
+    >>> f.download()
     >>> f.download('/foo/bar/some_other_name.png')
 
-You can iterate over files:
-
-.. code:: python
-
-    >>> for f in item.iter_files():
-    ...     print(f.name, f.sha1)
 
 Uploading from Python
 ~~~~~~~~~~~~~~~~~~~~~

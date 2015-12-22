@@ -9,6 +9,12 @@ import internetarchive.session
 from internetarchive import __version__
 
 
+if sys.version_info < (2, 7, 9):
+    protocol = 'http:'
+else:
+    protocol = 'https:'
+
+
 ROOT_DIR = os.getcwd()
 TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
 
@@ -37,8 +43,11 @@ def test_archive_session(tmpdir):
 
     assert CONFIG == s.config
     assert s.cookies == CONFIG['cookies']
-    assert s.secure is True
-    assert s.protocol == 'https:'
+    if sys.version_info < (2, 7, 9):
+        assert s.secure is False
+    else:
+        assert s.secure is True
+    assert s.protocol == protocol
     assert s.access_key == 'test_access'
     assert s.secret_key == 'test_secret'
     assert s.headers['user-agent'].startswith('internetarchive/{0}'.format(__version__))
@@ -51,7 +60,7 @@ def test_get_item(tmpdir):
         item_metadata = fh.read().strip()
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=item_metadata,
                  status=200,
                  content_type='application/json')
@@ -62,7 +71,7 @@ def test_get_item(tmpdir):
         assert item.identifier == 'nasa'
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=item_metadata,
                  status=400,
                  content_type='application/json')
@@ -94,7 +103,7 @@ def test_s3_is_overloaded():
     }"""
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://s3.us.archive.org',
+        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(protocol),
                  body=test_body,
                  status=200,
                  content_type='application/json')
@@ -120,7 +129,7 @@ def test_s3_is_overloaded():
     }"""
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://s3.us.archive.org',
+        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(protocol),
                  body=test_body,
                  status=200,
                  content_type='application/json')

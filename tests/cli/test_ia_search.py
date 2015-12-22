@@ -13,6 +13,12 @@ import responses
 from internetarchive.cli import ia
 
 
+if sys.version_info < (2, 7, 9):
+    protocol = 'http:'
+else:
+    protocol = 'https:'
+
+
 ROOT_DIR = os.getcwd()
 TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/advanced_search_response.json')
 with open(TEST_JSON_FILE) as fh:
@@ -20,10 +26,10 @@ with open(TEST_JSON_FILE) as fh:
 
 
 def test_ia_search_sort_asc(capsys):
-    url1 = ('https://archive.org/advancedsearch.php?'
-            'q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc')
-    url2 = ('https://archive.org/advancedsearch.php?'
-            'q=collection%3Anasa&output=json&rows=250&sort%5B0%5D=identifier+asc&page=1')
+    url1 = ('{0}//archive.org/advancedsearch.php?q=collection%3Anasa&output=json&'
+            'rows=0&sort%5B0%5D=identifier+asc'.format(protocol))
+    url2 = ('{0}//archive.org/advancedsearch.php?q=collection%3Anasa&output=json&'
+            'rows=250&sort%5B0%5D=identifier+asc&page=1'.format(protocol))
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, url1,
                  body=TEST_SEARCH_RESPONSE,
@@ -48,18 +54,18 @@ def test_ia_search_sort_asc(capsys):
 
 def test_ia_search_multi_page(capsys):
     j = json.loads(TEST_SEARCH_RESPONSE)
-    url1 = ('https://archive.org/advancedsearch.php?'
+    url1 = ('{0}//archive.org/advancedsearch.php?'
             'q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc&'
-            'fl%5B0%5D=identifier')
-    url2 = ('https://archive.org/advancedsearch.php?'
+            'fl%5B0%5D=identifier'.format(protocol))
+    url2 = ('{0}//archive.org/advancedsearch.php?'
             'q=collection%3Anasa&output=json&rows=25&page=1&sort%5B0%5D=identifier+asc&'
-            'fl%5B0%5D=identifier')
-    url3 = ('https://archive.org/advancedsearch.php?'
+            'fl%5B0%5D=identifier'.format(protocol))
+    url3 = ('{0}//archive.org/advancedsearch.php?'
             'q=collection%3Anasa&output=json&rows=25&page=2&sort%5B0%5D=identifier+asc&'
-            'fl%5B0%5D=identifier')
-    url4 = ('https://archive.org/advancedsearch.php?'
+            'fl%5B0%5D=identifier'.format(protocol))
+    url4 = ('{0}//archive.org/advancedsearch.php?'
             'q=collection%3Anasa&output=json&rows=25&page=3&sort%5B0%5D=identifier+asc&'
-            'fl%5B0%5D=identifier')
+            'fl%5B0%5D=identifier'.format(protocol))
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, url1,
                  body=TEST_SEARCH_RESPONSE,
@@ -104,12 +110,12 @@ def test_ia_search_multi_page(capsys):
 
 def test_ia_search_itemlist(capsys):
     with responses.RequestsMock() as rsps:
-        url1 = ('https://archive.org/advancedsearch.php?'
+        url1 = ('{0}//archive.org/advancedsearch.php?'
                 'q=collection%3Aattentionkmartshoppers&output=json&rows=0&'
-                'sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier')
-        url2 = ('https://archive.org/advancedsearch.php?'
-                'fl%5B0%5D=identifier&rows=250&sort%5B0%5D=identifier+asc&'
-                'q=collection%3Aattentionkmartshoppers&output=json&page=1')
+                'sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier'.format(protocol))
+        url2 = ('{0}//archive.org/advancedsearch.php?'
+                'fl%5B0%5D=identifier&rows=250&sort%5B0%5D=identifier+asc&q=collection%3'
+                'Aattentionkmartshoppers&output=json&page=1'.format(protocol))
         rsps.add(responses.GET, url1,
                  body=TEST_SEARCH_RESPONSE,
                  status=200,
@@ -133,8 +139,8 @@ def test_ia_search_itemlist(capsys):
 
 def test_ia_search_num_found(capsys):
     with responses.RequestsMock() as rsps:
-        url = ('https://archive.org/advancedsearch.php?'
-               'q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc')
+        url = ('{0}//archive.org/advancedsearch.php?q=collection%3Anasa&output=json&'
+               'rows=0&sort%5B0%5D=identifier+asc'.format(protocol))
         rsps.add(responses.GET, url,
                  body=TEST_SEARCH_RESPONSE,
                  status=200,

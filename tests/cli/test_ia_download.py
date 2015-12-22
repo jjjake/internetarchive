@@ -6,6 +6,12 @@ import shutil
 from subprocess import Popen, PIPE
 
 
+if sys.version_info < (2, 7, 9):
+    protocol = 'http:'
+else:
+    protocol = 'https:'
+
+
 def call(cmd):
     proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
@@ -50,13 +56,13 @@ def test_dry_run():
     cmd = 'ia download --dry-run nasa'
     exit_code, stdout, stderr = call(cmd)
     test_output_set = set([
-        "https://archive.org/download/nasa/NASAarchiveLogo.jpg",
-        "https://archive.org/download/nasa/globe_west_540.jpg",
-        "https://archive.org/download/nasa/nasa_reviews.xml",
-        "https://archive.org/download/nasa/nasa_meta.xml",
-        "https://archive.org/download/nasa/nasa_archive.torrent",
-        "https://archive.org/download/nasa/nasa_files.xml",
-        "https://archive.org/download/nasa/globe_west_540_thumb.jpg",
+        '{0}//archive.org/download/nasa/NASAarchiveLogo.jpg'.format(protocol),
+        '{0}//archive.org/download/nasa/globe_west_540.jpg'.format(protocol),
+        '{0}//archive.org/download/nasa/nasa_reviews.xml'.format(protocol),
+        '{0}//archive.org/download/nasa/nasa_meta.xml'.format(protocol),
+        '{0}//archive.org/download/nasa/nasa_archive.torrent'.format(protocol),
+        '{0}//archive.org/download/nasa/nasa_files.xml'.format(protocol),
+        '{0}//archive.org/download/nasa/globe_west_540_thumb.jpg'.format(protocol),
     ])
     assert parse_output(stdout.decode('utf-8')) == test_output_set
     assert exit_code == 0

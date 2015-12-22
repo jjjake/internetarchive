@@ -18,6 +18,12 @@ import internetarchive.session
 from internetarchive.exceptions import AuthenticationError
 
 
+if sys.version_info < (2, 7, 9):
+    protocol = 'http:'
+else:
+    protocol = 'https:'
+
+
 @responses.activate
 def test_get_auth_config():
     headers = {'set-cookie': 'logged-in-user=test@archive.org',

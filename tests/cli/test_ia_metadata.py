@@ -9,9 +9,15 @@ import responses
 from internetarchive.cli import ia
 
 
+if sys.version_info < (2, 7, 9):
+    protocol = 'http:'
+else:
+    protocol = 'https:'
+
+
 def test_ia_metadata_exists(capsys, testitem_metadata):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=testitem_metadata,
                  status=200)
         sys.argv = ['ia', 'metadata', '--exists', 'nasa']
@@ -22,7 +28,7 @@ def test_ia_metadata_exists(capsys, testitem_metadata):
         out, err = capsys.readouterr()
         assert out == 'nasa exists\n'
 
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body='{}',
                  status=200)
         sys.argv = ['ia', 'metadata', '--exists', 'nasa']
@@ -36,7 +42,7 @@ def test_ia_metadata_exists(capsys, testitem_metadata):
 
 def test_ia_metadata_formats(capsys, testitem_metadata):
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=testitem_metadata,
                  status=200)
         sys.argv = ['ia', 'metadata', '--formats', 'nasa']
@@ -53,13 +59,13 @@ def test_ia_metadata_modify(capsys, testitem_metadata):
     md_rsp = ('{"success":true,"task_id":447613301,'
               '"log":"https://catalogd.archive.org/log/447613301"}')
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=testitem_metadata,
                  status=200)
-        rsps.add(responses.POST, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.POST, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=md_rsp,
                  status=200)
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=testitem_metadata,
                  status=200)
         valid_key = "foo-{k}".format(k=int(time()))

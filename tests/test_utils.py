@@ -12,6 +12,12 @@ import responses
 import internetarchive.utils
 
 
+if sys.version_info < (2, 7, 9):
+    protocol = 'http:'
+else:
+    protocol = 'https:'
+
+
 def test_utils():
     list(internetarchive.utils.chunk_generator(open(__file__), 10))
     ifp = internetarchive.utils.IterableToFileAdapter([1, 2], 200)
@@ -52,7 +58,7 @@ def test_map2x():
 
 @responses.activate
 def test_IdentifierListAsItems(session, testitem_metadata):
-    responses.add(responses.GET, 'https://archive.org/metadata/nasa',
+    responses.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                   body=testitem_metadata,
                   status=200,
                   content_type='application/json')

@@ -21,6 +21,12 @@ from internetarchive import download
 from internetarchive import search_items
 
 
+if sys.version_info < (2, 7, 9):
+    protocol = 'http:'
+else:
+    protocol = 'https:'
+
+
 ROOT_DIR = os.getcwd()
 TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
 PY3 = six.PY3
@@ -68,7 +74,7 @@ def test_get_session_with_config_file(tmpdir):
 
 def test_get_item():
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         item = get_item('nasa')
@@ -77,7 +83,7 @@ def test_get_item():
 
 def test_get_item_with_config():
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         item = get_item('nasa', config={'s3': {'access': 'key'}})
@@ -90,7 +96,7 @@ def test_get_item_with_config_file(tmpdir):
     with open('ia_test.ini', 'w') as fh:
         fh.write(test_conf)
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         item = get_item('nasa', config_file='ia_test.ini')
@@ -99,7 +105,7 @@ def test_get_item_with_config_file(tmpdir):
 
 def test_get_item_with_archive_session():
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         s = get_session(config={'s3': {'access': 'key3'}})
@@ -110,11 +116,12 @@ def test_get_item_with_archive_session():
 def test_get_item_with_kwargs():
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         item = get_item('nasa', http_adapter_kwargs={'max_retries': 13})
-        assert isinstance(item.session.adapters['https://'].max_retries, urllib3.Retry)
+        assert isinstance(item.session.adapters['{0}//'.format(protocol)].max_retries,
+                          urllib3.Retry)
 
     try:
         item = get_item('nasa', request_kwargs={'timeout': .0000000000001})
@@ -125,7 +132,7 @@ def test_get_item_with_kwargs():
 def test_get_files():
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         files = get_files('nasa')
@@ -144,7 +151,7 @@ def test_get_files_with_get_item_kwargs(tmpdir):
     tmpdir.chdir()
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         s = get_session(config={'s3': {'access': 'key'}})
@@ -184,7 +191,7 @@ def test_get_files_with_get_item_kwargs(tmpdir):
 def test_get_files_non_existing():
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         files = get_files('nasa', files='none')
@@ -194,7 +201,7 @@ def test_get_files_non_existing():
 def test_get_files_multiple():
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         _files = ['nasa_meta.xml', 'nasa_files.xml']
@@ -206,7 +213,7 @@ def test_get_files_multiple():
 def test_get_files_source():
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         files = get_files('nasa', source='original')
@@ -228,7 +235,7 @@ def test_get_files_source():
 def test_get_files_formats():
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         files = get_files('nasa', formats='JPEG')
@@ -247,7 +254,7 @@ def test_get_files_formats():
 def test_get_files_glob_pattern():
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         files = get_files('nasa', glob_pattern='*torrent')
@@ -268,10 +275,10 @@ def test_get_files_glob_pattern():
 def test_modify_metadata():
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, 'https://archive.org/metadata/test',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/test'.format(protocol),
                  body={},
                  status=200)
-        rsps.add(responses.POST, 'https://archive.org/metadata/test',
+        rsps.add(responses.POST, '{0}//archive.org/metadata/test'.format(protocol),
                  body=('{"success":true,"task_id":423444944,'
                        '"log":"https://catalogd.archive.org/log/423444944"}'),
                  status=200)
@@ -299,7 +306,7 @@ def test_upload():
         rsps.add(responses.PUT, re.compile(r'.*s3.us.archive.org/.*'),
                  adding_headers=expected_s3_headers,
                  status=200)
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body={},
                  status=200)
         resp = upload('nasa', TEST_JSON_FILE,
@@ -313,16 +320,17 @@ def test_upload():
                 r.headers['x-archive-meta00-scanner'].split('%20')[:4])
             headers['x-archive-meta00-scanner'] = scanner_header
             assert headers == expected_s3_headers
-            assert p.url == 'https://s3.us.archive.org/nasa/nasa_meta.json'
+            assert p.url == '{0}//s3.us.archive.org/nasa/nasa_meta.json'.format(protocol)
 
 
 def test_download(tmpdir):
     tmpdir.chdir()
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, 'https://archive.org/download/nasa/nasa_meta.xml',
+        rsps.add(responses.GET,
+                 '{0}//archive.org/download/nasa/nasa_meta.xml'.format(protocol),
                  body='test content',
                  status=200)
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         download('nasa', 'nasa_meta.xml')
@@ -343,7 +351,7 @@ def test_get_tasks():
 def test_search_items():
     search_response_str = json.dumps(SEARCH_RESPONSE)
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php',
+        rsps.add(responses.GET, '{0}//archive.org/advancedsearch.php'.format(protocol),
                  body=search_response_str,
                  status=200)
         r = search_items('identifier:nasa')
@@ -365,7 +373,7 @@ def test_search_items_with_fields():
     search_response_str = json.dumps(search_r)
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php',
+        rsps.add(responses.GET, '{0}//archive.org/advancedsearch.php'.format(protocol),
                  body=search_response_str,
                  status=200)
         r = search_items('identifier:nasa', fields=['identifier', 'title'])
@@ -377,10 +385,10 @@ def test_search_items_as_items():
     search_response_str = json.dumps(SEARCH_RESPONSE)
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, 'https://archive.org/advancedsearch.php',
+        rsps.add(responses.GET, '{0}//archive.org/advancedsearch.php'.format(protocol),
                  body=search_response_str,
                  status=200)
-        rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
         r = search_items('identifier:nasa')

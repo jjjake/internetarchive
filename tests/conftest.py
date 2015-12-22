@@ -1,10 +1,17 @@
 from __future__ import absolute_import
+import sys
 import os
 
 import pytest
 import responses
 
 from internetarchive import get_session
+
+
+if sys.version_info < (2, 7, 9):
+    protocol = 'http:'
+else:
+    protocol = 'https:'
 
 
 @pytest.fixture
@@ -26,7 +33,7 @@ def testitem_metadata(json_filename):
 @pytest.fixture
 @responses.activate
 def testitem(testitem_metadata, session):
-    responses.add(responses.GET, 'https://archive.org/metadata/nasa',
+    responses.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                   body=testitem_metadata,
                   status=200,
                   content_type='application/json')
@@ -41,7 +48,7 @@ def session_with_logging():
 @pytest.fixture
 @responses.activate
 def testitem_with_logging(testitem_metadata, session_with_logging):
-    responses.add(responses.GET, 'https://archive.org/metadata/nasa',
+    responses.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                   body=testitem_metadata,
                   status=200,
                   content_type='application/json')

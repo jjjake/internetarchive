@@ -7,8 +7,8 @@ from internetarchive.cli import ia
 from internetarchive import get_session
 
 
-ROOT_DIR = os.getcwd()
-TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
+TESTS_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
+TEST_JSON_FILE = os.path.join(TESTS_DIR, 'data/nasa_meta.json')
 SESSION = get_session()
 with open(TEST_JSON_FILE, 'r') as fh:
     ITEM_METADATA = fh.read().strip()

@@ -19,8 +19,8 @@ else:
     protocol = 'https:'
 
 
-ROOT_DIR = os.getcwd()
-TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/advanced_search_response.json')
+TESTS_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
+TEST_JSON_FILE = os.path.join(TESTS_DIR, 'data/advanced_search_response.json')
 with open(TEST_JSON_FILE) as fh:
     TEST_SEARCH_RESPONSE = fh.read()
 

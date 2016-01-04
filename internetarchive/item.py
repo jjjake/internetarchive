@@ -10,6 +10,7 @@ from __future__ import absolute_import, unicode_literals, print_function
 
 from logging import getLogger
 from fnmatch import fnmatch
+from io import BytesIO
 import os
 from time import sleep
 import sys
@@ -440,7 +441,11 @@ class Item(BaseItem):
         request_kwargs = {} if request_kwargs is None else request_kwargs
 
         if not hasattr(body, 'read'):
-            body = open(body, 'rb')
+            with open(body, 'rb') as f:
+                body = BytesIO(f.read())
+                filename = f.name
+        else:
+            filename = body.name
 
         if not metadata.get('scanner'):
             scanner = 'Internet Archive Python library {0}'.format(__version__)
@@ -456,7 +461,7 @@ class Item(BaseItem):
         if not headers.get('x-archive-size-hint'):
             headers['x-archive-size-hint'] = size
 
-        key = body.name.split('/')[-1] if key is None else key
+        key = filename.split('/')[-1] if key is None else key
         base_url = '{protocol}//s3.us.archive.org/{identifier}'.format(
             protocol=self.session.protocol,
             identifier=self.identifier)
@@ -476,7 +481,7 @@ class Item(BaseItem):
                     'and verified, deleting '
                     'local copy'.format(i=self.identifier,
                                         f=key))
-                os.remove(body.name)
+                os.remove(filename)
             # Return an empty response object if checksums match.
             # TODO: Is there a better way to handle this?
             return Response()
@@ -553,7 +558,7 @@ class Item(BaseItem):
                         'https://archive.org/download/{i}/{f} and verified, deleting '
                         'local copy'.format(i=self.identifier,
                                             f=key))
-                    os.remove(body.name)
+                    os.remove(filename)
                 return response
             except HTTPError as exc:
                 error_msg = (' error uploading {0} to {1}, '

@@ -15,12 +15,14 @@ else:
     protocol = 'https:'
 
 
-ROOT_DIR = os.getcwd()
-TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
+TESTS_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
+TEST_JSON_FILE = os.path.join(TESTS_DIR, 'data/nasa_meta.json')
+STATUS_CHECK_JSON_FILE = os.path.join(TESTS_DIR, 'data/s3_status_check.json')
 
 with open(TEST_JSON_FILE, 'r') as fh:
     ITEM_METADATA = fh.read().strip()
-with open(os.path.join(ROOT_DIR, 'tests/data/s3_status_check.json'), 'r') as fh:
+
+with open(STATUS_CHECK_JSON_FILE, 'r') as fh:
     STATUS_CHECK_RESPONSE = fh.read().strip()
 
 

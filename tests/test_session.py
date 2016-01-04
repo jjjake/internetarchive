@@ -15,8 +15,8 @@ else:
     protocol = 'https:'
 
 
-ROOT_DIR = os.getcwd()
-TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
+TESTS_DIR = os.path.join(os.path.dirname(__file__))
+TEST_JSON_FILE = os.path.join(TESTS_DIR, 'data/nasa_meta.json')
 
 
 CONFIG = {

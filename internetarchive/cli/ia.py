@@ -31,6 +31,7 @@ from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import os
 import difflib
+import errno
 from pkg_resources import load_entry_point, DistributionNotFound
 
 from docopt import docopt, printable_usage
@@ -119,7 +120,14 @@ def main():
                           debug=args['--debug'])
 
     ia_module = load_ia_module(cmd)
-    sys.exit(ia_module.main(argv, session))
+    try:
+        sys.exit(ia_module.main(argv, session))
+    except IOError as e:
+        # Handle Broken Pipe errors.
+        if e.errno == errno.EPIPE:
+            sys.exit(0)
+        else:
+            raise
 
 if __name__ == '__main__':
     main()

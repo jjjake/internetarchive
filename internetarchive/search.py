@@ -57,10 +57,6 @@ class Search(object):
         # Set retries.
         self.session._mount_http_adapter(max_retries=5)
 
-        # Sort by identifier if no other sort is provided.
-        if not any(k.startswith('sort') for k, v in params.items()):
-            default_params['sort[0]'] = 'identifier asc'
-
         self.params = default_params.copy()
         self.params.update(params)
         if not self.params.get('output'):

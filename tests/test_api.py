@@ -170,7 +170,8 @@ def test_get_files_with_get_item_kwargs(tmpdir):
         test_conf = """[s3]\naccess = key2"""
         with open('ia_test.ini', 'w') as fh:
             fh.write(test_conf)
-        files = get_files('nasa', files='nasa_meta.xml', config_file='ia_test.ini')
+        files = get_files('nasa', files='nasa_meta.xml',
+                          config_file='ia_test.ini')
         files = list(files)
         assert len(files) == 1
         assert files[0].name == 'nasa_meta.xml'
@@ -182,7 +183,8 @@ def test_get_files_with_get_item_kwargs(tmpdir):
         assert len(files) == 1
         assert files[0].name == 'nasa_meta.xml'
 
-        files = get_files('nasa', files='nasa_meta.xml', request_kwargs={'timeout': 4})
+        files = get_files('nasa', files='nasa_meta.xml',
+                          request_kwargs={'timeout': 4})
         files = list(files)
         assert len(files) == 1
         assert files[0].name == 'nasa_meta.xml'
@@ -320,14 +322,16 @@ def test_upload():
                 r.headers['x-archive-meta00-scanner'].split('%20')[:4])
             headers['x-archive-meta00-scanner'] = scanner_header
             assert headers == expected_s3_headers
-            assert p.url == '{0}//s3.us.archive.org/nasa/nasa_meta.json'.format(protocol)
+            assert p.url == '{0}//s3.us.archive.org/nasa/nasa_meta.json'.format(
+                protocol)
 
 
 def test_download(tmpdir):
     tmpdir.chdir()
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET,
-                 '{0}//archive.org/download/nasa/nasa_meta.xml'.format(protocol),
+                 '{0}//archive.org/download/nasa/nasa_meta.xml'.format(
+                     protocol),
                  body='test content',
                  status=200)
         rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
@@ -394,3 +398,20 @@ def test_search_items_as_items():
         r = search_items('identifier:nasa')
         assert [x.identifier for x in r.iter_as_items()] == ['nasa']
         assert r.iter_as_items().search == r
+
+
+def test_page_row_specification():
+    search_response_str = json.dumps(SEARCH_RESPONSE)
+    with responses.RequestsMock(
+            assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, '{0}//archive.org/advancedsearch.php'.format(protocol),
+                 body=search_response_str,
+                 status=200)
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
+                 body=ITEM_METADATA,
+                 status=200)
+        r = search_items('identifier:nasa', params={
+                         'page': '1', 'rows': '1'})
+        assert [x.identifier for x in r.iter_as_items()] == ['nasa']
+        assert r.iter_as_items().search == r
+        assert len(r.iter_as_items()) == 1

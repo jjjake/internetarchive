@@ -33,6 +33,6 @@ binary:
 	pip wheel .
 	pex -v .  -e internetarchive.cli.ia:main -o ia-$(VERSION)-py2.pex --no-pypi --repo wheelhouse/
 
-publish-binary: pex-binary
-	./ia-$(VERSION)-py2.pex upload ia-pex ia-$(VERSION)-py2.pex
-	./ia-$(VERSION)-py2.pex upload ia-pex ia-$(VERSION)-py2.pex --remote-name=ia
+publish-binary: binary
+	./ia-$(VERSION)-py2.pex upload ia-pex ia-$(VERSION)-py2.pex --no-derive
+	./ia-$(VERSION)-py2.pex upload ia-pex ia-$(VERSION)-py2.pex --remote-name=ia --no-derive

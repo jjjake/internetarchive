@@ -67,6 +67,7 @@ def load_ia_module(cmd):
             for ep in iter_entry_points('internetarchive.cli.plugins'):
                 if ep.name == _module:
                     return ep.load()
+            raise ImportError
     except (ImportError, DistributionNotFound):
         print("error: '{0}' is not an ia command! See 'ia help'".format(cmd),
               file=sys.stderr)

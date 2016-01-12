@@ -609,7 +609,11 @@ def test_modify_metadata(testitem, testitem_metadata):
             '-target': 'metadata',
             '-patch': json.dumps([{"value": "new first", "replace": "/subject/2"}])
         }
-        assert p.data == expected_data
+
+        # Avoid comparing the json strings, because they are not in a canonical form
+        assert p.data.keys() == expected_data.keys()
+        assert all(p.data[k] == expected_data[k] for k in ['priority', '-target'])
+        assert json.loads(p.data['-patch']) == json.loads(expected_data['-patch'])
 
         # Test priority.
         md = {'title': 'NASA Images'}

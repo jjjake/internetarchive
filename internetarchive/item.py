@@ -30,9 +30,11 @@ from internetarchive import __version__
 
 log = getLogger(__name__)
 
+
 @functools.total_ordering
 class BaseItem(object):
     EXCLUDED_ITEM_METADATA_KEYS = (u'workable_servers', u'server')
+
     def __init__(self, identifier=None, item_metadata=None):
         # Default attributes.
         self.identifier = identifier
@@ -80,14 +82,20 @@ class BaseItem(object):
     def __eq__(self, other):
         return self.item_metadata == other.item_metadata or \
             (self.item_metadata.keys() == other.item_metadata.keys() and
-             all(self.item_metadata[x] == other.item_metadata[x] for x in self.item_metadata if x not in self.EXCLUDED_ITEM_METADATA_KEYS))
+             all(self.item_metadata[x] == other.item_metadata[x]
+                 for x in self.item_metadata
+                 if x not in self.EXCLUDED_ITEM_METADATA_KEYS))
 
     def __le__(self, other):
         return self.identifier <= other.identifier
 
     def __hash__(self):
-        without_excluded_keys = {k:v for (k,v) in self.item_metadata.items() if k not in self.EXCLUDED_ITEM_METADATA_KEYS}
-        return hash(json.dumps(without_excluded_keys, sort_keys=True, check_circular=False))
+        without_excluded_keys = dict(
+            (k, v) for (k, v) in self.item_metadata.items()
+            if k not in self.EXCLUDED_ITEM_METADATA_KEYS)
+        return hash(json.dumps(without_excluded_keys,
+                               sort_keys=True, check_circular=False))
+
 
 class Item(BaseItem):
     """This class represents an archive.org item. You can use this

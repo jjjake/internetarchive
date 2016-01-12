@@ -25,7 +25,7 @@ install_requires = [
     'schema>=0.4.0,<0.5.0',
 ]
 if sys.version_info <= (2, 7):
-    install_requires.append(['pyopenssl', 'ndg-httpsclient', 'pyasn1'])
+    install_requires.append(['pyopenssl', 'ndg-httpsclient', 'pyasn1', 'total-ordering'])
 
 setup(
     name='internetarchive',

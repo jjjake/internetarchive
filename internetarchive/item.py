@@ -13,7 +13,10 @@ from fnmatch import fnmatch
 import os
 from time import sleep
 import sys
-import functools
+try:
+    from functools import total_ordering
+except ImportError:
+    from total_ordering import total_ordering
 import json
 
 from six import string_types
@@ -31,7 +34,7 @@ from internetarchive import __version__
 log = getLogger(__name__)
 
 
-@functools.total_ordering
+@total_ordering
 class BaseItem(object):
     EXCLUDED_ITEM_METADATA_KEYS = (u'workable_servers', u'server')
 

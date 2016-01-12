@@ -32,7 +32,7 @@ import sys
 import os
 import difflib
 import errno
-from pkg_resources import load_entry_point, DistributionNotFound
+from pkg_resources import iter_entry_points, load_entry_point, DistributionNotFound
 
 from docopt import docopt, printable_usage
 from schema import Schema, Or, SchemaError
@@ -64,7 +64,10 @@ def load_ia_module(cmd):
             return __import__(_module, fromlist=['internetarchive.cli'])
         else:
             _module = 'ia_{0}'.format(cmd)
-            return load_entry_point(_module, 'internetarchive.cli.plugins', _module)
+            for ep in iter_entry_points('internetarchive.cli.plugins'):
+                if ep.name == _module:
+                    return ep.load()
+            raise ImportError
     except (ImportError, DistributionNotFound):
         print("error: '{0}' is not an ia command! See 'ia help'".format(cmd),
               file=sys.stderr)

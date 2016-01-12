@@ -16,17 +16,6 @@ with open('README.rst', 'r', 'utf-8') as f:
 with open('HISTORY.rst', 'r', 'utf-8') as f:
     history = f.read()
 
-install_requires = [
-    'requests>=2.0.0,<3.0.0',
-    'jsonpatch==0.4',
-    'docopt>=0.6.0,<0.7.0',
-    'clint>=0.4.0,<0.5.0',
-    'six>=1.0.0,<2.0.0',
-    'schema>=0.4.0,<0.5.0',
-]
-if sys.version_info <= (2, 7):
-    install_requires.append(['pyopenssl', 'ndg-httpsclient', 'pyasn1', 'total-ordering'])
-
 setup(
     name='internetarchive',
     version=version,
@@ -47,15 +36,21 @@ setup(
             'ia = internetarchive.cli.ia:main',
         ],
     },
-    install_requires=install_requires,
+    install_requires=[
+        'requests>=2.9.0,<3.0.0',
+        'jsonpatch==0.4',
+        'docopt>=0.6.0,<0.7.0',
+        'clint>=0.4.0,<0.6.0',
+        'six>=1.0.0,<2.0.0',
+        'schema>=0.4.0,<0.5.0',
+    ] + (['total-ordering'] if sys.version_info < (2, 7) else []),
     classifiers=(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'License :: OSI Approved :: GNU Affero General Public License v3',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
     )
 )

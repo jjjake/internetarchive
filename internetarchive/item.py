@@ -687,19 +687,21 @@ class Collection(Item):
             orig = args[0]
             args = (orig.session, orig.identifier, orig.item_metadata)
         super(Collection, self).__init__(*args, **kwargs)
-        mediatype = self.item_metadata.get('metadata', {}).get('mediatype', 'collection')
-        if mediatype != 'collection':
+        if self.metadata.get(u'mediatype', u'collection') != 'collection':
             raise ValueError('mediatype is not "collection"!')
-        self._make_search('contents', "collection:{0.identifier}")
-        self._make_search('subcollections',
-                          'collection:{0.identifier} AND mediatype:collection')
 
-    def _do_search(self, query, name):
-        _search = self.session.search_items(query, fields=['identifier'])
-        rtn = self.searches.setdefault(name, _search).iter_as_items()
-        if not hasattr(self, name + '_count'):
-            setattr(self, name + "_count", self.searches[name].num_found)
-        return rtn
+        deflt_srh = "collection:{0.identifier}".format(self)
+        self._make_search('contents',
+                          self.metadata.get(u'search_collection', deflt_srh))
+        self._make_search('subcollections',
+                          deflt_srh + " AND mediatype:collection")
+
+    def _do_search(self, name, query):
+        rtn = self.searches.setdefault(
+            name, self.session.search_items(query, fields=[u'identifier']))
+        if not hasattr(self, name+"_count"):
+            setattr(self, name+"_count", self.searches[name].num_found)
+        return rtn.iter_as_items()
 
     def _make_search(self, name, query):
-        setattr(self, name, lambda: self._do_search(query.format(self), name))
+        setattr(self, name, lambda: self._do_search(name, query))

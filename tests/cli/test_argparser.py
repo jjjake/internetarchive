@@ -20,16 +20,22 @@ def test_get_xml_text():
 def test_get_args_dict():
     test_input = [
         'collection:test_collection',
-        "description: Attention: multiple colon's",
+        "description: Attention: multiple colons",
         'unicode_test:தமிழ்',
         'subject:subject1',
         'subject:subject2',
+        'a=b&a=c&a=d',
+        'b = a , b = c , b = d',
+        'c = a ; c = b ; c = d'
     ]
     test_output = {
         'collection': 'test_collection',
-        'description': " Attention: multiple colon's",
+        'description': "Attention: multiple colons",
         'unicode_test': 'தமிழ்',
-        'subject': ['subject1', 'subject2']
+        'subject': ['subject1', 'subject2'],
+        'a': ['b', 'c', 'd'],
+        'b': ['a', 'c', 'd'],
+        'c': ['a', 'b', 'd']
     }
     args_dict = get_args_dict(test_input)
     for key, value in args_dict.items():

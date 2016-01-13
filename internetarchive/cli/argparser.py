@@ -8,6 +8,7 @@ internetarchive.cli.argparser
 """
 from collections import defaultdict
 from xml.dom.minidom import parseString
+import re
 
 
 def get_xml_text(xml_str, tag_name=None, text=None):
@@ -22,19 +23,17 @@ def get_xml_text(xml_str, tag_name=None, text=None):
     return text
 
 
-def get_args_dict(args):
-    # Convert args list into a metadata dict.
-    args = [] if not args else args
-    metadata = defaultdict(list)
-    for md in args:
-        key, value = md.split(':', 1)
-        assert value
-        if value not in metadata[key]:
-            metadata[key].append(value)
-
-    for key in metadata:
+def get_args_dict(strings):
+    args = defaultdict(list)
+    for s in strings:
+        for (key, value) in \
+                [[x.strip() for x in re.split(r'[:=]', p, 1)]
+                    for p in re.split('[,;&]', s)]:
+            assert value
+            if value not in args[key]:
+                args[key].append(value)
+    for key in args:
         # Flatten single item lists.
-        if len(metadata[key]) <= 1:
-            metadata[key] = metadata[key][0]
-
-    return metadata
+        if len(args[key]) <= 1:
+            args[key] = args[key][0]
+    return args

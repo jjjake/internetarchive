@@ -61,7 +61,9 @@ class Search(object):
 
         # Sort by score if no other sort is provided -- if page parameter is
         # not provided.
-        if 'page' not in params and not any(k.startswith('sort') for k, v in params.items()):
+        has_page_param = 'page' in params
+        has_sort_param = any(k.startswith('sort') for k, v in params.items())
+        if not (has_page_param or has_sort_param):
             default_params['sort[0]'] = 'identifier asc'
 
         self.params = default_params.copy()

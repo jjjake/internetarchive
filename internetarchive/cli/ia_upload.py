@@ -27,7 +27,6 @@ options:
                                       503 SlowDown error.
     -s, --sleep=<i>                   The amount of time to sleep between retries
                                       [default: 30].
-    -l, --log                         Log upload results to file.
     --status-check                    Check if S3 is accepting requests to the given item.
 """
 from __future__ import absolute_import, unicode_literals, print_function

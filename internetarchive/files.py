@@ -14,8 +14,8 @@ import logging
 import socket
 
 import six.moves.urllib as urllib
-from requests.exceptions import HTTPError, RetryError, ConnectTimeout, ConnectionError, \
-        ReadTimeout
+from requests.exceptions import HTTPError, RetryError, ConnectTimeout, \
+    ConnectionError, ReadTimeout
 
 from internetarchive import iarequest, utils
 

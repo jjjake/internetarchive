@@ -335,7 +335,7 @@ def test_upload(testitem, json_filename):
 
 def test_upload_secure_session(testitem_metadata, json_filename):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
-        s = get_session(config=dict(secure=True))
+        s = get_session(config={'general': {'secure': True}})
         rsps.add(responses.GET, 'https://archive.org/metadata/nasa',
                  body=testitem_metadata,
                  status=200)

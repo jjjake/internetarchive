@@ -77,9 +77,9 @@ class ArchiveSession(requests.sessions.Session):
         self.cookies.update(self.config.get('cookies', {}))
         # Avoid InsecurePlatformWarning errors on older versions of Python.
         if sys.version_info < (2, 7, 9):
-            self.secure = self.config.get('secure', False)
+            self.secure = self.config.get('general', {}).get('secure', False)
         else:
-            self.secure = self.config.get('secure', True)
+            self.secure = self.config.get('general', {}).get('secure', True)
         self.protocol = 'https:' if self.secure else 'http:'
         self.access_key = self.config.get('s3', {}).get('access')
         self.secret_key = self.config.get('s3', {}).get('secret')
@@ -93,7 +93,7 @@ class ArchiveSession(requests.sessions.Session):
         if logging_config.get('level'):
             self.set_file_logger(logging_config.get('level', 'NOTSET'),
                                  logging_config.get('file', 'internetarchive.log'))
-            if debug:
+            if debug or (logger.level <= 10):
                 self.set_file_logger(logging_config.get('level', 'NOTSET'),
                                      logging_config.get('file', 'internetarchive.log'),
                                      'requests.packages.urllib3')

@@ -9,6 +9,7 @@ internetarchive.config
 from __future__ import absolute_import
 
 import os
+from collections import defaultdict
 from six.moves import configparser
 
 import requests
@@ -100,6 +101,10 @@ def parse_config_file(config_file=None):
         config.add_section('cookies')
         config.set('cookies', 'logged-in-user', None)
         config.set('cookies', 'logged-in-sig', None)
+    if config.has_section('general'):
+        for k, v in config.items('general'):
+            if k in ['secure']:
+                config.set('general', k, config.getboolean('general', k))
 
     return (config_file, config)
 
@@ -111,11 +116,13 @@ def get_config(config=None, config_file=None):
     if not os.path.isfile(config_file):
         return _config
 
-    config_dict = dict()
+    config_dict = defaultdict(dict)
     for sec in config.sections():
         try:
-            _items = [(k, v) for k, v in config.items(sec) if k and v]
-            config_dict[sec] = dict(_items)
+            for k, v in config.items(sec):
+                if k is None or v is None:
+                    continue
+                config_dict[sec][k] = v
         except TypeError:
             pass
 

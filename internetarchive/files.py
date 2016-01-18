@@ -13,8 +13,9 @@ import sys
 import logging
 import socket
 
-from requests.exceptions import HTTPError, RetryError, ConnectTimeout, ConnectionError
 import six.moves.urllib as urllib
+from requests.exceptions import HTTPError, RetryError, ConnectTimeout, ConnectionError, \
+        ReadTimeout
 
 from internetarchive import iarequest, utils
 
@@ -187,7 +188,7 @@ class File(BaseFile):
                         f.write(chunk)
                         f.flush()
         except (RetryError, HTTPError, ConnectTimeout,
-                ConnectionError, socket.error) as exc:
+                ConnectionError, socket.error, ReadTimeout) as exc:
             msg = ('error downloading file {0}, '
                    'exception raised: {1}'.format(file_path, exc))
             log.error(msg)

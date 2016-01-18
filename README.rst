@@ -73,6 +73,13 @@ You can also modify metadata after `configuring ia <https://github.com/jjjake/in
 
     $ ia metadata <identifier> --modify="foo:bar" --modify="baz:foooo"
 
+You can remove a metadata field by setting the value of the given field to ``REMOVE_TAG``.
+For example, to remove the metadata field ``foo`` from the item ``<identifier>``:
+
+.. code:: bash
+
+    $ ia metadata <identifier> --modify="foo:REMOVE_TAG"
+
 See ``ia help metadata`` for more details.
 
 
@@ -310,6 +317,13 @@ again make sure you have the `internetarchive library configured <https://github
     >>> item = get_item('my_identifier')
     >>> md = dict(blah='one', foo=['two', 'three'])
     >>> item.modify_metadata(md)
+
+You can remove a metadata field by setting the value of the given field to ``REMOVE_TAG``.
+For example, to remove the metadata field ``foo`` from the given item:
+
+.. code:: python
+
+    >>> item.modify_metadata(dict(foo='REMOVE_TAG'))
 
 
 Searching from Python

@@ -7,7 +7,7 @@ The Internet Archive Python Library
 ===================================
 
 Welcome to the documentation for the ``internetarchive`` Python library.
-Please report any issues on `Github <https://github.com/jjjake/ia-wrapper/issues>`__.
+Please report any issues on `Github <https://github.com/jjjake/internetarchive/issues>`__.
 
 
 User's Guide
@@ -18,3 +18,4 @@ User's Guide
 
     installation
     quickstart
+    api

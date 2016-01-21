@@ -39,6 +39,8 @@ You can upload file-like objects::
 
     >>> r = upload('iacli-test-item301', {'foo.txt': StringIO(u'bar baz boo')})
 
+**Note**: metadata can only be added to an item using the :func:`upload <internetarchive.upload>` function on item creation. If an item already exists and you would like to modify it's metadata, you must use :func:`modify_metadata <internetarchive.modify_metadata>`.
+
 
 Metadata
 --------
@@ -154,3 +156,25 @@ Or, a list of formats::
     goodytwoshoes00newyiala:
      downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc to goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc
      downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala.epub to goodytwoshoes00newyiala/goodytwoshoes00newyiala.epub
+
+
+Searching
+---------
+
+The :func:`search_items <internetarchive.search_items>` function can be used to iterate through Archive.org search results::
+
+    >>> from internetarchive import search_items
+    >>> for i in search_items('identifier:nasa'):
+    ...     print(i['identifier'])
+    ...
+    nasa
+
+:func:`search_items <internetarchive.search_items>` can also yield :class:`Item <internetarchive.Item>` objects::
+
+    >>> from internetarchive import search_items
+    >>> for item in search_items('identifier:nasa').iter_as_items():
+    ...     print(item)
+    ...
+    Collection(identifier='nasa', exists=True)
+
+:func:`search_items <internetarchive.search_items>` will automatically paginate through large result sets.

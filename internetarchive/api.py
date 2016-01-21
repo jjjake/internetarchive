@@ -33,7 +33,7 @@ def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=N
     :param http_adapter_kwargs: (optional) Keyword arguments that
                                 :py:class:`requests.adapters.HTTPAdapter` takes.
 
-    Usage::
+    Usage:
         >>> from internetarchive import get_session
         >>> config = dict(s3=dict(acccess='foo', secret='bar'))
         >>> s = get_session(config)
@@ -71,9 +71,9 @@ def get_item(identifier,
 
     :type request_kwargs: dict
     :param request_kwargs: (optional) Keyword arguments that
-                           :py:class:`requests.request.Request` takes.
+                           :py:class:`requests.Request` takes.
 
-    Usage::
+    Usage:
         >>> from internetarchive import get_item
         >>> item = get_item('nasa')
         >>> item.item_size
@@ -109,7 +109,7 @@ def get_files(identifier,
 
     :param \*\*get_item_kwargs: (optional) Arguments that ``get_item()`` takes.
 
-    Usage::
+    Usage:
         >>> from internetarchive import get_files
         >>> fnames = [f.name for f in get_files('nasa', glob_pattern='*xml')]
         >>> print(fnames)

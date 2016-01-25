@@ -13,6 +13,11 @@ from fnmatch import fnmatch
 import os
 from time import sleep
 import sys
+try:
+    from functools import total_ordering
+except ImportError:
+    from total_ordering import total_ordering
+import json
 
 from six import string_types
 from requests import Response
@@ -29,7 +34,10 @@ from internetarchive import __version__
 log = getLogger(__name__)
 
 
+@total_ordering
 class BaseItem(object):
+    EXCLUDED_ITEM_METADATA_KEYS = (u'workable_servers', u'server')
+
     def __init__(self, identifier=None, item_metadata=None):
         # Default attributes.
         self.identifier = identifier
@@ -73,6 +81,23 @@ class BaseItem(object):
 
         mc = self.metadata.get('collection', [])
         self.collection = IdentifierListAsItems(mc, self.session)
+
+    def __eq__(self, other):
+        return self.item_metadata == other.item_metadata or \
+            (self.item_metadata.keys() == other.item_metadata.keys() and
+             all(self.item_metadata[x] == other.item_metadata[x]
+                 for x in self.item_metadata
+                 if x not in self.EXCLUDED_ITEM_METADATA_KEYS))
+
+    def __le__(self, other):
+        return self.identifier <= other.identifier
+
+    def __hash__(self):
+        without_excluded_keys = dict(
+            (k, v) for (k, v) in self.item_metadata.items()
+            if k not in self.EXCLUDED_ITEM_METADATA_KEYS)
+        return hash(json.dumps(without_excluded_keys,
+                               sort_keys=True, check_circular=False))
 
 
 class Item(BaseItem):

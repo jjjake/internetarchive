@@ -36,7 +36,8 @@ class Search(object):
                  request_kwargs=None):
         fields = [] if not fields else fields
         # Support str or list values for fields param.
-        fields = [fields] if not isinstance(fields, (list, set, tuple)) else fields
+        fields = [fields] if not isinstance(
+            fields, (list, set, tuple)) else fields
 
         params = {} if not params else params
         config = {} if not config else config
@@ -44,7 +45,8 @@ class Search(object):
 
         self.session = archive_session
         self.request_kwargs = request_kwargs
-        self.url = '{0}//archive.org/advancedsearch.php'.format(self.session.protocol)
+        self.url = '{0}//archive.org/advancedsearch.php'.format(
+            self.session.protocol)
         default_params = dict(
             q=query,
             rows=250,
@@ -57,8 +59,11 @@ class Search(object):
         # Set retries.
         self.session._mount_http_adapter(max_retries=5)
 
-        # Sort by identifier if no other sort is provided.
-        if not any(k.startswith('sort') for k, v in params.items()):
+        # Sort by score if no other sort is provided -- if page parameter is
+        # not provided.
+        has_page_param = 'page' in params
+        has_sort_param = any(k.startswith('sort') for k, v in params.items())
+        if not (has_page_param or has_sort_param):
             default_params['sort[0]'] = 'identifier asc'
 
         self.params = default_params.copy()
@@ -80,7 +85,8 @@ class Search(object):
     def _get_search_info(self):
         info_params = self.params.copy()
         info_params['rows'] = 0
-        r = self.session.get(self.url, params=info_params, **self.request_kwargs)
+        r = self.session.get(self.url, params=info_params,
+                             **self.request_kwargs)
         results = r.json()
         del results['response']['docs']
         return results
@@ -96,10 +102,16 @@ class Search(object):
 
     def make_results_generator(self):
         """Generator for iterating over search results"""
-        total_pages = int((self.num_found / int(self.params['rows'])) + 2)
-        for page in range(1, total_pages):
+        start_page = 1
+        end_page = int((self.num_found / int(self.params['rows'])) + 2)
+        if 'page' in self.params:
+            start_page = int(self.params['page'])
+            end_page = start_page + 1
+
+        for page in range(start_page, end_page):
             self.params['page'] = page
-            r = self.session.get(self.url, params=self.params, **self.request_kwargs)
+            r = self.session.get(
+                self.url, params=self.params, **self.request_kwargs)
             results = r.json()
             for doc in results['response']['docs']:
                 yield doc
@@ -116,7 +128,8 @@ class Search(object):
             _map = itertools.imap(self._get_item_from_search_result,
                                   self.make_results_generator())
         else:
-            _map = map(self._get_item_from_search_result, self.make_results_generator())
+            _map = map(self._get_item_from_search_result,
+                       self.make_results_generator())
         return SearchIterator(self, _map)
 
 
@@ -125,6 +138,7 @@ class SearchIterator(object):
 
     It provides access to the underlying Search, and supports
     len() (since that is known initially)."""
+
     def __init__(self, search, iterator):
         self.search = search
         self.iterator = iterator

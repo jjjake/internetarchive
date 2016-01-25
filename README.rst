@@ -189,6 +189,15 @@ Search
 .. code:: bash
 
     $ ia search 'subject:"market street" collection:prelinger'
+    
+By default, ``ia search`` attempts to return all items meeting the search criteria,
+and the results are sorted by item identifier. If you want to just select the top ``n``
+items, you can specify a ``page`` and ``rows`` parameter. For example, to get the 
+top 20 items matching the search 'dogs':
+
+.. code:: bash
+
+    $ ia search --parameters="page:1;rows:20" "dogs"
 
 You can use ``ia search`` to create an itemlist:
 

@@ -45,8 +45,7 @@ class Search(object):
 
         self.session = archive_session
         self.request_kwargs = request_kwargs
-        self.url = '{0}//archive.org/advancedsearch.php'.format(
-            self.session.protocol)
+        self.url = '{0}//archive.org/advancedsearch.php'.format(self.session.protocol)
         default_params = dict(
             q=query,
             rows=250,
@@ -85,8 +84,7 @@ class Search(object):
     def _get_search_info(self):
         info_params = self.params.copy()
         info_params['rows'] = 0
-        r = self.session.get(self.url, params=info_params,
-                             **self.request_kwargs)
+        r = self.session.get(self.url, params=info_params, **self.request_kwargs)
         results = r.json()
         del results['response']['docs']
         return results
@@ -110,8 +108,7 @@ class Search(object):
 
         for page in range(start_page, end_page):
             self.params['page'] = page
-            r = self.session.get(
-                self.url, params=self.params, **self.request_kwargs)
+            r = self.session.get(self.url, params=self.params, **self.request_kwargs)
             results = r.json()
             for doc in results['response']['docs']:
                 yield doc
@@ -128,8 +125,7 @@ class Search(object):
             _map = itertools.imap(self._get_item_from_search_result,
                                   self.make_results_generator())
         else:
-            _map = map(self._get_item_from_search_result,
-                       self.make_results_generator())
+            _map = map(self._get_item_from_search_result, self.make_results_generator())
         return SearchIterator(self, _map)
 
 

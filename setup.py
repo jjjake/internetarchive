@@ -43,7 +43,7 @@ setup(
         'clint>=0.4.0,<0.6.0',
         'six>=1.0.0,<2.0.0',
         'schema>=0.4.0,<0.5.0',
-    ],
+    ] + (['total-ordering'] if sys.version_info < (2, 7) else []),
     classifiers=(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

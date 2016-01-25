@@ -18,6 +18,7 @@ import os
 
 import internetarchive
 from internetarchive import __version__
+import alabaster
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -39,6 +40,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
+    'alabaster',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -109,6 +111,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
+html_theme_path = [alabaster.get_path()]
 html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme

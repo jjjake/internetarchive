@@ -6,7 +6,10 @@
 The Internet Archive Python Library
 ===================================
 
+Release v\ |version|. (:ref:`Installation <install>`)
+
 Welcome to the documentation for the ``internetarchive`` Python library.
+``internetarchive`` is a command-line and Python interface to Archive.org.
 Please report any issues on `Github <https://github.com/jjjake/internetarchive/issues>`__.
 
 

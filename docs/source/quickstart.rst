@@ -39,24 +39,22 @@ You can upload file-like objects::
 
     >>> r = upload('iacli-test-item301', {'foo.txt': StringIO(u'bar baz boo')})
 
+If the item already has a file with the same filename, the existing file within the item will be overwritten.
+
 **Note**: metadata can only be added to an item using the :func:`upload <internetarchive.upload>` function on item creation. If an item already exists and you would like to modify it's metadata, you must use :func:`modify_metadata <internetarchive.modify_metadata>`.
 
 
 Metadata
 --------
 
-Adding new metadata to an item can be done using the :func:`modify_metadata <internetarchive.modify_metadata>` function::
+Reading Metadata
+^^^^^^^^^^^^^^^^
 
-    >>> from internetarchive import modify_metadata
-    >>> r = modify_metadata('<identifier>', metadata=dict(title='My Title'))
-    >>> r.status_code
-    200
-
-You can access an item's metadata via the :class:`Item <internetarchive.Item>` object::
+You can access all of an item's metadata via the :class:`Item <internetarchive.Item>` object::
 
     >>> from internetarchive import get_item
     >>> item = get_item('iacli-test-item301')
-    >>> item.metadata['title']
+    >>> item.item_metadata['metadata']['title']
     'My Title'
 
 :func:`get_item <internetarchive.get_item>` retrieves all of an item's metadata via the `Internet Archive Metadata API <http://blog.archive.org/2013/07/04/metadata-api/>`_. This metadata can be accessed via the ``Item.item_metadata`` attribute::
@@ -72,6 +70,19 @@ All of the top-level keys in ``item.item_metadata`` are available as attributes:
     161752024
     >>> item.files[0].name
     'blank.txt'
+    >>> item.metadata['identifier']
+    'iacli-test-item301'
+
+
+Writing Metadata
+^^^^^^^^^^^^^^^^
+
+Adding new metadata to an item can be done using the :func:`modify_metadata <internetarchive.modify_metadata>` function::
+
+    >>> from internetarchive import modify_metadata
+    >>> r = modify_metadata('<identifier>', metadata=dict(title='My Stuff'))
+    >>> r.status_code
+    200
 
 Modifying metadata can also be done via the :class:`Item <internetarchive.Item>` object. For example, changing the title we set in the example above can be done like so::
     

@@ -32,12 +32,13 @@ logger = logging.getLogger(__name__)
 
 
 class ArchiveSession(requests.sessions.Session):
-    """The :class:`ArchiveSession <ArchiveSession>` object collects
-    together useful functionality from `internetarchive` as well as
-    important data such as configuration information and credentials.
-    It is subclassed from :class:`requests.sessions.Session <Session>`.
+    """The :class:`ArchiveSession <internetarchive.ArchiveSession>`
+    object collects together useful functionality from `internetarchive`
+    as well as important data such as configuration information and
+    credentials.  It is subclassed from
+    :class:`requests.Session <requests.Session>`.
 
-    Basic Usage::
+    Usage::
 
         >>> from internetarchive import ArchiveSession
         >>> s = ArchiveSession()

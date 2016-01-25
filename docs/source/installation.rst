@@ -52,6 +52,19 @@ Install ``internetarchive`` into your virtualenv::
     $ pip install internetarchive
 
 
+Binaries
+--------
+
+Binaries are also available for the ``ia`` command-line tool::
+
+    $ curl -LOs https://archive.org/download/ia-pex/ia
+    $ chmod +x ia
+
+Binaries are generated with `PEX <https://github.com/pantsbuild/pex>`_. The only requirement for using the binaries is that you have Python installed on a Unix-like operating system.
+
+For more details on the command-line interface please refer to the `README <https://github.com/jjjake/internetarchive/blob/master/README.rst>`_, or ``ia help``.
+
+
 Get the Code
 ------------
 

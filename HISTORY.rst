@@ -3,6 +3,22 @@
 Release History
 ---------------
 
+1.0.0 (?)
++++++++++
+
+**Features and Improvements**
+
+- Renamed ``internetarchive.iacli`` to ``internetarchive.cli``.
+- Moved ``File`` object to ``internetarchive.files``.
+- Converted config fromat from YAML to INI to avoid PyYAML requirement.
+- Use HTTPS by default for Python versions > 2.7.9.
+- Added ``get_username`` function to API.
+- Improved Python 3 support. ``internetarchive`` is now being tested against Python versions 2.6, 2.7, 3.4, and 3.5.
+- Improved plugin support.
+- Added retry support to download and metadata retrieval.
+- Added ``Collection`` object.
+- Made ``Item`` objects hashable and orderable.
+
 0.9.8 (2015-11-09)
 ++++++++++++++++++
 

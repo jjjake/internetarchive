@@ -86,25 +86,6 @@ def test_get_files_by_name(testitem):
                for f in files) == set(['globe_west_540.jpg', 'nasa_meta.xml'])
 
 
-def test_get_files_by_source(testitem):
-    files = set(f.name for f in testitem.get_files(source='metadata'))
-    expected_files = set(['nasa_reviews.xml',
-                          'nasa_meta.xml',
-                          'nasa_archive.torrent',
-                          'nasa_files.xml', ])
-    assert files == expected_files
-
-    files = set(f.name
-                for f in testitem.get_files(source=['metadata', 'original']))
-    expected_files = set(['nasa_reviews.xml',
-                          'nasa_meta.xml',
-                          'nasa_archive.torrent',
-                          'nasa_files.xml',
-                          'globe_west_540.jpg',
-                          'NASAarchiveLogo.jpg', ])
-    assert files == expected_files
-
-
 def test_get_files_by_formats(testitem):
     files = set(f.name for f in testitem.get_files(formats='Archive BitTorrent'))
     expected_files = set(['nasa_archive.torrent'])
@@ -271,12 +252,10 @@ def test_download_dry_run(tmpdir, capsys, testitem):
                  body='no dest dir',
                  status=200,
                  adding_headers={'content-length': '100'})
-        testitem.download(source='original', dry_run=True)
+        testitem.download(formats='Metadata', dry_run=True)
         out, err = capsys.readouterr()
-        expected_output = ('{0}//archive.org/download/nasa/NASAarchiveLogo.jpg\n'
-                           '{0}//archive.org/download/nasa/globe_west_540.jpg\n'.format(
-                               protocol))
-        assert expected_output == out
+        assert set([x.split('/')[-1] for x in out.split('\n') if x]) \
+            == set(['nasa_reviews.xml', 'nasa_meta.xml', 'nasa_files.xml'])
 
 
 def test_download_verbose(tmpdir, capsys, testitem):

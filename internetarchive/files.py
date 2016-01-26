@@ -100,7 +100,6 @@ class File(BaseFile):
         return ('File(identifier={identifier!r}, '
                 'filename={name!r}, '
                 'size={size!r}, '
-                'source={source!r}, '
                 'format={format!r})'.format(**self.__dict__))
 
     # download()

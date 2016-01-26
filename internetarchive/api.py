@@ -21,7 +21,9 @@ from internetarchive.exceptions import AuthenticationError
 
 
 def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=None):
-    """Return a new :class:`ArchiveSession` object.
+    """Return a new :class:`ArchiveSession` object. The :class:`ArchiveSession` object
+    is the main interface to the ``internetarchive`` lib. It allows you to persist
+    certain parameters across tasks.
 
     :type config: dict
     :param config: (optional) A dictionary used to configure your session.
@@ -39,6 +41,14 @@ def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=N
         >>> s = get_session(config)
         >>> s.access_key
         'foo'
+
+    From the session object, you can access all of the main functions of the
+    ``internetarchive`` lib:
+        >>> item = s.get_item('nasa')
+        >>> item.download()
+        nasa: ddddddd - success
+        >>> s.get_tasks(task_ids=31643513)[0].server
+        'ia311234'
     """
     return session.ArchiveSession(config, config_file, debug, http_adapter_kwargs)
 
@@ -86,7 +96,6 @@ def get_item(identifier,
 
 def get_files(identifier,
               files=None,
-              source=None,
               formats=None,
               glob_pattern=None,
               **get_item_kwargs):
@@ -97,9 +106,6 @@ def get_files(identifier,
 
     :param files: iterable
     :param files: (optional) Only return files matching the given filenames.
-
-    :param source: iterable
-    :param source: (optional) Only return files matching the given sources.
 
     :param formats: iterable
     :param formats: (optional) Only return files matching the given formats.
@@ -116,7 +122,7 @@ def get_files(identifier,
         ['nasa_reviews.xml', 'nasa_meta.xml', 'nasa_files.xml']
     """
     item = get_item(identifier, **get_item_kwargs)
-    return item.get_files(files, source, formats, glob_pattern)
+    return item.get_files(files, formats, glob_pattern)
 
 
 def modify_metadata(identifier, metadata,
@@ -249,7 +255,6 @@ def upload(identifier, files,
 
 def download(identifier,
              files=None,
-             source=None,
              formats=None,
              glob_pattern=None,
              dry_run=None,
@@ -269,8 +274,6 @@ def download(identifier,
     :param identifier: The globally unique Archive.org identifier for a given item.
 
     :param files: (optional) Only return files matching the given file names.
-
-    :param source: (optional) Only return files matching the given sources.
 
     :param formats: (optional) Only return files matching the given formats.
 
@@ -304,7 +307,6 @@ def download(identifier,
     """
     item = get_item(identifier, **get_item_kwargs)
     item.download(files=files,
-                  source=source,
                   formats=formats,
                   glob_pattern=glob_pattern,
                   dry_run=dry_run,
@@ -321,7 +323,6 @@ def download(identifier,
 
 def delete(identifier,
            files=None,
-           source=None,
            formats=None,
            glob_pattern=None,
            cascade_delete=None,
@@ -336,8 +337,6 @@ def delete(identifier,
     :param identifier: The globally unique Archive.org identifier for a given item.
 
     :param files: (optional) Only return files matching the given filenames.
-
-    :param source: (optional) Only return files matching the given sources.
 
     :param formats: (optional) Only return files matching the given formats.
 
@@ -361,7 +360,7 @@ def delete(identifier,
     :param debug: (optional) Set to True to print headers to stdout and exit exit without
                   sending the delete request.
     """
-    files = get_files(identifier, files, source, formats, glob_pattern, **kwargs)
+    files = get_files(identifier, files, formats, glob_pattern, **kwargs)
 
     responses = []
     for f in files:

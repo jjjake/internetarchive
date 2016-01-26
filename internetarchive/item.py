@@ -166,26 +166,21 @@ class Item(BaseItem):
         """
         return File(self, file_name)
 
-    def get_files(self, files=None, source=None, formats=None, glob_pattern=None):
+    def get_files(self, files=None, formats=None, glob_pattern=None):
         files = [] if not files else files
-        source = [] if not source else source
         formats = [] if not formats else formats
 
         if not isinstance(files, (list, tuple, set)):
             files = [files]
-        if not isinstance(source, (list, tuple, set)):
-            source = [source]
         if not isinstance(formats, (list, tuple, set)):
             formats = [formats]
 
-        if not any(k for k in [files, source, formats, glob_pattern]):
+        if not any(k for k in [files, formats, glob_pattern]):
             for f in self.files:
                 yield self.get_file(f.get('name'))
 
         for f in self.files:
             if f.get('name') in files:
-                yield self.get_file(f.get('name'))
-            elif f.get('source') in source:
                 yield self.get_file(f.get('name'))
             elif f.get('format') in formats:
                 yield self.get_file(f.get('name'))
@@ -200,7 +195,6 @@ class Item(BaseItem):
 
     def download(self,
                  files=None,
-                 source=None,
                  formats=None,
                  glob_pattern=None,
                  dry_run=None,
@@ -216,9 +210,6 @@ class Item(BaseItem):
         """Download files from an item.
 
         :param files: (optional) Only download files matching given file names.
-
-        :type source: str
-        :param source: (optional) Only download files matching given source.
 
         :type formats: str
         :param formats: (optional) Only download files matching the given Formats.
@@ -284,8 +275,6 @@ class Item(BaseItem):
             files = self.get_files(files)
         else:
             files = self.get_files()
-        if source:
-            files = self.get_files(source=source)
         if formats:
             files = self.get_files(formats=formats)
         if glob_pattern:

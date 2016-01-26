@@ -16,8 +16,6 @@ options:
     -R, --retries=<retries>     Set number of retries to <retries> [default: 5]
     -I, --itemlist=<itemlist>   Download items from a specified itemlist.
     -S, --search=<query>        Download items returned from a specified search query.
-    -s, --source=<source>...    Only download files matching the given source.
-    -o, --original              Only download files with source=original.
     -g, --glob=<pattern>        Only download files whose filename matches the
                                 given glob pattern.
     -f, --format=<format>...    Only download files of the specified format(s).
@@ -53,14 +51,6 @@ def search_ids(query):
         yield doc.get('identifier')
 
 
-def validate_sources(sources):
-    valid_sources = ['original', 'derivative', 'metadata']
-    for s in sources:
-        if s not in valid_sources:
-            return False
-    return True
-
-
 def dir_exists(dir):
     if os.path.exists(dir):
         return True
@@ -73,7 +63,6 @@ def main(argv, session):
 
     # Validation error messages.
     destdir_msg = '--destdir must be a valid path to a directory.'
-    src_msg = '--source must be "original", "derivative", or "metadata".'
 
     # Validate args.
     s = Schema({
@@ -81,7 +70,6 @@ def main(argv, session):
         '--destdir': Or([], And(Use(lambda d: d[0]), dir_exists), error=destdir_msg),
         '--format': list,
         '--glob': Use(lambda l: l[0] if l else None),
-        '--source': And(list, validate_sources, error=src_msg),
         '<file>': list,
         '--search': Or(str, None),
         '--itemlist': Or(str, None),
@@ -137,16 +125,8 @@ def main(argv, session):
             continue
 
         # Otherwise, download the entire item.
-        if args['--source']:
-            ia_source = args['--source']
-        elif args['--original']:
-            ia_source = ['original']
-        else:
-            ia_source = None
-
         _errors = item.download(
             files=files,
-            source=ia_source,
             formats=args['--format'],
             glob_pattern=args['--glob'],
             dry_run=args['--dry-run'],

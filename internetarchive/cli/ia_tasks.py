@@ -50,7 +50,8 @@ def main(argv, session):
         try:
             if args['<identifier>']:
                 tasks = session.get_tasks(identifier=args['<identifier>'],
-                        task_type=task_type, params=params)
+                                          task_type=task_type,
+                                          params=params)
             elif args['--get-task-log']:
                 task = session.get_tasks(task_ids=args['--get-task-log'], params=params)
                 if task:

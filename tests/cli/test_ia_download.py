@@ -84,23 +84,6 @@ def test_glob():
     rm('nasa')
 
 
-def test_source():
-    rm('nasa')
-
-    cmd = 'ia download --source=metadata nasa'
-    exit_code, stdout, stderr = call(cmd)
-    test_output = set([
-        'nasa_archive.torrent',
-        'nasa_files.xml',
-        'nasa_meta.xml',
-        'nasa_reviews.xml',
-    ])
-    assert set(os.listdir('nasa')) == test_output
-    assert exit_code == 0
-
-    rm('nasa')
-
-
 def test_format():
     rm('nasa')
 

@@ -1,7 +1,7 @@
 """List files in a given item.
 
 usage:
-    ia list [-v] [--glob=<pattern>] [--location] [--source=<source>]
+    ia list [-v] [--glob=<pattern>] [--location] [--format=<format>...]
             [--columns <column1,column2> | --all] <identifier>
 
 options:
@@ -11,8 +11,7 @@ options:
     -l, --location              Print full URL for each file.
     -c, --columns=<name,size>   List specified file information. [default: name]
     -g, --glob=<pattern>        Only return patterns match the given pattern.
-    -s, --source=<source>       Return files matching source.
-
+    -f, --format=<format>       Return files matching <format>.
 """
 import sys
 import csv
@@ -43,8 +42,8 @@ def main(argv, session):
     if args.get('--glob'):
         patterns = args['--glob'].split('|')
         files = [f for f in files if any(fnmatch(f['name'], p) for p in patterns)]
-    elif args.get('--source'):
-        files = [f.__dict__ for f in item.get_files(source=args['--source'])]
+    elif args.get('--format'):
+        files = [f.__dict__ for f in item.get_files(formats=args['--format'])]
 
     output = []
     for f in files:

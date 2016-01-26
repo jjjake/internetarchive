@@ -114,19 +114,18 @@ def test_ia_list_glob(capsys):
     assert out == 'nasa_archive.torrent\n'
 
 
-def test_ia_list_source(capsys):
+def test_ia_list_format(capsys):
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
-        ia_list.main(['list', '--source', 'metadata', 'nasa'], SESSION)
+        ia_list.main(['list', '--format', 'Metadata', 'nasa'], SESSION)
 
     out, err = capsys.readouterr()
     expected_output = set([
         'nasa_reviews.xml',
         'nasa_files.xml',
         'nasa_meta.xml',
-        'nasa_archive.torrent',
     ])
     assert set([f for f in out.split('\n') if f]) == expected_output
 

@@ -212,28 +212,6 @@ def test_get_files_multiple():
             assert f.name in _files
 
 
-def test_get_files_source():
-    with responses.RequestsMock(
-            assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
-                 body=ITEM_METADATA,
-                 status=200)
-        files = get_files('nasa', source='original')
-        expected_files = set(['NASAarchiveLogo.jpg', 'globe_west_540.jpg'])
-        assert set([f.name for f in files]) == expected_files
-
-        files = get_files('nasa', source=['original', 'metadata'])
-        expected_files = set([
-            'NASAarchiveLogo.jpg',
-            'globe_west_540.jpg',
-            'nasa_meta.xml',
-            'nasa_files.xml',
-            'nasa_reviews.xml',
-            'nasa_archive.torrent',
-        ])
-        assert set([f.name for f in files]) == expected_files
-
-
 def test_get_files_formats():
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:

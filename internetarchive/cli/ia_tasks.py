@@ -18,6 +18,7 @@ options:
     -p, --parameter=<k:v>...      Return tasks matching the given parameter.
 
 """
+from __future__ import absolute_import, print_function, unicode_literals
 import sys
 
 from docopt import docopt
@@ -47,24 +48,29 @@ def main(argv, session):
         task_type = 'red'
 
     try:
-        if args['<identifier>']:
-            tasks = get_tasks(identifier=args['<identifier>'], task_type=task_type,
-                              params=params)
-        elif args['--get-task-log']:
-            task = get_tasks(task_ids=args['--get-task-log'], params=params)
-            if task:
-                log = task[0].task_log()
-                sys.stdout.write(log)
+        try:
+            if args['<identifier>']:
+                tasks = get_tasks(identifier=args['<identifier>'], task_type=task_type,
+                                  params=params)
+            elif args['--get-task-log']:
+                task = get_tasks(task_ids=args['--get-task-log'], params=params)
+                if task:
+                    log = task[0].task_log()
+                    sys.stdout.write(log)
+                else:
+                    sys.stderr.write(
+                        'error retrieving task-log for {0}\n'.format(
+                            args['--get-task-log']))
+                    sys.exit(1)
+                sys.exit(0)
+            elif args['--task']:
+                tasks = get_tasks(task_ids=args['--task'], params=params)
             else:
-                sys.stderr.write(
-                    'error retrieving task-log for {0}\n'.format(args['--get-task-log'])
-                )
-                sys.exit(1)
-            sys.exit(0)
-        elif args['--task']:
-            tasks = get_tasks(task_ids=args['--task'], params=params)
-        else:
-            tasks = get_tasks(task_type=task_type, params=params)
+                tasks = get_tasks(task_type=task_type, params=params)
+        except ValueError as exc:
+            print('error: unable to parse JSON. have you run `ia configure`?'.format(exc),
+                  file=sys.stderr)
+            sys.exit(1)
 
         for t in tasks:
             task_info = [

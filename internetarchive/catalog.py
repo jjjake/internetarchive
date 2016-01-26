@@ -14,10 +14,15 @@ try:
     import ujson as json
 except ImportError:
     import json
+from logging import getLogger
+
 from six.moves.urllib.parse import parse_qsl
 from six import string_types
 
 from internetarchive.utils import map2x
+
+
+log = getLogger(__name__)
 
 
 class Catalog(object):
@@ -130,11 +135,15 @@ class Catalog(object):
 
     def _get_tasks(self):
         r = self.session.get(self.url, params=self.params, **self.request_kwargs)
-        print(self.url, self.params)
         content = r.content.decode('utf-8')
         # Convert JSONP to JSON (then parse the JSON).
         json_str = r.content[(content.index("(") + 1):content.rindex(")")]
-        return [CatalogTask(t) for t in json.loads(json_str)]
+        try:
+            return [CatalogTask(t) for t in json.loads(json_str)]
+        except ValueError:
+            msg = 'Unable to parse JSON. Check your configuration and try again.'
+            log.error(msg)
+            raise ValueError(msg)
 
 
 class CatalogTask(object):

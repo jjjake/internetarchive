@@ -115,7 +115,7 @@ class Catalog(object):
             task_ids = [str(t) for t in task_ids]
             self.params.update(dict(
                 where='task_id in({tasks})'.format(tasks=','.join(task_ids)),
-                history=99999999999999999999999,  # TODO: is there a better way?
+                history=999999999999999999999,  # TODO: is there a better way?
             ))
 
         if identifier:
@@ -139,7 +139,7 @@ class Catalog(object):
         # Convert JSONP to JSON (then parse the JSON).
         json_str = r.content[(content.index("(") + 1):content.rindex(")")]
         try:
-            return [CatalogTask(t) for t in json.loads(json_str)]
+            return [CatalogTask(t, self) for t in json.loads(json_str)]
         except ValueError:
             msg = 'Unable to parse JSON. Check your configuration and try again.'
             log.error(msg)
@@ -163,7 +163,9 @@ class CatalogTask(object):
         'row_type'
     )
 
-    def __init__(self, columns):
+    def __init__(self, columns, catalog_obj):
+        self.session = catalog_obj.session
+        self.request_kwargs = catalog_obj.request_kwargs
         for key, value in map2x(None, self.COLUMNS, columns):
             if key:
                 setattr(self, key, value)
@@ -195,7 +197,6 @@ class CatalogTask(object):
         if self.task_id is None:
             raise ValueError('task_id is None')
         url = 'http://catalogd.archive.org/log/{0}'.format(self.task_id)
-        print(url)
         p = dict(full=1)
         r = self.session.get(url, params=p, **self.request_kwargs)
         r.raise_for_status()

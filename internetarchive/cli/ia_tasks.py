@@ -23,7 +23,6 @@ import sys
 
 from docopt import docopt
 
-from internetarchive import get_tasks
 from internetarchive.cli.argparser import get_args_dict
 
 
@@ -50,23 +49,21 @@ def main(argv, session):
     try:
         try:
             if args['<identifier>']:
-                tasks = get_tasks(identifier=args['<identifier>'], task_type=task_type,
-                                  params=params)
+                tasks = session.get_tasks(identifier=args['<identifier>'],
+                        task_type=task_type, params=params)
             elif args['--get-task-log']:
-                task = get_tasks(task_ids=args['--get-task-log'], params=params)
+                task = session.get_tasks(task_ids=args['--get-task-log'], params=params)
                 if task:
                     log = task[0].task_log()
-                    sys.stdout.write(log)
+                    sys.exit(print(log))
                 else:
-                    sys.stderr.write(
-                        'error retrieving task-log for {0}\n'.format(
-                            args['--get-task-log']))
+                    print('error retrieving task-log '
+                          'for {0}\n'.format(args['--get-task-log']), file=sys.stderr)
                     sys.exit(1)
-                sys.exit(0)
             elif args['--task']:
-                tasks = get_tasks(task_ids=args['--task'], params=params)
+                tasks = session.get_tasks(task_ids=args['--task'], params=params)
             else:
-                tasks = get_tasks(task_type=task_type, params=params)
+                tasks = session.get_tasks(task_type=task_type, params=params)
         except ValueError as exc:
             print('error: unable to parse JSON. have you run `ia configure`?'.format(exc),
                   file=sys.stderr)
@@ -81,7 +78,7 @@ def main(argv, session):
                 # parse task args and append to task_info list.
                 targs = '\t'.join(['{0}={1}'.format(k, v) for (k, v) in t.args.items()])
                 task_info += [t.submitter, targs]
-            sys.stdout.write('\t'.join([str(x) for x in task_info]) + '\n')
+            print('\t'.join([str(x) for x in task_info]))
     except NameError as exc:
-        sys.stderr.write('error: {0}'.format(exc.message))
+        print('error: {0}'.format(exc.message), file=sys.stderr)
         sys.exit(1)

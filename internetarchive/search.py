@@ -12,8 +12,12 @@ search engine.
 from __future__ import absolute_import, unicode_literals
 
 import itertools
+from logging import getLogger
 
 import six
+
+
+log = getLogger(__name__)
 
 
 class Search(object):

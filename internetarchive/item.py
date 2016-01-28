@@ -153,25 +153,42 @@ class Item(BaseItem):
         self.session = archive_session
         super(Item, self).__init__(identifier, item_metadata)
 
-        class URLs:
-            pass
-        self.urls = URLs()
-        self._make_URL('details')
-        self._make_URL('metadata')
-        self._make_URL('download')
-        self._make_URL('history', 'https://catalogd.archive.org/{path}/{0.identifier}')
-        if self.metadata.get('mediatype'):
-            self._make_URL('editxml', 'https://archive.org/{path}.php'
-                           '?type={0.metadata[mediatype]}&edit_item={0.identifier}')
-        self._make_URL('item_mgr', 'https://archive.org/item-mgr.php'
-                       '?identifier={0.identifier}')
+        self.urls = self.URLs(self)
 
         if self.metadata.get('title'):
             self.wikilink = '* [{0.urls.details} {0.identifier}] ' \
                             '-- {0.metadata[title]}'.format(self)
 
-    def _make_URL(self, path, url_format='https://archive.org/{path}/{0.identifier}'):
-        setattr(self.urls, path, url_format.format(self, path=path))
+    class URLs:
+        def __init__(self, itm_obj):
+            self._itm_obj = itm_obj
+            self._paths = []
+            self._make_URL('details')
+            self._make_URL('metadata')
+            self._make_URL('download')
+            self._make_URL('history',
+                           'https://catalogd.archive.org/{path}/{0.identifier}')
+            self._make_URL('item_mgr', 'https://archive.org/item-mgr.php'
+                           '?identifier={0.identifier}')
+            mediatype = self._itm_obj.metadata.get('mediatype')
+            if mediatype:
+                self._make_URL('editxml', 'https://archive.org/{path}.php'
+                               '?type={0.metadata[mediatype]}&edit_item={0.identifier}')
+                if mediatype == 'collection':
+                    self._make_tab_URL('about')
+                    self._make_tab_URL('collection')
+
+        def _make_tab_URL(self, tab):
+            """Make URLs for the separate tabs of Collections details page."""
+            self._make_URL(tab, self.details + "&tab={tab}".format(tab=tab))
+
+        def _make_URL(self, path, url_format='https://archive.org/{path}/{0.identifier}'):
+            setattr(self, path, url_format.format(self._itm_obj, path=path))
+            self._paths.append(path)
+
+        def __str__(self):
+            return "URLs ({1}) for {0.identifier}" \
+                   .format(self._itm_obj, ', '.join(self._paths))
 
     def refresh(self, item_metadata=None, **kwargs):
         if not item_metadata:
@@ -723,18 +740,12 @@ class Collection(Item):
         super(Collection, self).__init__(*args, **kwargs)
         if self.metadata.get(u'mediatype', u'collection') != 'collection':
             raise ValueError('mediatype is not "collection"!')
-        self._make_tab_URL('about')
-        self._make_tab_URL('collection')
 
         deflt_srh = "collection:{0.identifier}".format(self)
         self._make_search('contents',
                           self.metadata.get(u'search_collection', deflt_srh))
         self._make_search('subcollections',
                           deflt_srh + " AND mediatype:collection")
-
-    def _make_tab_URL(self, tab):
-        """Make URLs for the separate tabs of Collections details page."""
-        self._make_URL(tab, self.urls.details + "&tab={tab}".format(tab=tab))
 
     def _do_search(self, name, query):
         rtn = self.searches.setdefault(

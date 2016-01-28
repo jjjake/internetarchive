@@ -166,13 +166,12 @@ class Item(BaseItem):
             self._make_URL('details')
             self._make_URL('metadata')
             self._make_URL('download')
-            self._make_URL('history',
-                           'https://catalogd.archive.org/{path}/{0.identifier}')
-            self._make_URL('item_mgr', 'https://archive.org/item-mgr.php'
+            self._make_URL('history')
+            self._make_URL('item_mgr', '{0.session.protocol}//archive.org/item-mgr.php'
                            '?identifier={0.identifier}')
             mediatype = self._itm_obj.metadata.get('mediatype')
             if mediatype:
-                self._make_URL('editxml', 'https://archive.org/{path}.php'
+                self._make_URL('editxml', '{0.session.protocol}//archive.org/{path}.php'
                                '?type={0.metadata[mediatype]}&edit_item={0.identifier}')
                 if mediatype == 'collection':
                     self._make_tab_URL('about')
@@ -182,7 +181,9 @@ class Item(BaseItem):
             """Make URLs for the separate tabs of Collections details page."""
             self._make_URL(tab, self.details + "&tab={tab}".format(tab=tab))
 
-        def _make_URL(self, path, url_format='https://archive.org/{path}/{0.identifier}'):
+        DEFAULT_URL_FORMAT = '{0.session.protocol}//archive.org/{path}/{0.identifier}'
+
+        def _make_URL(self, path, url_format=DEFAULT_URL_FORMAT):
             setattr(self, path, url_format.format(self._itm_obj, path=path))
             self._paths.append(path)
 

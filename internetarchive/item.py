@@ -153,6 +153,23 @@ class Item(BaseItem):
         self.session = archive_session
         super(Item, self).__init__(identifier, item_metadata)
 
+        class URLs:
+            pass
+        self.urls = URLs()
+        self._make_URL('details')
+        self._make_URL('metadata')
+        self._make_URL('download')
+        self._make_URL('history', 'https://catalogd.archive.org/{path}/{0.identifier}')
+        if self.metadata.get('mediatype'):
+            self._make_URL('editxml', 'https://archive.org/{path}.php?type={0.metadata[mediatype]}&edit_item={0.identifier}')
+        self._make_URL('item_mgr', 'https://archive.org/item-mgr.php?identifier={0.identifier}')
+
+        if self.metadata.get('title'):
+            self.wikilink = '* [{0.urls.details} {0.identifier}] -- {0.metadata[title]}'.format(self)
+
+    def _make_URL(self, path, url_format='https://archive.org/{path}/{0.identifier}'):
+        setattr(self.urls, path, url_format.format(self, path=path))
+
     def refresh(self, item_metadata=None, **kwargs):
         if not item_metadata:
             item_metadata = self.session.get_metadata(self.identifier, **kwargs)
@@ -703,12 +720,16 @@ class Collection(Item):
         super(Collection, self).__init__(*args, **kwargs)
         if self.metadata.get(u'mediatype', u'collection') != 'collection':
             raise ValueError('mediatype is not "collection"!')
+        self._make_URL_tab('about')
+        self._make_URL_tab('collection')
 
         deflt_srh = "collection:{0.identifier}".format(self)
         self._make_search('contents',
                           self.metadata.get(u'search_collection', deflt_srh))
         self._make_search('subcollections',
                           deflt_srh + " AND mediatype:collection")
+    def _make_URL_tab(self, tab):
+        self._make_URL(tab, self.urls.details+"&tab={tab}".format(tab=tab))
 
     def _do_search(self, name, query):
         rtn = self.searches.setdefault(

@@ -153,9 +153,10 @@ class Item(BaseItem):
         self.session = archive_session
         super(Item, self).__init__(identifier, item_metadata)
 
-        self.urls = self.URLs(self)
+        self.urls = Item.URLs(self)
 
         if self.metadata.get('title'):
+            # A copyable link to the item, in MediaWiki format
             self.wikilink = '* [{0.urls.details} {0.identifier}] ' \
                             '-- {0.metadata[title]}'.format(self)
 
@@ -167,15 +168,12 @@ class Item(BaseItem):
             self._make_URL('metadata')
             self._make_URL('download')
             self._make_URL('history')
-            self._make_URL('item_mgr', '{0.session.protocol}//archive.org/item-mgr.php'
-                           '?identifier={0.identifier}')
-            mediatype = self._itm_obj.metadata.get('mediatype')
-            if mediatype:
-                self._make_URL('editxml', '{0.session.protocol}//archive.org/{path}.php'
-                               '?type={0.metadata[mediatype]}&edit_item={0.identifier}')
-                if mediatype == 'collection':
-                    self._make_tab_URL('about')
-                    self._make_tab_URL('collection')
+            self._make_URL('edit')
+            self._make_URL('editxml')
+            self._make_URL('manage')
+            if self._itm_obj.metadata.get('mediatype') == 'collection':
+                self._make_tab_URL('about')
+                self._make_tab_URL('collection')
 
         def _make_tab_URL(self, tab):
             """Make URLs for the separate tabs of Collections details page."""

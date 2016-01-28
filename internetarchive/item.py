@@ -723,8 +723,8 @@ class Collection(Item):
         super(Collection, self).__init__(*args, **kwargs)
         if self.metadata.get(u'mediatype', u'collection') != 'collection':
             raise ValueError('mediatype is not "collection"!')
-        self._make_URL_tab('about')
-        self._make_URL_tab('collection')
+        self._make_tab_URL('about')
+        self._make_tab_URL('collection')
 
         deflt_srh = "collection:{0.identifier}".format(self)
         self._make_search('contents',
@@ -732,7 +732,8 @@ class Collection(Item):
         self._make_search('subcollections',
                           deflt_srh + " AND mediatype:collection")
 
-    def _make_URL_tab(self, tab):
+    def _make_tab_URL(self, tab):
+        """Make URLs for the separate tabs of Collections details page."""
         self._make_URL(tab, self.urls.details + "&tab={tab}".format(tab=tab))
 
     def _do_search(self, name, query):

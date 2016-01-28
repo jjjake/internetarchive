@@ -161,11 +161,14 @@ class Item(BaseItem):
         self._make_URL('download')
         self._make_URL('history', 'https://catalogd.archive.org/{path}/{0.identifier}')
         if self.metadata.get('mediatype'):
-            self._make_URL('editxml', 'https://archive.org/{path}.php?type={0.metadata[mediatype]}&edit_item={0.identifier}')
-        self._make_URL('item_mgr', 'https://archive.org/item-mgr.php?identifier={0.identifier}')
+            self._make_URL('editxml', 'https://archive.org/{path}.php'
+                           '?type={0.metadata[mediatype]}&edit_item={0.identifier}')
+        self._make_URL('item_mgr', 'https://archive.org/item-mgr.php'
+                       '?identifier={0.identifier}')
 
         if self.metadata.get('title'):
-            self.wikilink = '* [{0.urls.details} {0.identifier}] -- {0.metadata[title]}'.format(self)
+            self.wikilink = '* [{0.urls.details} {0.identifier}] ' \
+                            '-- {0.metadata[title]}'.format(self)
 
     def _make_URL(self, path, url_format='https://archive.org/{path}/{0.identifier}'):
         setattr(self.urls, path, url_format.format(self, path=path))
@@ -728,8 +731,9 @@ class Collection(Item):
                           self.metadata.get(u'search_collection', deflt_srh))
         self._make_search('subcollections',
                           deflt_srh + " AND mediatype:collection")
+
     def _make_URL_tab(self, tab):
-        self._make_URL(tab, self.urls.details+"&tab={tab}".format(tab=tab))
+        self._make_URL(tab, self.urls.details + "&tab={tab}".format(tab=tab))
 
     def _do_search(self, name, query):
         rtn = self.searches.setdefault(

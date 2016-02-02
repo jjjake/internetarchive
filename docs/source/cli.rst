@@ -89,6 +89,8 @@ You can also create new targets if they don't exist:
 
     $ ia metadata <identifier> --target="extra_metadata" --modify="foo:bar"
 
+Refer to `Internet Archive Metadata <metadata.html>`_ for more specific details regarding metadata and Archive.org.
+
 
 Modifying Metadata in Bulk
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

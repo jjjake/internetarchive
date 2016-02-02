@@ -106,6 +106,8 @@ The default behaviour of :func:`modify_metadata <internetarchive.modify_metadata
     >>> f.title
     'My File Title'
 
+Refer to `Internet Archive Metadata <metadata.html>`_ for more specific details regarding metadata and Archive.org.
+
 
 Downloading
 -----------

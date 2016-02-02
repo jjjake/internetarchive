@@ -29,4 +29,5 @@ User's Guide
     installation
     quickstart
     cli
+    metadata
     api

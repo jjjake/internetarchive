@@ -89,7 +89,21 @@ You can also create new targets if they don't exist:
 
     $ ia metadata <identifier> --target="extra_metadata" --modify="foo:bar"
 
+
+Modifying Metadata in Bulk
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you have a lot of metadata changes to submit, you can use a CSV spreadsheet to submit many changes with a single command.
+Your CSV must contain an ``identifier`` column, with one item per row. Any other column added will be treated as a metadata field in which to modify. If no value is provided in a given row for a column, no changes will be submitted. If you would like to specify multiple values for certain fields, an index can be provided: ``subject[0]``, ``subject[1]``. Your CSV file should be UTF-8 encoded. See `metadata.csv <https://archive.org/download/ia-pex/metadata.csv>`_ for an example CSV file.
+
+Once you're ready to submit your changes, you can submit them like so:
+
+.. code:: bash
+
+    $ ia metadata --spreadsheet=metadata.csv
+
 See ``ia help metadata`` for more details.
+
 
 Upload
 ------
@@ -112,6 +126,18 @@ You can use the ``--retries`` parameter to retry on errors (i.e. if IA-S3 is ove
 .. code:: bash
     
     $ ia upload <identifier> file1 --retries 10
+
+Bulk Uploading
+^^^^^^^^^^^^^^
+
+Uploading in bulk can be done similarily to `Modifying Metadata in Bulk`_. The only difference is that you must provide a ``file`` column which contains a relative or absolute path to your file. Please see `uploading.csv <https://archive.org/download/ia-pex/uploading.csv>`_ for an example.
+
+Once you are ready to start your upload, simply run:
+
+.. code:: bash
+
+    $ ia upload --spreadsheet=uploading.csv
+
 
 See ``ia help upload`` for more details.
 
@@ -154,7 +180,7 @@ Download an entire collection:
 
 .. code:: bash
 
-    $ ia download --search 'collection:freemusicarchive'
+    $ ia download --search 'collection:glasgowschoolofart'
 
 Download from an itemlist:
 
@@ -211,13 +237,13 @@ You can use ``ia search`` to create an itemlist:
 
 .. code:: bash
 
-    $ ia search 'collection:freemusicarchive' --itemlist > itemlist.txt
+    $ ia search 'collection:glasgowschoolofart' --itemlist > itemlist.txt
 
 You can pipe your itemlist into a GNU Parallel command to download items concurrently:
 
 .. code:: bash
 
-    $ ia search 'collection:freemusicarchive' --itemlist | parallel 'ia download {}'
+    $ ia search 'collection:glasgowschoolofart' --itemlist | parallel 'ia download {}'
 
 See ``ia help search`` for more details.
 

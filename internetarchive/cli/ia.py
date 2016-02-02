@@ -24,7 +24,11 @@ commands:
     tasks     Retrieve information about your Archive.org catalog tasks.
     list      List files in a given item.
 
-See 'ia help <command>' for more information on a specific command.
+Documentation for 'ia' is available at:
+
+    http://internetarchive.rtfd.org/en/latest/cli.html
+
+See 'ia help <command>' for help on a specific command.
 """
 from __future__ import absolute_import, unicode_literals, print_function
 

@@ -31,3 +31,4 @@ User's Guide
     cli
     metadata
     api
+    authors

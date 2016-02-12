@@ -69,6 +69,8 @@ class ArchiveSession(requests.sessions.Session):
         :param http_adapter_kwargs: (optional) Keyword arguments used to initialize the
                                     :class:`requests.adapters.HTTPAdapter <HTTPAdapter>`
                                     object.
+
+        :returns: :class:`ArchiveSession` object.
         """
         super(ArchiveSession, self).__init__()
         http_adapter_kwargs = {} if not http_adapter_kwargs else http_adapter_kwargs

@@ -1,11 +1,11 @@
+:orphan:
+
 .. _internetarchive:
 
 Internetarchive: A Python Interface to Archive.org
 ==================================================
 
 .. automodule:: internetarchive
-    :members:
-    :show-inheritance:
 
 
 :class:`internetarchive.Item`
@@ -36,5 +36,20 @@ Internetarchive: A Python Interface to Archive.org
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: Catalog
+    :members:
+    :show-inheritance:
+
+
+:class:`internetarchive.ArchiveSession`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ArchiveSession
+    :members:
+    :show-inheritance:
+
+
+:mod:`internetarchive.api`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: internetarchive.api
     :members:
     :show-inheritance:

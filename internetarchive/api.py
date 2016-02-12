@@ -21,9 +21,9 @@ from internetarchive.exceptions import AuthenticationError
 
 
 def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=None):
-    """Return a new :class:`ArchiveSession` object. The :class:`ArchiveSession` object
-    is the main interface to the ``internetarchive`` lib. It allows you to persist
-    certain parameters across tasks.
+    """Return a new :class:`ArchiveSession` object. The :class:`ArchiveSession`
+    object is the main interface to the ``internetarchive`` lib. It allows you to
+    persist certain parameters across tasks.
 
     :type config: dict
     :param config: (optional) A dictionary used to configure your session.
@@ -35,15 +35,19 @@ def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=N
     :param http_adapter_kwargs: (optional) Keyword arguments that
                                 :py:class:`requests.adapters.HTTPAdapter` takes.
 
+    :returns: :class:`ArchiveSession` object.
+
     Usage:
+
         >>> from internetarchive import get_session
         >>> config = dict(s3=dict(acccess='foo', secret='bar'))
         >>> s = get_session(config)
         >>> s.access_key
         'foo'
 
-    From the session object, you can access all of the main functions of the
+    From the session object, you can access all of the functionality of the
     ``internetarchive`` lib:
+
         >>> item = s.get_item('nasa')
         >>> item.download()
         nasa: ddddddd - success
@@ -192,6 +196,9 @@ def upload(identifier, files,
     :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
 
+    :param files: The filepaths or file-like objects to upload. This value can be an
+                  iterable or a single file-like object or string.
+
     :type metadata: dict
     :param metadata: (optional) Metadata used to create a new item. If the item already
                      exists, the metadata will not be updated -- use ``modify_metadata``.
@@ -235,6 +242,8 @@ def upload(identifier, files,
                   sending the upload request.
 
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
+
+    :returns: A list of :py:class:`requests.Response` objects.
     """
     item = get_item(identifier, **get_item_kwargs)
     return item.upload(files,
@@ -467,6 +476,10 @@ def configure(username=None, password=None):
 
     :type password: str
     :param password: Your Archive.org password.
+
+    Usage:
+        >>> from internetarchive import configure
+        >>> configure('user@example.com', 'password')
     """
     username = input('Email address: ') if not username else username
     password = getpass('Password: ') if not password else password

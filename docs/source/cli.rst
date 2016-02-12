@@ -129,6 +129,8 @@ You can use the ``--retries`` parameter to retry on errors (i.e. if IA-S3 is ove
     
     $ ia upload <identifier> file1 --retries 10
 
+Refer to `Archive.org Identifiers <identifiers.html>`_ for more information on creating valid Archive.org identifiers.
+
 Bulk Uploading
 ^^^^^^^^^^^^^^
 

@@ -10,6 +10,16 @@ Metadata allows people to locate and view information.
 Items with little or poor metadata may never be seen and can become lost.
 
 
+Archive.org Identifiers
+-----------------------
+
+Each item at Internet Archive has an identifier. An identifier is composed of any unique combination of alphanumeric characters, underscore (``_``) and dash (``-``). While there are no official limits it is strongly suggested that identifiers be between 5 and 80 characters in length.
+
+Identifiers must be unique across the entirety of Internet Archive, not simply unique within a single collection.
+
+Once defined an identifier **can not** be changed. It will travel with the item or object and is involved in every manner of accessing or referring to the item.
+
+
 Standard Internet Archive Metadata Fields
 -----------------------------------------
 
@@ -50,6 +60,7 @@ Currently collections can only be created by Internet Archive staff members.
 Please `contact Internet Archive <mailto:info@archive.org?subject=[Collection Creation Request]>`_ if you need a collection created.
 
 All items **should** belong to a collection.
+If a collection is not specified at the time of upload, it will be added to the ``opensource`` collection.
 For testing purposes, you may upload to the ``test_collection`` collection.
 
 contributor

@@ -39,4 +39,4 @@ Documentation is available at `https://internetarchive.readthedocs.org <https://
 Contributing
 ------------
 
-All contributions are welcom and appreciated. Please see `http://internetarchive.readthedocs.org/en/latest/contributing.html <http://internetarchive.readthedocs.org/en/latest/contributing.html>`_ for more details.
+All contributions are welcome and appreciated. Please see `http://internetarchive.readthedocs.org/en/latest/contributing.html <http://internetarchive.readthedocs.org/en/latest/contributing.html>`_ for more details.

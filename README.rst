@@ -1,5 +1,5 @@
 A Python and Command-Line Interface to Archive.org
---------------------------------------------------
+==================================================
 
 .. image:: https://travis-ci.org/jjjake/internetarchive.svg
     :target: https://travis-ci.org/jjjake/internetarchive
@@ -13,7 +13,7 @@ Please report all bugs and issues on `Github <https://github.com/jjjake/ia-wrapp
 
 
 Installation
-~~~~~~~~~~~~
+------------
 
 You can install this module via pip:
 
@@ -31,6 +31,12 @@ Binaries of the command-line tool are also available:
 
 
 Documentation
-~~~~~~~~~~~~~
+-------------
 
 Documentation is available at `https://internetarchive.readthedocs.org <https://internetarchive.readthedocs.org>`_.
+
+
+Contributing
+------------
+
+All contributions are welcom and appreciated. Please see `http://internetarchive.readthedocs.org/en/latest/contributing.html <http://internetarchive.readthedocs.org/en/latest/contributing.html>`_ for more details.

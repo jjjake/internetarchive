@@ -36,7 +36,7 @@ import sys
 import os
 import difflib
 import errno
-from pkg_resources import iter_entry_points, load_entry_point, DistributionNotFound
+from pkg_resources import iter_entry_points, DistributionNotFound
 
 from docopt import docopt, printable_usage
 from schema import Schema, Or, SchemaError

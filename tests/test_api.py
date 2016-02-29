@@ -34,28 +34,17 @@ PY3 = six.PY3
 with open(TEST_JSON_FILE, 'r') as fh:
     ITEM_METADATA = fh.read().strip()
 
-SEARCH_RESPONSE = {
-    "responseHeader": {
-        "status": 0,
-        "QTime": 1,
-        "params": {
-            "json.wrf": "callback",
-            "wt": "json",
-            "rows": "50",
-            "qin": "identifier:nasa",
-            "fl": "identifier",
-            "start": "0",
-            "q": "identifier:nasa"
-        }
-    },
-    "response": {
-        "numFound": 1,
-        "start": 0,
-        "docs": [
-            {"identifier": "nasa"},
-        ]
-    }
-}
+ROOT_DIR = os.getcwd()
+TEST_JSON_SEARCH_FILE = os.path.join(ROOT_DIR, 'tests/data/advanced_search_response.json')
+with open(TEST_JSON_SEARCH_FILE) as fh:
+    TEST_SEARCH_RESPONSE = fh.read()
+TEST_JSON_SCRAPE_FILE = os.path.join(ROOT_DIR, 'tests/data/scrape_response.json')
+with open(TEST_JSON_SCRAPE_FILE) as fh:
+    TEST_SCRAPE_RESPONSE = fh.read()
+    _j = json.loads(TEST_SCRAPE_RESPONSE)
+    del _j['cursor']
+    _j['items'] = [{'identifier': 'nasa'}]
+    TEST_SCRAPE_RESPONSE = json.dumps(_j)
 
 
 def test_get_session_with_config():
@@ -331,15 +320,21 @@ def test_get_tasks():
 
 
 def test_search_items():
-    search_response_str = json.dumps(SEARCH_RESPONSE)
+    _j = json.loads(TEST_SEARCH_RESPONSE)
+    _j['response']['numFound'] = 1
+    _search_r = json.dumps(_j)
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/advancedsearch.php'.format(protocol),
-                 body=search_response_str,
+        rsps.add(responses.GET,
+                 '{0}//archive.org/services/search/beta/scrape.php'.format(protocol),
+                 body=TEST_SCRAPE_RESPONSE,
+                 status=200)
+        rsps.add(responses.GET,
+                 '{0}//archive.org/advancedsearch.php'.format(protocol),
+                 body=_search_r,
                  status=200)
         r = search_items('identifier:nasa')
         expected_results = [{'identifier': 'nasa'}]
         assert r.num_found == 1
-        assert len(r) == 1
         assert iter(r).search == r
         assert len(iter(r)) == 1
         assert len(r.iter_as_results()) == 1
@@ -348,27 +343,27 @@ def test_search_items():
 
 
 def test_search_items_with_fields():
-    search_r = deepcopy(SEARCH_RESPONSE)
-    search_r['response']['docs'] = [
+    _j = json.loads(TEST_SCRAPE_RESPONSE)
+    _j['items'] = [
         {'identifier': 'nasa', 'title': 'NASA Images'}
     ]
-    search_response_str = json.dumps(search_r)
-    with responses.RequestsMock(
-            assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/advancedsearch.php'.format(protocol),
+    search_response_str = json.dumps(_j)
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET,
+                 '{0}//archive.org/services/search/beta/scrape.php'.format(protocol),
                  body=search_response_str,
                  status=200)
         r = search_items('identifier:nasa', fields=['identifier', 'title'])
-        assert r.num_found == 1
         assert list(r) == [{'identifier': 'nasa', 'title': 'NASA Images'}]
 
 
 def test_search_items_as_items():
-    search_response_str = json.dumps(SEARCH_RESPONSE)
+    search_response_str = json.dumps(TEST_SCRAPE_RESPONSE)
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/advancedsearch.php'.format(protocol),
-                 body=search_response_str,
+        rsps.add(responses.GET,
+                 '{0}//archive.org/services/search/beta/scrape.php'.format(protocol),
+                 body=TEST_SCRAPE_RESPONSE,
                  status=200)
         rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
@@ -379,11 +374,14 @@ def test_search_items_as_items():
 
 
 def test_page_row_specification():
-    search_response_str = json.dumps(SEARCH_RESPONSE)
+    _j = json.loads(TEST_SEARCH_RESPONSE)
+    _j['response']['docs'] = [{'identifier': 'nasa'}]
+    _j['response']['numFound'] = 1
+    _search_r = json.dumps(_j)
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, '{0}//archive.org/advancedsearch.php'.format(protocol),
-                 body=search_response_str,
+                 body=_search_r,
                  status=200)
         rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,

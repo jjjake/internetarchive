@@ -222,8 +222,8 @@ class ArchiveSession(requests.sessions.Session):
 
     def search_items(self, query,
                      fields=None,
+                     sorts=None,
                      params=None,
-                     config=None,
                      request_kwargs=None):
         """Search for items on Archive.org.
 
@@ -239,16 +239,13 @@ class ArchiveSession(requests.sessions.Session):
         :param params: (optional) The URL parameters to send with each request sent to the
                        Archive.org Advancedsearch Api.
 
-        :type config: dict
-        :param secure: (optional) Configuration options for session.
-
         :returns: A :class:`Search` object, yielding search results.
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
         return Search(self, query,
                       fields=fields,
+                      sorts=sorts,
                       params=params,
-                      config=config,
                       request_kwargs=request_kwargs)
 
     def get_tasks(self,

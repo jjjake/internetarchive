@@ -434,6 +434,7 @@ def get_tasks(identifier=None,
 
 def search_items(query,
                  fields=None,
+                 sorts=None,
                  params=None,
                  archive_session=None,
                  config=None,
@@ -463,8 +464,8 @@ def search_items(query,
         archive_session = get_session(config, config_file, http_adapter_kwargs)
     return archive_session.search_items(query,
                                         fields=fields,
+                                        sorts=sorts,
                                         params=params,
-                                        config=config,
                                         request_kwargs=request_kwargs)
 
 

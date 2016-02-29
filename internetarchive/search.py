@@ -35,25 +35,30 @@ class Search(object):
 
     def __init__(self, archive_session, query,
                  fields=None,
+                 sorts=None,
                  params=None,
-                 config=None,
                  request_kwargs=None):
-        fields = [] if not fields else fields
-        # Support str or list values for fields param.
-        fields = [fields] if not isinstance(
-            fields, (list, set, tuple)) else fields
-
-        params = {} if not params else params
-        config = {} if not config else config
-        request_kwargs = {} if not request_kwargs else request_kwargs
+        params = params or {}
 
         self.session = archive_session
-        self.request_kwargs = request_kwargs
-        self.url = '{0}//archive.org/advancedsearch.php'.format(self.session.protocol)
-        default_params = dict(
-            q=query,
-            rows=250,
-        )
+        self.query = query
+        self.fields = fields or list()
+        self.sorts = sorts or list()
+        self.request_kwargs = request_kwargs or dict()
+        self._num_found = None
+        self.scrape_url = '{0}//archive.org/services/search/beta/scrape.php'.format(
+            self.session.protocol)
+        self.search_url = '{0}//archive.org/advancedsearch.php'.format(
+            self.session.protocol)
+
+        # Initialize params.
+        default_params = dict(q=query)
+        if 'page' not in params:
+            default_params['size'] = 10000
+        else:
+            default_params['output'] = 'json'
+        self.params = default_params.copy()
+        self.params.update(params)
 
         # Set timeout.
         if 'timeout' not in request_kwargs:
@@ -62,74 +67,79 @@ class Search(object):
         # Set retries.
         self.session._mount_http_adapter(max_retries=5)
 
-        # Sort by score if no other sort is provided -- if page parameter is
-        # not provided.
-        has_page_param = 'page' in params
-        has_sort_param = any(k.startswith('sort') for k, v in params.items())
-        if not (has_page_param or has_sort_param):
-            default_params['sort[0]'] = 'identifier asc'
-
-        self.params = default_params.copy()
-        self.params.update(params)
-        if not self.params.get('output'):
-            self.params['output'] = 'json'
-
-        for k, v in enumerate(fields):
-            key = 'fl[{0}]'.format(k)
-            self.params[key] = v
-        self._search_info = self._get_search_info()
-        self.num_found = self._search_info['response']['numFound']
-        self.query = self._search_info['responseHeader']['params']['q']
-
     def __repr__(self):
-        return ('Search(query={query!r}, '
-                'num_found={num_found!r})'.format(**self.__dict__))
-
-    def _get_search_info(self):
-        info_params = self.params.copy()
-        info_params['rows'] = 0
-        r = self.session.get(self.url, params=info_params, **self.request_kwargs)
-        results = r.json()
-        del results['response']['docs']
-        return results
-
-    def _get_item_from_search_result(self, search_result):
-        return self.session.get_item(search_result['identifier'])
+        return 'Search(query={query!r})'.format(query=self.query)
 
     def __iter__(self):
         return self.iter_as_results()
 
-    def __len__(self):
-        return self.num_found
+    def _advanced_search(self):
+        # Always return identifier.
+        if 'identifier' not in self.fields:
+            self.fields.append('identifier')
+        for k, v in enumerate(self.fields):
+            key = 'fl[{0}]'.format(k)
+            self.params[key] = v
 
-    def make_results_generator(self):
-        """Generator for iterating over search results"""
-        start_page = 1
-        end_page = int((self.num_found / int(self.params['rows'])) + 2)
+        for i, field in enumerate(self.sorts):
+            self.params['sort[{0}]'.format(i)] = field
+
+        self.params['output'] = 'json'
+
+        r = self.session.get(self.search_url,
+                             params=self.params,
+                             **self.request_kwargs)
+        j = r.json()
+        for item in j.get('response', {}).get('docs', []):
+            yield item
+
+    def _scrape(self):
+        if self.fields:
+            self.params['fields'] = ','.join(self.fields)
+        if self.sorts:
+            self.params['sorts'] = ','.join(self.sorts)
+        remaining = True
+        while remaining:
+            r = self.session.get(self.scrape_url,
+                                 params=self.params,
+                                 **self.request_kwargs)
+            j = r.json()
+            if 'error' in j:
+                raise ValueError(j.get('error'))
+
+            self.params['cursor'] = j.get('cursor')
+            for item in j['items']:
+                yield item
+            if 'cursor' not in j:
+                break
+
+    def _make_results_generator(self):
         if 'page' in self.params:
-            start_page = int(self.params['page'])
-            end_page = start_page + 1
+            return self._advanced_search()
+        else:
+            return self._scrape()
 
-        for page in range(start_page, end_page):
-            self.params['page'] = page
-            r = self.session.get(self.url, params=self.params, **self.request_kwargs)
-            results = r.json()
-            for doc in results['response']['docs']:
-                yield doc
+    @property
+    def num_found(self):
+        if not self._num_found:
+            p = dict(q=self.params['q'], rows=0, output='json')
+            r = self.session.get(self.search_url, params=p, **self.request_kwargs)
+            j = r.json()
+            self._num_found = j.get('response', {}).get('numFound')
+        return self._num_found
+
+    def _get_item_from_search_result(self, search_result):
+        return self.session.get_item(search_result['identifier'])
 
     def iter_as_results(self):
-        return SearchIterator(self, self.make_results_generator())
+        return SearchIterator(self, self._make_results_generator())
 
     def iter_as_items(self):
-        """Returns iterator of search results as full Items"""
-        fields = [v for (k, v) in self.params.items() if k.startswith('fl[')]
-        if fields and not any(f == 'identifier' for f in fields):
-            raise KeyError('This search did not include item identifiers!')
         if six.PY2:
             _map = itertools.imap(self._get_item_from_search_result,
-                                  self.make_results_generator())
+                                  self._make_results_generator())
         else:
-            _map = map(self._get_item_from_search_result, self.make_results_generator())
+            _map = map(self._get_item_from_search_result, self._make_results_generator())
         return SearchIterator(self, _map)
 
 

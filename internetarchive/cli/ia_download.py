@@ -2,7 +2,7 @@
 
 usage:
     ia download <identifier> [<file>]... [options]...
-    ia download --itemlist=<itemlist> [options]...
+    ia download --itemlist=<file> [options]...
     ia download --search=<query> [options]...
     ia download --help
 
@@ -14,7 +14,8 @@ options:
     -i, --ignore-existing       Clobber files already downloaded.
     -C, --checksum              Skip files based on checksum [default: False].
     -R, --retries=<retries>     Set number of retries to <retries> [default: 5]
-    -I, --itemlist=<itemlist>   Download items from a specified itemlist.
+    -I, --itemlist=<file>       Download items from a specified file. Itemlists should
+                                be a plain text file with one identifier per line.
     -S, --search=<query>        Download items returned from a specified search query.
     -g, --glob=<pattern>        Only download files whose filename matches the
                                 given glob pattern.
@@ -63,6 +64,7 @@ def main(argv, session):
 
     # Validation error messages.
     destdir_msg = '--destdir must be a valid path to a directory.'
+    itemlist_msg = '--itemlist must be a valid path to an existing file.'
 
     # Validate args.
     s = Schema({
@@ -72,7 +74,7 @@ def main(argv, session):
         '--glob': Use(lambda l: l[0] if l else None),
         '<file>': list,
         '--search': Or(str, None),
-        '--itemlist': Or(str, None),
+        '--itemlist': Or(None, And(lambda f: os.path.isfile(f)), error=itemlist_msg),
         '<identifier>': Or(str, None),
         '--retries': Use(lambda x: x[0]),
     })
@@ -99,7 +101,7 @@ def main(argv, session):
         ids = search_ids(args['--search'])
 
     # Download specific files.
-    if args['<identifier>']:
+    if args['<identifier>'] and args['<identifier>'] != '-':
         if '/' in args['<identifier>']:
             identifier = args['<identifier>'].split('/')[0]
             files = ['/'.join(args['<identifier>'].split('/')[1:])]
@@ -108,11 +110,16 @@ def main(argv, session):
             files = args['<file>']
         total_ids = 1
         ids = [identifier]
+    elif args['<identifier>'] == '-':
+        total_ids = 1
+        ids = sys.stdin
+        files = None
     else:
         files = None
 
     errors = list()
     for i, identifier in enumerate(ids):
+        identifier = identifier.strip()
         if total_ids > 1:
             item_index = '{0}/{1}'.format((i + 1), total_ids)
         else:

@@ -23,7 +23,7 @@ options:
     --size-hint=<size>                Specify a size-hint for your item.
     --delete                          Delete files after verifying checksums
                                       [default: False].
-    -R, --retries=<i>                 Number of times to retry request if S3 retruns a
+    -R, --retries=<i>                 Number of times to retry request if S3 returns a
                                       503 SlowDown error.
     -s, --sleep=<i>                   The amount of time to sleep between retries
                                       [default: 30].

@@ -300,15 +300,6 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
 
     # Index all items which contain an index.
     for key in metadata:
-        # Parse string bools to proper bools.
-        try:
-            if metadata[key].lower() == 'true':
-                metadata[key] = True
-            elif metadata[key].lower() == 'false':
-                metadata[key] = False
-        except AttributeError:
-            pass
-
         # Insert values from indexed keys into prepared_metadata dict.
         if (rm_index(key) in indexed_keys):
             try:

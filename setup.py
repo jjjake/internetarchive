@@ -24,7 +24,7 @@ setup(
     author='Jacob M. Johnson',
     author_email='jake@archive.org',
     description='A python interface to archive.org.',
-    long_description=readme + '\n\n' + history,
+    long_description=readme,
     include_package_data=True,
     zip_safe=False,
     packages=[
@@ -45,7 +45,7 @@ setup(
         'schema>=0.4.0,<0.5.0',
     ] + (['total-ordering'] if sys.version_info < (2, 7) else []),
     classifiers=(
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'License :: OSI Approved :: GNU Affero General Public License v3',

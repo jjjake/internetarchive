@@ -67,7 +67,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
                 )
                 print('Endpoint:\n {0}\n'.format(r.url))
                 print('HTTP Headers:\n{0}'.format(headers))
-                return
+                return responses
 
         # Format error message for any non 200 responses that
         # we haven't caught yet,and write to stderr.
@@ -165,7 +165,11 @@ def main(argv, session):
         else:
             files = local_file
 
-        responses = _upload_files(item, files, upload_kwargs)
+        for _r in _upload_files(item, files, upload_kwargs):
+            if args['--debug']:
+                break
+            if (not _r) or (not _r.ok):
+                ERRORS = True
 
     # Bulk upload using spreadsheet.
     else:
@@ -188,6 +192,8 @@ def main(argv, session):
             upload_kwargs['metadata'].update(metadata)
             r = _upload_files(item, local_file, upload_kwargs, prev_identifier, session)
             for _r in r:
+                if args['--debug']:
+                    break
                 if (not _r) or (not _r.ok):
                     ERRORS = True
             prev_identifier = identifier

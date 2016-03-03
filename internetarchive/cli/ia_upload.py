@@ -83,6 +83,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
 
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
+    ERRORS = False
 
     # Validate args.
     s = Schema({
@@ -172,7 +173,6 @@ def main(argv, session):
         session = ArchiveSession()
         spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
         prev_identifier = None
-        errors = False
         for row in spreadsheet:
             local_file = row['file']
             identifier = row['identifier']
@@ -189,8 +189,8 @@ def main(argv, session):
             r = _upload_files(item, local_file, upload_kwargs, prev_identifier, session)
             for _r in r:
                 if (not _r) or (not _r.ok):
-                    errors = True
+                    ERRORS = True
             prev_identifier = identifier
 
-    if errors:
+    if ERRORS:
         sys.exit(1)

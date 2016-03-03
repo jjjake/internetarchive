@@ -45,10 +45,9 @@ from internetarchive.cli.argparser import get_args_dict, get_xml_text
 from internetarchive.utils import validate_ia_identifier
 
 
-def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None,
-                  responses=None):
+def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
     """Helper function for calling :meth:`Item.upload`"""
-    responses = [] if not responses else responses
+    responses = []
     if (upload_kwargs['verbose']) and (prev_identifier != item.identifier):
         print('{0}:'.format(item.identifier))
 
@@ -173,7 +172,7 @@ def main(argv, session):
         session = ArchiveSession()
         spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
         prev_identifier = None
-        responses = []
+        errors = False
         for row in spreadsheet:
             local_file = row['file']
             identifier = row['identifier']
@@ -187,10 +186,11 @@ def main(argv, session):
             md_args = ['{0}:{1}'.format(k.lower(), v) for (k, v) in row.items() if v]
             metadata = get_args_dict(md_args)
             upload_kwargs['metadata'].update(metadata)
-            r = _upload_files(item, local_file, upload_kwargs, prev_identifier, session,
-                              responses)
-            responses += r
+            r = _upload_files(item, local_file, upload_kwargs, prev_identifier, session)
+            for _r in r:
+                if (not _r) or (not _r.ok):
+                    errors = True
             prev_identifier = identifier
 
-    if responses and not all(r and r.ok for r in responses):
+    if errors:
         sys.exit(1)

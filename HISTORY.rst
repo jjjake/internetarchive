@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.0.1 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed memory leak in `ia upload --spreadsheet=metadata.csv`.
+
 1.0.0 (2016-03-01)
 ++++++++++++++++++
 

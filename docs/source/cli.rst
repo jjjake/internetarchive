@@ -235,7 +235,7 @@ top 20 items matching the search 'dogs':
 
 .. code:: bash
 
-    $ ia search --parameters="page:1;rows:20" "dogs"
+    $ ia search --parameters="page=1&rows=20" "dogs"
 
 You can use ``ia search`` to create an itemlist:
 

@@ -37,7 +37,7 @@ def main(argv, session=None):
     s = Schema({
         six.text_type: Use(bool),
         '<query>': Use(lambda x: ' '.join(x)),
-        '--parameters': Use(lambda x: get_args_dict(x)),
+        '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
         '--sort': list,
         '--field': Use(lambda x: ['identifier'] if not x and args['--itemlist'] else x),
     })

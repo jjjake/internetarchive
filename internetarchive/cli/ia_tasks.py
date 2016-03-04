@@ -28,7 +28,7 @@ from internetarchive.cli.argparser import get_args_dict
 
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
-    params = get_args_dict(args['--parameter'])
+    params = get_args_dict(args['--parameter'], query_string=True)
 
     row_types = {
         -1: 'done',

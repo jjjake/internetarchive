@@ -9,6 +9,7 @@ Release History
 **Bugfixes**
 
 - Fixed memory leak in `ia upload --spreadsheet=metadata.csv`.
+- Fixed arg parsing bug in `ia` CLI.
 
 1.0.0 (2016-03-01)
 ++++++++++++++++++

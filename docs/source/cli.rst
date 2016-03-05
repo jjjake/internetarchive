@@ -96,7 +96,7 @@ Modifying Metadata in Bulk
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you have a lot of metadata changes to submit, you can use a CSV spreadsheet to submit many changes with a single command.
-Your CSV must contain an ``identifier`` column, with one item per row. Any other column added will be treated as a metadata field in which to modify. If no value is provided in a given row for a column, no changes will be submitted. If you would like to specify multiple values for certain fields, an index can be provided: ``subject[0]``, ``subject[1]``. Your CSV file should be UTF-8 encoded. See `metadata.csv <https://archive.org/download/ia-pex/metadata.csv>`_ for an example CSV file.
+Your CSV must contain an ``identifier`` column, with one item per row. Any other column added will be treated as a metadata field to modify. If no value is provided in a given row for a column, no changes will be submitted. If you would like to specify multiple values for certain fields, an index can be provided: ``subject[0]``, ``subject[1]``. Your CSV file should be UTF-8 encoded. See `metadata.csv <https://archive.org/download/ia-pex/metadata.csv>`_ for an example CSV file.
 
 Once you're ready to submit your changes, you can submit them like so:
 
@@ -110,7 +110,7 @@ See ``ia help metadata`` for more details.
 Upload
 ------
 
-``ia`` cand also be used to upload items to Archive.org. After `configuring ia <quickstart.html#configuring>`__, you can upload files like so:
+``ia`` can also be used to upload items to Archive.org. After `configuring ia <quickstart.html#configuring>`__, you can upload files like so:
 
 .. code:: bash
 

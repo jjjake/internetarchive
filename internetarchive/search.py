@@ -27,8 +27,10 @@ class Search(object):
 
     Usage::
 
-        >>> import internetarchive.search
-        >>> search = internetarchive.search.Search('(uploader:jake@archive.org)')
+        >>> from internetarchive.session import ArchiveSession 
+        >>> from internetarchive.search import Search
+        >>> s = ArchiveSession()
+        >>> search = Search(s, '(uploader:jake@archive.org)')
         >>> for result in search:
         ...     print(result['identifier'])
     """
@@ -61,8 +63,8 @@ class Search(object):
         self.params.update(params)
 
         # Set timeout.
-        if 'timeout' not in request_kwargs:
-            request_kwargs['timeout'] = 12
+        if 'timeout' not in self.request_kwargs:
+            self.request_kwargs['timeout'] = 12
 
         # Set retries.
         self.session._mount_http_adapter(max_retries=5)

@@ -19,6 +19,8 @@ options:
     -m, --metadata=<key:value>...     Metadata to add to your item.
     -H, --header=<key:value>...       S3 HTTP headers to send with your request.
     -c, --checksum                    Skip based on checksum. [default: False]
+    -v, --verify                      Verify that data was not corrupted traversing the
+                                      network. [default: False]
     -n, --no-derive                   Do not derive uploaded files.
     --size-hint=<size>                Specify a size-hint for your item.
     --delete                          Delete files after verifying checksums
@@ -72,6 +74,8 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
         # Format error message for any non 200 responses that
         # we haven't caught yet,and write to stderr.
         if responses and responses[-1] and responses[-1].status_code != 200:
+            if not responses[-1].status_code:
+                return responses
             filename = responses[-1].request.url.split('/')[-1]
             msg = get_xml_text(responses[-1].content)
             print(' * error uploading '
@@ -142,8 +146,9 @@ def main(argv, session):
         headers=args['--header'],
         debug=args['--debug'],
         queue_derive=queue_derive,
-        checksum=args['--checksum'],
         verbose=verbose,
+        verify=args['--verify'],
+        checksum=args['--checksum'],
         retries=args['--retries'],
         retries_sleep=args['--sleep'],
         delete=args['--delete'],

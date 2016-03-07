@@ -463,6 +463,9 @@ class Item(BaseItem):
         try:
             body.seek(0, os.SEEK_END)
             size = body.tell()
+            # Avoid OverflowError.
+            if size > sys.maxsize:
+                size = None
             body.seek(0, os.SEEK_SET)
         except IOError:
             size = None

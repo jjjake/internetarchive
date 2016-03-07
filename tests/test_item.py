@@ -334,8 +334,12 @@ def test_upload_metadata(testitem, json_filename):
         _expected_headers['x-archive-meta00-foo'] = 'bar'
         _expected_headers['x-archive-meta00-subject'] = 'first'
         _expected_headers['x-archive-meta01-subject'] = 'second'
-        _expected_headers['x-archive-meta00-baz'] = 'uri(%D0%9F%D0%BE%D1%87%D0%B5%D0%BC%D1%83%20%D0%B1%D1%8B%20%D0%B8%20%D0%BD%D0%B5%D1%82...)'
-        _expected_headers['x-archive-meta00-baz2'] = 'uri(%D0%9F%D0%BE%D1%87%D0%B5%D0%BC%D1%83%20%D0%B1%D1%8B%20%D0%B8%20%D0%BD%D0%B5%D1%82...)'
+        _expected_headers['x-archive-meta00-baz'] = ('uri(%D0%9F%D0%BE%D1%87%D0%B5%D0%BC'
+                                                     '%D1%83%20%D0%B1%D1%8B%20%D0%B8%20%'
+                                                     'D0%BD%D0%B5%D1%82...)')
+        _expected_headers['x-archive-meta00-baz2'] = ('uri(%D0%9F%D0%BE%D1%87%D0%B5%D0%BC'
+                                                     '%D1%83%20%D0%B1%D1%8B%20%D0%B8%20%'
+                                                     'D0%BD%D0%B5%D1%82...)')
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=_expected_headers,
                  status=200)

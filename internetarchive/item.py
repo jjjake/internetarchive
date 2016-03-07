@@ -452,6 +452,7 @@ class Item(BaseItem):
         retries_sleep = 30 if retries_sleep is None else retries_sleep
         debug = False if debug is None else debug
         request_kwargs = {} if request_kwargs is None else request_kwargs
+        md5_sum = None
 
         if not hasattr(body, 'read'):
             body = open(body, 'rb')
@@ -483,23 +484,29 @@ class Item(BaseItem):
         # Skip based on checksum.
         md5_sum = get_md5(body)
         ia_file = self.get_file(key)
-        if (checksum) and (not self.tasks) and (ia_file) and (ia_file.md5 == md5_sum):
-            log.info('{f} already exists: {u}'.format(f=key, u=url))
-            if verbose:
-                print(' {f} already exists, skipping.'.format(f=key))
-            if delete:
-                log.info(
-                    '{f} successfully uploaded to https://archive.org/download/{i}/{f} '
-                    'and verified, deleting '
-                    'local copy'.format(i=self.identifier,
-                                        f=key))
-                os.remove(body.name)
-            # Return an empty response object if checksums match.
-            # TODO: Is there a better way to handle this?
-            return Response()
+        if checksum:
+            md5_sum = get_md5(body)
+            ia_file = self.get_file(key)
+            if (not self.tasks) and (ia_file) and (ia_file.md5 == md5_sum):
+                log.info('{f} already exists: {u}'.format(f=key, u=url))
+                if verbose:
+                    print(' {f} already exists, skipping.'.format(f=key))
+                if delete:
+                    log.info(
+                        '{f} successfully uploaded to '
+                        'https://archive.org/download/{i}/{f} '
+                        'and verified, deleting '
+                        'local copy'.format(i=self.identifier,
+                                            f=key))
+                    os.remove(body.name)
+                # Return an empty response object if checksums match.
+                # TODO: Is there a better way to handle this?
+                return Response()
 
         # require the Content-MD5 header when delete is True.
         if verify or delete:
+            if not md5_sum:
+                md5_sum = get_md5(body)
             headers['Content-MD5'] = md5_sum
 
         def _build_request():

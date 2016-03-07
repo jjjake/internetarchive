@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import sys
 try:
@@ -333,10 +334,17 @@ def test_upload_metadata(testitem, json_filename):
         _expected_headers['x-archive-meta00-foo'] = 'bar'
         _expected_headers['x-archive-meta00-subject'] = 'first'
         _expected_headers['x-archive-meta01-subject'] = 'second'
+        _expected_headers['x-archive-meta00-baz'] = 'uri(%D0%9F%D0%BE%D1%87%D0%B5%D0%BC%D1%83%20%D0%B1%D1%8B%20%D0%B8%20%D0%BD%D0%B5%D1%82...)'
+        _expected_headers['x-archive-meta00-baz2'] = 'uri(%D0%9F%D0%BE%D1%87%D0%B5%D0%BC%D1%83%20%D0%B1%D1%8B%20%D0%B8%20%D0%BD%D0%B5%D1%82...)'
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=_expected_headers,
                  status=200)
-        md = dict(foo='bar', subject=['first', 'second'])
+        md = dict(
+            foo='bar',
+            subject=['first', 'second'],
+            baz='Почему бы и нет...',
+            baz2=u'\u041f\u043e\u0447\u0435\u043c\u0443 \u0431\u044b \u0438 \u043d\u0435\u0442...',
+        )
         resp = testitem.upload(json_filename,
                                metadata=md,
                                access_key='test_access',

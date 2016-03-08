@@ -41,6 +41,16 @@ You can upload file-like objects::
 
 If the item already has a file with the same filename, the existing file within the item will be overwritten.
 
+:func:`upload <internetarchive.upload>` can also upload directories. For example, the following command will upload ``my_dir`` and all of it's contents to ``https://archive.org/download/my_item/my_dir/``::
+
+    >>> r = upload('my_item', 'my_dir')
+
+To upload only the contents of the directory, but not the directory itself, simply append a slash to your directory::
+
+    >>> r = upload('my_item', 'my_dir/')
+
+This will upload all of the contents of ``my_dir`` to ``https://archive.org/download/my_item/``. :func:`upload <internetarchive.upload>` accepts relative or absolute paths.
+
 **Note**: metadata can only be added to an item using the :func:`upload <internetarchive.upload>` function on item creation. If an item already exists and you would like to modify it's metadata, you must use :func:`modify_metadata <internetarchive.modify_metadata>`.
 
 

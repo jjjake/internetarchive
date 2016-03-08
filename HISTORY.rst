@@ -3,8 +3,21 @@
 Release History
 ---------------
 
-1.0.1 (?)
-+++++++++
+1.0.1 (2016-03-07)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed OverflowError bug in uploads on 32-bit systems when uploading files larger than ~2GB.
+- Fixed unicode bug in upload where ``urllib.parse.quote`` is unable to parse non-encoded strings.
+
+**Features and Improvements**
+
+- Only generate MD5s in upload if they are used (i.e. verify, delete, or checksum is True).
+- verify is off by default in ``ia upload``, it can be turned on with ``ia upload --verify``.
+
+1.0.1 (2016-03-04)
+++++++++++++++++++
 
 **Bugfixes**
 

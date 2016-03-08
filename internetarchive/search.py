@@ -27,7 +27,7 @@ class Search(object):
 
     Usage::
 
-        >>> from internetarchive.session import ArchiveSession 
+        >>> from internetarchive.session import ArchiveSession
         >>> from internetarchive.search import Search
         >>> s = ArchiveSession()
         >>> search = Search(s, '(uploader:jake@archive.org)')

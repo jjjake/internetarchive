@@ -100,7 +100,6 @@ def test_ia_upload_debug(capsys):
     assert set(out.split('\n')) == set([
         '',
         'Endpoint:',
-        ' Content-MD5:acbd18db4cc2f85cedef654fccc4a4d8',
         ' {0}//s3.us.archive.org/nasa/test.txt'.format(protocol),
         'HTTP Headers:',
         ' x-archive-size-hint:3',
@@ -163,7 +162,6 @@ def test_ia_upload_size_hint(capsys):
 
     out, err = capsys.readouterr()
     assert set(out.split('\n')) == set(['', ' x-archive-size-hint:30',
-                                        ' Content-MD5:acbd18db4cc2f85cedef654fccc4a4d8',
                                         'Endpoint:', 'HTTP Headers:', 'nasa:',
                                         (' {0}//s3.us.archive.org/nasa/'
                                          'test.txt'.format(protocol))])

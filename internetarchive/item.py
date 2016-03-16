@@ -474,7 +474,8 @@ class Item(BaseItem):
         if not headers.get('x-archive-size-hint'):
             headers['x-archive-size-hint'] = size
 
-        key = body.name.split('/')[-1] if key is None else key
+        bodyname = body.name.decode(sys.getfilesystemencoding())
+        key = bodyname.split('/')[-1] if key is None else key
         base_url = '{protocol}//s3.us.archive.org/{identifier}'.format(
             protocol=self.session.protocol,
             identifier=self.identifier)

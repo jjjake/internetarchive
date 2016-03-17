@@ -323,14 +323,19 @@ def test_search_items():
     _j = json.loads(TEST_SEARCH_RESPONSE)
     _j['response']['numFound'] = 1
     _search_r = json.dumps(_j)
+    results_url = ('{0}//archive.org/services/search/beta/scrape.php'
+                   '?q=identifier%3Anasa&size=10000'.format(protocol))
+    count_url = ('{0}//archive.org/services/search/beta/scrape.php'
+                 '?q=identifier%3Anasa&total_only=true'.format(protocol))
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET,
-                 '{0}//archive.org/services/search/beta/scrape.php'.format(protocol),
+        rsps.add(responses.GET, results_url,
                  body=TEST_SCRAPE_RESPONSE,
+                 match_querystring=True,
                  status=200)
-        rsps.add(responses.GET,
-                 '{0}//archive.org/advancedsearch.php'.format(protocol),
-                 body=_search_r,
+        rsps.add(responses.GET, count_url,
+                 body='{"items":[],"count":0,"total":1}',
+                 match_querystring=True,
+                 content_type='application/json; charset=UTF-8',
                  status=200)
         r = search_items('identifier:nasa')
         expected_results = [{'identifier': 'nasa'}]
@@ -378,13 +383,19 @@ def test_page_row_specification():
     _j['response']['docs'] = [{'identifier': 'nasa'}]
     _j['response']['numFound'] = 1
     _search_r = json.dumps(_j)
-    with responses.RequestsMock(
-            assert_all_requests_are_fired=False) as rsps:
+    with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, '{0}//archive.org/advancedsearch.php'.format(protocol),
                  body=_search_r,
                  status=200)
         rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
+                 status=200)
+        rsps.add(responses.GET,
+                 ('{0}//archive.org/services/search/beta/scrape.php'
+                  '?q=identifier%3Anasa&total_only=true'.format(protocol)),
+                 body='{"items":[],"count":0,"total":1}',
+                 match_querystring=True,
+                 content_type='application/json; charset=UTF-8',
                  status=200)
         r = search_items('identifier:nasa', params={
                          'page': '1', 'rows': '1'})

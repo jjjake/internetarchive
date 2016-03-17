@@ -61,11 +61,11 @@ def test_ia_search_itemlist(capsys):
 
 
 def test_ia_search_num_found(capsys):
-    with responses.RequestsMock() as rsps:
-        url = ('{0}//archive.org/advancedsearch.php?'
-               'q=collection%3Anasa&output=json&rows=0'.format(protocol))
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        url = ('{0}//archive.org/services/search/beta/scrape.php'
+               '?q=collection%3Anasa&total_only=true'.format(protocol))
         rsps.add(responses.GET, url,
-                 body=TEST_SEARCH_RESPONSE,
+                 body='{"items":[],"count":0,"total":50}',
                  status=200,
                  match_querystring=True)
 

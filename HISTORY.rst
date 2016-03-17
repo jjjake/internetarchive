@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.0.3 (?)
++++++++++
+
+**Features and Improvements**
+
+- Use scrape API for getting total number of results rather than the advanced search API.
+
 1.0.2 (2016-03-07)
 ++++++++++++++++++
 

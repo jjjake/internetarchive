@@ -88,9 +88,7 @@ class Search(object):
 
         self.params['output'] = 'json'
 
-        r = self.session.get(self.search_url,
-                             params=self.params,
-                             **self.request_kwargs)
+        r = self.session.get(self.search_url, params=self.params, **self.request_kwargs)
         j = r.json()
         for item in j.get('response', {}).get('docs', []):
             yield item
@@ -124,10 +122,10 @@ class Search(object):
     @property
     def num_found(self):
         if not self._num_found:
-            p = dict(q=self.params['q'], rows=0, output='json')
-            r = self.session.get(self.search_url, params=p, **self.request_kwargs)
+            p = dict(q=self.params['q'], total_only='true')
+            r = self.session.get(self.scrape_url, params=p, **self.request_kwargs)
             j = r.json()
-            self._num_found = j.get('response', {}).get('numFound')
+            self._num_found = j.get('total')
         return self._num_found
 
     def _get_item_from_search_result(self, search_result):

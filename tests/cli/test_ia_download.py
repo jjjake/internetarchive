@@ -6,10 +6,7 @@ import shutil
 from subprocess import Popen, PIPE
 
 
-if sys.version_info < (2, 7, 9):
-    protocol = 'http:'
-else:
-    protocol = 'https:'
+protocol = 'https:'
 
 
 def call(cmd):

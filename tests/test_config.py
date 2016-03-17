@@ -18,10 +18,7 @@ import internetarchive.session
 from internetarchive.exceptions import AuthenticationError
 
 
-if sys.version_info < (2, 7, 9):
-    protocol = 'http:'
-else:
-    protocol = 'https:'
+protocol = 'https:'
 
 
 @responses.activate

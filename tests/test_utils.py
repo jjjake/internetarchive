@@ -12,10 +12,7 @@ import responses
 import internetarchive.utils
 
 
-if sys.version_info < (2, 7, 9):
-    protocol = 'http:'
-else:
-    protocol = 'https:'
+protocol = 'https:'
 
 
 def test_utils():

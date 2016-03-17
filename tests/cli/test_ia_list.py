@@ -10,10 +10,7 @@ from internetarchive.cli import ia_list
 from internetarchive import get_session
 
 
-if sys.version_info < (2, 7, 9):
-    protocol = 'http:'
-else:
-    protocol = 'https:'
+protocol = 'https:'
 
 
 ROOT_DIR = os.getcwd()

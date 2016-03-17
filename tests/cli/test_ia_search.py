@@ -13,10 +13,7 @@ import responses
 from internetarchive.cli import ia
 
 
-if sys.version_info < (2, 7, 9):
-    protocol = 'http:'
-else:
-    protocol = 'https:'
+protocol = 'https:'
 
 
 ROOT_DIR = os.getcwd()
@@ -64,6 +61,8 @@ def test_ia_search_num_found(capsys):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         url = ('{0}//archive.org/services/search/beta/scrape.php'
                '?q=collection%3Anasa&total_only=true'.format(protocol))
+        url = ('{0}//archive.org/advancedsearch.php?'
+               'q=collection%3Anasa&output=json&rows=0'.format(protocol))
         rsps.add(responses.GET, url,
                  body='{"items":[],"count":0,"total":50}',
                  status=200,

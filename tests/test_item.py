@@ -18,10 +18,7 @@ from internetarchive import get_session
 import internetarchive.files
 
 
-if sys.version_info < (2, 7, 9):
-    protocol = 'http:'
-else:
-    protocol = 'https:'
+protocol = 'https:'
 
 
 DOWNLOAD_URL_RE = re.compile(r'{0}//archive.org/download/.*'.format(protocol))

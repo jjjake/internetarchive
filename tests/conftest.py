@@ -8,10 +8,7 @@ import responses
 from internetarchive import get_session
 
 
-if sys.version_info < (2, 7, 9):
-    protocol = 'http:'
-else:
-    protocol = 'https:'
+protocol = 'https:'
 
 
 @pytest.fixture

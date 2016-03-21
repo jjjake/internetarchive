@@ -76,7 +76,7 @@ def write_config_file(username, password):
 
     # Write config file.
     with open(config_file, 'w') as fh:
-        os.chmod(config_file, 0o700)
+        os.chmod(config_file, 0o600)
         config.write(fh)
 
     return config_file

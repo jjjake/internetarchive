@@ -128,8 +128,13 @@ def main(argv, session):
         try:
             item = session.get_item(identifier)
         except Exception as exc:
-            print('{0}: failed to retrieve item metadata - errors'.format(identifier))
-            continue
+            print('{0}: failed to retrieve item metadata - errors'.format(identifier),
+                  file=sys.stderr)
+            if 'You are attempting to make an HTTPS' in str(exc):
+                print('\n{0}'.format(exc), file=sys.stderr)
+                sys.exit(1)
+            else:
+                continue
 
         # Otherwise, download the entire item.
         _errors = item.download(

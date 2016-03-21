@@ -16,6 +16,7 @@ import locale
 import sys
 import logging
 import platform
+import warnings
 
 import requests.sessions
 from requests.utils import default_headers
@@ -309,3 +310,26 @@ class ArchiveSession(requests.sessions.Session):
             return False
         else:
             return True
+
+    def send(self, request, **kwargs):
+        # Catch urllib3 warnings for HTTPS related errors.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always')
+            r = super(ArchiveSession, self).send(request, **kwargs)
+            if self.protocol == 'http:':
+                return r
+            insecure_warnings = ['SNIMissingWarning', 'InsecurePlatformWarning']
+            if w:
+                for e in w:
+                    if any(x in str(e) for x in insecure_warnings):
+                        insecure = True
+                        break
+            else:
+                insecure = False
+        if insecure:
+            from requests.exceptions import RequestException
+            msg = ('You are attempting to make an HTTPS request on an insecure platform,'
+                   ' please see:\n\n\thttps://internetarchive.readthedocs.org'
+                   '/en/latest/troubleshooting.html#https-issues\n')
+            raise RequestException(msg)
+        return r

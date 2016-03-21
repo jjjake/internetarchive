@@ -6,27 +6,15 @@ import ast
 
 
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
+
 with open('internetarchive/__init__.py', 'rb') as f:
     version = str(ast.literal_eval(_version_re.search(
         f.read().decode('utf-8')).group(1)))
 
 with open('README.rst', 'r', 'utf-8') as f:
     readme = f.read()
-
-install_requires = [
-    'requests>=2.9.1,<3.0.0',
-    'jsonpatch==0.4',
-    'docopt>=0.6.0,<0.7.0',
-    'clint>=0.4.0,<0.6.0',
-    'six>=1.0.0,<2.0.0',
-    'schema>=0.4.0,<0.5.0',
-]
-if sys.version_info < (2, 7):
-    install_requires.append('total-ordering')
-
-if sys.version_info < (2, 7, 9):
-    install_requires.append('ndg-httpsclient')
-    install_requires.append('pyOpenSSL')
+with open('HISTORY.rst', 'r', 'utf-8') as f:
+    history = f.read()
 
 setup(
     name='internetarchive',
@@ -48,7 +36,14 @@ setup(
             'ia = internetarchive.cli.ia:main',
         ],
     },
-    install_requires=install_requires,
+    install_requires=[
+        'requests>=2.9.1,<3.0.0',
+        'jsonpatch==0.4',
+        'docopt>=0.6.0,<0.7.0',
+        'clint>=0.4.0,<0.6.0',
+        'six>=1.0.0,<2.0.0',
+        'schema>=0.4.0,<0.5.0',
+    ] + (['total-ordering'] if sys.version_info < (2, 7) else []),
     classifiers=(
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

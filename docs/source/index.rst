@@ -32,5 +32,6 @@ User's Guide
     metadata
     api
     updates
+    troubleshooting
     contributing
     authors

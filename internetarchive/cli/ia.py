@@ -120,7 +120,7 @@ def main():
         config['logging'] = {'level': 'DEBUG'}
 
     if args['--insecure']:
-        config['secure'] = False
+        config['general'] = dict(secure=False)
 
     session = get_session(config_file=args['--config-file'],
                           config=config,

@@ -15,6 +15,7 @@ import os
 import locale
 import sys
 import logging
+import platform
 
 import requests.sessions
 from requests.utils import default_headers
@@ -103,7 +104,7 @@ class ArchiveSession(requests.sessions.Session):
 
     def _get_user_agent_string(self):
         """Generate a User-Agent string to be sent with every request."""
-        uname = os.uname()
+        uname = platform.uname()
         try:
             lang = locale.getlocale()[0][:2]
         except:

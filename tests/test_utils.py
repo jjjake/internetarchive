@@ -93,4 +93,4 @@ def test_get_file_size():
     except AttributeError as exc:
         assert "object has no attribute 'seek'" in str(exc)
     s = internetarchive.utils.get_file_size(open(f))
-    assert s == 7557 
+    assert s == 7557

@@ -134,7 +134,7 @@ def test_ia_upload_403(capsys):
             assert exc.code == 1
 
     out, err = capsys.readouterr()
-    assert 'error uploading test_ia_upload.py to nasa, 403' in err
+    assert 'error uploading test_ia_upload.py' in err
 
 
 def test_ia_upload_invalid_cmd(capsys):

@@ -365,12 +365,18 @@ def test_upload_metadata(testitem, json_filename):
 
 
 def test_upload_503(capsys, testitem, json_filename):
+    body = ("<?xml version='1.0' encoding='UTF-8'?>"
+            '<Error><Code>SlowDown</Code><Message>Please reduce your request rate.'
+            '</Message><Resource>simulated error caused by x-(amz|archive)-simulate-error'
+            ', try x-archive-simulate-error:help</Resource><RequestId>d36ec445-8d4a-4a64-'
+            'a110-f67af6ee2c2a</RequestId></Error>')
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         rsps.add(responses.GET, S3_URL_RE,
                  body='{"over_limit": "1"}',
                  status=200)
         rsps.add(responses.PUT, S3_URL_RE,
+                 body=body,
                  adding_headers=_expected_headers,
                  status=503)
         try:
@@ -381,7 +387,7 @@ def test_upload_503(capsys, testitem, json_filename):
                             retries_sleep=.1,
                             verbose=True)
         except Exception as exc:
-            assert '503' in str(exc)
+            assert 'Please reduce your request rate' in str(exc)
             out, err = capsys.readouterr()
             assert 'warning: s3 is overloaded' in err
 
@@ -462,6 +468,12 @@ def test_upload_queue_derive(testitem, json_filename):
 
 
 def test_upload_delete(tmpdir, testitem):
+    body = ("<?xml version='1.0' encoding='UTF-8'?>"
+            '<Error><Code>BadDigest</Code><Message>The Content-MD5 you specified did not '
+            'match what we received.</Message><Resource>content-md5 submitted with PUT: '
+            'foo != recieved data md5: 70871f9fce8dd23853d6e42417356b05also not equal to '
+            'base64 version: cIcfn86N0jhT1uQkFzVrBQ==</Resource><RequestId>ec03fe7c-e123-'
+            '4133-a207-3141d4d74096</RequestId></Error>')
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         del _expected_headers['x-archive-meta00-scanner']
@@ -472,6 +484,7 @@ def test_upload_delete(tmpdir, testitem):
 
         # Non-matching md5, should not delete.
         rsps.add(responses.PUT, S3_URL_RE,
+                 body=body,
                  adding_headers=_expected_headers,
                  status=400)
         try:

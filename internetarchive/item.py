@@ -28,6 +28,7 @@ from internetarchive.utils import IdentifierListAsItems, get_md5, chunk_generato
     IterableToFileAdapter
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
+from internetarchive.utils import get_s3_xml_text, get_file_size
 from internetarchive import __version__
 
 
@@ -457,29 +458,15 @@ class Item(BaseItem):
         if not hasattr(body, 'read'):
             body = open(body, 'rb')
 
-        if not metadata.get('scanner'):
-            scanner = 'Internet Archive Python library {0}'.format(__version__)
-            metadata['scanner'] = scanner
-
-        try:
-            body.seek(0, os.SEEK_END)
-            size = body.tell()
-            # Avoid OverflowError.
-            if size > sys.maxsize:
-                size = None
-            body.seek(0, os.SEEK_SET)
-        except IOError:
-            size = None
+        size = get_file_size(body) 
 
         if not headers.get('x-archive-size-hint'):
             headers['x-archive-size-hint'] = size
 
+        # Build IA-S3 URL.
         key = body.name.split('/')[-1] if key is None else key
-        base_url = '{protocol}//s3.us.archive.org/{identifier}'.format(
-            protocol=self.session.protocol,
-            identifier=self.identifier)
-        url = '{base_url}/{key}'.format(base_url=base_url,
-                                        key=key.lstrip('/'))
+        base_url = '{0.session.protocol}//s3.us.archive.org/{0.identifier}'.format(self)
+        url = '{0}/{1}'.format(base_url, key.lstrip('/'))
 
         # Skip based on checksum.
         if checksum:
@@ -578,13 +565,14 @@ class Item(BaseItem):
                     os.remove(body.name)
                 return response
             except HTTPError as exc:
+                msg = get_s3_xml_text(exc.response.content)
                 error_msg = (' error uploading {0} to {1}, '
-                             '{2}'.format(key, self.identifier, exc))
+                             '{2}'.format(key, self.identifier, msg))
                 log.error(error_msg)
                 if verbose:
-                    print(error_msg, file=sys.stderr)
+                    print(' error uploading {0}: {1}'.format(key, msg), file=sys.stderr)
                 # Raise HTTPError with error message.
-                raise type(exc)(error_msg)
+                raise type(exc)(error_msg, response=exc.response, request=exc.request)
 
     def upload(self, files,
                metadata=None,

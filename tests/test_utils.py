@@ -71,3 +71,26 @@ def test_IdentifierListAsItems_len(session):
     assert len(internetarchive.utils.IdentifierListAsItems(['foo', 'bar'], session)) == 2
 
 # TODO: Add test of slice access to IdenfierListAsItems
+
+
+def test_get_s3_xml_text():
+    xml_str = ('<Error><Code>NoSuchBucket</Code>'
+               '<Message>The specified bucket does not exist.</Message>'
+               '<Resource>'
+               'does-not-exist-! not found by Metadata::get_obj()[server]'
+               '</Resource>'
+               '<RequestId>d56bdc63-169b-4b4f-8c47-0fac6de39040</RequestId></Error>')
+
+    expected_txt = internetarchive.utils.get_s3_xml_text(xml_str)
+    assert expected_txt == ('The specified bucket does not exist. - does-not-exist-! '
+                            'not found by Metadata::get_obj()[server]')
+
+
+def test_get_file_size():
+    f = os.path.join(os.path.dirname(__file__), 'data/nasa_meta.json')
+    try:
+        s = internetarchive.utils.get_file_size(f)
+    except AttributeError as exc:
+        assert "object has no attribute 'seek'" in str(exc)
+    s = internetarchive.utils.get_file_size(open(f))
+    assert s == 7557 

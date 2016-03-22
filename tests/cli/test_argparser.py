@@ -3,18 +3,7 @@ import os
 import sys
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, inc_path)
-from internetarchive.cli.argparser import get_args_dict, get_xml_text
-
-
-def test_get_xml_text():
-    xml_str = ('<Error><Code>NoSuchBucket</Code>'
-               '<Message>The specified bucket does not exist.</Message>'
-               '<Resource>'
-               'does-not-exist-! not found by Metadata::get_obj()[server]'
-               '</Resource>'
-               '<RequestId>d56bdc63-169b-4b4f-8c47-0fac6de39040</RequestId></Error>')
-
-    assert get_xml_text(xml_str) == 'The specified bucket does not exist.'
+from internetarchive.cli.argparser import get_args_dict
 
 
 def test_get_args_dict():

@@ -43,8 +43,8 @@ from schema import Schema, Use, Or, And, SchemaError
 import six
 
 from internetarchive.session import ArchiveSession
-from internetarchive.cli.argparser import get_args_dict, get_xml_text
-from internetarchive.utils import validate_ia_identifier
+from internetarchive.cli.argparser import get_args_dict
+from internetarchive.utils import validate_ia_identifier, get_s3_xml_text
 
 
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
@@ -77,10 +77,8 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
             if not responses[-1].status_code:
                 return responses
             filename = responses[-1].request.url.split('/')[-1]
-            msg = get_xml_text(responses[-1].content)
-            print(' * error uploading '
-                  '{0} ({1}): {2}'.format(filename, responses[-1].status_code, msg),
-                  file=sys.stderr)
+            msg = get_s3_xml_text(responses[-1].content)
+            print(' error uploading {0}: {2}'.format(filename, msg), file=sys.stderr)
 
     return responses
 

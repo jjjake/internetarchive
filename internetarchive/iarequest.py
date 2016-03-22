@@ -21,7 +21,7 @@ import requests
 from jsonpatch import make_patch
 import six
 
-from internetarchive import auth
+from internetarchive import auth, __version__
 from internetarchive.utils import needs_quote
 
 
@@ -97,12 +97,17 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         :param headers: (optional) S3 compatible HTTP headers.
 
         """
+        if not metadata.get('scanner'):
+            scanner = 'Internet Archive Python library {0}'.format(__version__)
+            metadata['scanner'] = scanner
         prepared_metadata = prepare_metadata(metadata)
+
         headers['x-archive-auto-make-bucket'] = 1
         if queue_derive is False:
             headers['x-archive-queue-derive'] = 0
         else:
             headers['x-archive-queue-derive'] = 1
+
         for meta_key, meta_value in prepared_metadata.items():
             # Encode arrays into JSON strings because Archive.org does not
             # yet support complex metadata structures in

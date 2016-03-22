@@ -15,6 +15,7 @@ import re
 from itertools import starmap
 from six.moves import zip_longest
 from collections import Mapping
+from xml.dom.minidom import parseString
 
 
 def deep_update(d, u):
@@ -125,3 +126,36 @@ class IdentifierListAsItems(object):
 
     def __repr__(self):
         return '{0.__class__.__name__}({0.ids!r})'.format(self)
+
+
+def get_s3_xml_text(xml_str):
+    def _get_tag_text(tag_name, xml_obj):
+        text = ''
+        elements = xml_obj.getElementsByTagName(tag_name)
+        for e in elements:
+            for node in e.childNodes:
+                if node.nodeType == node.TEXT_NODE:
+                    text += node.data
+        return text
+    tag_names = ['Message', 'Resource']
+    p = parseString(xml_str)
+    _msg = _get_tag_text('Message', p)
+    _resource = _get_tag_text('Resource', p)
+    # Avoid weird Resource text that contains PUT method.
+    if _resource and "'PUT" not in _resource:
+        return '{0} - {1}'.format(_msg, _resource.strip())
+    else:
+        return _msg
+
+
+def get_file_size(file_obj):
+    try:
+        file_obj.seek(0, os.SEEK_END)
+        size = file_obj.tell()
+        # Avoid OverflowError.
+        if size > sys.maxsize:
+            size = None
+        file_obj.seek(0, os.SEEK_SET)
+    except IOError:
+        size = None
+    return size

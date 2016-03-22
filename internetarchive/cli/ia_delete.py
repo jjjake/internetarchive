@@ -25,7 +25,7 @@ from six import text_type
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Use, Or, And
 
-from internetarchive.cli.argparser import get_xml_text
+from internetarchive.utils import get_s3_xml_text
 from internetarchive.utils import validate_ia_identifier
 
 
@@ -96,6 +96,6 @@ def main(argv, session):
             continue
         resp = f.delete(verbose=verbose, cascade_delete=args['--cascade'])
         if resp.status_code != 204:
-            msg = get_xml_text(resp.content)
+            msg = get_s3_xml_text(resp.content)
             sys.stderr.write(' error: {0} ({1})\n'.format(msg, resp.status_code))
             sys.exit(1)

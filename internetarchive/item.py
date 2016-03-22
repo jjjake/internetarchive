@@ -458,7 +458,7 @@ class Item(BaseItem):
         if not hasattr(body, 'read'):
             body = open(body, 'rb')
 
-        size = get_file_size(body) 
+        size = get_file_size(body)
 
         if not headers.get('x-archive-size-hint'):
             headers['x-archive-size-hint'] = size

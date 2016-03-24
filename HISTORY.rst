@@ -1,5 +1,6 @@
 .. :changelog:
 
+
 Release History
 ---------------
 
@@ -9,6 +10,13 @@ Release History
 **Features and Improvements**
 
 - Use scrape API for getting total number of results rather than the advanced search API.
+- Improved error messages for S3 related errors.
+
+**Bugfixes**
+
+- Updated ``requests`` lib version requirements.
+  This resolves issues with sending binary strings as bodies in Python 3.
+- Improved Windows support for windows, see `https://github.com/jjjake/internetarchive/issues/126 <https://github.com/jjjake/internetarchive/issues/126>`_ for more details.
 
 1.0.2 (2016-03-07)
 ++++++++++++++++++

@@ -16,7 +16,7 @@ Release History
 
 - Updated ``requests`` lib version requirements.
   This resolves issues with sending binary strings as bodies in Python 3.
-- Improved Windows support for windows, see `https://github.com/jjjake/internetarchive/issues/126 <https://github.com/jjjake/internetarchive/issues/126>`_ for more details.
+- Improved support for Windows, see `https://github.com/jjjake/internetarchive/issues/126 <https://github.com/jjjake/internetarchive/issues/126>`_ for more details.
 
 1.0.2 (2016-03-07)
 ++++++++++++++++++

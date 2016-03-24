@@ -47,6 +47,12 @@ Release History
 - Added ``Collection`` object.
 - Made ``Item`` objects hashable and orderable.
 
+**Bugfixes**
+
+- IA's Advanced Search API no longer supports deep-paging of large result sets.
+  All search functions have been refactored to use the new Scrape API (http://archive.org/help/aboutsearch.htm).
+  Search functions in previous versions are effictively broken, upgrade to >=1.0.0.
+
 0.9.8 (2015-11-09)
 ++++++++++++++++++
 

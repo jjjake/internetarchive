@@ -17,6 +17,9 @@ Release History
 - Updated ``requests`` lib version requirements.
   This resolves issues with sending binary strings as bodies in Python 3.
 - Improved support for Windows, see `https://github.com/jjjake/internetarchive/issues/126 <https://github.com/jjjake/internetarchive/issues/126>`_ for more details.
+- Previously all requests were made in HTTP for Python versions < 2.7.9 due to the issues described at `https://urllib3.readthedocs.org/en/latest/security.html <https://urllib3.readthedocs.org/en/latest/security.html>`_.
+  In favor of security over convenience, all requests are now made via HTTPS regardless of Python version.
+  Refer to `http://internetarchive.readthedocs.org/en/latest/troubleshooting.html#https-issues <http://internetarchive.readthedocs.org/en/latest/troubleshooting.html#https-issues>`_ if you are experiencing issues.
 
 1.0.2 (2016-03-07)
 ++++++++++++++++++

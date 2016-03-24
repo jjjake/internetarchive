@@ -31,5 +31,6 @@ User's Guide
     cli
     metadata
     api
+    updates
     contributing
     authors

@@ -98,8 +98,7 @@ class Search(object):
             self.params['fields'] = ','.join(self.fields)
         if self.sorts:
             self.params['sorts'] = ','.join(self.sorts)
-        remaining = True
-        while remaining:
+        while True:
             r = self.session.get(self.scrape_url,
                                  params=self.params,
                                  **self.request_kwargs)

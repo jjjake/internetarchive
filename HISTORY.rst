@@ -1,6 +1,5 @@
 .. :changelog:
 
-
 Release History
 ---------------
 
@@ -10,7 +9,7 @@ Release History
 **Features and Improvements**
 
 - Use scrape API for getting total number of results rather than the advanced search API.
-- Improved error messages for S3 related errors.
+- Improved error messages for IA-S3 (upload) related errors.
 
 **Bugfixes**
 
@@ -20,6 +19,7 @@ Release History
 - Previously all requests were made in HTTP for Python versions < 2.7.9 due to the issues described at `https://urllib3.readthedocs.org/en/latest/security.html <https://urllib3.readthedocs.org/en/latest/security.html>`_.
   In favor of security over convenience, all requests are now made via HTTPS regardless of Python version.
   Refer to `http://internetarchive.readthedocs.org/en/latest/troubleshooting.html#https-issues <http://internetarchive.readthedocs.org/en/latest/troubleshooting.html#https-issues>`_ if you are experiencing issues.
+- Fixed bug in ``ia`` CLI where ``-insecure`` was still making HTTPS requests when it should have been making HTTP requests.
 
 1.0.2 (2016-03-07)
 ++++++++++++++++++

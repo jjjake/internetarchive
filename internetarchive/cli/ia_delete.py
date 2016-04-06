@@ -83,7 +83,7 @@ def main(argv, session):
         sys.stdout.write('Deleting files from {0}\n'.format(item.identifier))
 
     if args['--all']:
-        files = [f for f in item.iter_files()]
+        files = [f for f in item.get_files()]
         args['--cacade'] = True
     elif args['--glob']:
         files = item.get_files(glob_pattern=args['--glob'])

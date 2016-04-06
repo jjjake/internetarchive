@@ -20,6 +20,7 @@ Release History
   In favor of security over convenience, all requests are now made via HTTPS regardless of Python version.
   Refer to `http://internetarchive.readthedocs.org/en/latest/troubleshooting.html#https-issues <http://internetarchive.readthedocs.org/en/latest/troubleshooting.html#https-issues>`_ if you are experiencing issues.
 - Fixed bug in ``ia`` CLI where ``-insecure`` was still making HTTPS requests when it should have been making HTTP requests.
+- Fixed bug in ``ia delete`` where ``-all`` option wasn't working because it was using ``item.iter_files`` instead of ``item.get_files``.
 
 1.0.2 (2016-03-07)
 ++++++++++++++++++

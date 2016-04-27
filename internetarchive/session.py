@@ -331,6 +331,7 @@ class ArchiveSession(requests.sessions.Session):
 
     def send(self, request, **kwargs):
         # Catch urllib3 warnings for HTTPS related errors.
+        insecure = False
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always')
             r = super(ArchiveSession, self).send(request, **kwargs)
@@ -342,8 +343,6 @@ class ArchiveSession(requests.sessions.Session):
                     if any(x in str(e) for x in insecure_warnings):
                         insecure = True
                         break
-            else:
-                insecure = False
         if insecure:
             from requests.exceptions import RequestException
             msg = ('You are attempting to make an HTTPS request on an insecure platform,'

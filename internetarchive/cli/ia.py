@@ -45,7 +45,7 @@ commands:
 
 Documentation for 'ia' is available at:
 
-    http://internetarchive.rtfd.org/en/latest/cli.html
+    https://internetarchive.readthedocs.io/en/latest/cli.html
 
 See 'ia help <command>' for help on a specific command.
 """

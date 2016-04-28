@@ -33,10 +33,10 @@ Binaries of the command-line tool are also available:
 Documentation
 -------------
 
-Documentation is available at `https://internetarchive.readthedocs.org <https://internetarchive.readthedocs.org>`_.
+Documentation is available at `https://internetarchive.readthedocs.io <https://internetarchive.readthedocs.io>`_.
 
 
 Contributing
 ------------
 
-All contributions are welcome and appreciated. Please see `https://internetarchive.readthedocs.org/en/latest/contributing.html <https://internetarchive.readthedocs.org/en/latest/contributing.html>`_ for more details.
+All contributions are welcome and appreciated. Please see `https://internetarchive.readthedocs.io/en/latest/contributing.html <https://internetarchive.readthedocs.io/en/latest/contributing.html>`_ for more details.

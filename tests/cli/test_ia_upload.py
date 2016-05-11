@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import sys
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -162,6 +163,34 @@ def test_ia_upload_size_hint(capsys):
                                         'Endpoint:', 'HTTP Headers:', 'nasa:',
                                         (' {0}//s3.us.archive.org/nasa/'
                                          'test.txt'.format(protocol))])
+
+
+def test_ia_upload_unicode(tmpdir):
+    tmpdir.chdir()
+    with open('தமிழ் - baz ∆.txt', 'w') as fh:
+        fh.write('unicode foo')
+    fname = u'தமிழ் - baz ∆.txt'
+    efname = '%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20baz%20%E2%88%86.txt'
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
+                 body=ITEM_METADATA,
+                 status=200,
+                 content_type='application/json')
+        rsps.add(responses.PUT,
+                 '{0}//s3.us.archive.org/nasa/{1}'.format(protocol, efname),
+                 body='',
+                 status=200,
+                 content_type='text/plain')
+        sys.argv = ['ia', '--log', 'upload', 'nasa', 'தமிழ் - baz ∆.txt',
+                    '--metadata', 'foo:∆']
+        try:
+            ia.main()
+        except SystemExit as exc:
+            assert not exc.code
+
+    with open('internetarchive.log', 'r') as fh:
+        assert ('uploaded தமிழ் - baz ∆.txt to {0}//s3.us.archive.org/nasa/'
+                'தமிழ் - baz ∆.txt'.format(protocol)) in fh.read()
 
 
 def test_ia_upload_remote_name(tmpdir):

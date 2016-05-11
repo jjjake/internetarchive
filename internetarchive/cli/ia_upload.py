@@ -62,7 +62,7 @@ from schema import Schema, Use, Or, And, SchemaError
 import six
 
 from internetarchive.session import ArchiveSession
-from internetarchive.cli.argparser import get_args_dict
+from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
 from internetarchive.utils import validate_ia_identifier, get_s3_xml_text
 
 
@@ -103,22 +103,27 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
 
 
 def main(argv, session):
-    args = docopt(__doc__, argv=argv)
+    if six.PY2:
+        args = docopt(__doc__.encode('utf-8'), argv=argv)
+    else:
+        args = docopt(__doc__, argv=argv)
     ERRORS = False
 
     # Validate args.
     s = Schema({
-        six.text_type: Use(bool),
+        str: Use(bool),
         '<identifier>': Or(None, And(str, validate_ia_identifier,
             error=('<identifier> should be between 3 and 80 characters in length, and '
                    'can only contain alphanumeric characters, underscores ( _ ), or '
                    'dashes ( - )'))),
         '<file>': And(
+            Use(lambda l: l if not six.PY2 else convert_str_list_to_unicode(l)),
             And(lambda f: all(os.path.exists(x) for x in f if x != '-'),
                 error='<file> should be a readable file or directory.'),
             And(lambda f: False if f == ['-'] and not args['--remote-name'] else True,
                 error='--remote-name must be provided when uploading from stdin.')),
-        '--remote-name': Or(None, And(str)),
+        '--remote-name': Or(None,
+            Use(lambda x: x.decode(sys.getfilesystemencoding()) if six.PY2 else x)),
         '--spreadsheet': Or(None, os.path.isfile,
             error='--spreadsheet should be a readable file.'),
         '--metadata': Or(None, And(Use(get_args_dict), dict),

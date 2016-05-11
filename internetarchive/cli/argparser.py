@@ -25,7 +25,7 @@ internetarchive.cli.argparser
 :license: AGPL 3, see LICENSE for more details.
 """
 from collections import defaultdict
-from xml.dom.minidom import parseString
+import sys
 
 from six.moves.urllib.parse import parse_qsl
 
@@ -52,3 +52,10 @@ def get_args_dict(args, query_string=False):
             metadata[key] = metadata[key][0]
 
     return metadata
+
+
+def convert_str_list_to_unicode(str_list):
+    unicode_list = list()
+    for x in str_list:
+        unicode_list.append(x.decode(sys.getfilesystemencoding()))
+    return unicode_list

@@ -38,6 +38,7 @@ except ImportError:
 import json
 
 from six import string_types
+from six.moves import urllib
 from requests import Response
 from clint.textui import progress
 from requests.exceptions import HTTPError
@@ -484,7 +485,7 @@ class Item(BaseItem):
         # Build IA-S3 URL.
         key = body.name.split('/')[-1] if key is None else key
         base_url = '{0.session.protocol}//s3.us.archive.org/{0.identifier}'.format(self)
-        url = '{0}/{1}'.format(base_url, key.lstrip('/'))
+        url = '{0}/{1}'.format(base_url, urllib.parse.quote(key.lstrip('/')))
 
         # Skip based on checksum.
         if checksum:

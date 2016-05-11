@@ -10,6 +10,10 @@ Release History
 
 - Use scrape API for getting total number of results rather than the advanced search API.
 - Improved error messages for IA-S3 (upload) related errors.
+- Added retry suport to delete.
+- ``ia delete`` no longer exits if a single request fails when deleting multiple files,
+  but continues onto the next file. If any file fails, the command will exit with a
+  non-zero status code.
 
 **Bugfixes**
 
@@ -21,6 +25,8 @@ Release History
   Refer to `http://internetarchive.readthedocs.org/en/latest/troubleshooting.html#https-issues <http://internetarchive.readthedocs.org/en/latest/troubleshooting.html#https-issues>`_ if you are experiencing issues.
 - Fixed bug in ``ia`` CLI where ``-insecure`` was still making HTTPS requests when it should have been making HTTP requests.
 - Fixed bug in ``ia delete`` where ``-all`` option wasn't working because it was using ``item.iter_files`` instead of ``item.get_files``.
+- Fixed bug in ``ia upload`` where uploading files with unicode file names were failing.
+- Fixed bug in upload where filenames with ``;`` characters were being truncated.
 
 1.0.2 (2016-03-07)
 ++++++++++++++++++

@@ -77,6 +77,8 @@ For example, to remove the metadata field ``foo`` from the item ``<identifier>``
 
     $ ia metadata <identifier> --modify="foo:REMOVE_TAG"
 
+Note that some metadata fields (e.g. ``mediatype``) cannot be modified, and must instead be set initially on upload.
+
 The default target to write to is ``metadata``. If you would like to write to another target, such as ``files``, you can specify so using the ``--target`` parameter. For example, if we had an item whose identifier was ``my_identifier`` and we wanted to add a metadata field to a file within the item called ``foo.txt``: 
 
 .. code:: bash
@@ -114,7 +116,9 @@ Upload
 
 .. code:: bash
 
-    $ ia upload <identifier> file1 file2 --metadata="title:foo" --metadata="blah:arg"
+    $ ia upload <identifier> file1 file2 --metadata="mediatype:texts" --metadata="blah:arg"
+
+Please note that, unless specified otherwise, items will be uploaded with a ``data`` mediatype. **This cannot be changed afterwards.** Therefore, you should specify a mediatype when uploading, eg. ``--metadata="mediatype:movies"``
 
 You can upload files from ``stdin``:
 

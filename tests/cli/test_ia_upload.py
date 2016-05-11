@@ -169,7 +169,7 @@ def test_ia_upload_unicode(tmpdir):
     tmpdir.chdir()
     with open('தமிழ் - baz ∆.txt', 'w') as fh:
         fh.write('unicode foo')
-    fname = u'தமிழ் - baz ∆.txt'
+    fname = u'தமிழ் - foo; baz ∆.txt'
     efname = '%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20baz%20%E2%88%86.txt'
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
@@ -190,7 +190,8 @@ def test_ia_upload_unicode(tmpdir):
 
     with open('internetarchive.log', 'r') as fh:
         assert ('uploaded தமிழ் - baz ∆.txt to {0}//s3.us.archive.org/nasa/'
-                'தமிழ் - baz ∆.txt'.format(protocol)) in fh.read()
+                '%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20'
+                'baz%20%E2%88%86.txt'.format(protocol)) in fh.read()
 
 
 def test_ia_upload_remote_name(tmpdir):

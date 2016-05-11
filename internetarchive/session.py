@@ -128,16 +128,18 @@ class ArchiveSession(requests.sessions.Session):
         return 'internetarchive/{0} ({1} {2}; N; {3}; {4}) Python/{5}'.format(
             __version__, uname[0], uname[-1], lang, self.access_key, py_version)
 
-    def _mount_http_adapter(self, protocol=None, max_retries=None, status_forcelist=None):
+    def _mount_http_adapter(self, protocol=None, max_retries=None,
+                            status_forcelist=None, host=None):
         """Mount an HTTP adapter to the
         :class:`ArchiveSession <ArchiveSession>` object.
         """
         protocol = protocol if protocol else self.protocol
-        if not max_retries:
+        host = host if host else 'archive.org'
+        if max_retries is None:
             max_retries = self.http_adapter_kwargs.get('max_retries', 3)
 
         if not status_forcelist:
-            status_forcelist = [500, 501, 502, 503, 504, 400, 408]
+            status_forcelist = [500, 501, 502, 503, 504]
         if max_retries and isinstance(max_retries, (int, float)):
             max_retries = Retry(total=max_retries,
                                 connect=max_retries,
@@ -150,7 +152,7 @@ class ArchiveSession(requests.sessions.Session):
         max_retries_adapter = HTTPAdapter(**self.http_adapter_kwargs)
         # Don't mount on s3.us.archive.org, only archive.org!
         # IA-S3 requires a more complicated retry workflow.
-        self.mount('{0}//archive.org'.format(self.protocol), max_retries_adapter)
+        self.mount('{0}//{1}'.format(protocol, host), max_retries_adapter)
 
     def set_file_logger(self, log_level, path, logger_name='internetarchive'):
         """Convenience function to quickly configure any level of

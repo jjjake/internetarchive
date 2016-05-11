@@ -35,17 +35,21 @@ options:
                                delete.
     -g, --glob=<pattern>       Only delete files matching the given pattern.
     -f, --format=<format>...   Only only delete files matching the specified format(s).
+    -R, --retries=<i>          Number of times to retry if S3 returns a 503 SlowDown
+                               error [default: 2].
 """
 from __future__ import absolute_import, print_function, unicode_literals
 
 import sys
-from six import text_type
+import six
 
+import requests.exceptions
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Use, Or, And
 
 from internetarchive.utils import get_s3_xml_text
 from internetarchive.utils import validate_ia_identifier
+from internetarchive.cli.argparser import convert_str_list_to_unicode
 
 
 def main(argv, session):
@@ -58,12 +62,14 @@ def main(argv, session):
 
     # Validate args.
     s = Schema({
-        text_type: Use(lambda x: bool(x)),
-        '<file>': list,
+        six.text_type: Use(lambda x: bool(x)),
+        '<file>': And(list, Use(
+            lambda x: convert_str_list_to_unicode(x) if six.PY2 else x)),
         '--format': list,
         '--glob': list,
         'delete': bool,
         '<identifier>': Or(None, And(str, validate_ia_identifier, error=invalid_id_msg)),
+        '--retries': Use(lambda i: int(i[0])),
     })
     try:
         args = s.validate(args)
@@ -92,29 +98,45 @@ def main(argv, session):
     else:
         fnames = []
         if args['<file>'] == ['-']:
-            fnames = [f.strip().decode('utf-8') for f in sys.stdin]
+            if six.PY2:
+                fnames = convert_str_list_to_unicode([f.strip() for f in sys.stdin])
+            else:
+                fnames = [f.strip() for f in sys.stdin]
         else:
-            fnames = [f.strip().decode('utf-8') for f in args['<file>']]
+            fnames = [f.strip() for f in args['<file>']]
 
-        files = [f for f in [item.get_file(f) for f in fnames] if f]
+        files = list(item.get_files(fnames))
 
     if not files:
         sys.stderr.write(' warning: no files found, nothing deleted.\n')
         sys.exit(1)
 
+    errors = False
     for f in files:
         if not f:
             if verbose:
                 sys.stderr.write(' error: "{0}" does not exist\n'.format(f.name))
-            sys.exit(1)
+            errors = True
         if any(f.name.endswith(s) for s in no_delete):
             continue
         if args['--dry-run']:
             sys.stdout.write(' will delete: {0}/{1}\n'.format(item.identifier,
                                                               f.name.encode('utf-8')))
             continue
-        resp = f.delete(verbose=verbose, cascade_delete=args['--cascade'])
+        try:
+            resp = f.delete(verbose=verbose,
+                            cascade_delete=args['--cascade'],
+                            retries=args['--retries'])
+        except requests.exceptions.RetryError as e:
+            print(' error: max retries exceeded for {0}'.format(f.name), file=sys.stderr)
+            errors = True
+            continue
+
         if resp.status_code != 204:
+            errors = True
             msg = get_s3_xml_text(resp.content)
-            sys.stderr.write(' error: {0} ({1})\n'.format(msg, resp.status_code))
-            sys.exit(1)
+            print(' error: {0} ({1})'.format(msg, resp.status_code), file=sys.stderr)
+            continue
+
+    if errors is True:
+        sys.exit(1)

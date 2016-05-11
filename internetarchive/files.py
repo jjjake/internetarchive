@@ -236,7 +236,7 @@ class File(BaseFile):
         return True
 
     def delete(self, cascade_delete=None, access_key=None, secret_key=None, verbose=None,
-               debug=None):
+               debug=None, retries=None):
         """Delete a file from the Archive. Note: Some files -- such as
         <itemname>_meta.xml -- cannot be deleted.
 
@@ -265,9 +265,14 @@ class File(BaseFile):
         secret_key = self.item.session.secret_key if not secret_key else secret_key
         debug = False if not debug else debug
         verbose = False if not verbose else verbose
+        max_retries = 2 if retries is None else retries
 
-        url = 'http://s3.us.archive.org/{0}/{1}'.format(self.identifier,
-                                                        self.name)
+        url = '{0}//s3.us.archive.org/{1}/{2}'.format(self.item.session.protocol,
+                                                      self.identifier,
+                                                      self.name)
+        self.item.session._mount_http_adapter(max_retries=max_retries,
+                                              status_forcelist=[503],
+                                              host='s3.us.archive.org')
         request = iarequest.S3Request(
             method='DELETE',
             url=url,
@@ -288,9 +293,18 @@ class File(BaseFile):
             try:
                 resp = self.item.session.send(prepared_request)
                 resp.raise_for_status()
-            except HTTPError as e:
-                error_msg = 'Error deleting {0}, {1}'.format(resp.url, e)
+            except (RetryError, HTTPError, ConnectTimeout,
+                    ConnectionError, socket.error, ReadTimeout) as exc:
+                error_msg = 'Error deleting {0}, {1}'.format(url, exc)
                 log.error(error_msg)
                 raise
-            finally:
+            else:
                 return resp
+            finally:
+                # The retry adapter is mounted to the session object.
+                # Make sure to remove it after delete, so it isn't
+                # mounted if and when the session object is used for an
+                # upload. This is important because we use custom retry
+                # handling for IA-S3 uploads.
+                url_prefix = '{0}//s3.us.archive.org'.format(self.item.session.protocol)
+                del self.item.session.adapters[url_prefix]

@@ -151,6 +151,8 @@ def main():
     except IOError as e:
         # Handle Broken Pipe errors.
         if e.errno == errno.EPIPE:
+            sys.stderr.close()
+            sys.stdout.close()
             sys.exit(0)
         else:
             raise

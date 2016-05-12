@@ -155,7 +155,7 @@ class Catalog(object):
         r = self.session.get(self.url, params=self.params, **self.request_kwargs)
         content = r.content.decode('utf-8')
         # Convert JSONP to JSON (then parse the JSON).
-        json_str = r.content[(content.index("(") + 1):content.rindex(")")]
+        json_str = content[(content.index("(") + 1):content.rindex(")")]
         try:
             return [CatalogTask(t, self) for t in json.loads(json_str)]
         except ValueError:

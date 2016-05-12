@@ -41,7 +41,7 @@ class S3Auth(AuthBase):
         return r
 
 
-class MetadataAuth(AuthBase):
+class S3PostAuth(AuthBase):
     """Attaches S3 Basic Authentication to the given Request object."""
     def __init__(self, access_key=None, secret_key=None):
         self.access_key = access_key
@@ -49,5 +49,8 @@ class MetadataAuth(AuthBase):
 
     def __call__(self, r):
         auth_str = '&access={a}&secret={s}'.format(a=self.access_key, s=self.secret_key)
+        if not r.body:
+            r.body = ''
         r.body += auth_str
+        r.headers['content-type'] = 'application/x-www-form-urlencoded'
         return r

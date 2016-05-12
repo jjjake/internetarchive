@@ -168,7 +168,7 @@ class MetadataRequest(requests.models.Request):
         super(MetadataRequest, self).__init__(**kwargs)
 
         if not self.auth:
-            self.auth = auth.MetadataAuth(access_key, secret_key)
+            self.auth = auth.S3PostAuth(access_key, secret_key)
         metadata = {} if not metadata else metadata
 
         self.metadata = metadata

@@ -146,7 +146,7 @@ def main(argv, session):
     for i, identifier in enumerate(ids):
         try:
             identifier = identifier.strip()
-        except AttributeError: 
+        except AttributeError:
             identifier = identifier.get('identifier')
         if total_ids > 1:
             item_index = '{0}/{1}'.format((i + 1), total_ids)

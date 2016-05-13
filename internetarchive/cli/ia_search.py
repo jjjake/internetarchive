@@ -58,7 +58,7 @@ def main(argv, session=None):
         '<query>': Use(lambda x: ' '.join(x)),
         '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
         '--sort': list,
-        '--field': Use(lambda x: ['identifier'] if not x and args['--itemlist'] else x),
+        '--field': list,
     })
     try:
         args = s.validate(args)
@@ -70,16 +70,16 @@ def main(argv, session=None):
     fields = list(chain.from_iterable([x.split(',') for x in args['--field']]))
     sorts = list(chain.from_iterable([x.split(',') for x in args['--sort']]))
 
-    search = search_items(args['<query>'],
-                          fields=fields,
-                          sorts=sorts,
-                          params=args['--parameters'])
-
-    if args['--num-found']:
-        print('{0}'.format(search.num_found))
-        sys.exit(0)
+    search = session.search_items(args['<query>'],
+                                  fields=fields,
+                                  sorts=sorts,
+                                  params=args['--parameters'])
 
     try:
+        if args['--num-found']:
+            print('{0}'.format(search.num_found))
+            sys.exit(0)
+
         for result in search:
             if args['--itemlist']:
                 print(result.get('identifier', ''))

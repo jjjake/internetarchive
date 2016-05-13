@@ -11,9 +11,13 @@ Release History
 - Use scrape API for getting total number of results rather than the advanced search API.
 - Improved error messages for IA-S3 (upload) related errors.
 - Added retry suport to delete.
-- ``ia delete`` no longer exits if a single request fails when deleting multiple files,
-  but continues onto the next file. If any file fails, the command will exit with a
-  non-zero status code.
+- ``ia delete`` no longer exits if a single request fails when deleting multiple files, but continues onto the next file.
+  If any file fails, the command will exit with a non-zero status code.
+- All search requests now require authentication via IA-S3 keys.
+  You can run ``ia configure`` to generate a config file that will be used to authenticate all search requests automatically. 
+  For more details refer to the following links:
+    http://internetarchive.readthedocs.io/en/latest/quickstart.html?highlight=configure#configuring
+    http://internetarchive.readthedocs.io/en/latest/api.html#configuration
 
 **Bugfixes**
 
@@ -27,6 +31,7 @@ Release History
 - Fixed bug in ``ia delete`` where ``-all`` option wasn't working because it was using ``item.iter_files`` instead of ``item.get_files``.
 - Fixed bug in ``ia upload`` where uploading files with unicode file names were failing.
 - Fixed bug in upload where filenames with ``;`` characters were being truncated.
+- Fixed bug in ``internetarchive.catalog`` where TypeError was being raised in Python 3 due to mixing bytes with strings.
 
 1.0.2 (2016-03-07)
 ++++++++++++++++++

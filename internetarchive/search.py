@@ -34,6 +34,8 @@ from logging import getLogger
 
 import six
 
+from internetarchive.auth import S3PostAuth
+
 
 log = getLogger(__name__)
 
@@ -70,9 +72,10 @@ class Search(object):
             self.session.protocol)
         self.search_url = '{0}//archive.org/advancedsearch.php'.format(
             self.session.protocol)
+        self.auth = S3PostAuth(self.session.access_key, self.session.secret_key)
 
         # Initialize params.
-        default_params = dict(q=query)
+        default_params = dict(q=query, REQUIRE_AUTH='true')
         if 'page' not in params:
             default_params['size'] = 10000
         else:
@@ -117,12 +120,12 @@ class Search(object):
         if self.sorts:
             self.params['sorts'] = ','.join(self.sorts)
         while True:
-            r = self.session.get(self.scrape_url,
-                                 params=self.params,
-                                 **self.request_kwargs)
+            r = self.session.post(self.scrape_url,
+                                  params=self.params,
+                                  auth=self.auth,
+                                  **self.request_kwargs)
             j = r.json()
-            if 'error' in j:
-                raise ValueError(j.get('error'))
+            self._handle_scrape_error(j)
 
             self.params['cursor'] = j.get('cursor')
             for item in j['items']:
@@ -139,11 +142,25 @@ class Search(object):
     @property
     def num_found(self):
         if not self._num_found:
-            p = dict(q=self.params['q'], total_only='true')
-            r = self.session.get(self.scrape_url, params=p, **self.request_kwargs)
+            p = self.params.copy()
+            p['total_only'] = 'true'
+            r = self.session.post(self.scrape_url,
+                                  params=p,
+                                  auth=self.auth,
+                                  **self.request_kwargs)
             j = r.json()
+            self._handle_scrape_error(j)
             self._num_found = j.get('total')
         return self._num_found
+
+    def _handle_scrape_error(self, j):
+        if 'error' in j:
+            if all(s in j['error'].lower() for s in ['invalid', 'secret']):
+                if not j['error'].endswith('.'):
+                    j['error'] += '.'
+                raise ValueError("{0} Try running 'ia configure' "
+                                 "and retrying.".format(j['error']))
+            raise ValueError(j.get('error'))
 
     def _get_item_from_search_result(self, search_result):
         return self.session.get_item(search_result['identifier'])
@@ -158,6 +175,9 @@ class Search(object):
         else:
             _map = map(self._get_item_from_search_result, self._make_results_generator())
         return SearchIterator(self, _map)
+
+    def __len__(self):
+        return self.num_found
 
 
 class SearchIterator(object):

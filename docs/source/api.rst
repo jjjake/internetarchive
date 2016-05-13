@@ -8,7 +8,7 @@ Developer Interface
 Configuration
 -------------
 
-Certain functions of the internetarchive library require your Archive.org credentials (i.e. uploading, modifying metadata).
+Certain functions of the internetarchive library require your Archive.org credentials (i.e. uploading, modifying metadata, searching).
 Your credentials and other configurations can be provided via a dictionary when insantiating an :class:`ArchiveSession` or :class:`Item` object, or in a config file.
 
 The easiest way to create a config file is with the `configure <internetarchive.html#internetarchive.configure>`_ function::

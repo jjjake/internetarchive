@@ -26,22 +26,22 @@ with open(TEST_JSON_SCRAPE_FILE) as fh:
 
 
 def test_ia_search_itemlist(capsys):
-    with responses.RequestsMock() as rsps:
+    with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:
         url1 = ('{0}//archive.org/services/search/beta/scrape.php'
                 '?q=collection%3Aattentionkmartshoppers'
-                '&fields=identifier&size=10000'.format(protocol))
-        url2 = ('{0}//archive.org/services/search/beta/scrape.php'
-                '?q=collection%3Aattentionkmartshoppers&fields=identifier'
-                '&cursor=W3siaWRlbnRpZmllciI6IjE5NjEtTC0wNTkxNCJ9XQ%3D%3D'
+                '&REQUIRE_AUTH=true&size=10000'.format(protocol))
+        url2 = ('{0}//archive.org/services/search/beta/scrape.php?'
+                'cursor=W3siaWRlbnRpZmllciI6IjE5NjEtTC0wNTkxNCJ9XQ%3D%3D'
+                '&REQUIRE_AUTH=true&q=collection%3Aattentionkmartshoppers'
                 '&size=10000'.format(protocol))
-        rsps.add(responses.GET, url1,
+        rsps.add(responses.POST, url1,
                  body=TEST_SCRAPE_RESPONSE,
                  status=200,
                  match_querystring=True)
         _j = json.loads(TEST_SCRAPE_RESPONSE)
         del _j['cursor']
         _r = json.dumps(_j)
-        rsps.add(responses.GET, url2,
+        rsps.add(responses.POST, url2,
                  body=_r,
                  status=200,
                  match_querystring=True)
@@ -60,8 +60,9 @@ def test_ia_search_itemlist(capsys):
 def test_ia_search_num_found(capsys):
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         url = ('{0}//archive.org/services/search/beta/scrape.php'
-               '?q=collection%3Anasa&total_only=true'.format(protocol))
-        rsps.add(responses.GET, url,
+               '?q=collection%3Anasa&total_only=true'
+               '&REQUIRE_AUTH=true&size=10000'.format(protocol))
+        rsps.add(responses.POST, url,
                  body='{"items":[],"count":0,"total":50}',
                  status=200,
                  match_querystring=True)

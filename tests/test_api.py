@@ -321,15 +321,16 @@ def test_search_items():
     _j['response']['numFound'] = 1
     _search_r = json.dumps(_j)
     results_url = ('{0}//archive.org/services/search/beta/scrape.php'
-                   '?q=identifier%3Anasa&size=10000'.format(protocol))
+                   '?q=identifier%3Anasa&size=10000&REQUIRE_AUTH=true'.format(protocol))
     count_url = ('{0}//archive.org/services/search/beta/scrape.php'
-                 '?q=identifier%3Anasa&total_only=true'.format(protocol))
+                 '?q=identifier%3Anasa&total_only=true&REQUIRE_AUTH=true'
+                 '&size=10000'.format(protocol))
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, results_url,
+        rsps.add(responses.POST, results_url,
                  body=TEST_SCRAPE_RESPONSE,
                  match_querystring=True,
                  status=200)
-        rsps.add(responses.GET, count_url,
+        rsps.add(responses.POST, count_url,
                  body='{"items":[],"count":0,"total":1}',
                  match_querystring=True,
                  content_type='application/json; charset=UTF-8',
@@ -350,10 +351,21 @@ def test_search_items_with_fields():
         {'identifier': 'nasa', 'title': 'NASA Images'}
     ]
     search_response_str = json.dumps(_j)
+    results_url = ('{0}//archive.org/services/search/beta/scrape.php'
+                   '?q=identifier%3Anasa&size=10000&REQUIRE_AUTH=true'
+                   '&fields=identifier%2Ctitle'.format(protocol))
+    count_url = ('{0}//archive.org/services/search/beta/scrape.php'
+                 '?q=identifier%3Anasa&total_only=true&REQUIRE_AUTH=true'
+                 '&size=10000'.format(protocol))
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET,
-                 '{0}//archive.org/services/search/beta/scrape.php'.format(protocol),
+        rsps.add(responses.POST, results_url,
+                 match_querystring=True,
                  body=search_response_str,
+                 status=200)
+        rsps.add(responses.POST, count_url,
+                 body='{"items":[],"count":0,"total":1}',
+                 match_querystring=True,
+                 content_type='application/json; charset=UTF-8',
                  status=200)
         r = search_items('identifier:nasa', fields=['identifier', 'title'])
         assert list(r) == [{'identifier': 'nasa', 'title': 'NASA Images'}]
@@ -363,7 +375,7 @@ def test_search_items_as_items():
     search_response_str = json.dumps(TEST_SCRAPE_RESPONSE)
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET,
+        rsps.add(responses.POST,
                  '{0}//archive.org/services/search/beta/scrape.php'.format(protocol),
                  body=TEST_SCRAPE_RESPONSE,
                  status=200)
@@ -387,11 +399,9 @@ def test_page_row_specification():
         rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
-        rsps.add(responses.GET,
-                 ('{0}//archive.org/services/search/beta/scrape.php'
-                  '?q=identifier%3Anasa&total_only=true'.format(protocol)),
+        rsps.add(responses.POST, 'https://archive.org/services/search/beta/scrape.php',
                  body='{"items":[],"count":0,"total":1}',
-                 match_querystring=True,
+                 match_querystring=False,
                  content_type='application/json; charset=UTF-8',
                  status=200)
         r = search_items('identifier:nasa', params={

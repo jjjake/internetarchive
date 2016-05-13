@@ -486,7 +486,7 @@ class Item(BaseItem):
         key = body.name.split('/')[-1] if key is None else key
         base_url = '{0.session.protocol}//s3.us.archive.org/{0.identifier}'.format(self)
         url = '{0}/{1}'.format(
-                base_url, urllib.parse.quote(key.lstrip('/').encode('utf-8')))
+            base_url, urllib.parse.quote(key.lstrip('/').encode('utf-8')))
 
         # Skip based on checksum.
         if checksum:

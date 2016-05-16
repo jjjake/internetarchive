@@ -38,7 +38,7 @@ def main(argv, session):
     docopt(__doc__, argv=argv)
     print("Enter your Archive.org credentials below to configure 'ia'.\n")
     try:
-        configure()
+        configure(config_file=session.config_file)
     except AuthenticationError as exc:
         print('\nerror: {0}'.format(str(exc)))
         sys.exit(1)

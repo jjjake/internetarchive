@@ -16,7 +16,21 @@ The easiest way to create a config file is with the `configure <internetarchive.
     >>> from internetarchive import configure
     >>> configure('user@example.com', 'password')
 
-Config files are stored in either ``$HOME/.ia`` or ``$HOME/.config/ia.ini`` by default, but other config files can be specified when insantiating an :class:`ArchiveSession` or :class:`Item` object.
+Config files are stored in either ``$HOME/.ia`` or ``$HOME/.config/ia.ini`` by default. You can also specify your own path::
+
+
+    >>> from internetarchive import configure
+    >>> configure('user@example.com', 'password', config_file='/home/jake/.config/ia-alternate.ini')
+
+Custom config files can be specified when insantiating an :class:`ArchiveSession` object::
+
+    >>> from internetarchive import get_session
+    >>> s = get_session(config_file='/home/jake/.config/ia-alternate.ini')
+
+Or an :class:`Item` object::
+
+    >>> form internetarchive import get_item
+    >>> item = get_item('nasa', config_file='/home/jake/.config/ia-alternate.ini')
 
 IA-S3 Configuration
 ~~~~~~~~~~~~~~~~~~~

@@ -18,6 +18,7 @@ Release History
   For more details refer to the following links:
     http://internetarchive.readthedocs.io/en/latest/quickstart.html?highlight=configure#configuring
     http://internetarchive.readthedocs.io/en/latest/api.html#configuration
+- Added ability to specify your own filepath in ``ia configure`` and ``internetarchive.configure()``.
 
 **Bugfixes**
 

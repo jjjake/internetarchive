@@ -97,6 +97,7 @@ class ArchiveSession(requests.sessions.Session):
         debug = False if not debug else True
 
         self.config = get_config(config, config_file)
+        self.config_file = config_file
         self.cookies.update(self.config.get('cookies', {}))
         self.secure = self.config.get('general', {}).get('secure', True)
         self.protocol = 'https:' if self.secure else 'http:'

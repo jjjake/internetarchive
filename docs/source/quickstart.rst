@@ -19,7 +19,7 @@ To automatically create a config file with your Archive.org credentials, you can
     
     Config saved to: /home/user/.config/ia.ini
 
-Your config file will be saved to ``$HOME/.config/ia.ini``, or ``$HOME/.ia`` if you do not have a ``.config`` directory in ``$HOME``.
+Your config file will be saved to ``$HOME/.config/ia.ini``, or ``$HOME/.ia`` if you do not have a ``.config`` directory in ``$HOME``. Alternatively, you can specify your own path to save the config to via ``ia --config-file '~/.ia-custom-config' configure``.
 
 
 Uploading

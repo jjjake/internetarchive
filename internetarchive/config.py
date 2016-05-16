@@ -77,8 +77,8 @@ def get_auth_config(username, password):
     return auth_config
 
 
-def write_config_file(username, password):
-    config_file, config = parse_config_file()
+def write_config_file(username, password, config_file=None):
+    config_file, config = parse_config_file(config_file)
     auth_config = get_auth_config(username, password)
 
     # S3 Keys.

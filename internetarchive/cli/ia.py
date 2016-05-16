@@ -107,8 +107,7 @@ def main():
     # Validate args.
     s = Schema({
         six.text_type: bool,
-        '--config-file': Or(None, lambda f: os.path.exists(f),
-                            error='--config-file should be a readable file.'),
+        '--config-file': Or(None, str),
         '<args>': list,
         '<command>': Or(str, lambda _: 'help'),
     })
@@ -129,6 +128,12 @@ def main():
         else:
             ia_module = load_ia_module(args['<args>'][0])
             sys.exit(print(ia_module.__doc__.strip(), file=sys.stderr))
+
+    if cmd != 'configure' and args['--config-file']:
+        if not os.path.isfile(args['--config-file']):
+            print('--config-file should be a readable file.\n{0}'.format(
+                printable_usage(__doc__)), file=sys.stderr)
+            sys.exit(1)
 
     argv = [cmd] + args['<args>']
 

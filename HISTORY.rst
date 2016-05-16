@@ -3,8 +3,8 @@
 Release History
 ---------------
 
-1.0.3 (?)
-+++++++++
+1.0.3 (2016-05-16)
+++++++++++++++++++
 
 **Features and Improvements**
 
@@ -28,8 +28,8 @@ Release History
 - Previously all requests were made in HTTP for Python versions < 2.7.9 due to the issues described at `https://urllib3.readthedocs.org/en/latest/security.html <https://urllib3.readthedocs.org/en/latest/security.html>`_.
   In favor of security over convenience, all requests are now made via HTTPS regardless of Python version.
   Refer to `http://internetarchive.readthedocs.org/en/latest/troubleshooting.html#https-issues <http://internetarchive.readthedocs.org/en/latest/troubleshooting.html#https-issues>`_ if you are experiencing issues.
-- Fixed bug in ``ia`` CLI where ``-insecure`` was still making HTTPS requests when it should have been making HTTP requests.
-- Fixed bug in ``ia delete`` where ``-all`` option wasn't working because it was using ``item.iter_files`` instead of ``item.get_files``.
+- Fixed bug in ``ia`` CLI where ``--insecure`` was still making HTTPS requests when it should have been making HTTP requests.
+- Fixed bug in ``ia delete`` where ``--all`` option wasn't working because it was using ``item.iter_files`` instead of ``item.get_files``.
 - Fixed bug in ``ia upload`` where uploading files with unicode file names were failing.
 - Fixed bug in upload where filenames with ``;`` characters were being truncated.
 - Fixed bug in ``internetarchive.catalog`` where TypeError was being raised in Python 3 due to mixing bytes with strings.

@@ -17,6 +17,17 @@ or, with `easy_install <http://pypi.python.org/pypi/setuptools>`_::
 
 Either of these commands will install the ``internetarchive`` Python library and ``ia`` command-line tool on your system.
 
+**Note**: Some versions of Mac OS X come with Python libraries that are required by ``internetarchive`` (e.g. the Python package ``six``).
+This can cause installation issues. If your installation is failing with a message that looks something like::
+
+    OSError: [Errno 1] Operation not permitted: '/var/folders/bk/3wx7qs8d0x79tqbmcdmsk1040000gp/T/pip-TGyjVo-uninstall/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/six-1.4.1-py2.7.egg-info'
+
+You can use the ``--ignore-installed`` parameter in ``pip`` to ignore the libraries that are already installed, and continue with the rest of the installation::
+
+    $ sudo pip install --ignore-installed internetarchive
+
+More details on this issue can be found here: https://github.com/pypa/pip/issues/3165
+
 
 virtualenv
 ----------

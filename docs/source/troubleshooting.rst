@@ -17,7 +17,7 @@ See `https://urllib3.readthedocs.org/en/latest/security.html <https://urllib3.re
 If you are using a Python version earlier than 2.7.9, you might see ``InsecurePlatformWarning`` and ``SNIMissingWarning`` warnings and your reqeusts might fail. There are a few options to address this issue:
 
     1. Upgrade your Python to version 2.7.9 or more recent.
-    2. Install or upgrade the following Python modules as `documented here <https://urllib3.readthedocs.org/en/latest/security.html#installing-urllib3-with-sni-support-and-certificates>`_: ``PyOpenSSL``, ``ndghttpsclient``, and ``pyasn1``.
+    2. Install or upgrade the following Python modules as `documented here <https://urllib3.readthedocs.org/en/latest/security.html#installing-urllib3-with-sni-support-and-certificates>`_: ``PyOpenSSL``, ``ndg-httpsclient``, and ``pyasn1``.
     3. Use HTTP to make insecure requests in one of the following ways:
            + Adding the following lines to your ``ia.ini`` config file (usually located at ``~/.config/ia.ini`` or ``~/.ia.ini``):
            .. code:: bash

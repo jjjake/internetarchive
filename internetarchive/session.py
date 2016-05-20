@@ -326,7 +326,10 @@ class ArchiveSession(requests.sessions.Session):
             bucket=identifier,
         )
         r = self.get(u, params=p)
-        j = r.json()
+        try:
+            j = r.json()
+        except ValueError:
+            return True
         if j.get('over_limit') == 0:
             return False
         else:

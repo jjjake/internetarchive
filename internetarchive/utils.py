@@ -177,3 +177,26 @@ def get_file_size(file_obj):
     except IOError:
         size = None
     return size
+
+
+def iter_directory(directory):
+    """Given a directory, yield all files recursivley as a two-tuple (filepath, s3key)"""
+    for path, dir, files in os.walk(directory):
+        for f in files:
+            filepath = os.path.join(path, f)
+            key = os.path.relpath(filepath, directory)
+            yield (filepath, key)
+
+
+def recursive_file_count(files):
+    """Given a filepath or list of filepaths, return the total number of files."""
+    if not isinstance(files, (list, set)):
+        files = [files]
+    total_files = 0
+    for f in files:
+        if os.path.isdir(f):
+            for x, _ in iter_directory(f):
+                total_files+=1
+        else:
+            total_files+=1
+    return total_files

@@ -80,6 +80,11 @@ class Search(object):
             default_params['count'] = 10000
         else:
             default_params['output'] = 'json'
+        # In the beta endpoint 'scope' was called 'index'.
+        # Let's support both for a while.
+        if 'index' in params:
+            params['scope'] = params['index']
+            del params['index']
         self.params = default_params.copy()
         self.params.update(params)
 

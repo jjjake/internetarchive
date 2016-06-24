@@ -120,6 +120,7 @@ def get_files(identifier,
               files=None,
               formats=None,
               glob_pattern=None,
+              on_the_fly=None,
               **get_item_kwargs):
     """Get :class:`File` objects from an item.
 
@@ -135,6 +136,10 @@ def get_files(identifier,
     :type glob_pattern: str
     :param glob_pattern: (optional) Only return files matching the given glob pattern.
 
+    :type on_the_fly: bool
+    :param on_the_fly: (optional) Include on-the-fly files (i.e. derivative EPUB,
+                       MOBI, DAISY files).
+
     :param \*\*get_item_kwargs: (optional) Arguments that ``get_item()`` takes.
 
     Usage:
@@ -144,7 +149,7 @@ def get_files(identifier,
         ['nasa_reviews.xml', 'nasa_meta.xml', 'nasa_files.xml']
     """
     item = get_item(identifier, **get_item_kwargs)
-    return item.get_files(files, formats, glob_pattern)
+    return item.get_files(files, formats, glob_pattern, on_the_fly)
 
 
 def modify_metadata(identifier, metadata,

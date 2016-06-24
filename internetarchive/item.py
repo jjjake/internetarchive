@@ -36,6 +36,7 @@ try:
 except ImportError:
     from total_ordering import total_ordering
 import json
+from copy import deepcopy
 
 from six import string_types
 from six.moves import urllib
@@ -186,20 +187,32 @@ class Item(BaseItem):
         """
         return File(self, file_name)
 
-    def get_files(self, files=None, formats=None, glob_pattern=None):
+    def get_files(self, files=None, formats=None, glob_pattern=None, on_the_fly=None):
         files = [] if not files else files
         formats = [] if not formats else formats
+        on_the_fly = False if not on_the_fly else True
 
         if not isinstance(files, (list, tuple, set)):
             files = [files]
         if not isinstance(formats, (list, tuple, set)):
             formats = [formats]
 
+        item_files = deepcopy(self.files)
+        # Add support for on-the-fly files (e.g. EPUB).
+        if on_the_fly:
+            otf_files = [
+                '{0}.epub'.format(self.identifier),
+                '{0}.mobi'.format(self.identifier),
+                '{0}_daisy.zip'.format(self.identifier),
+            ]
+            for f in otf_files:
+                item_files.append(dict(name=f, otf=True))
+
         if not any(k for k in [files, formats, glob_pattern]):
-            for f in self.files:
+            for f in item_files:
                 yield self.get_file(f.get('name'))
 
-        for f in self.files:
+        for f in item_files:
             if f.get('name') in files:
                 yield self.get_file(f.get('name'))
             elif f.get('format') in formats:
@@ -226,7 +239,8 @@ class Item(BaseItem):
                  no_directory=None,
                  retries=None,
                  item_index=None,
-                 ignore_errors=None):
+                 ignore_errors=None,
+                 on_the_fly=None):
         """Download files from an item.
 
         :param files: (optional) Only download files matching given file names.
@@ -251,6 +265,10 @@ class Item(BaseItem):
         :type no_directory: bool
         :param no_directory: (optional) Download files to current working directory rather
                              than creating an item directory.
+
+        :type on_the_fly: bool
+        :param on_the_fly: (optional) Download on-the-fly files (i.e. derivative EPUB,
+                           MOBI, DAISY files).
 
         :rtype: bool
         :returns: True if if files have been downloaded successfully.
@@ -292,13 +310,13 @@ class Item(BaseItem):
             return
 
         if files:
-            files = self.get_files(files)
+            files = self.get_files(files, on_the_fly=on_the_fly)
         else:
-            files = self.get_files()
+            files = self.get_files(on_the_fly=on_the_fly)
         if formats:
-            files = self.get_files(formats=formats)
+            files = self.get_files(formats=formats, on_the_fly=on_the_fly)
         if glob_pattern:
-            files = self.get_files(glob_pattern=glob_pattern)
+            files = self.get_files(glob_pattern=glob_pattern, on_the_fly=on_the_fly)
 
         if not files:
             msg = 'skipping {0}, no matching files found.'.format(self.identifier)
@@ -671,7 +689,7 @@ class Item(BaseItem):
                 file_index += 1
                 # Set derive header if queue_derive is True,
                 # and this is the last request being made.
-                #if queue_derive is True and file_index >= len(files):
+                # if queue_derive is True and file_index >= len(files):
                 if queue_derive is True and file_index >= total_files:
                     _queue_derive = True
                 else:

@@ -46,6 +46,9 @@ options:
 
                                                  ia metadata --formats <identifier>
 
+    --on-the-fly                             Download on-the-fly files, as well as other matching
+                                             files. on-the-fly files includ derivative EPUB, MOBI
+                                             and DAISY files [default: True].
     --no-directories                         Download files into working directory. Do not
                                              create item directories.
     --destdir=<dir>                          The destination directory to download files
@@ -93,6 +96,7 @@ def main(argv, session):
         '<identifier>': Or(str, None),
         '--retries': Use(lambda x: x[0]),
         '--search-parameters': Use(lambda x: get_args_dict(x, query_string=True)),
+        '--on-the-fly': Use(bool),
     })
 
     # Filenames should be unicode literals. Support PY2 and PY3.
@@ -178,7 +182,8 @@ def main(argv, session):
             no_directory=args['--no-directories'],
             retries=retries,
             item_index=item_index,
-            ignore_errors=True
+            ignore_errors=True,
+            on_the_fly=args['--on-the-fly'],
         )
         if _errors:
             errors.append(_errors)

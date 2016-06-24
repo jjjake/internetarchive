@@ -171,15 +171,25 @@ By default, the :func:`download <internetarchive.download>` function will downlo
 
 Files can also be filtered using the ``formats`` parameter. ``formats`` can either be a single format provided as a string::
 
-    >>> download('goodytwoshoes00newyiala', verbose=True, formats='EPUB')
+    >>> download('goodytwoshoes00newyiala', verbose=True, formats='MARC')
     goodytwoshoes00newyiala:
-     downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala.epub to goodytwoshoes00newyiala/goodytwoshoes00newyiala.epub
+     downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc to goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc
 
 Or, a list of formats::
     
-    >>> download('goodytwoshoes00newyiala', verbose=True, formats=['EPUB', 'MARC'])
+    >>> download('goodytwoshoes00newyiala', verbose=True, formats=['DjVuTXT', 'MARC'])
     goodytwoshoes00newyiala:
      downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc to goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc
+     downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala_djvu.txt to goodytwoshoes00newyiala/goodytwoshoes00newyiala_djvu.txt
+
+
+Downloading On-The-Fly Files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some files on archive.org are generated on-the-fly as requested. This currently includes non-original files of the formats EPUB, MOBI, and DAISY. These files can be downloaded using the ``on_the_fly`` parameter::
+
+    >>> download('goodytwoshoes00newyiala', verbose=True, formats='EPUB', on_the_fly=True)
+    goodytwoshoes00newyiala:
      downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala.epub to goodytwoshoes00newyiala/goodytwoshoes00newyiala.epub
 
 

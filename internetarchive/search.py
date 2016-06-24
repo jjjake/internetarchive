@@ -68,7 +68,7 @@ class Search(object):
         self.sorts = sorts or list()
         self.request_kwargs = request_kwargs or dict()
         self._num_found = None
-        self.scrape_url = '{0}//archive.org/services/search/v1/scrape/'.format(
+        self.scrape_url = '{0}//archive.org/services/search/v1/scrape'.format(
             self.session.protocol)
         self.search_url = '{0}//archive.org/advancedsearch.php'.format(
             self.session.protocol)

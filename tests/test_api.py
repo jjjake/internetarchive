@@ -320,11 +320,12 @@ def test_search_items():
     _j = json.loads(TEST_SEARCH_RESPONSE)
     _j['response']['numFound'] = 1
     _search_r = json.dumps(_j)
-    results_url = ('{0}//archive.org/services/search/beta/scrape.php'
-                   '?q=identifier%3Anasa&size=10000&REQUIRE_AUTH=true'.format(protocol))
-    count_url = ('{0}//archive.org/services/search/beta/scrape.php'
+    results_url = ('{0}//archive.org/services/search/v1/scrape'
+                   '?q=identifier%3Anasa&count=10000&REQUIRE_AUTH=true'.format(protocol))
+    print(results_url)
+    count_url = ('{0}//archive.org/services/search/v1/scrape'
                  '?q=identifier%3Anasa&total_only=true&REQUIRE_AUTH=true'
-                 '&size=10000'.format(protocol))
+                 '&count=10000'.format(protocol))
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.POST, results_url,
                  body=TEST_SCRAPE_RESPONSE,
@@ -351,12 +352,12 @@ def test_search_items_with_fields():
         {'identifier': 'nasa', 'title': 'NASA Images'}
     ]
     search_response_str = json.dumps(_j)
-    results_url = ('{0}//archive.org/services/search/beta/scrape.php'
-                   '?q=identifier%3Anasa&size=10000&REQUIRE_AUTH=true'
+    results_url = ('{0}//archive.org/services/search/v1/scrape'
+                   '?q=identifier%3Anasa&count=10000&REQUIRE_AUTH=true'
                    '&fields=identifier%2Ctitle'.format(protocol))
-    count_url = ('{0}//archive.org/services/search/beta/scrape.php'
+    count_url = ('{0}//archive.org/services/search/v1/scrape'
                  '?q=identifier%3Anasa&total_only=true&REQUIRE_AUTH=true'
-                 '&size=10000'.format(protocol))
+                 '&count=10000'.format(protocol))
     with responses.RequestsMock() as rsps:
         rsps.add(responses.POST, results_url,
                  match_querystring=True,
@@ -376,7 +377,7 @@ def test_search_items_as_items():
     with responses.RequestsMock(
             assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.POST,
-                 '{0}//archive.org/services/search/beta/scrape.php'.format(protocol),
+                 '{0}//archive.org/services/search/v1/scrape'.format(protocol),
                  body=TEST_SCRAPE_RESPONSE,
                  status=200)
         rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
@@ -399,7 +400,7 @@ def test_page_row_specification():
         rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
                  body=ITEM_METADATA,
                  status=200)
-        rsps.add(responses.POST, 'https://archive.org/services/search/beta/scrape.php',
+        rsps.add(responses.POST, 'https://archive.org/services/search/v1/scrape',
                  body='{"items":[],"count":0,"total":1}',
                  match_querystring=False,
                  content_type='application/json; charset=UTF-8',

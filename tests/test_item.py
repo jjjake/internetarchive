@@ -394,7 +394,7 @@ def test_upload_file_keys(testitem, json_filename):
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=EXPECTED_S3_HEADERS,
                  status=200)
-        files = {'new_key.txt': json_filename, 222: json_filename}
+        files = {'new_key.txt': json_filename, '222': json_filename}
         resp = testitem.upload(files,
                                access_key='test_access',
                                secret_key='test_secret',

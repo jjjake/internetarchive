@@ -194,7 +194,12 @@ def recursive_file_count(files):
         files = [files]
     total_files = 0
     for f in files:
-        if os.path.isdir(f):
+        try:
+            is_dir = os.path.isdir(f)
+        except TypeError:
+            f = f[0]
+            is_dir = os.path.isdir(f)
+        if is_dir:
             for x, _ in iter_directory(f):
                 total_files += 1
         else:

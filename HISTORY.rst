@@ -3,6 +3,20 @@
 Release History
 ---------------
 
+1.0.4 (?)
++++++++++
+
+**Features and Improvements**
+
+- Search now uses the v1 scraping API endpoint.
+- Moved ``internetarchive.item.Item.upload.iter_directory()`` to ``internetarchive.utils``.
+- Added support for downloading "on-the-fly" files (e.g. EPUB, MOBI, and DAISY) via ``ia download <id> --on-the-fly`` or ``item.download(on_the_fly=True)``.
+
+**Bugfixes**
+
+- ``s3_is_overloaded()`` now returns ``True`` if the call is unsuccessful.
+- Fixed bug in upload where a derive task wasn't being queued when a directory is uploaded.
+
 1.0.3 (2016-05-16)
 ++++++++++++++++++
 

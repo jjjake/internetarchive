@@ -143,6 +143,7 @@ The mediatype metadata field recognizes a limited set of values:
   These items will be displayed with an online video player.
 - ``software``: Items with a mediatype of ``software`` are accessible to browse via Internet Archive's `software collection <http://www.archive.org/details/software>`_.
   There is no online viewer for software but all files are available for download.
+- ``texts``: All text items (PDFs, EPUBs, etc.) should receive a mediatype value of ``texts``.
 - ``web``: The ``web`` mediatype value is reserved for items which contain web archive `WARC <http://www.digitalpreservation.gov/formats/fdd/fdd000236.shtml>`_ files.
 
 If the mediatype value you set is not in the list above it will be saved but ignored by the system. The item will be treated as though it has a mediatype value of ``data``.

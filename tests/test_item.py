@@ -566,7 +566,7 @@ def test_modify_metadata(testitem, testitem_metadata):
             {"add": "/foo", "value": "bar"},
         ])
         expected_data = {
-            'priority': 0,
+            'priority': -5,
             '-target': 'metadata',
             '-patch': _patch,
         }
@@ -579,14 +579,14 @@ def test_modify_metadata(testitem, testitem_metadata):
         md = {'title': 'NASA Images'}
         r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
-        expected_data = {'priority': 0, '-target': 'metadata', '-patch': '[]'}
+        expected_data = {'priority': -5, '-target': 'metadata', '-patch': '[]'}
         assert p.data == expected_data
 
         md = {'title': 'REMOVE_TAG'}
         r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
         expected_data = {
-            'priority': 0,
+            'priority': -5,
             '-target': 'metadata',
             '-patch': json.dumps([{"remove": "/title"}])
         }
@@ -594,10 +594,10 @@ def test_modify_metadata(testitem, testitem_metadata):
 
         # Test add array.
         md = {'subject': ['one', 'two', 'last']}
-        r = testitem.modify_metadata(md, debug=True)
+        r = testitem.modify_metadata(md, debug=True, priority=-1)
         p = r.prepare()
         expected_data = {
-            'priority': 0,
+            'priority': -1,
             '-target': 'metadata',
             '-patch': json.dumps([{"add": "/subject", "value": ["one", "two", "last"]}])
         }
@@ -609,7 +609,7 @@ def test_modify_metadata(testitem, testitem_metadata):
         r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
         expected_data = {
-            'priority': 0,
+            'priority': -5,
             '-target': 'metadata',
             '-patch': json.dumps([{"value": "new first", "replace": "/subject/2"}])
         }
@@ -633,7 +633,7 @@ def test_modify_metadata(testitem, testitem_metadata):
                                      secret_key='test_secret',
                                      debug=True)
         p = r.prepare()
-        expected_data = {'priority': 0, '-target': 'metadata', '-patch': '[]'}
+        expected_data = {'priority': -5, '-target': 'metadata', '-patch': '[]'}
         assert r.auth.access_key == 'test_access'
         assert r.auth.secret_key == 'test_secret'
 

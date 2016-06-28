@@ -49,7 +49,7 @@ except ImportError:
 import csv
 
 from docopt import docopt, printable_usage
-from schema import Schema, SchemaError, Or, And
+from schema import Schema, SchemaError, Or, And, Use
 import six
 
 from internetarchive.cli.argparser import get_args_dict
@@ -80,7 +80,7 @@ def main(argv, session):
         '--spreadsheet': Or(None, And(lambda f: os.path.exists(f),
                             error='<file> should be a readable file or directory.')),
         '--target': Or(None, str),
-        '--priority': None,
+        '--priority': Or(None, Use(int, error='<priority> should be an integer.')),
     })
     try:
         args = s.validate(args)

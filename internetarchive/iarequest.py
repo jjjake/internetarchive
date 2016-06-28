@@ -225,7 +225,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         self.prepare_hooks(hooks)
 
     def prepare_body(self, metadata, source_metadata, target, priority, append):
-        priority = 0 if not priority else priority
+        priority = -5 if not priority else priority
 
         if not source_metadata:
             r = requests.get(self.url)

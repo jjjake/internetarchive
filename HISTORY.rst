@@ -3,8 +3,17 @@
 Release History
 ---------------
 
-1.0.4 (?)
+1.0.5 (?)
 +++++++++
+
+**Features and Improvements**
+
+- All metadata writes are now submitted at -5 priority by default.
+  This is friendlier to the archive.org catalog, and should only be changed for one-off metadata writes.
+
+
+1.0.4 (2016-06-28)
+++++++++++++++++++
 
 **Features and Improvements**
 

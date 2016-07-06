@@ -11,9 +11,6 @@ Release v\ |version|. (:ref:`Installation <install>`)
 .. image:: https://travis-ci.org/jjjake/internetarchive.svg
     :target: https://travis-ci.org/jjjake/internetarchive
 
-.. image:: https://img.shields.io/pypi/dm/internetarchive.svg
-    :target: https://pypi.python.org/pypi/internetarchive
-
 
 Welcome to the documentation for the ``internetarchive`` Python library.
 ``internetarchive`` is a command-line and Python interface to Archive.org.

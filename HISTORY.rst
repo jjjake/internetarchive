@@ -10,6 +10,9 @@ Release History
 
 - All metadata writes are now submitted at -5 priority by default.
   This is friendlier to the archive.org catalog, and should only be changed for one-off metadata writes.
+- Expanded scope of valid identifiers in ``utils.validate_ia_identifier`` (i.e. ``ia upload``).
+  Periods are now allowed.
+  Periods, underscores, and dashes are not allowed as the first character.
 
 
 1.0.4 (2016-06-28)

@@ -55,7 +55,10 @@ def map2x(func, *iterables):
 
 
 def validate_ia_identifier(string):
-    legal_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'
+    legal_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-'
+    # periods, underscores, and dashes are legal, but may not be the first
+    # character!
+    assert all(string.startswith(c) is False for c in ['.', '_', '-'])
     assert 80 >= len(string) >= 3
     assert all(c in legal_chars for c in string)
     return True

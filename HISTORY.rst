@@ -3,8 +3,8 @@
 Release History
 ---------------
 
-1.0.5 (?)
-+++++++++
+1.0.5 (2016-07-07)
+++++++++++++++++++
 
 **Features and Improvements**
 
@@ -13,7 +13,6 @@ Release History
 - Expanded scope of valid identifiers in ``utils.validate_ia_identifier`` (i.e. ``ia upload``).
   Periods are now allowed.
   Periods, underscores, and dashes are not allowed as the first character.
-
 
 1.0.4 (2016-06-28)
 ++++++++++++++++++

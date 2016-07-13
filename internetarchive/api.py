@@ -325,7 +325,7 @@ def download(identifier,
     :type checksum: bool
     :param checksum: (optional) Skip downloading file based on checksum.
 
-    :type destdir: bool
+    :type destdir: str
     :param destdir: (optional) Download files to the given directory.
 
     :type no_directory: bool

@@ -1,7 +1,7 @@
 Command-Line Interface
 ======================
 
-The ``ia`` command-line tool is installed with ``internetarchive``, or `available as a binary <installation.html#binaries>`_. ``ia`` allows you to interact with various Archive.org services from the command-line.
+The ``ia`` command-line tool is installed with ``internetarchive``, or `available as a binary <installation.html#binaries>`_. ``ia`` allows you to interact with various archive.org services from the command-line.
 
 Getting Started
 ---------------
@@ -13,7 +13,7 @@ The easiest way to start using ``ia`` is downloading a binary. The only requirem
     $ curl -LOs https://archive.org/download/ia-pex/ia
     $ chmod +x ia
     $ ./ia help
-    A command line interface to Archive.org.
+    A command line interface to archive.org.
 
     usage:
         ia [--help | --version]
@@ -30,12 +30,12 @@ The easiest way to start using ``ia`` is downloading a binary. The only requirem
     commands:
         help      Retrieve help for subcommands.
         configure Configure `ia`.
-        metadata  Retrieve and modify metadata for items on Archive.org.
-        upload    Upload items to Archive.org.
-        download  Download files from Archive.org.
-        delete    Delete files from Archive.org.
-        search    Search Archive.org.
-        tasks     Retrieve information about your Archive.org catalog tasks.
+        metadata  Retrieve and modify metadata for items on archive.org.
+        upload    Upload items to archive.org.
+        download  Download files from archive.org.
+        delete    Delete files from archive.org.
+        search    Search archive.org.
+        tasks     Retrieve information about your archive.org catalog tasks.
         list      List files in a given item.
 
     See 'ia help <command>' for more information on a specific command.
@@ -47,7 +47,7 @@ Metadata
 Reading Metadata
 ^^^^^^^^^^^^^^^^
 
-You can use ``ia`` to read and write metadata from Archive.org. To retrieve all of an items metadata in JSON, simply:
+You can use ``ia`` to read and write metadata from archive.org. To retrieve all of an items metadata in JSON, simply:
 
 .. code:: bash
 
@@ -91,7 +91,7 @@ You can also create new targets if they don't exist:
 
     $ ia metadata <identifier> --target="extra_metadata" --modify="foo:bar"
 
-Refer to `Internet Archive Metadata <metadata.html>`_ for more specific details regarding metadata and Archive.org.
+Refer to `Internet Archive Metadata <metadata.html>`_ for more specific details regarding metadata and archive.org.
 
 
 Modifying Metadata in Bulk
@@ -112,7 +112,7 @@ See ``ia help metadata`` for more details.
 Upload
 ------
 
-``ia`` can also be used to upload items to Archive.org. After `configuring ia <quickstart.html#configuring>`__, you can upload files like so:
+``ia`` can also be used to upload items to archive.org. After `configuring ia <quickstart.html#configuring>`__, you can upload files like so:
 
 .. code:: bash
 
@@ -133,7 +133,8 @@ You can use the ``--retries`` parameter to retry on errors (i.e. if IA-S3 is ove
     
     $ ia upload <identifier> file1 --retries 10
 
-Refer to `Archive.org Identifiers <identifiers.html>`_ for more information on creating valid Archive.org identifiers.
+Refer to `archive.org Identifiers <identifiers.html>`_ for more information on creating valid archive.org identifiers.
+Please also read the `Internet Archive Items <items.html>`_ page before getting started.
 
 Bulk Uploading
 ^^^^^^^^^^^^^^
@@ -170,7 +171,7 @@ Download specific files matching a glob pattern:
 
 .. code:: bash
 
-    $ ia download TripDown1905 --glob='*.mp4'
+    $ ia download TripDown1905 --glob=\*.mp4
 
 Download only files of a specific format:
 
@@ -212,7 +213,7 @@ Some files on archive.org are generated on-the-fly as requested. This currently 
 Delete
 ------
 
-You can use ``ia`` to delete files from Archive.org items:
+You can use ``ia`` to delete files from archive.org items:
 
 .. code:: bash
 
@@ -236,7 +237,7 @@ See ``ia help delete`` for more details.
 Search
 ------
 
-``ia`` can also be used for retrieving Archive.org search results in JSON:
+``ia`` can also be used for retrieving archive.org search results in JSON:
 
 .. code:: bash
 
@@ -276,7 +277,7 @@ To retrieve the task history for an item, simply run:
 
     $ ia tasks <identifier>
 
-View all of your queued and running Archive.org tasks:
+View all of your queued and running archive.org tasks:
 
 .. code:: bash
 

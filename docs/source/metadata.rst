@@ -172,13 +172,13 @@ The value of this metadata field may contain HTML. ``<script>`` tags and CSS are
 pick
 ^^^^
 
-On the v1 Archive.org site, each collection page on Internet Archive may include a "Staff Picks" section.
+On the v1 archive.org site, each collection page on Internet Archive may include a "Staff Picks" section.
 This section will highlight a single item in the collection.
 This item will be selected at random from the items with a ``pick`` metadata value of ``1``.
 If there are no items with this ``pick`` metadata value the "Staff Picks" section will not appear on the collection page.
 
 By default all new items have no `pick` metadata value.
-**Note:** v2 of the Archive.org website does not make use of this value.
+**Note:** v2 of the archive.org website does not make use of this value.
 
 publicdate
 ^^^^^^^^^^

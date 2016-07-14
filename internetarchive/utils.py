@@ -200,8 +200,11 @@ def recursive_file_count(files):
         try:
             is_dir = os.path.isdir(f)
         except TypeError:
-            f = f[0]
-            is_dir = os.path.isdir(f)
+            try:
+                f = f[0]
+                is_dir = os.path.isdir(f)
+            except AttributeError:
+                is_dir = False
         if is_dir:
             for x, _ in iter_directory(f):
                 total_files += 1

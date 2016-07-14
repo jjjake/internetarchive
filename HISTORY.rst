@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.0.6 (2016-07-14)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed bug where upload was failing on file-like objects (e.g. StringIO objects).
+
 1.0.5 (2016-07-07)
 ++++++++++++++++++
 

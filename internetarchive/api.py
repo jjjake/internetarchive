@@ -520,13 +520,25 @@ def get_username(access_key, secret_key):
     :type secret_key: str
     :param secret_key: IA-S3 secret_key to use when making the given request.
     """
+    j = get_user_info(access_key, secret_key)
+    return j.get('username')
+
+
+def get_user_info(access_key, secret_key):
+    """Returns details about an Archive.org user given an IA-S3 key pair.
+
+    :type access_key: str
+    :param access_key: IA-S3 access_key to use when making the given request.
+
+    :type secret_key: str
+    :param secret_key: IA-S3 secret_key to use when making the given request.
+    """
     u = 'https://s3.us.archive.org'
     p = dict(check_auth=1)
     r = requests.get(u, params=p, auth=auth.S3Auth(access_key, secret_key))
     r.raise_for_status()
     j = r.json()
-    username = j.get('username')
-    if username:
-        return username
-    else:
+    if j.get('error'):
         raise AuthenticationError(j.get('error'))
+    else:
+        return j

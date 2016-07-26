@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.0.7 (?)
++++++++++
+
+**Features and Improvements**
+
+- Added ``internetarchive.api.get_user_info()``. 
+
 1.0.6 (2016-07-14)
 ++++++++++++++++++
 

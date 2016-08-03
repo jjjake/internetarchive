@@ -21,6 +21,7 @@ publish:
 	git push --tags
 	python setup.py register
 	python setup.py sdist upload
+	python setup.py bdist_wheel upload
 
 docs-init:
 	pip install -r docs/requirements.txt

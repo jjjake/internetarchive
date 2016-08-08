@@ -59,7 +59,7 @@ def validate_ia_identifier(string):
     # periods, underscores, and dashes are legal, but may not be the first
     # character!
     assert all(string.startswith(c) is False for c in ['.', '_', '-'])
-    assert 80 >= len(string) >= 3
+    assert 100 >= len(string) >= 3
     assert all(c in legal_chars for c in string)
     return True
 

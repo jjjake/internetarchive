@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.0.8 (?)
++++++++++
+
+**Features and Improvements**
+
+- Increased maximum identifier length from 80 to 100 characters in ``ia upload``.
+
 1.0.7 (2016-08-02)
 ++++++++++++++++++
 

@@ -10,6 +10,11 @@ Release History
 
 - Increased maximum identifier length from 80 to 100 characters in ``ia upload``.
 
+**Bugfixes**
+
+- As of version 2.11.0 of the requests library, all header values must be strings (i.e. not integers).
+  ``internetarchive`` now converts all header values to strings.
+
 1.0.7 (2016-08-02)
 ++++++++++++++++++
 

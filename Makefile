@@ -16,12 +16,14 @@ pep8-test:
 test:
 	py.test --pep8 --cov-report term-missing --cov internetarchive
 
-publish:
+publish: binary
 	git tag -a v$(VERSION) -m 'version $(VERSION)'
 	git push --tags
 	python setup.py register
 	python setup.py sdist upload
 	python setup.py bdist_wheel upload
+	./ia-$(VERSION)-py2.py3-none-any.pex upload ia-pex ia-$(VERSION)-py2.py3-none-any.pex --no-derive
+	./ia-$(VERSION)-py2.py3-none-any.pex upload ia-pex ia-$(VERSION)-py2.py3-none-any.pex --remote-name=ia --no-derive
 
 docs-init:
 	pip install -r docs/requirements.txt
@@ -31,8 +33,8 @@ docs:
 	@echo "\033[95m\n\nBuild successful! View the docs homepage at docs/build/html/index.html.\n\033[0m"
 
 binary:
-	pip wheel .
-	pex -v .  -e internetarchive.cli.ia:main -o ia-$(VERSION)-py2.pex --no-pypi --repo wheelhouse/
+	# This requires using https://github.com/jjjake/pex which has been hacked for multi-platform support.
+	pex . --python python3 --python python2 --python-shebang='/usr/bin/env python' -e internetarchive.cli.ia:main -o ia-$(VERSION)-py2.py3-none-any.pex
 
 publish-binary: binary
 	./ia-$(VERSION)-py2.pex upload ia-pex ia-$(VERSION)-py2.pex --no-derive

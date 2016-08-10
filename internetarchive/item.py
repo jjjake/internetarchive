@@ -498,7 +498,7 @@ class Item(BaseItem):
         size = get_file_size(body)
 
         if not headers.get('x-archive-size-hint'):
-            headers['x-archive-size-hint'] = size
+            headers['x-archive-size-hint'] = str(size)
 
         # Build IA-S3 URL.
         key = body.name.split('/')[-1] if key is None else key

@@ -67,8 +67,11 @@ Release History
 - All search requests now require authentication via IA-S3 keys.
   You can run ``ia configure`` to generate a config file that will be used to authenticate all search requests automatically. 
   For more details refer to the following links:
-    http://internetarchive.readthedocs.io/en/latest/quickstart.html?highlight=configure#configuring
-    http://internetarchive.readthedocs.io/en/latest/api.html#configuration
+
+  http://internetarchive.readthedocs.io/en/latest/quickstart.html?highlight=configure#configuring
+
+  http://internetarchive.readthedocs.io/en/latest/api.html#configuration
+
 - Added ability to specify your own filepath in ``ia configure`` and ``internetarchive.configure()``.
 
 **Bugfixes**

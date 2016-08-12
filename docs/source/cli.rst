@@ -133,7 +133,7 @@ You can use the ``--retries`` parameter to retry on errors (i.e. if IA-S3 is ove
     
     $ ia upload <identifier> file1 --retries 10
 
-Refer to `archive.org Identifiers <identifiers.html>`_ for more information on creating valid archive.org identifiers.
+Refer to `archive.org Identifiers <metadata.html#archive-org-identifiers>`_ for more information on creating valid archive.org identifiers.
 Please also read the `Internet Archive Items <items.html>`_ page before getting started.
 
 Bulk Uploading

@@ -23,6 +23,7 @@ from six import string_types
 from requests import Response
 from clint.textui import progress
 from requests.exceptions import HTTPError
+import attr
 
 from internetarchive.utils import IdentifierListAsItems, get_md5, chunk_generator, \
     IterableToFileAdapter
@@ -153,41 +154,28 @@ class Item(BaseItem):
         self.session = archive_session
         super(Item, self).__init__(identifier, item_metadata)
 
-        self.urls = Item.URLs(self)
+        DEFAULT_URL_FORMAT = '{0.session.protocol}//archive.org/{1}/{0.identifier}'
+        TAB_FORMAT = '{0.session.protocol}//archive.org/details/{0.identifier}&tab={1}'
+
+        def _make_URL(path, url_format):
+            def make():
+                return url_format.format(self, path)
+            return attr.ib(init=False, default=attr.Factory(make))
+
+        def _make_URLs(paths, url_format=DEFAULT_URL_FORMAT):
+            return {path: _make_URL(path, url_format) for path in paths}
+
+        a = _make_URLs(['details', 'metadata', 'download', 'history',
+                        'edit', 'editxml', 'manage'])
+        if self.metadata.get('mediatype') == 'collection':
+            a.update(_make_URLs(['about', 'collection'], TAB_FORMAT))
+
+        self.urls = attr.make_class(b'URLs', a, repr_ns='Item', cmp=False, slots=True)()
 
         if self.metadata.get('title'):
             # A copyable link to the item, in MediaWiki format
             self.wikilink = '* [{0.urls.details} {0.identifier}] ' \
                             '-- {0.metadata[title]}'.format(self)
-
-    class URLs:
-        def __init__(self, itm_obj):
-            self._itm_obj = itm_obj
-            self._paths = []
-            self._make_URL('details')
-            self._make_URL('metadata')
-            self._make_URL('download')
-            self._make_URL('history')
-            self._make_URL('edit')
-            self._make_URL('editxml')
-            self._make_URL('manage')
-            if self._itm_obj.metadata.get('mediatype') == 'collection':
-                self._make_tab_URL('about')
-                self._make_tab_URL('collection')
-
-        def _make_tab_URL(self, tab):
-            """Make URLs for the separate tabs of Collections details page."""
-            self._make_URL(tab, self.details + "&tab={tab}".format(tab=tab))
-
-        DEFAULT_URL_FORMAT = '{0.session.protocol}//archive.org/{path}/{0.identifier}'
-
-        def _make_URL(self, path, url_format=DEFAULT_URL_FORMAT):
-            setattr(self, path, url_format.format(self._itm_obj, path=path))
-            self._paths.append(path)
-
-        def __str__(self):
-            return "URLs ({1}) for {0.identifier}" \
-                   .format(self._itm_obj, ', '.join(self._paths))
 
     def refresh(self, item_metadata=None, **kwargs):
         if not item_metadata:

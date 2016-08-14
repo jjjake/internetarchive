@@ -1,9 +1,27 @@
 # -*- coding: utf-8 -*-
+#
+# The internetarchive module is a Python/CLI interface to Archive.org.
+#
+# Copyright (C) 2012-2016 Internet Archive
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 internetarchive.iarequest
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:copyright: (c) 2015 by Internet Archive.
+:copyright: (C) 2012-2016 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 from __future__ import absolute_import
@@ -21,7 +39,7 @@ import requests
 from jsonpatch import make_patch
 import six
 
-from internetarchive import auth
+from internetarchive import auth, __version__
 from internetarchive.utils import needs_quote
 
 
@@ -97,12 +115,17 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         :param headers: (optional) S3 compatible HTTP headers.
 
         """
+        if not metadata.get('scanner'):
+            scanner = 'Internet Archive Python library {0}'.format(__version__)
+            metadata['scanner'] = scanner
         prepared_metadata = prepare_metadata(metadata)
+
         headers['x-archive-auto-make-bucket'] = 1
         if queue_derive is False:
             headers['x-archive-queue-derive'] = 0
         else:
             headers['x-archive-queue-derive'] = 1
+
         for meta_key, meta_value in prepared_metadata.items():
             # Encode arrays into JSON strings because Archive.org does not
             # yet support complex metadata structures in
@@ -121,6 +144,8 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                     continue
                 header_key = 'x-archive-meta{0:02d}-{1}'.format(i, meta_key)
                 if (isinstance(value, six.string_types) and needs_quote(value)):
+                    if six.PY2 and isinstance(value, six.text_type):
+                        value = value.encode('utf-8')
                     value = 'uri({0})'.format(urllib.parse.quote(value))
                 # because rfc822 http headers disallow _ in names, IA-S3 will
                 # translate two hyphens in a row (--) into an underscore (_).
@@ -143,7 +168,7 @@ class MetadataRequest(requests.models.Request):
         super(MetadataRequest, self).__init__(**kwargs)
 
         if not self.auth:
-            self.auth = auth.MetadataAuth(access_key, secret_key)
+            self.auth = auth.S3PostAuth(access_key, secret_key)
         metadata = {} if not metadata else metadata
 
         self.metadata = metadata
@@ -200,7 +225,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         self.prepare_hooks(hooks)
 
     def prepare_body(self, metadata, source_metadata, target, priority, append):
-        priority = 0 if not priority else priority
+        priority = -5 if not priority else priority
 
         if not source_metadata:
             r = requests.get(self.url)
@@ -300,15 +325,6 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
 
     # Index all items which contain an index.
     for key in metadata:
-        # Parse string bools to proper bools.
-        try:
-            if metadata[key].lower() == 'true':
-                metadata[key] = True
-            elif metadata[key].lower() == 'false':
-                metadata[key] = False
-        except AttributeError:
-            pass
-
         # Insert values from indexed keys into prepared_metadata dict.
         if (rm_index(key) in indexed_keys):
             try:

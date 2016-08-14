@@ -1,4 +1,23 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# The internetarchive module is a Python/CLI interface to Archive.org.
+#
+# Copyright (C) 2012-2016 Internet Archive
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """A command line interface to Archive.org.
 
 usage:
@@ -24,7 +43,11 @@ commands:
     tasks     Retrieve information about your Archive.org catalog tasks.
     list      List files in a given item.
 
-See 'ia help <command>' for more information on a specific command.
+Documentation for 'ia' is available at:
+
+    https://internetarchive.readthedocs.io/en/latest/cli.html
+
+See 'ia help <command>' for help on a specific command.
 """
 from __future__ import absolute_import, unicode_literals, print_function
 
@@ -32,7 +55,7 @@ import sys
 import os
 import difflib
 import errno
-from pkg_resources import iter_entry_points, load_entry_point, DistributionNotFound
+from pkg_resources import iter_entry_points, DistributionNotFound
 
 from docopt import docopt, printable_usage
 from schema import Schema, Or, SchemaError
@@ -84,8 +107,7 @@ def main():
     # Validate args.
     s = Schema({
         six.text_type: bool,
-        '--config-file': Or(None, lambda f: os.path.exists(f),
-                            error='--config-file should be a readable file.'),
+        '--config-file': Or(None, str),
         '<args>': list,
         '<command>': Or(str, lambda _: 'help'),
     })
@@ -107,6 +129,12 @@ def main():
             ia_module = load_ia_module(args['<args>'][0])
             sys.exit(print(ia_module.__doc__.strip(), file=sys.stderr))
 
+    if cmd != 'configure' and args['--config-file']:
+        if not os.path.isfile(args['--config-file']):
+            print('--config-file should be a readable file.\n{0}'.format(
+                printable_usage(__doc__)), file=sys.stderr)
+            sys.exit(1)
+
     argv = [cmd] + args['<args>']
 
     config = dict()
@@ -116,7 +144,7 @@ def main():
         config['logging'] = {'level': 'DEBUG'}
 
     if args['--insecure']:
-        config['secure'] = False
+        config['general'] = dict(secure=False)
 
     session = get_session(config_file=args['--config-file'],
                           config=config,
@@ -128,6 +156,8 @@ def main():
     except IOError as e:
         # Handle Broken Pipe errors.
         if e.errno == errno.EPIPE:
+            sys.stderr.close()
+            sys.stdout.close()
             sys.exit(0)
         else:
             raise

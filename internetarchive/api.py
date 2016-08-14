@@ -1,11 +1,29 @@
 # -*- coding: utf-8 -*-
+#
+# The internetarchive module is a Python/CLI interface to Archive.org.
+#
+# Copyright (C) 2012-2016 Internet Archive
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 internetarchive.api
 ~~~~~~~~~~~~~~~~~~~
 
 This module implements the Internetarchive API.
 
-:copyright: (c) 2015 Internet Archive.
+:copyright: (C) 2012-2016 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 from __future__ import absolute_import
@@ -21,9 +39,9 @@ from internetarchive.exceptions import AuthenticationError
 
 
 def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=None):
-    """Return a new :class:`ArchiveSession` object. The :class:`ArchiveSession` object
-    is the main interface to the ``internetarchive`` lib. It allows you to persist
-    certain parameters across tasks.
+    """Return a new :class:`ArchiveSession` object. The :class:`ArchiveSession`
+    object is the main interface to the ``internetarchive`` lib. It allows you to
+    persist certain parameters across tasks.
 
     :type config: dict
     :param config: (optional) A dictionary used to configure your session.
@@ -35,15 +53,19 @@ def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=N
     :param http_adapter_kwargs: (optional) Keyword arguments that
                                 :py:class:`requests.adapters.HTTPAdapter` takes.
 
+    :returns: :class:`ArchiveSession` object.
+
     Usage:
+
         >>> from internetarchive import get_session
         >>> config = dict(s3=dict(acccess='foo', secret='bar'))
         >>> s = get_session(config)
         >>> s.access_key
         'foo'
 
-    From the session object, you can access all of the main functions of the
+    From the session object, you can access all of the functionality of the
     ``internetarchive`` lib:
+
         >>> item = s.get_item('nasa')
         >>> item.download()
         nasa: ddddddd - success
@@ -98,6 +120,7 @@ def get_files(identifier,
               files=None,
               formats=None,
               glob_pattern=None,
+              on_the_fly=None,
               **get_item_kwargs):
     """Get :class:`File` objects from an item.
 
@@ -113,6 +136,10 @@ def get_files(identifier,
     :type glob_pattern: str
     :param glob_pattern: (optional) Only return files matching the given glob pattern.
 
+    :type on_the_fly: bool
+    :param on_the_fly: (optional) Include on-the-fly files (i.e. derivative EPUB,
+                       MOBI, DAISY files).
+
     :param \*\*get_item_kwargs: (optional) Arguments that ``get_item()`` takes.
 
     Usage:
@@ -122,7 +149,7 @@ def get_files(identifier,
         ['nasa_reviews.xml', 'nasa_meta.xml', 'nasa_files.xml']
     """
     item = get_item(identifier, **get_item_kwargs)
-    return item.get_files(files, formats, glob_pattern)
+    return item.get_files(files, formats, glob_pattern, on_the_fly)
 
 
 def modify_metadata(identifier, metadata,
@@ -192,6 +219,9 @@ def upload(identifier, files,
     :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
 
+    :param files: The filepaths or file-like objects to upload. This value can be an
+                  iterable or a single file-like object or string.
+
     :type metadata: dict
     :param metadata: (optional) Metadata used to create a new item. If the item already
                      exists, the metadata will not be updated -- use ``modify_metadata``.
@@ -235,6 +265,8 @@ def upload(identifier, files,
                   sending the upload request.
 
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
+
+    :returns: A list of :py:class:`requests.Response` objects.
     """
     item = get_item(identifier, **get_item_kwargs)
     return item.upload(files,
@@ -425,6 +457,7 @@ def get_tasks(identifier=None,
 
 def search_items(query,
                  fields=None,
+                 sorts=None,
                  params=None,
                  archive_session=None,
                  config=None,
@@ -454,12 +487,12 @@ def search_items(query,
         archive_session = get_session(config, config_file, http_adapter_kwargs)
     return archive_session.search_items(query,
                                         fields=fields,
+                                        sorts=sorts,
                                         params=params,
-                                        config=config,
                                         request_kwargs=request_kwargs)
 
 
-def configure(username=None, password=None):
+def configure(username=None, password=None, config_file=None):
     """Configure internetarchive with your Archive.org credentials.
 
     :type username: str
@@ -467,10 +500,14 @@ def configure(username=None, password=None):
 
     :type password: str
     :param password: Your Archive.org password.
+
+    Usage:
+        >>> from internetarchive import configure
+        >>> configure('user@example.com', 'password')
     """
     username = input('Email address: ') if not username else username
     password = getpass('Password: ') if not password else password
-    config_file_path = config_module.write_config_file(username, password)
+    config_file_path = config_module.write_config_file(username, password, config_file)
     print('\nConfig saved to: {0}'.format(config_file_path))
 
 

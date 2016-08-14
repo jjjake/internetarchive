@@ -9,10 +9,7 @@ import internetarchive.session
 from internetarchive import __version__
 
 
-if sys.version_info < (2, 7, 9):
-    protocol = 'http:'
-else:
-    protocol = 'https:'
+protocol = 'https:'
 
 
 ROOT_DIR = os.getcwd()
@@ -43,10 +40,7 @@ def test_archive_session(tmpdir):
 
     assert CONFIG == s.config
     assert s.cookies == CONFIG['cookies']
-    if sys.version_info < (2, 7, 9):
-        assert s.secure is False
-    else:
-        assert s.secure is True
+    assert s.secure is True
     assert s.protocol == protocol
     assert s.access_key == 'test_access'
     assert s.secret_key == 'test_secret'

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import sys
 try:
@@ -17,10 +18,7 @@ from internetarchive import get_session
 import internetarchive.files
 
 
-if sys.version_info < (2, 7, 9):
-    protocol = 'http:'
-else:
-    protocol = 'https:'
+protocol = 'https:'
 
 
 DOWNLOAD_URL_RE = re.compile(r'{0}//archive.org/download/.*'.format(protocol))
@@ -333,10 +331,24 @@ def test_upload_metadata(testitem, json_filename):
         _expected_headers['x-archive-meta00-foo'] = 'bar'
         _expected_headers['x-archive-meta00-subject'] = 'first'
         _expected_headers['x-archive-meta01-subject'] = 'second'
+        _expected_headers['x-archive-meta00-baz'] = (
+            'uri(%D0%9F%D0%BE%D1%87%D0%B5%D0%BC'
+            '%D1%83%20%D0%B1%D1%8B%20%D0%B8%20%'
+            'D0%BD%D0%B5%D1%82...)')
+        _expected_headers['x-archive-meta00-baz2'] = (
+            'uri(%D0%9F%D0%BE%D1%87%D0%B5%D0%BC'
+            '%D1%83%20%D0%B1%D1%8B%20%D0%B8%20%'
+            'D0%BD%D0%B5%D1%82...)')
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=_expected_headers,
                  status=200)
-        md = dict(foo='bar', subject=['first', 'second'])
+        md = dict(
+            foo='bar',
+            subject=['first', 'second'],
+            baz='Почему бы и нет...',
+            baz2=(u'\u041f\u043e\u0447\u0435\u043c\u0443 \u0431\u044b \u0438 '
+                  u'\u043d\u0435\u0442...'),
+        )
         resp = testitem.upload(json_filename,
                                metadata=md,
                                access_key='test_access',
@@ -350,12 +362,18 @@ def test_upload_metadata(testitem, json_filename):
 
 
 def test_upload_503(capsys, testitem, json_filename):
+    body = ("<?xml version='1.0' encoding='UTF-8'?>"
+            '<Error><Code>SlowDown</Code><Message>Please reduce your request rate.'
+            '</Message><Resource>simulated error caused by x-(amz|archive)-simulate-error'
+            ', try x-archive-simulate-error:help</Resource><RequestId>d36ec445-8d4a-4a64-'
+            'a110-f67af6ee2c2a</RequestId></Error>')
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         rsps.add(responses.GET, S3_URL_RE,
                  body='{"over_limit": "1"}',
                  status=200)
         rsps.add(responses.PUT, S3_URL_RE,
+                 body=body,
                  adding_headers=_expected_headers,
                  status=503)
         try:
@@ -366,7 +384,7 @@ def test_upload_503(capsys, testitem, json_filename):
                             retries_sleep=.1,
                             verbose=True)
         except Exception as exc:
-            assert '503' in str(exc)
+            assert 'Please reduce your request rate' in str(exc)
             out, err = capsys.readouterr()
             assert 'warning: s3 is overloaded' in err
 
@@ -376,7 +394,7 @@ def test_upload_file_keys(testitem, json_filename):
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=EXPECTED_S3_HEADERS,
                  status=200)
-        files = {'new_key.txt': json_filename, 222: json_filename}
+        files = {'new_key.txt': json_filename, '222': json_filename}
         resp = testitem.upload(files,
                                access_key='test_access',
                                secret_key='test_secret',
@@ -447,6 +465,12 @@ def test_upload_queue_derive(testitem, json_filename):
 
 
 def test_upload_delete(tmpdir, testitem):
+    body = ("<?xml version='1.0' encoding='UTF-8'?>"
+            '<Error><Code>BadDigest</Code><Message>The Content-MD5 you specified did not '
+            'match what we received.</Message><Resource>content-md5 submitted with PUT: '
+            'foo != recieved data md5: 70871f9fce8dd23853d6e42417356b05also not equal to '
+            'base64 version: cIcfn86N0jhT1uQkFzVrBQ==</Resource><RequestId>ec03fe7c-e123-'
+            '4133-a207-3141d4d74096</RequestId></Error>')
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         del _expected_headers['x-archive-meta00-scanner']
@@ -457,6 +481,7 @@ def test_upload_delete(tmpdir, testitem):
 
         # Non-matching md5, should not delete.
         rsps.add(responses.PUT, S3_URL_RE,
+                 body=body,
                  adding_headers=_expected_headers,
                  status=400)
         try:
@@ -541,7 +566,7 @@ def test_modify_metadata(testitem, testitem_metadata):
             {"add": "/foo", "value": "bar"},
         ])
         expected_data = {
-            'priority': 0,
+            'priority': -5,
             '-target': 'metadata',
             '-patch': _patch,
         }
@@ -554,14 +579,14 @@ def test_modify_metadata(testitem, testitem_metadata):
         md = {'title': 'NASA Images'}
         r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
-        expected_data = {'priority': 0, '-target': 'metadata', '-patch': '[]'}
+        expected_data = {'priority': -5, '-target': 'metadata', '-patch': '[]'}
         assert p.data == expected_data
 
         md = {'title': 'REMOVE_TAG'}
         r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
         expected_data = {
-            'priority': 0,
+            'priority': -5,
             '-target': 'metadata',
             '-patch': json.dumps([{"remove": "/title"}])
         }
@@ -569,10 +594,10 @@ def test_modify_metadata(testitem, testitem_metadata):
 
         # Test add array.
         md = {'subject': ['one', 'two', 'last']}
-        r = testitem.modify_metadata(md, debug=True)
+        r = testitem.modify_metadata(md, debug=True, priority=-1)
         p = r.prepare()
         expected_data = {
-            'priority': 0,
+            'priority': -1,
             '-target': 'metadata',
             '-patch': json.dumps([{"add": "/subject", "value": ["one", "two", "last"]}])
         }
@@ -584,7 +609,7 @@ def test_modify_metadata(testitem, testitem_metadata):
         r = testitem.modify_metadata(md, debug=True)
         p = r.prepare()
         expected_data = {
-            'priority': 0,
+            'priority': -5,
             '-target': 'metadata',
             '-patch': json.dumps([{"value": "new first", "replace": "/subject/2"}])
         }
@@ -608,7 +633,7 @@ def test_modify_metadata(testitem, testitem_metadata):
                                      secret_key='test_secret',
                                      debug=True)
         p = r.prepare()
-        expected_data = {'priority': 0, '-target': 'metadata', '-patch': '[]'}
+        expected_data = {'priority': -5, '-target': 'metadata', '-patch': '[]'}
         assert r.auth.access_key == 'test_access'
         assert r.auth.secret_key == 'test_secret'
 

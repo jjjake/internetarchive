@@ -19,6 +19,8 @@ To automatically create a config file with your Archive.org credentials, you can
     
     Config saved to: /home/user/.config/ia.ini
 
+Your config file will be saved to ``$HOME/.config/ia.ini``, or ``$HOME/.ia`` if you do not have a ``.config`` directory in ``$HOME``. Alternatively, you can specify your own path to save the config to via ``ia --config-file '~/.ia-custom-config' configure``.
+
 
 Uploading
 ---------
@@ -40,6 +42,16 @@ You can upload file-like objects::
     >>> r = upload('iacli-test-item301', {'foo.txt': StringIO(u'bar baz boo')})
 
 If the item already has a file with the same filename, the existing file within the item will be overwritten.
+
+:func:`upload <internetarchive.upload>` can also upload directories. For example, the following command will upload ``my_dir`` and all of it's contents to ``https://archive.org/download/my_item/my_dir/``::
+
+    >>> r = upload('my_item', 'my_dir')
+
+To upload only the contents of the directory, but not the directory itself, simply append a slash to your directory::
+
+    >>> r = upload('my_item', 'my_dir/')
+
+This will upload all of the contents of ``my_dir`` to ``https://archive.org/download/my_item/``. :func:`upload <internetarchive.upload>` accepts relative or absolute paths.
 
 **Note**: metadata can only be added to an item using the :func:`upload <internetarchive.upload>` function on item creation. If an item already exists and you would like to modify it's metadata, you must use :func:`modify_metadata <internetarchive.modify_metadata>`.
 
@@ -106,6 +118,8 @@ The default behaviour of :func:`modify_metadata <internetarchive.modify_metadata
     >>> f.title
     'My File Title'
 
+Refer to `Internet Archive Metadata <metadata.html>`_ for more specific details regarding metadata and Archive.org.
+
 
 Downloading
 -----------
@@ -157,15 +171,25 @@ By default, the :func:`download <internetarchive.download>` function will downlo
 
 Files can also be filtered using the ``formats`` parameter. ``formats`` can either be a single format provided as a string::
 
-    >>> download('goodytwoshoes00newyiala', verbose=True, formats='EPUB')
+    >>> download('goodytwoshoes00newyiala', verbose=True, formats='MARC')
     goodytwoshoes00newyiala:
-     downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala.epub to goodytwoshoes00newyiala/goodytwoshoes00newyiala.epub
+     downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc to goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc
 
 Or, a list of formats::
     
-    >>> download('goodytwoshoes00newyiala', verbose=True, formats=['EPUB', 'MARC'])
+    >>> download('goodytwoshoes00newyiala', verbose=True, formats=['DjVuTXT', 'MARC'])
     goodytwoshoes00newyiala:
      downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc to goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc
+     downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala_djvu.txt to goodytwoshoes00newyiala/goodytwoshoes00newyiala_djvu.txt
+
+
+Downloading On-The-Fly Files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some files on archive.org are generated on-the-fly as requested. This currently includes non-original files of the formats EPUB, MOBI, and DAISY. These files can be downloaded using the ``on_the_fly`` parameter::
+
+    >>> download('goodytwoshoes00newyiala', verbose=True, formats='EPUB', on_the_fly=True)
+    goodytwoshoes00newyiala:
      downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala.epub to goodytwoshoes00newyiala/goodytwoshoes00newyiala.epub
 
 

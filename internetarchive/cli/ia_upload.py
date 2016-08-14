@@ -1,3 +1,22 @@
+# -*- coding: utf-8 -*-
+#
+# The internetarchive module is a Python/CLI interface to Archive.org.
+#
+# Copyright (C) 2012-2016 Internet Archive
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """Upload files to Archive.org.
 
 usage:
@@ -19,11 +38,13 @@ options:
     -m, --metadata=<key:value>...     Metadata to add to your item.
     -H, --header=<key:value>...       S3 HTTP headers to send with your request.
     -c, --checksum                    Skip based on checksum. [default: False]
+    -v, --verify                      Verify that data was not corrupted traversing the
+                                      network. [default: False]
     -n, --no-derive                   Do not derive uploaded files.
     --size-hint=<size>                Specify a size-hint for your item.
     --delete                          Delete files after verifying checksums
                                       [default: False].
-    -R, --retries=<i>                 Number of times to retry request if S3 retruns a
+    -R, --retries=<i>                 Number of times to retry request if S3 returns a
                                       503 SlowDown error.
     -s, --sleep=<i>                   The amount of time to sleep between retries
                                       [default: 30].
@@ -41,14 +62,13 @@ from schema import Schema, Use, Or, And, SchemaError
 import six
 
 from internetarchive.session import ArchiveSession
-from internetarchive.cli.argparser import get_args_dict, get_xml_text
-from internetarchive.utils import validate_ia_identifier
+from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
+from internetarchive.utils import validate_ia_identifier, get_s3_xml_text
 
 
-def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None,
-                  responses=None):
+def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
     """Helper function for calling :meth:`Item.upload`"""
-    responses = [] if not responses else responses
+    responses = []
     if (upload_kwargs['verbose']) and (prev_identifier != item.identifier):
         print('{0}:'.format(item.identifier))
 
@@ -68,36 +88,42 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
                 )
                 print('Endpoint:\n {0}\n'.format(r.url))
                 print('HTTP Headers:\n{0}'.format(headers))
-                return
+                return responses
 
         # Format error message for any non 200 responses that
         # we haven't caught yet,and write to stderr.
         if responses and responses[-1] and responses[-1].status_code != 200:
+            if not responses[-1].status_code:
+                return responses
             filename = responses[-1].request.url.split('/')[-1]
-            msg = get_xml_text(responses[-1].content)
-            print(' * error uploading '
-                  '{0} ({1}): {2}'.format(filename, responses[-1].status_code, msg),
-                  file=sys.stderr)
+            msg = get_s3_xml_text(responses[-1].content)
+            print(' error uploading {0}: {2}'.format(filename, msg), file=sys.stderr)
 
     return responses
 
 
 def main(argv, session):
-    args = docopt(__doc__, argv=argv)
+    if six.PY2:
+        args = docopt(__doc__.encode('utf-8'), argv=argv)
+    else:
+        args = docopt(__doc__, argv=argv)
+    ERRORS = False
 
     # Validate args.
     s = Schema({
-        six.text_type: Use(bool),
+        str: Use(bool),
         '<identifier>': Or(None, And(str, validate_ia_identifier,
             error=('<identifier> should be between 3 and 80 characters in length, and '
                    'can only contain alphanumeric characters, underscores ( _ ), or '
                    'dashes ( - )'))),
         '<file>': And(
+            Use(lambda l: l if not six.PY2 else convert_str_list_to_unicode(l)),
             And(lambda f: all(os.path.exists(x) for x in f if x != '-'),
                 error='<file> should be a readable file or directory.'),
             And(lambda f: False if f == ['-'] and not args['--remote-name'] else True,
                 error='--remote-name must be provided when uploading from stdin.')),
-        '--remote-name': Or(None, And(str)),
+        '--remote-name': Or(None,
+            Use(lambda x: x.decode(sys.getfilesystemencoding()) if six.PY2 else x)),
         '--spreadsheet': Or(None, os.path.isfile,
             error='--spreadsheet should be a readable file.'),
         '--metadata': Or(None, And(Use(get_args_dict), dict),
@@ -142,8 +168,9 @@ def main(argv, session):
         headers=args['--header'],
         debug=args['--debug'],
         queue_derive=queue_derive,
-        checksum=args['--checksum'],
         verbose=verbose,
+        verify=args['--verify'],
+        checksum=args['--checksum'],
         retries=args['--retries'],
         retries_sleep=args['--sleep'],
         delete=args['--delete'],
@@ -165,7 +192,11 @@ def main(argv, session):
         else:
             files = local_file
 
-        responses = _upload_files(item, files, upload_kwargs)
+        for _r in _upload_files(item, files, upload_kwargs):
+            if args['--debug']:
+                break
+            if (not _r) or (not _r.ok):
+                ERRORS = True
 
     # Bulk upload using spreadsheet.
     else:
@@ -173,7 +204,6 @@ def main(argv, session):
         session = ArchiveSession()
         spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
         prev_identifier = None
-        responses = []
         for row in spreadsheet:
             local_file = row['file']
             identifier = row['identifier']
@@ -187,10 +217,13 @@ def main(argv, session):
             md_args = ['{0}:{1}'.format(k.lower(), v) for (k, v) in row.items() if v]
             metadata = get_args_dict(md_args)
             upload_kwargs['metadata'].update(metadata)
-            r = _upload_files(item, local_file, upload_kwargs, prev_identifier, session,
-                              responses)
-            responses += r
+            r = _upload_files(item, local_file, upload_kwargs, prev_identifier, session)
+            for _r in r:
+                if args['--debug']:
+                    break
+                if (not _r) or (not _r.ok):
+                    ERRORS = True
             prev_identifier = identifier
 
-    if responses and not all(r and r.ok for r in responses):
+    if ERRORS:
         sys.exit(1)

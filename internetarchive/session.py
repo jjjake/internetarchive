@@ -1,4 +1,22 @@
 # -*- coding: utf-8 -*-
+#
+# The internetarchive module is a Python/CLI interface to Archive.org.
+#
+# Copyright (C) 2012-2016 Internet Archive
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 internetarchive.session
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -6,7 +24,7 @@ internetarchive.session
 This module provides an ArchiveSession object to manage and persist
 settings across the internetarchive package.
 
-:copyright: (c) 2015 by Internet Archive.
+:copyright: (C) 2012-2016 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 from __future__ import absolute_import, unicode_literals
@@ -15,6 +33,8 @@ import os
 import locale
 import sys
 import logging
+import platform
+import warnings
 
 import requests.sessions
 from requests.utils import default_headers
@@ -69,18 +89,17 @@ class ArchiveSession(requests.sessions.Session):
         :param http_adapter_kwargs: (optional) Keyword arguments used to initialize the
                                     :class:`requests.adapters.HTTPAdapter <HTTPAdapter>`
                                     object.
+
+        :returns: :class:`ArchiveSession` object.
         """
         super(ArchiveSession, self).__init__()
         http_adapter_kwargs = {} if not http_adapter_kwargs else http_adapter_kwargs
         debug = False if not debug else True
 
         self.config = get_config(config, config_file)
+        self.config_file = config_file
         self.cookies.update(self.config.get('cookies', {}))
-        # Avoid InsecurePlatformWarning errors on older versions of Python.
-        if sys.version_info < (2, 7, 9):
-            self.secure = self.config.get('general', {}).get('secure', False)
-        else:
-            self.secure = self.config.get('general', {}).get('secure', True)
+        self.secure = self.config.get('general', {}).get('secure', True)
         self.protocol = 'https:' if self.secure else 'http:'
         self.access_key = self.config.get('s3', {}).get('access')
         self.secret_key = self.config.get('s3', {}).get('secret')
@@ -101,7 +120,7 @@ class ArchiveSession(requests.sessions.Session):
 
     def _get_user_agent_string(self):
         """Generate a User-Agent string to be sent with every request."""
-        uname = os.uname()
+        uname = platform.uname()
         try:
             lang = locale.getlocale()[0][:2]
         except:
@@ -110,16 +129,18 @@ class ArchiveSession(requests.sessions.Session):
         return 'internetarchive/{0} ({1} {2}; N; {3}; {4}) Python/{5}'.format(
             __version__, uname[0], uname[-1], lang, self.access_key, py_version)
 
-    def _mount_http_adapter(self, protocol=None, max_retries=None, status_forcelist=None):
+    def _mount_http_adapter(self, protocol=None, max_retries=None,
+                            status_forcelist=None, host=None):
         """Mount an HTTP adapter to the
         :class:`ArchiveSession <ArchiveSession>` object.
         """
         protocol = protocol if protocol else self.protocol
-        if not max_retries:
+        host = host if host else 'archive.org'
+        if max_retries is None:
             max_retries = self.http_adapter_kwargs.get('max_retries', 3)
 
         if not status_forcelist:
-            status_forcelist = [500, 501, 502, 503, 504, 400, 408]
+            status_forcelist = [500, 501, 502, 503, 504]
         if max_retries and isinstance(max_retries, (int, float)):
             max_retries = Retry(total=max_retries,
                                 connect=max_retries,
@@ -132,7 +153,7 @@ class ArchiveSession(requests.sessions.Session):
         max_retries_adapter = HTTPAdapter(**self.http_adapter_kwargs)
         # Don't mount on s3.us.archive.org, only archive.org!
         # IA-S3 requires a more complicated retry workflow.
-        self.mount('{0}//archive.org'.format(self.protocol), max_retries_adapter)
+        self.mount('{0}//{1}'.format(protocol, host), max_retries_adapter)
 
     def set_file_logger(self, log_level, path, logger_name='internetarchive'):
         """Convenience function to quickly configure any level of
@@ -220,8 +241,8 @@ class ArchiveSession(requests.sessions.Session):
 
     def search_items(self, query,
                      fields=None,
+                     sorts=None,
                      params=None,
-                     config=None,
                      request_kwargs=None):
         """Search for items on Archive.org.
 
@@ -237,16 +258,13 @@ class ArchiveSession(requests.sessions.Session):
         :param params: (optional) The URL parameters to send with each request sent to the
                        Archive.org Advancedsearch Api.
 
-        :type config: dict
-        :param secure: (optional) Configuration options for session.
-
         :returns: A :class:`Search` object, yielding search results.
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
         return Search(self, query,
                       fields=fields,
+                      sorts=sorts,
                       params=params,
-                      config=config,
                       request_kwargs=request_kwargs)
 
     def get_tasks(self,
@@ -308,8 +326,33 @@ class ArchiveSession(requests.sessions.Session):
             bucket=identifier,
         )
         r = self.get(u, params=p)
-        j = r.json()
+        try:
+            j = r.json()
+        except ValueError:
+            return True
         if j.get('over_limit') == 0:
             return False
         else:
             return True
+
+    def send(self, request, **kwargs):
+        # Catch urllib3 warnings for HTTPS related errors.
+        insecure = False
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always')
+            r = super(ArchiveSession, self).send(request, **kwargs)
+            if self.protocol == 'http:':
+                return r
+            insecure_warnings = ['SNIMissingWarning', 'InsecurePlatformWarning']
+            if w:
+                for e in w:
+                    if any(x in str(e) for x in insecure_warnings):
+                        insecure = True
+                        break
+        if insecure:
+            from requests.exceptions import RequestException
+            msg = ('You are attempting to make an HTTPS request on an insecure platform,'
+                   ' please see:\n\n\thttps://internetarchive.readthedocs.org'
+                   '/en/latest/troubleshooting.html#https-issues\n')
+            raise RequestException(msg)
+        return r

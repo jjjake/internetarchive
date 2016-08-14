@@ -13,115 +13,36 @@ import responses
 from internetarchive.cli import ia
 
 
-if sys.version_info < (2, 7, 9):
-    protocol = 'http:'
-else:
-    protocol = 'https:'
+protocol = 'https:'
 
 
 ROOT_DIR = os.getcwd()
 TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/advanced_search_response.json')
 with open(TEST_JSON_FILE) as fh:
     TEST_SEARCH_RESPONSE = fh.read()
-
-
-def test_ia_search_sort_asc(capsys):
-    url1 = ('{0}//archive.org/advancedsearch.php?q=collection%3Anasa&output=json&'
-            'rows=0&sort%5B0%5D=identifier+asc'.format(protocol))
-    url2 = ('{0}//archive.org/advancedsearch.php?q=collection%3Anasa&output=json&'
-            'rows=250&sort%5B0%5D=identifier+asc&page=1'.format(protocol))
-    with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, url1,
-                 body=TEST_SEARCH_RESPONSE,
-                 status=200,
-                 match_querystring=True)
-        rsps.add(responses.GET, url2,
-                 body=TEST_SEARCH_RESPONSE,
-                 status=200,
-                 match_querystring=True)
-
-        sys.argv = ['ia', 'search', 'collection:nasa', '--sort', 'identifier:asc']
-        try:
-            ia.main()
-        except SystemExit as exc:
-            assert not exc.code
-
-    out, err = capsys.readouterr()
-    j = json.loads(TEST_SEARCH_RESPONSE)
-    expected_output = '\n'.join([json.dumps(d) for d in j['response']['docs']]) + '\n'
-    assert out == expected_output
-
-
-def test_ia_search_multi_page(capsys):
-    j = json.loads(TEST_SEARCH_RESPONSE)
-    url1 = ('{0}//archive.org/advancedsearch.php?'
-            'q=collection%3Anasa&output=json&rows=0&sort%5B0%5D=identifier+asc&'
-            'fl%5B0%5D=identifier'.format(protocol))
-    url2 = ('{0}//archive.org/advancedsearch.php?'
-            'q=collection%3Anasa&output=json&rows=25&page=1&sort%5B0%5D=identifier+asc&'
-            'fl%5B0%5D=identifier'.format(protocol))
-    url3 = ('{0}//archive.org/advancedsearch.php?'
-            'q=collection%3Anasa&output=json&rows=25&page=2&sort%5B0%5D=identifier+asc&'
-            'fl%5B0%5D=identifier'.format(protocol))
-    url4 = ('{0}//archive.org/advancedsearch.php?'
-            'q=collection%3Anasa&output=json&rows=25&page=3&sort%5B0%5D=identifier+asc&'
-            'fl%5B0%5D=identifier'.format(protocol))
-    with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, url1,
-                 body=TEST_SEARCH_RESPONSE,
-                 status=200,
-                 match_querystring=True)
-        _j = deepcopy(j)
-        _j['response']['docs'] = j['response']['docs'][:25]
-        rsps.add(responses.GET, url2,
-                 body=json.dumps(_j),
-                 status=200,
-                 match_querystring=True)
-        _j = deepcopy(j)
-        _j['response']['docs'] = j['response']['docs'][25:]
-        rsps.add(responses.GET, url3,
-                 body=json.dumps(_j),
-                 status=200,
-                 match_querystring=True)
-        _j = deepcopy(j)
-        _j['response']['docs'] = []
-        rsps.add(responses.GET, url4,
-                 body=json.dumps(_j),
-                 status=200,
-                 match_querystring=True)
-
-        sys.argv = ['ia', 'search', 'collection:nasa', '-p', 'rows:25', '-f',
-                    'identifier']
-        try:
-            ia.main()
-        except SystemExit as exc:
-            assert not exc.code
-
-    out, err = capsys.readouterr()
-    out_ids = set()
-    for l in out.split('\n'):
-        if not l:
-            continue
-        jj = json.loads(l)
-        out_ids.add(jj['identifier'])
-    expected_out_ids = set([d['identifier'] for d in j['response']['docs']])
-    assert out_ids == expected_out_ids
+TEST_JSON_SCRAPE_FILE = os.path.join(ROOT_DIR, 'tests/data/scrape_response.json')
+with open(TEST_JSON_SCRAPE_FILE) as fh:
+    TEST_SCRAPE_RESPONSE = fh.read()
 
 
 def test_ia_search_itemlist(capsys):
-    with responses.RequestsMock() as rsps:
-        url1 = ('{0}//archive.org/advancedsearch.php?'
-                'q=collection%3Aattentionkmartshoppers&output=json&rows=0&'
-                'sort%5B0%5D=identifier+asc&fl%5B0%5D=identifier'.format(protocol))
-        url2 = ('{0}//archive.org/advancedsearch.php?'
-                'fl%5B0%5D=identifier&rows=250&sort%5B0%5D=identifier+asc&q=collection%3'
-                'Aattentionkmartshoppers&output=json&page=1'.format(protocol))
-        rsps.add(responses.GET, url1,
-                 body=TEST_SEARCH_RESPONSE,
+    with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:
+        url1 = ('{0}//archive.org/services/search/v1/scrape'
+                '?q=collection%3Aattentionkmartshoppers'
+                '&REQUIRE_AUTH=true&count=10000'.format(protocol))
+        url2 = ('{0}//archive.org/services/search/v1/scrape?'
+                'cursor=W3siaWRlbnRpZmllciI6IjE5NjEtTC0wNTkxNCJ9XQ%3D%3D'
+                '&REQUIRE_AUTH=true&q=collection%3Aattentionkmartshoppers'
+                '&count=10000'.format(protocol))
+        rsps.add(responses.POST, url1,
+                 body=TEST_SCRAPE_RESPONSE,
                  status=200,
                  match_querystring=True)
-        rsps.add(responses.GET, url2,
-                 body=TEST_SEARCH_RESPONSE,
+        _j = json.loads(TEST_SCRAPE_RESPONSE)
+        del _j['cursor']
+        _r = json.dumps(_j)
+        rsps.add(responses.POST, url2,
+                 body=_r,
                  status=200,
                  match_querystring=True)
 
@@ -133,16 +54,16 @@ def test_ia_search_itemlist(capsys):
 
     out, err = capsys.readouterr()
     j = json.loads(TEST_SEARCH_RESPONSE)
-    expected_output = '\n'.join([d['identifier'] for d in j['response']['docs']]) + '\n'
-    assert out == expected_output
+    assert len(out.split()) == 200
 
 
 def test_ia_search_num_found(capsys):
-    with responses.RequestsMock() as rsps:
-        url = ('{0}//archive.org/advancedsearch.php?q=collection%3Anasa&output=json&'
-               'rows=0&sort%5B0%5D=identifier+asc'.format(protocol))
-        rsps.add(responses.GET, url,
-                 body=TEST_SEARCH_RESPONSE,
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        url = ('{0}//archive.org/services/search/v1/scrape'
+               '?q=collection%3Anasa&total_only=true'
+               '&REQUIRE_AUTH=true&count=10000'.format(protocol))
+        rsps.add(responses.POST, url,
+                 body='{"items":[],"count":0,"total":50}',
                  status=200,
                  match_querystring=True)
 

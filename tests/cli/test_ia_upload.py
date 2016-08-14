@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import sys
 inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -9,10 +10,7 @@ import responses
 from internetarchive.cli import ia
 
 
-if sys.version_info < (2, 7, 9):
-    protocol = 'http:'
-else:
-    protocol = 'https:'
+protocol = 'https:'
 
 
 ROOT_DIR = os.getcwd()
@@ -100,7 +98,6 @@ def test_ia_upload_debug(capsys):
     assert set(out.split('\n')) == set([
         '',
         'Endpoint:',
-        ' Content-MD5:acbd18db4cc2f85cedef654fccc4a4d8',
         ' {0}//s3.us.archive.org/nasa/test.txt'.format(protocol),
         'HTTP Headers:',
         ' x-archive-size-hint:3',
@@ -135,7 +132,7 @@ def test_ia_upload_403(capsys):
             assert exc.code == 1
 
     out, err = capsys.readouterr()
-    assert 'error uploading test_ia_upload.py to nasa, 403' in err
+    assert 'error uploading test_ia_upload.py' in err
 
 
 def test_ia_upload_invalid_cmd(capsys):
@@ -163,10 +160,38 @@ def test_ia_upload_size_hint(capsys):
 
     out, err = capsys.readouterr()
     assert set(out.split('\n')) == set(['', ' x-archive-size-hint:30',
-                                        ' Content-MD5:acbd18db4cc2f85cedef654fccc4a4d8',
                                         'Endpoint:', 'HTTP Headers:', 'nasa:',
                                         (' {0}//s3.us.archive.org/nasa/'
                                          'test.txt'.format(protocol))])
+
+
+def test_ia_upload_unicode(tmpdir):
+    tmpdir.chdir()
+    with open('தமிழ் - baz ∆.txt', 'w') as fh:
+        fh.write('unicode foo')
+    fname = u'தமிழ் - foo; baz ∆.txt'
+    efname = '%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20baz%20%E2%88%86.txt'
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
+                 body=ITEM_METADATA,
+                 status=200,
+                 content_type='application/json')
+        rsps.add(responses.PUT,
+                 '{0}//s3.us.archive.org/nasa/{1}'.format(protocol, efname),
+                 body='',
+                 status=200,
+                 content_type='text/plain')
+        sys.argv = ['ia', '--log', 'upload', 'nasa', 'தமிழ் - baz ∆.txt',
+                    '--metadata', 'foo:∆']
+        try:
+            ia.main()
+        except SystemExit as exc:
+            assert not exc.code
+
+    with open('internetarchive.log', 'r') as fh:
+        assert ('uploaded தமிழ் - baz ∆.txt to {0}//s3.us.archive.org/nasa/'
+                '%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20'
+                'baz%20%E2%88%86.txt'.format(protocol)) in fh.read()
 
 
 def test_ia_upload_remote_name(tmpdir):

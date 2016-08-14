@@ -6,10 +6,7 @@ import shutil
 from subprocess import Popen, PIPE
 
 
-if sys.version_info < (2, 7, 9):
-    protocol = 'http:'
-else:
-    protocol = 'https:'
+protocol = 'http:'
 
 
 def call(cmd):
@@ -35,7 +32,7 @@ def rm(path):
 def test_no_args():
     rm('nasa')
 
-    cmd = 'ia download nasa'
+    cmd = 'ia --insecure download nasa'
     exit_code, stdout, stderr = call(cmd)
     test_output = set([
         'globe_west_540.jpg',
@@ -52,8 +49,32 @@ def test_no_args():
     rm('nasa')
 
 
+def test_https():
+    rm('nasa')
+
+    cmd = 'ia download nasa'
+    exit_code, stdout, stderr = call(cmd)
+    if sys.version_info < (2, 7, 9):
+        assert exit_code == 1
+        assert 'You are attempting to make an HTTPS' in stderr
+    else:
+        test_output = set([
+            'globe_west_540.jpg',
+            'nasa_archive.torrent',
+            'nasa_files.xml',
+            'nasa_meta.xml',
+            'nasa_reviews.xml',
+            'NASAarchiveLogo.jpg',
+            'globe_west_540_thumb.jpg',
+        ])
+        assert set(os.listdir('nasa')) == test_output
+        assert exit_code == 0
+
+    rm('nasa')
+
+
 def test_dry_run():
-    cmd = 'ia download --dry-run nasa'
+    cmd = 'ia --insecure download --dry-run nasa'
     exit_code, stdout, stderr = call(cmd)
     test_output_set = set([
         '{0}//archive.org/download/nasa/NASAarchiveLogo.jpg'.format(protocol),
@@ -71,7 +92,7 @@ def test_dry_run():
 def test_glob():
     rm('nasa')
 
-    cmd = 'ia download --glob="*jpg" nasa'
+    cmd = 'ia --insecure download --glob="*jpg" nasa'
     exit_code, stdout, stderr = call(cmd)
     test_output = set([
         'globe_west_540.jpg',
@@ -87,7 +108,7 @@ def test_glob():
 def test_format():
     rm('nasa')
 
-    cmd = 'ia download --format="Archive BitTorrent" nasa'
+    cmd = 'ia --insecure download --format="Archive BitTorrent" nasa'
     exit_code, stdout, stderr = call(cmd)
     assert os.listdir('nasa') == ['nasa_archive.torrent']
     assert exit_code == 0
@@ -98,7 +119,7 @@ def test_format():
 def test_clobber():
     rm('nasa')
 
-    cmd = 'ia download nasa nasa_meta.xml'
+    cmd = 'ia --insecure download nasa nasa_meta.xml'
     exit_code, stdout, stderr = call(cmd)
     assert os.listdir('nasa') == ['nasa_meta.xml']
     assert exit_code == 0
@@ -114,12 +135,12 @@ def test_clobber():
 def test_checksum():
     rm('nasa')
 
-    cmd = 'ia download nasa nasa_meta.xml'
+    cmd = 'ia --insecure download nasa nasa_meta.xml'
     exit_code, stdout, stderr = call(cmd)
     assert os.listdir('nasa') == ['nasa_meta.xml']
     assert exit_code == 0
 
-    cmd = 'ia download --checksum nasa nasa_meta.xml'
+    cmd = 'ia --insecure download --checksum nasa nasa_meta.xml'
     exit_code, stdout, stderr = call(cmd)
     assert 'nasa: . - success\n' == stdout.decode('utf-8')
     assert exit_code == 0
@@ -130,7 +151,7 @@ def test_checksum():
 def test_no_directories():
     rm('nasa_meta.xml')
 
-    cmd = 'ia download --no-directories nasa nasa_meta.xml'
+    cmd = 'ia --insecure download --no-directories nasa nasa_meta.xml'
     exit_code, stdout, stderr = call(cmd)
     assert 'nasa_meta.xml' in os.listdir('.')
     assert exit_code == 0
@@ -142,7 +163,7 @@ def test_destdir(tmpdir):
     tmpdir.chdir()
     rm('thisdirdoesnotexist')
 
-    cmd = 'ia download --destdir=thisdirdoesnotexist/ nasa nasa_meta.xml'
+    cmd = 'ia --insecure download --destdir=thisdirdoesnotexist/ nasa nasa_meta.xml'
     exit_code, stdout, stderr = call(cmd)
     assert '--destdir must be a valid path to a directory.' in stderr.decode('utf-8')
     assert exit_code == 1
@@ -153,7 +174,8 @@ def test_destdir(tmpdir):
                                          'thisdirdoesnotexist/nasa'))
     assert exit_code == 0
 
-    cmd = 'ia download --no-directories --destdir=thisdirdoesnotexist/ nasa nasa_meta.xml'
+    cmd = ('ia --insecure download --no-directories --destdir=thisdirdoesnotexist/ '
+           'nasa nasa_meta.xml')
     exit_code, stdout, stderr = call(cmd)
     assert 'nasa_meta.xml' in os.listdir(os.path.join(str(tmpdir),
                                          'thisdirdoesnotexist/'))

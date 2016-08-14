@@ -24,7 +24,7 @@ def test_ia(capsys):
     assert 'A command line interface to Archive.org.' in out
 
     try:
-        sys.argv = ['ia', 'ls', 'nasa']
+        sys.argv = ['ia', '--insecure', 'ls', 'nasa']
         ia.main()
     except SystemExit as exc:
         assert not exc.code

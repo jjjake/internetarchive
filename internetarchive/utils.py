@@ -1,11 +1,29 @@
 # -*- coding: utf-8 -*-
+#
+# The internetarchive module is a Python/CLI interface to Archive.org.
+#
+# Copyright (C) 2012-2016 Internet Archive
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 internetarchive.utils
 ~~~~~~~~~~~~~~~~~~~~~
 
 This module provides utility functions for the internetarchive library.
 
-:copyright: (c) 2015 by Internet Archive.
+:copyright: (C) 2012-2016 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 import sys
@@ -15,6 +33,7 @@ import re
 from itertools import starmap
 from six.moves import zip_longest
 from collections import Mapping
+from xml.dom.minidom import parseString
 
 
 def deep_update(d, u):
@@ -125,3 +144,64 @@ class IdentifierListAsItems(object):
 
     def __repr__(self):
         return '{0.__class__.__name__}({0.ids!r})'.format(self)
+
+
+def get_s3_xml_text(xml_str):
+    def _get_tag_text(tag_name, xml_obj):
+        text = ''
+        elements = xml_obj.getElementsByTagName(tag_name)
+        for e in elements:
+            for node in e.childNodes:
+                if node.nodeType == node.TEXT_NODE:
+                    text += node.data
+        return text
+    tag_names = ['Message', 'Resource']
+    p = parseString(xml_str)
+    _msg = _get_tag_text('Message', p)
+    _resource = _get_tag_text('Resource', p)
+    # Avoid weird Resource text that contains PUT method.
+    if _resource and "'PUT" not in _resource:
+        return '{0} - {1}'.format(_msg, _resource.strip())
+    else:
+        return _msg
+
+
+def get_file_size(file_obj):
+    try:
+        file_obj.seek(0, os.SEEK_END)
+        size = file_obj.tell()
+        # Avoid OverflowError.
+        if size > sys.maxsize:
+            size = None
+        file_obj.seek(0, os.SEEK_SET)
+    except IOError:
+        size = None
+    return size
+
+
+def iter_directory(directory):
+    """Given a directory, yield all files recursivley as a two-tuple (filepath, s3key)"""
+    for path, dir, files in os.walk(directory):
+        for f in files:
+            filepath = os.path.join(path, f)
+            key = os.path.relpath(filepath, directory)
+            yield (filepath, key)
+
+
+def recursive_file_count(files):
+    """Given a filepath or list of filepaths, return the total number of files."""
+    if not isinstance(files, (list, set)):
+        files = [files]
+    total_files = 0
+    for f in files:
+        try:
+            is_dir = os.path.isdir(f)
+        except TypeError:
+            f = f[0]
+            is_dir = os.path.isdir(f)
+        if is_dir:
+            for x, _ in iter_directory(f):
+                total_files += 1
+        else:
+            total_files += 1
+    return total_files

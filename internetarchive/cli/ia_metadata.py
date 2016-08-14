@@ -1,3 +1,22 @@
+# -*- coding: utf-8 -*-
+#
+# The internetarchive module is a Python/CLI interface to Archive.org.
+#
+# Copyright (C) 2012-2016 Internet Archive
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """Retrieve and modify Archive.org metadata.
 
 usage:
@@ -30,7 +49,7 @@ except ImportError:
 import csv
 
 from docopt import docopt, printable_usage
-from schema import Schema, SchemaError, Or, And
+from schema import Schema, SchemaError, Or, And, Use
 import six
 
 from internetarchive.cli.argparser import get_args_dict
@@ -61,7 +80,7 @@ def main(argv, session):
         '--spreadsheet': Or(None, And(lambda f: os.path.exists(f),
                             error='<file> should be a readable file or directory.')),
         '--target': Or(None, str),
-        '--priority': None,
+        '--priority': Or(None, Use(int, error='<priority> should be an integer.')),
     })
     try:
         args = s.validate(args)

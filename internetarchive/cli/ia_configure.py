@@ -21,7 +21,7 @@
 
 usage:
     ia configure [--help]
-    ia configure [--username=<username> --password=<password>] 
+    ia configure [--username=<username> --password=<password>]
 
 options:
     -h, --help
@@ -43,7 +43,9 @@ def main(argv, session):
     args = docopt(__doc__, argv=argv)
     try:
         if args['--username'] and args['--password']:
-            config_file_path = configure(args['--username'], args['--password'], session.config_file)
+            config_file_path = configure(args['--username'],
+                                         args['--password'],
+                                         session.config_file)
             print('Config saved to: {0}'.format(config_file_path))
         else:
             print("Enter your Archive.org credentials below to configure 'ia'.\n")

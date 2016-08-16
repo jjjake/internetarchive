@@ -508,7 +508,7 @@ def configure(username=None, password=None, config_file=None):
     username = input('Email address: ') if not username else username
     password = getpass('Password: ') if not password else password
     config_file_path = config_module.write_config_file(username, password, config_file)
-    print('\nConfig saved to: {0}'.format(config_file_path))
+    return config_file_path
 
 
 def get_username(access_key, secret_key):

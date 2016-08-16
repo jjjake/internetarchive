@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.0.9 (?)
++++++++++
+
+**Features and Improvements**
+
+- Added support to the CLI for providing username and password as options on the command-line.
+
 1.0.8 (2016-08-10)
 ++++++++++++++++++
 

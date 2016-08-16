@@ -122,11 +122,12 @@ class BaseItem(object):
 
 
 class Item(BaseItem):
-    """This class represents an archive.org item. You can use this
-    class to access item metadata::
+    """This class represents an archive.org item. Generally this class
+    should not be used directly, but rather via the
+    ``internetarchive.get_item()`` function::
 
-        >>> import internetarchive
-        >>> item = internetarchive.Item('stairs')
+        >>> from internetarchive import get_item
+        >>> item = get_item('stairs')
         >>> print(item.metadata)
 
     Or to modify the metadata for an item::

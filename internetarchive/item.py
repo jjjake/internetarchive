@@ -184,7 +184,7 @@ class Item(BaseItem):
             return attr.ib(init=False, default=attr.Factory(make))
 
         def _make_URLs(paths, url_format=DEFAULT_URL_FORMAT):
-            return {path: _make_URL(path, url_format) for path in paths}
+            return dict((path, _make_URL(path, url_format)) for path in paths)
 
         a = _make_URLs(['details', 'metadata', 'download', 'history',
                         'edit', 'editxml', 'manage'])

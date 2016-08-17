@@ -38,7 +38,7 @@ except ImportError:
 import json
 from copy import deepcopy
 
-from six import string_types
+import six
 from six.moves import urllib
 from requests import Response
 from clint.textui import progress
@@ -192,7 +192,8 @@ class Item(BaseItem):
         if self.metadata.get('mediatype') == 'collection':
             a.update(_make_URLs(['about', 'collection'], TAB_FORMAT))
 
-        self.urls = attr.make_class(b'URLs', a, repr_ns='Item', cmp=False, slots=True)()
+        self.urls = attr.make_class(b'URLs' if six.PY2 else 'URLs',
+                                    a, repr_ns='Item', cmp=False, slots=True)()
 
         if self.metadata.get('title'):
             # A copyable link to the item, in MediaWiki format
@@ -683,7 +684,7 @@ class Item(BaseItem):
         file_index = 0
         total_files = recursive_file_count(files)
         for f in files:
-            if isinstance(f, string_types) and os.path.isdir(f):
+            if isinstance(f, six.string_types) and os.path.isdir(f):
                 for filepath, key in iter_directory(f):
                     file_index += 1
                     # Set derive header if queue_derive is True,
@@ -724,7 +725,7 @@ class Item(BaseItem):
                     key, body = (None, f)
                 else:
                     key, body = f
-                if key and not isinstance(key, string_types):
+                if key and not isinstance(key, six.string_types):
                     key = str(key)
                 resp = self.upload_file(body,
                                         key=key,

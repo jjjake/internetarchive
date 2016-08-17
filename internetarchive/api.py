@@ -325,7 +325,7 @@ def download(identifier,
     :type checksum: bool
     :param checksum: (optional) Skip downloading file based on checksum.
 
-    :type destdir: bool
+    :type destdir: str
     :param destdir: (optional) Download files to the given directory.
 
     :type no_directory: bool
@@ -508,11 +508,24 @@ def configure(username=None, password=None, config_file=None):
     username = input('Email address: ') if not username else username
     password = getpass('Password: ') if not password else password
     config_file_path = config_module.write_config_file(username, password, config_file)
-    print('\nConfig saved to: {0}'.format(config_file_path))
+    return config_file_path
 
 
 def get_username(access_key, secret_key):
     """Returns an Archive.org username given an IA-S3 key pair.
+
+    :type access_key: str
+    :param access_key: IA-S3 access_key to use when making the given request.
+
+    :type secret_key: str
+    :param secret_key: IA-S3 secret_key to use when making the given request.
+    """
+    j = get_user_info(access_key, secret_key)
+    return j.get('username')
+
+
+def get_user_info(access_key, secret_key):
+    """Returns details about an Archive.org user given an IA-S3 key pair.
 
     :type access_key: str
     :param access_key: IA-S3 access_key to use when making the given request.
@@ -525,8 +538,7 @@ def get_username(access_key, secret_key):
     r = requests.get(u, params=p, auth=auth.S3Auth(access_key, secret_key))
     r.raise_for_status()
     j = r.json()
-    username = j.get('username')
-    if username:
-        return username
-    else:
+    if j.get('error'):
         raise AuthenticationError(j.get('error'))
+    else:
+        return j

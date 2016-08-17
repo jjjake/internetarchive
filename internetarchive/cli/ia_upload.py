@@ -114,8 +114,9 @@ def main(argv, session):
         str: Use(bool),
         '<identifier>': Or(None, And(str, validate_ia_identifier,
             error=('<identifier> should be between 3 and 80 characters in length, and '
-                   'can only contain alphanumeric characters, underscores ( _ ), or '
-                   'dashes ( - )'))),
+                   'can only contain alphanumeric characters, periods ".", '
+                   'underscores "_", or dashes "-". However, <identifier> cannot begin '
+                   'with periods, underscores, or dashes.'))),
         '<file>': And(
             Use(lambda l: l if not six.PY2 else convert_str_list_to_unicode(l)),
             And(lambda f: all(os.path.exists(x) for x in f if x != '-'),

@@ -21,9 +21,14 @@
 
 usage:
     ia configure [--help]
+    ia configure [--username=<username> --password=<password>]
 
 options:
     -h, --help
+    -u, --username=<username>  Provide username as an option rather than
+                               providing it interactively.
+    -p, --password=<password>  Provide password as an option rather than
+                               providing it interactively.
 """
 from __future__ import absolute_import, print_function, unicode_literals
 import sys
@@ -35,10 +40,22 @@ from internetarchive.exceptions import AuthenticationError
 
 
 def main(argv, session):
-    docopt(__doc__, argv=argv)
-    print("Enter your Archive.org credentials below to configure 'ia'.\n")
+    args = docopt(__doc__, argv=argv)
     try:
-        configure(config_file=session.config_file)
+        if args['--username'] and args['--password']:
+            config_file_path = configure(args['--username'],
+                                         args['--password'],
+                                         session.config_file)
+            print('Config saved to: {0}'.format(config_file_path))
+        else:
+            print("Enter your Archive.org credentials below to configure 'ia'.\n")
+            config_file_path = configure(config_file=session.config_file)
+            print('\nConfig saved to: {0}'.format(config_file_path))
     except AuthenticationError as exc:
-        print('\nerror: {0}'.format(str(exc)))
+        # TODO: refactor output so we don't have to have special cases
+        # for adding newlines!
+        if args['--username']:
+            print('error: {0}'.format(str(exc)))
+        else:
+            print('\nerror: {0}'.format(str(exc)))
         sys.exit(1)

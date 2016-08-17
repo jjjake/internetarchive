@@ -120,11 +120,11 @@ class S3PreparedRequest(requests.models.PreparedRequest):
             metadata['scanner'] = scanner
         prepared_metadata = prepare_metadata(metadata)
 
-        headers['x-archive-auto-make-bucket'] = 1
+        headers['x-archive-auto-make-bucket'] = '1'
         if queue_derive is False:
-            headers['x-archive-queue-derive'] = 0
+            headers['x-archive-queue-derive'] = '0'
         else:
-            headers['x-archive-queue-derive'] = 1
+            headers['x-archive-queue-derive'] = '1'
 
         for meta_key, meta_value in prepared_metadata.items():
             # Encode arrays into JSON strings because Archive.org does not

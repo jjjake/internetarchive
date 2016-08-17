@@ -2,7 +2,7 @@
 
 .. _internetarchive:
 
-Internetarchive: A Python Interface to Archive.org
+Internetarchive: A Python Interface to archive.org
 ==================================================
 
 .. automodule:: internetarchive

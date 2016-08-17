@@ -55,8 +55,11 @@ def map2x(func, *iterables):
 
 
 def validate_ia_identifier(string):
-    legal_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'
-    assert 80 >= len(string) >= 3
+    legal_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-'
+    # periods, underscores, and dashes are legal, but may not be the first
+    # character!
+    assert all(string.startswith(c) is False for c in ['.', '_', '-'])
+    assert 100 >= len(string) >= 3
     assert all(c in legal_chars for c in string)
     return True
 
@@ -197,8 +200,11 @@ def recursive_file_count(files):
         try:
             is_dir = os.path.isdir(f)
         except TypeError:
-            f = f[0]
-            is_dir = os.path.isdir(f)
+            try:
+                f = f[0]
+                is_dir = os.path.isdir(f)
+            except AttributeError:
+                is_dir = False
         if is_dir:
             for x, _ in iter_directory(f):
                 total_files += 1

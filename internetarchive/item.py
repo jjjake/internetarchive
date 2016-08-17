@@ -86,8 +86,8 @@ class BaseItem(object):
         self.load()
 
     def __repr__(self):
-        return ('{0.__class__.__name__}(identifier={identifier!r}, '
-                'exists={exists!r})'.format(self, **self.__dict__))
+        return ('{0.__class__.__name__}(identifier={0.identifier!r}{notloaded})'.format(
+            self, notloaded=', item_metadata={}' if not self.exists else ''))
 
     def load(self, item_metadata=None):
         if item_metadata:
@@ -123,11 +123,12 @@ class BaseItem(object):
 
 
 class Item(BaseItem):
-    """This class represents an archive.org item. You can use this
-    class to access item metadata::
+    """This class represents an archive.org item. Generally this class
+    should not be used directly, but rather via the
+    ``internetarchive.get_item()`` function::
 
-        >>> import internetarchive
-        >>> item = internetarchive.Item('stairs')
+        >>> from internetarchive import get_item
+        >>> item = get_item('stairs')
         >>> print(item.metadata)
 
     Or to modify the metadata for an item::
@@ -522,7 +523,7 @@ class Item(BaseItem):
         size = get_file_size(body)
 
         if not headers.get('x-archive-size-hint'):
-            headers['x-archive-size-hint'] = size
+            headers['x-archive-size-hint'] = str(size)
 
         # Build IA-S3 URL.
         key = body.name.split('/')[-1] if key is None else key

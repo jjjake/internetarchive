@@ -8,7 +8,7 @@ Developer Interface
 Configuration
 -------------
 
-Certain functions of the internetarchive library require your Archive.org credentials (i.e. uploading, modifying metadata, searching).
+Certain functions of the internetarchive library require your archive.org credentials (i.e. uploading, modifying metadata, searching).
 Your credentials and other configurations can be provided via a dictionary when insantiating an :class:`ArchiveSession` or :class:`Item` object, or in a config file.
 
 The easiest way to create a config file is with the `configure <internetarchive.html#internetarchive.configure>`_ function::
@@ -55,7 +55,7 @@ Or, using the :class:`ArchiveSession` obect::
 Cookie Confgiuration
 ~~~~~~~~~~~~~~~~~~~~
 
-Your Archive.org logged-in cookies are required for downloading access-restricted files that you have permissions to and retrieving information about Archive.org catalog tasks.
+Your archive.org logged-in cookies are required for downloading access-restricted files that you have permissions to and retrieving information about archive.org catalog tasks.
 
 Your cookies can be specified like so::
 
@@ -117,7 +117,7 @@ It collects together your credentials and config.
 Item Objects
 ------------
 
-:class:`Item` objects represent `Internet Archive items <https://blog.archive.org/2011/03/31/how-archive-org-items-are-structured/>`_.
+:class:`Item` objects represent `Internet Archive items <items.html>`_.
 From the :class:`Item` object you can create new items, upload files to existing items, read and write metadata, and download or delete files.
 
 .. autofunction:: get_item
@@ -137,7 +137,7 @@ Or :func:`internetarchive.upload`::
 
 The item will automatically be created if it does not exist.
 
-Refer to `Archive.org Identifiers <metadata.html#archive-org-identifiers>`_ for more information on creating valid Archive.org identifiers.
+Refer to `archive.org Identifiers <metadata.html#archive-org-identifiers>`_ for more information on creating valid archive.org identifiers.
 
 Setting Remote Filenames
 ^^^^^^^^^^^^^^^^^^^^^^^^

@@ -7,12 +7,12 @@ Quickstart
 Configuring
 -----------
 
-Certain functionality of the internetarchive Python library requires your Archive.org credentials.
-Your `IA-S3 keys <https://archive.org/account/s3.php>`_ are required for uploading and modifying metadata, and your Archive.org logged-in cookies are required for downloading access-restricted content and viewing your task history.
-To automatically create a config file with your Archive.org credentials, you can use the ``ia`` command-line tool::
+Certain functionality of the internetarchive Python library requires your archive.org credentials.
+Your `IA-S3 keys <https://archive.org/account/s3.php>`_ are required for uploading and modifying metadata, and your archive.org logged-in cookies are required for downloading access-restricted content and viewing your task history.
+To automatically create a config file with your archive.org credentials, you can use the ``ia`` command-line tool::
 
     $ ia configure
-    Enter your Archive.org credentials below to configure 'ia'.
+    Enter your archive.org credentials below to configure 'ia'.
     
     Email address: user@example.com
     Password:
@@ -25,7 +25,7 @@ Your config file will be saved to ``$HOME/.config/ia.ini``, or ``$HOME/.ia`` if 
 Uploading
 ---------
 
-Creating a new `item on Archive.org <https://blog.archive.org/2011/03/31/how-archive-org-items-are-structured/>`_ and uploading files to it is as easy as::
+Creating a new `item on archive.org <items.html>`_ and uploading files to it is as easy as::
 
     >>> from internetarchive import upload
     >>> md = dict(collection='test_collection', title='My New Item', mediatype='movies')
@@ -118,7 +118,7 @@ The default behaviour of :func:`modify_metadata <internetarchive.modify_metadata
     >>> f.title
     'My File Title'
 
-Refer to `Internet Archive Metadata <metadata.html>`_ for more specific details regarding metadata and Archive.org.
+Refer to `Internet Archive Metadata <metadata.html>`_ for more specific details regarding metadata and archive.org.
 
 
 Downloading
@@ -137,7 +137,7 @@ Downloading files can be done via the :func:`download <internetarchive.download>
      downloaded nasa/nasa_archive.torrent to nasa/nasa_archive.torrent
      downloaded nasa/nasa_files.xml to nasa/nasa_files.xml
 
-By default, the :func:`download <internetarchive.download>` function sets the ``mtime`` for downloaded files to the ``mtime`` of the file on Archive.org. If we retry downloading the same set of files we downloaded above, no requests will be made. This is because the filename, mtime and size of the local files match the filename, mtime and size of the files on Archive.org, so we assume that the file has already been downloaded. For example::
+By default, the :func:`download <internetarchive.download>` function sets the ``mtime`` for downloaded files to the ``mtime`` of the file on archive.org. If we retry downloading the same set of files we downloaded above, no requests will be made. This is because the filename, mtime and size of the local files match the filename, mtime and size of the files on archive.org, so we assume that the file has already been downloaded. For example::
 
     >>> download('nasa', verbose=True)
     nasa:
@@ -196,7 +196,7 @@ Some files on archive.org are generated on-the-fly as requested. This currently 
 Searching
 ---------
 
-The :func:`search_items <internetarchive.search_items>` function can be used to iterate through Archive.org search results::
+The :func:`search_items <internetarchive.search_items>` function can be used to iterate through archive.org search results::
 
     >>> from internetarchive import search_items
     >>> for i in search_items('identifier:nasa'):

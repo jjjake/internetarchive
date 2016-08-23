@@ -299,6 +299,7 @@ def download(identifier,
              retries=None,
              item_index=None,
              ignore_errors=None,
+             on_the_fly=None,
              **get_item_kwargs):
     """Download files from an item.
 
@@ -316,41 +317,63 @@ def download(identifier,
     :param dry_run: (optional) Print URLs to files to stdout rather than downloading
                     them.
 
-    :type clobber: bool
-    :param clobber: (optional) Overwrite local files if they already exist.
+    :type verbose: bool
+    :param verbose: (optional) Turn on verbose output.
 
-    :type no_clobber: bool
-    :param no_clobber: (optional) Do not overwrite local files if they already exist.
+    :type silent: bool
+    :param silent: (optional) Suppress all output.
+
+    :type ignore_existing: bool
+    :param ignore_existing: (optional) Skip files that already exist
+                            locally.
 
     :type checksum: bool
     :param checksum: (optional) Skip downloading file based on checksum.
 
     :type destdir: str
-    :param destdir: (optional) Download files to the given directory.
+    :param destdir: (optional) The directory to download files to.
 
     :type no_directory: bool
-    :param no_directory: (optional) Download files to current working directory rather
-                         than creating an item directory.
+    :param no_directory: (optional) Download files to current working
+                         directory rather than creating an item directory.
 
-    :type verbose: bool
-    :param verbose: (optional) Display download progress.
+    :type retries: int
+    :param retries: (optional) The number of times to retry on failed
+                    requests.
+
+    :type item_index: int
+    :param item_index: (optional) The index of the item for displaying
+                       progress in bulk downloads.
+
+    :type ignore_errors: bool
+    :param ignore_errors: (optional) Don't fail if a single file fails to
+                          download, continue to download other files.
+
+    :type on_the_fly: bool
+    :param on_the_fly: (optional) Download on-the-fly files (i.e. derivative EPUB,
+                       MOBI, DAISY files).
 
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
+
+    :rtype: bool
+    :returns: True if all files were downloaded successfully.
     """
     item = get_item(identifier, **get_item_kwargs)
-    item.download(files=files,
-                  formats=formats,
-                  glob_pattern=glob_pattern,
-                  dry_run=dry_run,
-                  verbose=verbose,
-                  silent=silent,
-                  ignore_existing=ignore_existing,
-                  checksum=checksum,
-                  destdir=destdir,
-                  no_directory=no_directory,
-                  retries=retries,
-                  item_index=item_index,
-                  ignore_errors=ignore_errors)
+    r = item.download(files=files,
+                      formats=formats,
+                      glob_pattern=glob_pattern,
+                      dry_run=dry_run,
+                      verbose=verbose,
+                      silent=silent,
+                      ignore_existing=ignore_existing,
+                      checksum=checksum,
+                      destdir=destdir,
+                      no_directory=no_directory,
+                      retries=retries,
+                      item_index=item_index,
+                      ignore_errors=ignore_errors,
+                      on_the_fly=on_the_fly)
+    return r
 
 
 def delete(identifier,

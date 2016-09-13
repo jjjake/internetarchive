@@ -275,7 +275,7 @@ class File(BaseFile):
                       without sending the delete request.
 
         """
-        cascade_delete = False if not cascade_delete else True
+        cascade_delete = '0' if not cascade_delete else '1'
         access_key = self.item.session.access_key if not access_key else access_key
         secret_key = self.item.session.secret_key if not secret_key else secret_key
         debug = False if not debug else debug
@@ -291,7 +291,7 @@ class File(BaseFile):
         request = iarequest.S3Request(
             method='DELETE',
             url=url,
-            headers={'x-archive-cascade-delete': int(cascade_delete)},
+            headers={'x-archive-cascade-delete': cascade_delete},
             access_key=access_key,
             secret_key=secret_key
         )

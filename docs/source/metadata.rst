@@ -31,7 +31,7 @@ addeddate
 
 Contains the date on which the item was added to Internet Archive.
 
-Please use an `ISO 8601 <https://en.wikipedia.org/wiki/ISO_8601>`_ compatible format for this date.
+Please use an `ISO 8601`_ compatible format for this date.
 For instance, these are all valid date formats:
 
 - YYYY
@@ -95,7 +95,7 @@ date
 
 The publication, production or other similar date of this item. 
 
-Please use an `ISO 8601 <https://en.wikipedia.org/wiki/ISO_8601>`_ compatible format for this date.
+Please use an `ISO 8601`_ compatible format for this date.
 
 description
 ^^^^^^^^^^^
@@ -186,7 +186,7 @@ publicdate
 Items which have had their metadata included in the Internet Archive search engine index are considered to be public.
 The date the metadata is added to the index is the public date for the item.
 
-Please use an `ISO 8601 <https://en.wikipedia.org/wiki/ISO_8601>`_ compatible format for this date.
+Please use an `ISO 8601`_ compatible format for this date.
 For instance, these are all valid date formats:
 
 While it is possible to set the ``publicdate`` metadata value it is not recommended.
@@ -238,7 +238,7 @@ updatedate
 The date on which an update was made to the item.
 This field is repeatable.
 
-Please use an `ISO 8601 <http://en.wikipedia.org/wiki/ISO_8601>`_ compatible format for this date.
+Please use an `ISO 8601`_ compatible format for this date.
 
 While it is possible to set the ``publicdate`` metadata value it is not recommended.
 This value is typically set by automated processes.
@@ -268,3 +268,5 @@ Custom Metadata Fields
 Internet Archive strives to be metadata agnostic, enabling users to define the metadata format which best suits the needs of their material.
 In addition to the standard metadata fields listed above you may also define as many custom metadata fields as you require.
 These metadata fields can be defined ad hoc at item creation or metadata editing time and do not have to be defined in advance.
+
+.. _ISO 8601: https://en.wikipedia.org/wiki/ISO_8601

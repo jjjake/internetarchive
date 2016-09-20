@@ -3,8 +3,15 @@
 Release History
 ---------------
 
-1.0.9 (?)
-+++++++++
+1.0.10 (2016-09-20)
++++++++++++++++++++
+
+**Bugfixes**
+
+- Convert x-archive-cascade-delete headers to strings for compatability with ``requests>=2.11.0``.
+
+1.0.9 (2016-08-16)
+++++++++++++++++++
 
 **Features and Improvements**
 

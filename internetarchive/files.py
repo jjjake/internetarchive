@@ -180,7 +180,9 @@ class File(BaseFile):
                     sys.stdout.flush()
                 return
             elif checksum:
-                md5_sum = utils.get_md5(open(file_path, 'rb'))
+                with open(file_path, 'rb') as fp:
+                    md5_sum = utils.get_md5(fp)
+
                 if md5_sum == self.md5:
                     msg = ('skipping {0}, '
                            'file already exists based on checksum.'.format(file_path))

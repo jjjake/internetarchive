@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-import os
 import sys
-inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, inc_path)
+
+from tests.conftest import IaRequestsMock, load_test_data_file
+
 import json
 
 import responses
@@ -10,31 +10,19 @@ import responses
 from internetarchive.cli import ia
 
 
-protocol = 'https:'
+PROTOCOL = 'https:'
+STATUS_CHECK_RESPONSE = load_test_data_file('s3_status_check.json')
 
 
-ROOT_DIR = os.getcwd()
-TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
-
-with open(TEST_JSON_FILE, 'r') as fh:
-    ITEM_METADATA = fh.read().strip()
-with open(os.path.join(ROOT_DIR, 'tests/data/s3_status_check.json'), 'r') as fh:
-    STATUS_CHECK_RESPONSE = fh.read().strip()
-
-
-def test_ia_upload(tmpdir):
+def test_ia_upload(tmpdir, caplog):
     tmpdir.chdir()
     with open('test.txt', 'w') as fh:
         fh.write('foo')
 
-    with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
-                 body=ITEM_METADATA,
-                 status=200,
-                 content_type='application/json')
-        rsps.add(responses.PUT, '{0}//s3.us.archive.org/nasa/test.txt'.format(protocol),
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.PUT, '{0}//s3.us.archive.org/nasa/test.txt'.format(PROTOCOL),
                  body='',
-                 status=200,
                  content_type='text/plain')
         sys.argv = ['ia', '--log', 'upload', 'nasa', 'test.txt']
         try:
@@ -42,16 +30,14 @@ def test_ia_upload(tmpdir):
         except SystemExit as exc:
             assert not exc.code
 
-    with open('internetarchive.log', 'r') as fh:
-        assert ('uploaded test.txt to {0}//s3.us.archive.org/nasa/'
-                'test.txt'.format(protocol)) in fh.read()
+    assert ('uploaded test.txt to {0}//s3.us.archive.org/nasa/'
+            'test.txt'.format(PROTOCOL)) in caplog.text()
 
 
 def test_ia_upload_status_check(capsys):
-    with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(protocol),
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(PROTOCOL),
                  body=STATUS_CHECK_RESPONSE,
-                 status=200,
                  content_type='application/json')
 
         sys.argv = ['ia', 'upload', 'nasa', '--status-check']
@@ -65,9 +51,8 @@ def test_ia_upload_status_check(capsys):
 
         j = json.loads(STATUS_CHECK_RESPONSE)
         j['over_limit'] = 1
-        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(protocol),
+        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(PROTOCOL),
                  body=json.dumps(j),
-                 status=200,
                  content_type='application/json')
 
         sys.argv = ['ia', 'upload', 'nasa', '--status-check']
@@ -82,11 +67,8 @@ def test_ia_upload_status_check(capsys):
 
 
 def test_ia_upload_debug(capsys):
-    with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
-                 body=ITEM_METADATA,
-                 status=200,
-                 content_type='application/json')
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
         sys.argv = ['ia', 'upload', '--debug', 'nasa', 'test.txt']
         try:
             ia.main()
@@ -98,7 +80,7 @@ def test_ia_upload_debug(capsys):
     assert set(out.split('\n')) == set([
         '',
         'Endpoint:',
-        ' {0}//s3.us.archive.org/nasa/test.txt'.format(protocol),
+        ' {0}//s3.us.archive.org/nasa/test.txt'.format(PROTOCOL),
         'HTTP Headers:',
         ' x-archive-size-hint:3',
         'nasa:'])
@@ -115,13 +97,10 @@ def test_ia_upload_403(capsys):
                 '<RequestId>18a9c5ea-088f-42f5-9fcf-70651cc085ca</RequestId>'
                 '</Error>')
 
-    with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
-                 body=ITEM_METADATA,
-                 status=200,
-                 content_type='application/json')
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
         rsps.add(responses.PUT,
-                 '{0}//s3.us.archive.org/nasa/test_ia_upload.py'.format(protocol),
+                 '{0}//s3.us.archive.org/nasa/test_ia_upload.py'.format(PROTOCOL),
                  body=s3_error,
                  status=403,
                  content_type='text/plain')
@@ -147,11 +126,8 @@ def test_ia_upload_invalid_cmd(capsys):
 
 
 def test_ia_upload_size_hint(capsys):
-    with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
-                 body=ITEM_METADATA,
-                 status=200,
-                 content_type='application/json')
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
         sys.argv = ['ia', 'upload', '--debug', 'nasa', '--size-hint', '30', 'test.txt']
         try:
             ia.main()
@@ -162,24 +138,20 @@ def test_ia_upload_size_hint(capsys):
     assert set(out.split('\n')) == set(['', ' x-archive-size-hint:30',
                                         'Endpoint:', 'HTTP Headers:', 'nasa:',
                                         (' {0}//s3.us.archive.org/nasa/'
-                                         'test.txt'.format(protocol))])
+                                         'test.txt'.format(PROTOCOL))])
 
 
-def test_ia_upload_unicode(tmpdir):
+def test_ia_upload_unicode(tmpdir, caplog):
     tmpdir.chdir()
     with open('தமிழ் - baz ∆.txt', 'w') as fh:
         fh.write('unicode foo')
     fname = u'தமிழ் - foo; baz ∆.txt'
     efname = '%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20baz%20%E2%88%86.txt'
-    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
-                 body=ITEM_METADATA,
-                 status=200,
-                 content_type='application/json')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
         rsps.add(responses.PUT,
-                 '{0}//s3.us.archive.org/nasa/{1}'.format(protocol, efname),
+                 '{0}//s3.us.archive.org/nasa/{1}'.format(PROTOCOL, efname),
                  body='',
-                 status=200,
                  content_type='text/plain')
         sys.argv = ['ia', '--log', 'upload', 'nasa', 'தமிழ் - baz ∆.txt',
                     '--metadata', 'foo:∆']
@@ -188,25 +160,20 @@ def test_ia_upload_unicode(tmpdir):
         except SystemExit as exc:
             assert not exc.code
 
-    with open('internetarchive.log', 'r') as fh:
-        assert ('uploaded தமிழ் - baz ∆.txt to {0}//s3.us.archive.org/nasa/'
-                '%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20'
-                'baz%20%E2%88%86.txt'.format(protocol)) in fh.read()
+    assert (u'uploaded தமிழ் - baz ∆.txt to {0}//s3.us.archive.org/nasa/'
+            u'%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20'
+            u'baz%20%E2%88%86.txt'.format(PROTOCOL)) in caplog.text()
 
 
-def test_ia_upload_remote_name(tmpdir):
+def test_ia_upload_remote_name(tmpdir, caplog):
     tmpdir.chdir()
     with open('test.txt', 'w') as fh:
         fh.write('foo')
 
-    with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
-                 body=ITEM_METADATA,
-                 status=200,
-                 content_type='application/json')
-        rsps.add(responses.PUT, '{0}//s3.us.archive.org/nasa/hi.txt'.format(protocol),
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.PUT, '{0}//s3.us.archive.org/nasa/hi.txt'.format(PROTOCOL),
                  body='',
-                 status=200,
                  content_type='text/plain')
         sys.argv = ['ia', '--log', 'upload', 'nasa', 'test.txt', '--remote-name',
                     'hi.txt']
@@ -215,6 +182,5 @@ def test_ia_upload_remote_name(tmpdir):
         except SystemExit as exc:
             assert not exc.code
 
-    with open('internetarchive.log', 'r') as fh:
-        assert ('uploaded hi.txt to {0}//s3.us.archive.org/nasa/'
-                'hi.txt'.format(protocol)) in fh.read()
+    assert ('uploaded hi.txt to {0}//s3.us.archive.org/nasa/'
+            'hi.txt'.format(PROTOCOL)) in caplog.text()

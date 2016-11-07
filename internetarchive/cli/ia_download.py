@@ -65,11 +65,6 @@ from schema import Schema, Use, Or, And, SchemaError
 from internetarchive.cli.argparser import get_args_dict
 
 
-def itemlist_ids(itemlist):
-    for line in open(itemlist):
-        yield line.strip()
-
-
 def dir_exists(dir):
     if os.path.exists(dir):
         return True
@@ -113,7 +108,8 @@ def main(argv, session):
     retries = int(args['--retries'])
 
     if args['--itemlist']:
-        ids = [x.strip() for x in open(args['--itemlist'])]
+        with open(args['--itemlist']) as fp:
+            ids = [x.strip() for x in fp]
         total_ids = len(ids)
     elif args['--search']:
         try:

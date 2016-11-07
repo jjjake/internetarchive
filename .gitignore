@@ -16,3 +16,4 @@ wheelhouse
 .venv*
 .cache
 .vagrant
+.idea

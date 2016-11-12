@@ -1,22 +1,15 @@
 # -*- coding: utf-8 -*-
-import os
-import sys
+import io
 import string
-inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, inc_path)
+
+from tests.conftest import IaRequestsMock, NASA_METADATA_PATH
 
 import six
-
-import responses
-
 import internetarchive.utils
 
 
-protocol = 'https:'
-
-
 def test_utils():
-    list(internetarchive.utils.chunk_generator(open(__file__), 10))
+    list(internetarchive.utils.chunk_generator(io.open(__file__, encoding='utf-8'), 10))
     ifp = internetarchive.utils.IterableToFileAdapter([1, 2], 200)
     assert len(ifp) == 200
     ifp.read()
@@ -40,7 +33,8 @@ def test_validate_ia_identifier():
 
 
 def test_get_md5():
-    md5 = internetarchive.utils.get_md5(open(__file__, 'rb'))
+    with open(__file__, 'rb') as fp:
+        md5 = internetarchive.utils.get_md5(fp)
     assert isinstance(md5, six.string_types)
 
 
@@ -53,15 +47,12 @@ def test_map2x():
         assert key == value
 
 
-@responses.activate
-def test_IdentifierListAsItems(session, testitem_metadata):
-    responses.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
-                  body=testitem_metadata,
-                  status=200,
-                  content_type='application/json')
-    it = internetarchive.utils.IdentifierListAsItems('nasa', session)
-    assert it[0].identifier == 'nasa'
-    assert it.nasa.identifier == 'nasa'
+def test_IdentifierListAsItems(session):
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        it = internetarchive.utils.IdentifierListAsItems('nasa', session)
+        assert it[0].identifier == 'nasa'
+        assert it.nasa.identifier == 'nasa'
 
 
 def test_IdentifierListAsItems_len(session):
@@ -84,10 +75,10 @@ def test_get_s3_xml_text():
 
 
 def test_get_file_size():
-    f = os.path.join(os.path.dirname(__file__), 'data/nasa_meta.json')
     try:
-        s = internetarchive.utils.get_file_size(f)
+        s = internetarchive.utils.get_file_size(NASA_METADATA_PATH)
     except AttributeError as exc:
         assert "object has no attribute 'seek'" in str(exc)
-    s = internetarchive.utils.get_file_size(open(f))
+    with open(NASA_METADATA_PATH) as fp:
+        s = internetarchive.utils.get_file_size(fp)
     assert s == 7557

@@ -1,7 +1,4 @@
 import os
-import sys
-inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, inc_path)
 import six
 from six.moves import http_client as httplib
 from six import StringIO
@@ -16,9 +13,6 @@ import requests.adapters
 import internetarchive.config
 import internetarchive.session
 from internetarchive.exceptions import AuthenticationError
-
-
-protocol = 'https:'
 
 
 @responses.activate
@@ -37,7 +31,7 @@ def test_get_auth_config():
         "success": 1
     }"""
     responses.add(responses.GET, 'https://archive.org/account/s3.php',
-                  status=200, body=test_body, adding_headers=headers,
+                  body=test_body, adding_headers=headers,
                   content_type='application/json')
 
     class UglyHack(httplib.HTTPResponse):
@@ -71,7 +65,7 @@ def test_get_auth_config():
 @responses.activate
 def test_get_auth_config_auth_fail():
     # No logged-in-sig cookie set raises AuthenticationError.
-    responses.add(responses.POST, 'https://archive.org/account/login.php', status=200)
+    responses.add(responses.POST, 'https://archive.org/account/login.php')
     try:
         internetarchive.config.get_auth_config('test@example.com', 'password1')
     except AuthenticationError as exc:

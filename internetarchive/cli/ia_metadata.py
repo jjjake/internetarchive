@@ -135,20 +135,21 @@ def main(argv, session):
     if args['--spreadsheet']:
         if not args['--priority']:
             args['--priority'] = -5
-        spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
-        responses = []
-        for row in spreadsheet:
-            if not row['identifier']:
-                continue
-            item = session.get_item(row['identifier'])
-            if row.get('file'):
-                del row['file']
-            metadata = dict((k.lower(), v) for (k, v) in row.items() if v)
-            responses.append(modify_metadata(item, metadata, args))
+        with open(args['--spreadsheet'], 'rU') as csvfp:
+            spreadsheet = csv.DictReader(csvfp)
+            responses = []
+            for row in spreadsheet:
+                if not row['identifier']:
+                    continue
+                item = session.get_item(row['identifier'])
+                if row.get('file'):
+                    del row['file']
+                metadata = dict((k.lower(), v) for (k, v) in row.items() if v)
+                responses.append(modify_metadata(item, metadata, args))
 
-        if all(r.status_code == 200 for r in responses):
-            sys.exit(0)
-        else:
-            sys.exit(1)
+            if all(r.status_code == 200 for r in responses):
+                sys.exit(0)
+            else:
+                sys.exit(1)
 
     sys.exit(0)

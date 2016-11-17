@@ -26,11 +26,12 @@ internetarchive.item
 """
 from __future__ import absolute_import, unicode_literals, print_function
 
-from logging import getLogger
-from fnmatch import fnmatch
 import os
-from time import sleep
 import sys
+from fnmatch import fnmatch
+from logging import getLogger
+from time import sleep
+
 try:
     from functools import total_ordering
 except ImportError:
@@ -45,12 +46,10 @@ from clint.textui import progress
 from requests.exceptions import HTTPError
 
 from internetarchive.utils import IdentifierListAsItems, get_md5, chunk_generator, \
-    IterableToFileAdapter, iter_directory, recursive_file_count
+    IterableToFileAdapter, iter_directory, recursive_file_count, norm_filepath
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
 from internetarchive.utils import get_s3_xml_text, get_file_size
-from internetarchive import __version__
-
 
 log = getLogger(__name__)
 
@@ -423,9 +422,9 @@ class Item(BaseItem):
             access_key=access_key,
             secret_key=secret_key,
             append=append)
-        if debug:
-            return request
         prepared_request = request.prepare()
+        if debug:
+            return prepared_request
         resp = self.session.send(prepared_request, **request_kwargs)
         # Re-initialize the Item object with the updated metadata.
         self.refresh()
@@ -517,7 +516,10 @@ class Item(BaseItem):
         md5_sum = None
 
         if not hasattr(body, 'read'):
+            filename = body
             body = open(body, 'rb')
+        else:
+            filename = body.name
 
         size = get_file_size(body)
 
@@ -525,10 +527,10 @@ class Item(BaseItem):
             headers['x-archive-size-hint'] = str(size)
 
         # Build IA-S3 URL.
-        key = body.name.split('/')[-1] if key is None else key
+        key = norm_filepath(filename).split('/')[-1] if key is None else key
         base_url = '{0.session.protocol}//s3.us.archive.org/{0.identifier}'.format(self)
         url = '{0}/{1}'.format(
-            base_url, urllib.parse.quote(key.lstrip('/').encode('utf-8')))
+            base_url, urllib.parse.quote(norm_filepath(key).lstrip('/').encode('utf-8')))
 
         # Skip based on checksum.
         if checksum:
@@ -545,9 +547,11 @@ class Item(BaseItem):
                         'and verified, deleting '
                         'local copy'.format(i=self.identifier,
                                             f=key))
-                    os.remove(body.name)
+                    body.close()
+                    os.remove(filename)
                 # Return an empty response object if checksums match.
                 # TODO: Is there a better way to handle this?
+                body.close()
                 return Response()
 
         # require the Content-MD5 header when delete is True.
@@ -585,7 +589,9 @@ class Item(BaseItem):
             return request
 
         if debug:
-            return _build_request()
+            prepared_request = _build_request()
+            body.close()
+            return prepared_request
         else:
             try:
                 error_msg = ('s3 is overloaded, sleeping for '
@@ -617,16 +623,18 @@ class Item(BaseItem):
                             log.info('maximum retries exceeded, upload failed.')
                         break
                 response.raise_for_status()
-                log.info('uploaded {f} to {u}'.format(f=key, u=url))
+                log.info(u'uploaded {f} to {u}'.format(f=key, u=url))
                 if delete and response.status_code == 200:
                     log.info(
                         '{f} successfully uploaded to '
                         'https://archive.org/download/{i}/{f} and verified, deleting '
-                        'local copy'.format(i=self.identifier,
-                                            f=key))
-                    os.remove(body.name)
+                        'local copy'.format(i=self.identifier, f=key))
+                    body.close()
+                    os.remove(filename)
+                body.close()
                 return response
             except HTTPError as exc:
+                body.close()
                 msg = get_s3_xml_text(exc.response.content)
                 error_msg = (' error uploading {0} to {1}, '
                              '{2}'.format(key, self.identifier, msg))
@@ -693,6 +701,7 @@ class Item(BaseItem):
                         _queue_derive = False
                     if not f.endswith('/'):
                         key = '{0}/{1}'.format(f, key)
+                    key = norm_filepath(key)
                     resp = self.upload_file(filepath,
                                             key=key,
                                             metadata=metadata,
@@ -746,6 +755,7 @@ class Item(BaseItem):
 
 class Collection(Item):
     """This class represents an archive.org collection."""
+
     def __init__(self, *args, **kwargs):
         self.searches = {}
         if isinstance(args[0], Item):

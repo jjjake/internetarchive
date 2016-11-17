@@ -183,7 +183,7 @@ class ArchiveSession(requests.sessions.Session):
         _log = logging.getLogger(logger_name)
         _log.setLevel(logging.DEBUG)
 
-        fh = logging.FileHandler(path)
+        fh = logging.FileHandler(path, encoding='utf-8')
         fh.setLevel(_log_level[log_level])
 
         formatter = logging.Formatter(log_format)

@@ -3,6 +3,18 @@
 Release History
 ---------------
 
+1.1.0 (?)
++++++++++
+
+**Features and Improvements**
+
+- Make sure collection exists when creating new item via ``ia upload``. If it doesn't, upload will fail.
+- Refactored tests.
+
+**Bugfixes**
+
+- Fixed bug where the full filepath was being set as the remote filename in Windows.
+
 1.0.10 (2016-09-20)
 +++++++++++++++++++
 

@@ -148,7 +148,7 @@ def main(argv, session):
     # Make sure the collection being uploaded to exists.
     collection_id = args['--metadata'].get('collection')
     if collection_id and not args['--no-collection-check'] and not args['--status-check']:
-        collection = session.get_item(collection_id) 
+        collection = session.get_item(collection_id)
         if not collection.exists:
             sys.stderr.write(
                     'You must upload to a collection that exists. '

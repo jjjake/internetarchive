@@ -49,6 +49,7 @@ options:
     -s, --sleep=<i>                   The amount of time to sleep between retries
                                       [default: 30].
     --status-check                    Check if S3 is accepting requests to the given item.
+    --no-collection-check             Skip collection exists check [default: False].
 """
 from __future__ import absolute_import, unicode_literals, print_function
 import sys
@@ -142,6 +143,17 @@ def main(argv, session):
     except SchemaError as exc:
         print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
         sys.exit(1)
+
+    # Make sure the collection being uploaded to exists.
+    collection_id = args['--metadata'].get('collection')
+    if collection_id and not args['--no-collection-check'] and not args['--status-check']:
+        collection = session.get_item(collection_id) 
+        if not collection.exists:
+            sys.stderr.write(
+                    'You must upload to a collection that exists. '
+                    '"{0}" does not exist.\n{1}\n'.format(collection_id,
+                                                          printable_usage(__doc__)))
+            sys.exit(1)
 
     # Status check.
     if args['--status-check']:

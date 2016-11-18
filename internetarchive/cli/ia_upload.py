@@ -151,9 +151,9 @@ def main(argv, session):
         collection = session.get_item(collection_id)
         if not collection.exists:
             sys.stderr.write(
-                    'You must upload to a collection that exists. '
-                    '"{0}" does not exist.\n{1}\n'.format(collection_id,
-                                                          printable_usage(__doc__)))
+                'You must upload to a collection that exists. '
+                '"{0}" does not exist.\n{1}\n'.format(collection_id,
+                                                      printable_usage(__doc__)))
             sys.exit(1)
 
     # Status check.

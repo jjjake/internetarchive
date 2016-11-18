@@ -14,6 +14,7 @@ Release History
 **Bugfixes**
 
 - Fixed bug where the full filepath was being set as the remote filename in Windows.
+- Convert all metadata header values to strings for compatability with ``requests>=2.11.0``.
 
 1.0.10 (2016-09-20)
 +++++++++++++++++++

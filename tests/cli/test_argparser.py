@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
-import sys
-inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, inc_path)
 from internetarchive.cli.argparser import get_args_dict
 
 
@@ -23,7 +19,6 @@ def test_get_args_dict():
     }
     args_dict = get_args_dict(test_input)
     for key, value in args_dict.items():
-        print(key, value)
         assert test_output[key] == value
 
 

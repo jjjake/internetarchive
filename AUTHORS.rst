@@ -8,6 +8,11 @@ Development Lead
 
 - Jake Johnson <jake@archive.org>
 
+Contributors
+------------
+
+- Bryce Drennan <internetarchive@brycedrennan.com>
+
 Patches and Suggestions
 -----------------------
 

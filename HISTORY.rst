@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.2.0 (2016-11-18)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Added ``ia copy`` and ``ia move`` for copying and moving files in archive.org items.
+
 1.1.0 (2016-11-18)
 ++++++++++++++++++
 

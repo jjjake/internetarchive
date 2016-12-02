@@ -296,3 +296,25 @@ You can list files in an item like so:
     $ ia list goodytwoshoes00newyiala
 
 See ``ia help list`` for more details.
+
+
+Copy
+----
+
+You can copy files in archive.org items like so:
+
+.. code:: bash
+
+    $ ia copy <src-identifier>/<src-filename> <dest-identifier>/<dest-filename>
+
+If you're copying your file to a new item, you can provide metadata as well:
+
+.. code:: bash
+
+    $ ia copy <src-identifier>/<src-filename> <dest-identifier>/<dest-filename> --metadata 'title:My New Item' --metadata collection:test_collection
+
+
+Move
+----
+
+``ia move`` works just like ``ia copy`` except the source file is deleted after the file has been successfully copied.

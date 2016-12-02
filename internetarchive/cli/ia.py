@@ -76,6 +76,8 @@ cmd_aliases = dict(
     se='search',
     ta='tasks',
     ls='list',
+    cp='copy',
+    mv='move',
 )
 
 

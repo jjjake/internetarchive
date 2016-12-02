@@ -8,6 +8,7 @@ Release History
 
 **Features and Improvements**
 
+- Added ``ia copy`` and ``ia move`` for copying and moving files in archive.org items.
 - Added support for outputing JSON in ``ia tasks``.
 
 **Bugfixes**

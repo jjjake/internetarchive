@@ -38,6 +38,8 @@ from internetarchive.cli import ia_copy
 
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
+    src_path = args['<src-identifier>/<src-file>']
+    dest_path = args['<dest-identifier>/<dest-file>']
 
     # First we use ia_copy, prep argv for ia_copy.
     argv.pop(0)
@@ -45,9 +47,8 @@ def main(argv, session):
 
     # Call ia_copy.
     r, src_file = ia_copy.main(argv, session, cmd='move')
-    dr = src_file.delete()
+    dr = src_file.delete(cascade_delete=True)
     if dr.status_code == 204:
-        print('success: moved {} to {}'.format(args['<src-identifier>/<src-file>'],
-              args['<dest-identifier>/<dest-file>']))
+        print('success: moved {} to {}'.format(src_path, dest_path))
         sys.exit(0)
     print('error: {}'.format(dr.content))

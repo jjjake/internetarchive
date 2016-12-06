@@ -31,7 +31,6 @@ options:
 from __future__ import print_function, absolute_import
 import sys
 
-import six
 from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
 
@@ -50,17 +49,27 @@ def assert_src_file_exists(src_location):
 
 def main(argv, session, cmd='copy'):
     args = docopt(__doc__, argv=argv)
+    src_path = args['<src-identifier>/<src-file>']
+    dest_path = args['<dest-identifier>/<dest-file>']
+
+    # If src == dest, file get's deleted!
+    try:
+        assert src_path != dest_path
+    except AssertionError:
+        print('error: The source and destination files cannot be the same!',
+              file=sys.stderr)
+        sys.exit(1)
+
     global SRC_ITEM
-    SRC_ITEM = session.get_item(args['<src-identifier>/<src-file>'].split('/')[0])
+    SRC_ITEM = session.get_item(src_path.split('/')[0])
 
     # Validate args.
     s = Schema({
         str: Use(bool),
-        '<src-identifier>/<src-file>': And(six.text_type, assert_src_file_exists, error=(
+        '<src-identifier>/<src-file>': And(str, assert_src_file_exists, error=(
             'https://archive.org/download/{} does not exist. '
-            'Please check the identifier and filepath and retry.'.format(
-                       args['<src-identifier>/<src-file>']))),
-        '<dest-identifier>/<dest-file>': six.text_type,
+            'Please check the identifier and filepath and retry.'.format(src_path))),
+        '<dest-identifier>/<dest-file>': str,
         '--metadata': Or(None, And(Use(get_args_dict), dict),
                          error='--metadata must be formatted as --metadata="key:value"'),
     })
@@ -70,16 +79,15 @@ def main(argv, session, cmd='copy'):
     except SchemaError as exc:
         # This module is sometimes called by other modules.
         # Replace references to 'ia copy' in ___doc__ to 'ia {cmd}' for clarity.
-        sys.stderr.write('{0}\n{1}\n'.format(
-            str(exc), printable_usage(__doc__.replace('ia copy', 'ia {}'.format(cmd)))))
+        usage = printable_usage(__doc__.replace('ia copy', 'ia {}'.format(cmd)))
+        print('{0}\n{1}'.format(str(exc), usage), file=sys.stderr)
         sys.exit(1)
 
     headers = {
-        'x-amz-copy-source': '/{}'.format(args['<src-identifier>/<src-file>']),
+        'x-amz-copy-source': '/{}'.format(src_path),
         'x-amz-metadata-directive': 'COPY',
     }
-    url = '{}//s3.us.archive.org/{}'.format(session.protocol,
-                                            args['<dest-identifier>/<dest-file>'])
+    url = '{}//s3.us.archive.org/{}'.format(session.protocol, dest_path)
     req = ia.iarequest.S3Request(url=url,
                                  method='PUT',
                                  metadata=args['--metadata'],
@@ -89,11 +97,9 @@ def main(argv, session, cmd='copy'):
     p = req.prepare()
     r = session.send(p)
     if r.status_code != 200:
-        print('error: failed to {} {} to {}. {}'.format(cmd,
-              args['<src-identifier>/<src-file>'], args['<src-identifier>/<src-file>']))
+        print('error: failed to {} {} to {}. {}'.format(cmd, src_path))
         sys.exit(1)
     elif cmd == 'copy':
-        print('success: copied {} to {}.'.format(args['<src-identifier>/<src-file>'],
-              args['<dest-identifier>/<dest-file>']))
+        print('success: copied {} to {}.'.format(src_path, dest_path))
     else:
         return (r, SRC_FILE)

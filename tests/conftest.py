@@ -73,7 +73,10 @@ def call_cmd(cmd, expected_exit_code=0):
     stdout, stderr = proc.communicate()
     stdout = stdout.decode('utf-8').strip()
     stderr = stderr.decode('utf-8').strip()
-    assert proc.returncode == expected_exit_code
+    if proc.returncode != expected_exit_code:
+        print(stdout)
+        print(stderr)
+        assert proc.returncode == expected_exit_code
     return (stdout, stderr)
 
 

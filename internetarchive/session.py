@@ -213,7 +213,10 @@ class ArchiveSession(requests.sessions.Session):
                          'retrieving now.'.format(identifier))
             item_metadata = self.get_metadata(identifier, request_kwargs)
         mediatype = item_metadata.get('metadata', {}).get('mediatype')
-        item_class = self.ITEM_MEDIATYPE_TABLE.get(mediatype, Item)
+        try:
+            item_class = self.ITEM_MEDIATYPE_TABLE.get(mediatype, Item)
+        except TypeError:
+            item_class = Item
         return item_class(self, identifier, item_metadata)
 
     def get_metadata(self, identifier, request_kwargs=None):

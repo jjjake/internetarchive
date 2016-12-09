@@ -38,3 +38,17 @@ If you are using a Python version earlier than 2.7.9, you might see ``InsecurePl
                .. code:: bash
 
                  $ ia --insecure download <identifier>
+
+OverflowError
+-------------
+
+On some 32-bit systems you may run into issues uploading files larger than 2 GB.
+You may see an error that looks something like ``OverflowError: long int too large to convert to int``.
+You can get around this by upgrading ``requests``::
+
+    pip install --upgrade requests
+
+You can find more details about this issue at the following links:
+
+https://github.com/sigmavirus24/requests-toolbelt/issues/80
+https://github.com/kennethreitz/requests/issues/2691

@@ -16,6 +16,8 @@ Welcome to the documentation for the ``internetarchive`` Python library.
 ``internetarchive`` is a command-line and Python interface to archive.org.
 Please report any issues on `Github <https://github.com/jjjake/internetarchive/issues>`__.
 
+If you're not sure where to begin, the quickest and easiest way to get started is `downloading a binary <installation.html#binaries>`__ and taking a look at the `command-line interface documentation <cli.html>`__.
+
 
 User's Guide
 ------------

@@ -70,6 +70,8 @@ def main(argv, session):
         for key, val in f.items():
             if key in columns:
                 if six.PY2:
+                    if isinstance(val, (list, tuple, set)):
+                        val = ';'.join(val)
                     val = val.encode('utf-8')
                 if key == 'name' and args.get('--location'):
                     file_dict[key] = ('https://archive.org/download/'

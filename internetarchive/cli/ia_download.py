@@ -156,7 +156,7 @@ def main(argv, session):
                 sys.stderr.write('error: {0}/{1} does not exist!\n'.format(
                     identifier, args['<file>'][0]))
                 sys.exit(1)
-            f[0].download(retries=args['--retries'], stdout=True)
+            f[0].download(retries=args['--retries'], file_obj=sys.stdout)
             sys.exit(0)
         try:
             identifier = identifier.strip()

@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.2.0 (?)
++++++++++
+
+**Features and Improvements**
+
+- Added support for downloading files to stdout in ``ia download`` and ``File.download``.
+
 1.1.0 (2016-11-18)
 ++++++++++++++++++
 

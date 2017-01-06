@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.2.0 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug in upload where AttributeError was rasied when trying to upload file-like objects without a name attribute.
+
 1.1.0 (2016-11-18)
 ++++++++++++++++++
 

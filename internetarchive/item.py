@@ -519,7 +519,10 @@ class Item(BaseItem):
             filename = body
             body = open(body, 'rb')
         else:
-            filename = body.name
+            if key:
+                filename = key
+            else:
+                filename = body.name
 
         size = get_file_size(body)
 

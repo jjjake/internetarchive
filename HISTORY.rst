@@ -12,6 +12,9 @@ Release History
 - Removed identifier validation from ``ia delete``.
   If an identifier already exists, we don't need to validate it.
   This only makes things annoying if an identifier exists but fails ``internetarchive`` id validation.
+- Fixed bug where error message isn't returned in ``ia upload`` if the response body is not XML.
+  Ideally IA-S3 would always return XML, but that's not the case as of now.
+  Try to dump the HTML in the S3 response if unable to parse XML.
 
 1.1.0 (2016-11-18)
 ++++++++++++++++++

@@ -9,6 +9,9 @@ Release History
 **Bugfixes**
 
 - Fixed bug in upload where AttributeError was rasied when trying to upload file-like objects without a name attribute.
+- Removed identifier validation from ``ia delete``.
+  If an identifier already exists, we don't need to validate it.
+  This only makes things annoying if an identifier exists but fails ``internetarchive`` id validation.
 
 1.1.0 (2016-11-18)
 ++++++++++++++++++

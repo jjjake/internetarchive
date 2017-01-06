@@ -6,6 +6,10 @@ Release History
 1.2.0 (?)
 +++++++++
 
+**Features and Improvements**
+
+- Added support for outputing JSON in ``ia tasks``.
+
 **Bugfixes**
 
 - Fixed bug in upload where AttributeError was rasied when trying to upload file-like objects without a name attribute.

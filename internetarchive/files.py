@@ -120,7 +120,7 @@ class File(BaseFile):
 
     def download(self, file_path=None, verbose=None, silent=None, ignore_existing=None,
                  checksum=None, destdir=None, retries=None, ignore_errors=None,
-                 file_obj=None):
+                 fileobj=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -150,8 +150,8 @@ class File(BaseFile):
         :param ignore_errors: (optional) Don't fail if a single file fails to
                               download, continue to download other files.
 
-        :type file_obj: file-like object
-        :param file_obj: (optional) Write data to the given file-like object
+        :type fileobj: file-like object
+        :param fileobj: (optional) Write data to the given file-like object
                          (e.g. sys.stdout).
 
         :rtype: bool
@@ -162,7 +162,7 @@ class File(BaseFile):
         checksum = False if checksum is None else checksum
         retries = 2 if not retries else retries
         ignore_errors = False if not ignore_errors else ignore_errors
-        if (file_obj and silent is None) or silent is not None:
+        if (fileobj and silent is None) or silent is not None:
             silent = True
         else:
             silent = False
@@ -224,14 +224,14 @@ class File(BaseFile):
             response.raise_for_status()
 
             chunk_size = 2048
-            if not file_obj:
-                file_obj = open(file_path, 'wb')
+            if not fileobj:
+                fileobj = open(file_path, 'wb')
 
-            with file_obj:
+            with fileobj:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:
-                        file_obj.write(chunk)
-                        file_obj.flush()
+                        fileobj.write(chunk)
+                        fileobj.flush()
         except (RetryError, HTTPError, ConnectTimeout,
                 ConnectionError, socket.error, ReadTimeout) as exc:
             msg = ('error downloading file {0}, '

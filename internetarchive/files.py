@@ -305,7 +305,7 @@ class File(BaseFile):
                 if cascade_delete:
                     msg += ' and all derivative files.'
                 print(msg, file=sys.stderr)
-            prepared_request = request.prepare()
+            prepared_request = self.item.session.prepare_request(request)
 
             try:
                 resp = self.item.session.send(prepared_request)

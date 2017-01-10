@@ -422,7 +422,9 @@ class Item(BaseItem):
             access_key=access_key,
             secret_key=secret_key,
             append=append)
-        prepared_request = request.prepare()
+        # Must use Session.prepare_request to make sure session settings
+        # are used on request!
+        prepared_request = self.session.prepare_request(request)
         if debug:
             return prepared_request
         resp = self.session.send(prepared_request, **request_kwargs)
@@ -592,7 +594,7 @@ class Item(BaseItem):
             return request
 
         if debug:
-            prepared_request = _build_request()
+            prepared_request = self.session.prepare_request(_build_request())
             body.close()
             return prepared_request
         else:
@@ -610,7 +612,9 @@ class Item(BaseItem):
                             retries -= 1
                             continue
                     request = _build_request()
-                    prepared_request = request.prepare()
+                    # Must use Session.prepare_request to make sure session settings
+                    # are used on request!
+                    prepared_request = self.session.prepare_request(_build_request())
                     response = self.session.send(prepared_request,
                                                  stream=True,
                                                  **request_kwargs)

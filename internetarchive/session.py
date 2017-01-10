@@ -106,7 +106,7 @@ class ArchiveSession(requests.sessions.Session):
         self.http_adapter_kwargs = http_adapter_kwargs
 
         self.headers = default_headers()
-        self.headers['User-Agent'] = self._get_user_agent_string()
+        self.headers.update({'User-Agent': self._get_user_agent_string()})
         self._mount_http_adapter()
 
         logging_config = self.config.get('logging', {})

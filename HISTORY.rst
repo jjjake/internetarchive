@@ -20,6 +20,7 @@ Release History
 - Fixed bug where error message isn't returned in ``ia upload`` if the response body is not XML.
   Ideally IA-S3 would always return XML, but that's not the case as of now.
   Try to dump the HTML in the S3 response if unable to parse XML.
+- Fixed bug where ArchiveSession headers weren't being sent in prepared requests.
 
 1.1.0 (2016-11-18)
 ++++++++++++++++++

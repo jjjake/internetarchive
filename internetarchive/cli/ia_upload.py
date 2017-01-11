@@ -138,7 +138,7 @@ def main(argv, session):
                        error='--header must be formatted as --header="key:value"'),
         '--retries': Use(lambda x: int(x[0]) if x else 0),
         '--sleep': Use(lambda l: int(l[0]), error='--sleep value must be an integer.'),
-        '--size-hint': Or(Use(lambda l: int(l[0]) if l else None), int, None,
+        '--size-hint': Or(Use(lambda l: str(l[0]) if l else None), int, None,
                           error='--size-hint value must be an integer.'),
         '--status-check': bool,
     })

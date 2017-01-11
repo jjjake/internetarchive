@@ -414,8 +414,10 @@ class Item(BaseItem):
             protocol=self.session.protocol,
             identifier=self.identifier)
         request = MetadataRequest(
+            method='POST',
             url=url,
             metadata=metadata,
+            headers=self.session.headers,
             source_metadata=self.item_metadata.get(target.split('/')[0], {}),
             target=target,
             priority=priority,
@@ -424,7 +426,7 @@ class Item(BaseItem):
             append=append)
         # Must use Session.prepare_request to make sure session settings
         # are used on request!
-        prepared_request = self.session.prepare_request(request)
+        prepared_request = request.prepare()
         if debug:
             return prepared_request
         resp = self.session.send(prepared_request, **request_kwargs)
@@ -583,6 +585,7 @@ class Item(BaseItem):
             else:
                 data = body
 
+            headers.update(self.session.headers)
             request = S3Request(method='PUT',
                                 url=url,
                                 headers=headers,
@@ -612,9 +615,7 @@ class Item(BaseItem):
                             retries -= 1
                             continue
                     request = _build_request()
-                    # Must use Session.prepare_request to make sure session settings
-                    # are used on request!
-                    prepared_request = self.session.prepare_request(_build_request())
+                    prepared_request = request.prepare()
                     response = self.session.send(prepared_request,
                                                  stream=True,
                                                  **request_kwargs)

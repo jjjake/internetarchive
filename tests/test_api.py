@@ -217,6 +217,11 @@ def test_upload():
             scanner_header = '%20'.join(
                 response.headers['x-archive-meta00-scanner'].split('%20')[:4])
             headers['x-archive-meta00-scanner'] = scanner_header
+            assert 'user-agent' in headers
+            del headers['accept']
+            del headers['accept-encoding']
+            del headers['connection']
+            del headers['user-agent']
             assert headers == expected_s3_headers
             assert req.url == '{0}//s3.us.archive.org/nasa/nasa.json'.format(PROTOCOL)
 
@@ -298,11 +303,12 @@ def test_page_row_specification():
     _j['response']['docs'] = [{'identifier': 'nasa'}]
     _j['response']['numFound'] = 1
     _search_r = json.dumps(_j)
-    with IaRequestsMock() as rsps:
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, '{0}//archive.org/advancedsearch.php'.format(PROTOCOL),
                  body=_search_r)
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.POST, 'https://archive.org/services/search/v1/scrape',
+        rsps.add(responses.POST,
+                '{0}//archive.org/services/search/v1/scrape'.format(PROTOCOL),
                  body='{"items":[],"count":0,"total":1}',
                  match_querystring=False,
                  content_type='application/json; charset=UTF-8')

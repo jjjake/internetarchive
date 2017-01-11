@@ -209,9 +209,6 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, metadata={},
                 source_metadata=None, target=None, priority=None, append=None):
-
-        method = 'POST' if not method else method
-
         self.prepare_method(method)
         self.prepare_url(url, params)
         self.prepare_headers(headers)

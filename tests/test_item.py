@@ -34,6 +34,12 @@ EXPECTED_S3_HEADERS = {
     'content-md5': '6f1834f5c70c0eabf93dea675ccf90c4',
     'x-archive-auto-make-bucket': '1',
     'authorization': 'LOW a:b',
+    'accept': '*/*',
+    'accept-encoding': 'gzip, deflate',
+    'connection': 'keep-alive',
+    'user-agent': 'internetarchive/1.2.0.dev4 (Darwin i386; N; en; None) '
+                  'Python/3.6.0'
+
 }
 
 

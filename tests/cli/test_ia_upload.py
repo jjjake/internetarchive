@@ -52,13 +52,13 @@ def test_ia_upload_debug(capsys, tmpdir_ch, nasa_mocker):
 
     ia_call(['ia', 'upload', '--debug', 'nasa', 'test.txt'])
     out, err = capsys.readouterr()
-    assert set(out.split('\n')) == set([
-        '',
-        'Endpoint:',
-        ' {0}//s3.us.archive.org/nasa/test.txt'.format(PROTOCOL),
-        'HTTP Headers:',
-        ' x-archive-size-hint:3',
-        'nasa:'])
+    assert 'User-Agent' in out
+    assert 's3.us.archive.org/nasa/test.txt' in out
+    assert 'Accept:*/*' in out
+    assert 'Authorization:LOW ' in out
+    assert 'Connection:keep-alive' in out
+    assert 'Content-Length:3' in out
+    assert 'Accept-Encoding:gzip, deflate' in out
 
 
 def test_ia_upload_403(capsys):
@@ -96,14 +96,15 @@ def test_ia_upload_size_hint(capsys, tmpdir_ch, nasa_mocker):
         fh.write('foo')
 
     ia_call(['ia', 'upload', '--debug', 'nasa', '--size-hint', '30', 'test.txt'])
-    expected_headers = set([
-        '', ' x-archive-size-hint:30',
-        'Endpoint:', 'HTTP Headers:', 'nasa:',
-        (' {0}//s3.us.archive.org/nasa/'
-         'test.txt'.format(PROTOCOL))
-    ])
     out, err = capsys.readouterr()
-    assert set(out.split('\n')) == expected_headers
+    assert 'User-Agent' in out
+    assert 's3.us.archive.org/nasa/test.txt' in out
+    assert 'x-archive-size-hint:30' in out
+    assert 'Accept:*/*' in out
+    assert 'Authorization:LOW ' in out
+    assert 'Connection:keep-alive' in out
+    assert 'Content-Length:3' in out
+    assert 'Accept-Encoding:gzip, deflate' in out
 
 
 def test_ia_upload_unicode(tmpdir_ch, caplog):

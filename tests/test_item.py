@@ -37,9 +37,6 @@ EXPECTED_S3_HEADERS = {
     'accept': '*/*',
     'accept-encoding': 'gzip, deflate',
     'connection': 'keep-alive',
-    'user-agent': 'internetarchive/1.2.0.dev4 (Darwin i386; N; en; None) '
-                  'Python/3.6.0'
-
 }
 
 
@@ -292,6 +289,8 @@ def test_upload(nasa_item):
             scanner_header = '%20'.join(
                 resp.headers['x-archive-meta00-scanner'].split('%20')[:4])
             headers['x-archive-meta00-scanner'] = scanner_header
+            assert 'user-agent' in headers
+            del headers['user-agent']
             assert headers == EXPECTED_S3_HEADERS
             assert request.url == '{0}//s3.us.archive.org/nasa/nasa.json'.format(PROTOCOL)
 
@@ -339,6 +338,8 @@ def test_upload_metadata(nasa_item):
             request = resp.request
             del request.headers['x-archive-meta00-scanner']
             headers = dict((k.lower(), str(v)) for k, v in request.headers.items())
+            assert 'user-agent' in headers
+            del headers['user-agent']
             assert headers == _expected_headers
 
 
@@ -409,7 +410,6 @@ def test_upload_dir(tmpdir, nasa_item):
                                       access_key='a',
                                       secret_key='b')
         tmp_path = norm_filepath(str(tmpdir))
-        print(tmp_path)
         expected_eps = [
             '{0}nasa{1}/dir_test/{2}'.format(S3_URL, tmp_path, 'foo.txt'),
             '{0}nasa{1}/dir_test/{2}'.format(S3_URL, tmp_path, 'foo2.txt'),
@@ -428,6 +428,8 @@ def test_upload_queue_derive(nasa_item):
         for resp in _responses:
             headers = dict((k.lower(), str(v)) for k, v in resp.request.headers.items())
             del headers['x-archive-meta00-scanner']
+            assert 'user-agent' in headers
+            del headers['user-agent']
             assert headers == _expected_headers
 
 

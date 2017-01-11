@@ -308,7 +308,7 @@ def test_page_row_specification():
                  body=_search_r)
         rsps.add_metadata_mock('nasa')
         rsps.add(responses.POST,
-                '{0}//archive.org/services/search/v1/scrape'.format(PROTOCOL),
+                 '{0}//archive.org/services/search/v1/scrape'.format(PROTOCOL),
                  body='{"items":[],"count":0,"total":1}',
                  match_querystring=False,
                  content_type='application/json; charset=UTF-8')

@@ -3,6 +3,21 @@
 Release History
 ---------------
 
+1.4.0 (2017-01-26)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Another bugfix for setting mtime correctly after ``fileobj`` functionality was added to ``ia download``.
+
+1.3.0 (2017-01-26)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed bug where download was trying to set mtime, even when ``fileobj`` was set to ``True``
+  (e.g. ``ia download <id> <file> --stdout``).
+
 1.2.0 (2017-01-26)
 ++++++++++++++++++
 

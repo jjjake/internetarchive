@@ -162,7 +162,7 @@ class File(BaseFile):
         checksum = False if checksum is None else checksum
         retries = 2 if not retries else retries
         ignore_errors = False if not ignore_errors else ignore_errors
-        if (fileobj and silent is None) or silent is not None:
+        if (fileobj and silent is None) or silent is not False:
             silent = True
         else:
             silent = False
@@ -250,8 +250,11 @@ class File(BaseFile):
                 raise exc
 
         # Set mtime with mtime from files.xml.
-        if not fileobj:
+        try:
             os.utime(file_path, (0, self.mtime))
+        except OSError:
+            # Probably file-like object, e.g. sys.stdout.
+            pass
 
         msg = 'downloaded {0}/{1} to {2}'.format(self.identifier,
                                                  self.name,

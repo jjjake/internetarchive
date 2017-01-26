@@ -3,13 +3,14 @@
 Release History
 ---------------
 
-1.2.0 (?)
-+++++++++
+1.2.0 (2017-01-26)
+++++++++++++++++++
 
 **Features and Improvements**
 
 - Added ``ia copy`` and ``ia move`` for copying and moving files in archive.org items.
 - Added support for outputing JSON in ``ia tasks``.
+- Added support to ``ia download`` to write to stdout instead of file.
 
 **Bugfixes**
 

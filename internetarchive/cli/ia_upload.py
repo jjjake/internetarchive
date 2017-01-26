@@ -218,7 +218,6 @@ def main(argv, session):
     # Bulk upload using spreadsheet.
     else:
         # Use the same session for each upload request.
-        session = ArchiveSession()
         with open(args['--spreadsheet'], 'rU') as csvfp:
             spreadsheet = csv.DictReader(csvfp)
             prev_identifier = None

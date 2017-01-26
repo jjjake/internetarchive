@@ -38,7 +38,6 @@ Release History
   Try to dump the HTML in the S3 response if unable to parse XML.
 - Fixed bug where ArchiveSession headers weren't being sent in prepared requests.
 - Fixed bug in ``ia upload --size-hint`` where value was an integer, but requests requries it to be a string.
-=======
 - Added support for downloading files to stdout in ``ia download`` and ``File.download``.
 
 1.1.0 (2016-11-18)

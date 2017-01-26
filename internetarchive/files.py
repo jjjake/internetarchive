@@ -250,7 +250,8 @@ class File(BaseFile):
                 raise exc
 
         # Set mtime with mtime from files.xml.
-        os.utime(file_path, (0, self.mtime))
+        if not fileobj:
+            os.utime(file_path, (0, self.mtime))
 
         msg = 'downloaded {0}/{1} to {2}'.format(self.identifier,
                                                  self.name,

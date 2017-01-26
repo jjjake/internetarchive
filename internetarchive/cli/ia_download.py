@@ -21,6 +21,7 @@
 
 usage:
     ia download <identifier> [<file>]... [options]...
+    ia download <identifier> <file> --stdout [--retries=<retries>]
     ia download --itemlist=<file> [options]...
     ia download --search=<query> [options]...
     ia download --help
@@ -53,6 +54,7 @@ options:
                                              create item directories.
     --destdir=<dir>                          The destination directory to download files
                                              and item directories to.
+    -s, --stdout                             Write file contents to stdout.
 """
 from __future__ import print_function, absolute_import
 import os
@@ -101,6 +103,7 @@ def main(argv, session):
     try:
         args = s.validate(args)
     except SchemaError as exc:
+        raise
         sys.stderr.write('{0}\n{1}\n'.format(
             str(exc), printable_usage(__doc__)))
         sys.exit(1)
@@ -144,6 +147,21 @@ def main(argv, session):
 
     errors = list()
     for i, identifier in enumerate(ids):
+        if args['--stdout']:
+            item = session.get_item(identifier)
+            f = list(item.get_files(args['<file>']))
+            try:
+                assert len(f) == 1
+            except AssertionError:
+                sys.stderr.write('error: {0}/{1} does not exist!\n'.format(
+                    identifier, args['<file>'][0]))
+                sys.exit(1)
+            if six.PY2:
+                stdout_buf = sys.stdout
+            else:
+                stdout_buf = sys.stdout.buffer
+            f[0].download(retries=args['--retries'], fileobj=stdout_buf)
+            sys.exit(0)
         try:
             identifier = identifier.strip()
         except AttributeError:

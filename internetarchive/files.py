@@ -119,7 +119,8 @@ class File(BaseFile):
                 'format={format!r})'.format(**self.__dict__))
 
     def download(self, file_path=None, verbose=None, silent=None, ignore_existing=None,
-                 checksum=None, destdir=None, retries=None, ignore_errors=None):
+                 checksum=None, destdir=None, retries=None, ignore_errors=None,
+                 fileobj=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -149,15 +150,22 @@ class File(BaseFile):
         :param ignore_errors: (optional) Don't fail if a single file fails to
                               download, continue to download other files.
 
+        :type fileobj: file-like object
+        :param fileobj: (optional) Write data to the given file-like object
+                         (e.g. sys.stdout).
+
         :rtype: bool
         :returns: True if file was successfully downloaded.
         """
         verbose = False if verbose is None else verbose
-        silent = False if silent is None else silent
         ignore_existing = False if ignore_existing is None else ignore_existing
         checksum = False if checksum is None else checksum
         retries = 2 if not retries else retries
         ignore_errors = False if not ignore_errors else ignore_errors
+        if (fileobj and silent is None) or silent is not None:
+            silent = True
+        else:
+            silent = False
 
         self.item.session._mount_http_adapter(max_retries=retries)
         file_path = self.name if not file_path else file_path
@@ -216,11 +224,14 @@ class File(BaseFile):
             response.raise_for_status()
 
             chunk_size = 2048
-            with open(file_path, 'wb') as f:
+            if not fileobj:
+                fileobj = open(file_path, 'wb')
+
+            with fileobj:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:
-                        f.write(chunk)
-                        f.flush()
+                        fileobj.write(chunk)
+                        fileobj.flush()
         except (RetryError, HTTPError, ConnectTimeout,
                 ConnectionError, socket.error, ReadTimeout) as exc:
             msg = ('error downloading file {0}, '

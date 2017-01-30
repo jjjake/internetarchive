@@ -9,7 +9,7 @@ Configuration
 -------------
 
 Certain functions of the internetarchive library require your archive.org credentials (i.e. uploading, modifying metadata, searching).
-Your credentials and other configurations can be provided via a dictionary when insantiating an :class:`ArchiveSession` or :class:`Item` object, or in a config file.
+Your credentials and other configurations can be provided via a dictionary when instantiating an :class:`ArchiveSession` or :class:`Item` object, or in a config file.
 
 The easiest way to create a config file is with the `configure <internetarchive.html#internetarchive.configure>`_ function::
 
@@ -22,7 +22,7 @@ Config files are stored in either ``$HOME/.ia`` or ``$HOME/.config/ia.ini`` by d
     >>> from internetarchive import configure
     >>> configure('user@example.com', 'password', config_file='/home/jake/.config/ia-alternate.ini')
 
-Custom config files can be specified when insantiating an :class:`ArchiveSession` object::
+Custom config files can be specified when instantiating an :class:`ArchiveSession` object::
 
     >>> from internetarchive import get_session
     >>> s = get_session(config_file='/home/jake/.config/ia-alternate.ini')
@@ -44,7 +44,7 @@ They can be specified in your config file like so::
     access = mYaccEsSkEY
     secret = mYs3cREtKEy
 
-Or, using the :class:`ArchiveSession` obect::
+Or, using the :class:`ArchiveSession` object::
 
     >>> from internetarchive import get_session
     >>> c = {'s3': {'access': 'mYaccEsSkEY', 'secret': 'mYs3cREtKEy'}}
@@ -52,7 +52,7 @@ Or, using the :class:`ArchiveSession` obect::
     >>> s.access_key
     'mYaccEsSkEY'
 
-Cookie Confgiuration
+Cookie Configuration
 ~~~~~~~~~~~~~~~~~~~~
 
 Your archive.org logged-in cookies are required for downloading access-restricted files that you have permissions to and retrieving information about archive.org catalog tasks.
@@ -63,7 +63,7 @@ Your cookies can be specified like so::
     logged-in-user = user%40example.com
     logged-in-sig = <redacted>
 
-Or, using the :class:`ArchiveSession` obect::
+Or, using the :class:`ArchiveSession` object::
 
     >>> from internetarchive import get_session
     >>> c = {'cookies': {'logged-in-user': 'user%40example.com', 'logged-in-sig': 'foo'}}
@@ -81,7 +81,7 @@ You can specify logging levels and the location of your log file like so::
     level = INFO
     file = /tmp/ia.log
 
-Or, using the :class:`ArchiveSession` obect::
+Or, using the :class:`ArchiveSession` object::
 
     >>> from internetarchive import get_session
     >>> c = {'logging': {'level': 'INFO', 'file': '/tmp/ia.log'}}
@@ -98,7 +98,7 @@ You can change this setting in your config file in the ``general`` section::
     [general]
     secure = False
 
-Or, using the :class:`ArchiveSession` obect::
+Or, using the :class:`ArchiveSession` object::
 
     >>> from internetarchive import get_session
     >>> s = get_session(config={'general': {'secure': False}})

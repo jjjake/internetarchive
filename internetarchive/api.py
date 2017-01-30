@@ -300,6 +300,7 @@ def download(identifier,
              item_index=None,
              ignore_errors=None,
              on_the_fly=None,
+             return_responses=None,
              **get_item_kwargs):
     """Download files from an item.
 
@@ -353,6 +354,10 @@ def download(identifier,
     :param on_the_fly: (optional) Download on-the-fly files (i.e. derivative EPUB,
                        MOBI, DAISY files).
 
+    :type return_responses: bool
+    :param return_responses: (optional) Rather than downloading files to disk, return
+			     a list of response objects.
+
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
 
     :rtype: bool
@@ -372,7 +377,8 @@ def download(identifier,
                       retries=retries,
                       item_index=item_index,
                       ignore_errors=ignore_errors,
-                      on_the_fly=on_the_fly)
+                      on_the_fly=on_the_fly,
+                      return_responses=return_responses)
     return r
 
 

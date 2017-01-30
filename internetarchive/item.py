@@ -240,7 +240,8 @@ class Item(BaseItem):
                  retries=None,
                  item_index=None,
                  ignore_errors=None,
-                 on_the_fly=None):
+                 on_the_fly=None,
+                 return_responses=None):
         """Download files from an item.
 
         :param files: (optional) Only download files matching given file names.
@@ -293,6 +294,10 @@ class Item(BaseItem):
         :param on_the_fly: (optional) Download on-the-fly files (i.e. derivative EPUB,
                            MOBI, DAISY files).
 
+        :type return_responses: bool
+        :param return_responses: (optional) Rather than downloading files to disk, return
+                                 a list of response objects.
+
         :rtype: bool
         :returns: True if if all files have been downloaded successfully.
         """
@@ -303,6 +308,7 @@ class Item(BaseItem):
         ignore_errors = False if not ignore_errors else ignore_errors
         checksum = False if checksum is None else checksum
         no_directory = False if no_directory is None else no_directory
+        return_responses = False if not return_responses else True
 
         if not dry_run:
             if item_index and verbose is True:
@@ -350,6 +356,7 @@ class Item(BaseItem):
                 print(msg, end='')
 
         errors = list()
+        responses = list()
         for f in files:
             if no_directory:
                 path = f.name
@@ -359,7 +366,9 @@ class Item(BaseItem):
                 print(f.url)
                 continue
             r = f.download(path, verbose, silent, ignore_existing, checksum, destdir,
-                           retries, ignore_errors)
+                           retries, ignore_errors, None, return_responses)
+            if return_responses:
+                responses.append(r)
             if r is False:
                 errors.append(f.name)
         if silent is False and verbose is False and dry_run is False:
@@ -367,7 +376,10 @@ class Item(BaseItem):
                 print(' - errors')
             else:
                 print(' - success')
-        return errors
+        if return_responses:
+            return responses
+        else:
+            return errors
 
     def modify_metadata(self, metadata,
                         target=None,

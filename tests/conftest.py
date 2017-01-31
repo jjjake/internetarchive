@@ -42,7 +42,6 @@ NASA_EXPECTED_FILES = set([
 ])
 
 
-
 def ia_call(argv, expected_exit_code=0):
     # Use a test config for all `ia` tests.
     argv.insert(1, '--config-file')

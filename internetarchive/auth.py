@@ -27,6 +27,7 @@ This module contains the Archive.org authentication handlers for Requests.
 :license: AGPL 3, see LICENSE for more details.
 """
 from requests.auth import AuthBase
+from internetarchive.exceptions import AuthenticationError
 
 
 class S3Auth(AuthBase):
@@ -36,6 +37,18 @@ class S3Auth(AuthBase):
         self.secret_key = secret_key
 
     def __call__(self, r):
+        if not self.access_key:
+            if self.secret_key:
+                raise AuthenticationError('No access_key set!'
+                                          ' Have you run `ia configure`?')
+        if not self.secret_key:
+            if self.access_key:
+                raise AuthenticationError('No secret_key set!'
+                                          ' Have you run `ia configure`?')
+            else:
+                raise AuthenticationError('No access_key or secret_key set!'
+                                          ' Have you run `ia configure`?')
+
         auth_str = 'LOW {a}:{s}'.format(a=self.access_key, s=self.secret_key)
         r.headers['Authorization'] = auth_str
         return r

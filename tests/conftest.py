@@ -29,6 +29,7 @@ PROTOCOL = 'https:'
 BASE_URL = 'https://archive.org/'
 METADATA_URL = BASE_URL + 'metadata/'
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TEST_CONFIG = os.path.join(ROOT_DIR, 'tests/ia.ini')
 NASA_METADATA_PATH = os.path.join(ROOT_DIR, 'tests/data/metadata/nasa.json')
 NASA_EXPECTED_FILES = set([
     'globe_west_540.jpg',
@@ -41,7 +42,11 @@ NASA_EXPECTED_FILES = set([
 ])
 
 
+
 def ia_call(argv, expected_exit_code=0):
+    # Use a test config for all `ia` tests.
+    argv.insert(1, '--config-file')
+    argv.insert(2, TEST_CONFIG)
     sys.argv = argv
     try:
         ia.main()

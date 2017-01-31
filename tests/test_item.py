@@ -297,7 +297,8 @@ def test_upload(nasa_item):
 
 def test_upload_secure_session():
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
-        s = get_session(config={'general': {'secure': True}})
+        c = {'s3': {'access': 'foo', 'secret': 'bar'}, 'general': {'secure': True}}
+        s = get_session(config=c)
         rsps.add_metadata_mock('nasa')
         item = s.get_item('nasa')
         with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:

@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+1.5.0 (2017-02-17)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Added option to download() for returning a list of response objects
+  rather than writing files to disk.
+
 1.4.0 (2017-01-26)
 ++++++++++++++++++
 

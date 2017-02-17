@@ -356,7 +356,7 @@ def download(identifier,
 
     :type return_responses: bool
     :param return_responses: (optional) Rather than downloading files to disk, return
-			     a list of response objects.
+                             a list of response objects.
 
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
 

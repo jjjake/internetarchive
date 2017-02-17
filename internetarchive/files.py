@@ -120,7 +120,7 @@ class File(BaseFile):
 
     def download(self, file_path=None, verbose=None, silent=None, ignore_existing=None,
                  checksum=None, destdir=None, retries=None, ignore_errors=None,
-                 fileobj=None):
+                 fileobj=None, return_responses=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -154,6 +154,10 @@ class File(BaseFile):
         :param fileobj: (optional) Write data to the given file-like object
                          (e.g. sys.stdout).
 
+        :type return_responses: bool
+        :param return_responses: (optional) Rather than downloading files to disk, return
+                                 a list of response objects.
+
         :rtype: bool
         :returns: True if file was successfully downloaded.
         """
@@ -162,6 +166,7 @@ class File(BaseFile):
         checksum = False if checksum is None else checksum
         retries = 2 if not retries else retries
         ignore_errors = False if not ignore_errors else ignore_errors
+        return_responses = False if not return_responses else return_responses
         if (fileobj and silent is None) or silent is not False:
             silent = True
         else:
@@ -177,7 +182,7 @@ class File(BaseFile):
                 raise IOError('{} is not a directory!'.format(destdir))
             file_path = os.path.join(destdir, file_path)
 
-        if os.path.exists(file_path):
+        if not return_responses and os.path.exists(file_path):
             if ignore_existing:
                 msg = 'skipping {0}, file already exists.'.format(file_path)
                 log.info(msg)
@@ -222,6 +227,8 @@ class File(BaseFile):
         try:
             response = self.item.session.get(self.url, stream=True, timeout=12)
             response.raise_for_status()
+            if return_responses:
+                return response
 
             chunk_size = 2048
             if not fileobj:

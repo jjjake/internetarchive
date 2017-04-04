@@ -219,7 +219,7 @@ def recursive_file_count(files, item=None, checksum=False):
             _files = dict(files).values()
         else:
             _files = files
-    for f in files:
+    for f in _files:
         try:
             is_dir = os.path.isdir(f)
         except TypeError:

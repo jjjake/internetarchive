@@ -708,7 +708,10 @@ class Item(BaseItem):
 
         responses = []
         file_index = 0
-        total_files = recursive_file_count(files)
+        if checksum:
+            total_files = recursive_file_count(files, item=self, checksum=True)
+        else:
+            total_files = recursive_file_count(files, item=self, checksum=False)
         for f in files:
             if isinstance(f, string_types) and os.path.isdir(f):
                 for filepath, key in iter_directory(f):

@@ -201,11 +201,15 @@ def iter_directory(directory):
             yield (filepath, key)
 
 
-def recursive_file_count(files):
+def recursive_file_count(files, item=None, checksum=False):
     """Given a filepath or list of filepaths, return the total number of files."""
     if not isinstance(files, (list, set)):
         files = [files]
     total_files = 0
+    if checksum is True:
+        md5s = [f['md5'] for f in item.files]
+    else:
+        md5s = list()
     for f in files:
         try:
             is_dir = os.path.isdir(f)
@@ -217,7 +221,15 @@ def recursive_file_count(files):
                 is_dir = False
         if is_dir:
             for x, _ in iter_directory(f):
-                total_files += 1
+                lmd5 = get_md5(open(x))
+                if lmd5 in md5s:
+                    continue
+                else:
+                    total_files += 1
         else:
-            total_files += 1
+            lmd5 = get_md5(open(x))
+            if lmd5 in md5s:
+                continue
+            else:
+                total_files += 1
     return total_files

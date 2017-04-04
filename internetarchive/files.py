@@ -45,6 +45,7 @@ class BaseFile(object):
 
     def __init__(self, item_metadata, name):
         _file = {}
+        name = name.strip('/')
         for f in item_metadata.get('files', []):
             if f.get('name') == name:
                 _file = f

@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.6.0 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug in upload where derives weren't being queued in some cases where checksum=True was set.
+
 1.5.0 (2017-02-17)
 ++++++++++++++++++
 

@@ -227,7 +227,7 @@ def recursive_file_count(files, item=None, checksum=False):
                 else:
                     total_files += 1
         else:
-            lmd5 = get_md5(open(x))
+            lmd5 = get_md5(open(f))
             if lmd5 in md5s:
                 continue
             else:

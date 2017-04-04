@@ -230,7 +230,7 @@ def recursive_file_count(files, item=None, checksum=False):
                 is_dir = False
         if is_dir:
             for x, _ in iter_directory(f):
-                lmd5 = get_md5(open(f, 'rb'))
+                lmd5 = get_md5(open(x, 'rb'))
                 if lmd5 in md5s:
                     continue
                 else:

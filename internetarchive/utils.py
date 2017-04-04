@@ -207,9 +207,18 @@ def recursive_file_count(files, item=None, checksum=False):
         files = [files]
     total_files = 0
     if checksum is True:
-        md5s = [f['md5'] for f in item.files]
+        md5s = [f.get('md5') for f in item.files]
     else:
         md5s = list()
+    if isinstance(files, dict):
+        # make sure to use local filenames.
+        _files = files.values()
+        print(_files)
+    else:
+        if isinstance(files[0], tuple):
+            _files = dict(files).values()
+        else:
+            _files = files
     for f in files:
         try:
             is_dir = os.path.isdir(f)
@@ -221,7 +230,7 @@ def recursive_file_count(files, item=None, checksum=False):
                 is_dir = False
         if is_dir:
             for x, _ in iter_directory(f):
-                lmd5 = get_md5(open(x))
+                lmd5 = get_md5(open(f, 'rb'))
                 if lmd5 in md5s:
                     continue
                 else:

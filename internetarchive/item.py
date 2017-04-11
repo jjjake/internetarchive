@@ -696,9 +696,8 @@ class Item(BaseItem):
             >>> item.upload('/path/to/image.jpg', metadata=md, queue_derive=False)
             True
 
-        :rtype: bool
-        :returns: True if the request was successful and all files were
-                  uploaded, False otherwise.
+        :rtype: list
+        :returns: A list of requests.Response objects.
         """
         queue_derive = True if queue_derive is None else queue_derive
         if isinstance(files, dict):

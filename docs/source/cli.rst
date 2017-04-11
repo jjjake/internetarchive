@@ -139,7 +139,7 @@ Please also read the `Internet Archive Items <items.html>`_ page before getting 
 Bulk Uploading
 ^^^^^^^^^^^^^^
 
-Uploading in bulk can be done similarily to `Modifying Metadata in Bulk`_. The only difference is that you must provide a ``file`` column which contains a relative or absolute path to your file. Please see `uploading.csv <https://archive.org/download/ia-pex/uploading.csv>`_ for an example.
+Uploading in bulk can be done similarly to `Modifying Metadata in Bulk`_. The only difference is that you must provide a ``file`` column which contains a relative or absolute path to your file. Please see `uploading.csv <https://archive.org/download/ia-pex/uploading.csv>`_ for an example.
 
 Once you are ready to start your upload, simply run:
 

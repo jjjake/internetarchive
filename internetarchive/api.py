@@ -58,7 +58,7 @@ def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=N
     Usage:
 
         >>> from internetarchive import get_session
-        >>> config = dict(s3=dict(acccess='foo', secret='bar'))
+        >>> config = dict(s3=dict(access='foo', secret='bar'))
         >>> s = get_session(config)
         >>> s.access_key
         'foo'

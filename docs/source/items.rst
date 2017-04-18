@@ -15,7 +15,7 @@ How Items Are Structured
 ------------------------
 
 An item is just a directory of files and possibly subdirectories.
-Every item has at least two files named in the following format for more information on what an identifier is):
+Every item has at least two files named in the following format (see `metadata page <metadata.html#archive-org-identifiers>`_ for more context on what an identifier is):
 
     - ``<identifier>_files.xml``
     - ``<identifier>_meta.xml``

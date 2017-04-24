@@ -141,7 +141,7 @@ class Catalog(object):
                                                              identifier)
         elif task_ids:
             self.url = '{0}//cat-tracey.archive.org/catalog.php'.format(
-                    self.session.protocol)
+                self.session.protocol)
         else:
             self.url = '{0}//archive.org/catalog.php'.format(self.session.protocol)
 

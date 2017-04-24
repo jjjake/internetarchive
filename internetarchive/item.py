@@ -630,6 +630,7 @@ class Item(BaseItem):
                     prepared_request = request.prepare()
                     response = self.session.send(prepared_request,
                                                  stream=True,
+                                                 timeout=120,
                                                  **request_kwargs)
                     if (response.status_code == 503) and (retries > 0):
                         log.info(error_msg)

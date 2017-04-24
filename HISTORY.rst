@@ -6,6 +6,10 @@ Release History
 1.6.0 (?)
 +++++++++
 
+**Features and Improvements**
+
+- Added 60 second timeout to all upload requests.
+
 **Bugfixes**
 
 - Fixed bug in upload where derives weren't being queued in some cases where checksum=True was set.

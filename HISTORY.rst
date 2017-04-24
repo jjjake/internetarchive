@@ -13,6 +13,7 @@ Release History
 **Bugfixes**
 
 - Fixed bug in upload where derives weren't being queued in some cases where checksum=True was set.
+- Fixed bug where ``ia tasks`` and other ``Catalog`` functions were always using HTTP even when it should have been HTTPS.
 
 1.5.0 (2017-02-17)
 ++++++++++++++++++

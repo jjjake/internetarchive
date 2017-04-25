@@ -171,7 +171,9 @@ Download specific files matching a glob pattern:
 
 .. code:: bash
 
-    $ ia download TripDown1905 --glob=\*.mp4
+    $ ia download TripDown1905 --glob="*.mp4"
+
+*Note that you may have to escpae the* ``*`` *differently depending on your shell (e.g.* ``\*.mp4``, ``'*.mp4'``, *etc.).*
 
 Download only files of a specific format:
 

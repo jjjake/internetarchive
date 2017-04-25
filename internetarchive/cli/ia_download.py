@@ -102,8 +102,11 @@ def main(argv, session):
 
     try:
         args = s.validate(args)
+        if args['--glob']:
+            if args['--format']:
+                raise(SchemaError(None, '--glob and --format cannot be used together.'))
+
     except SchemaError as exc:
-        raise
         sys.stderr.write('{0}\n{1}\n'.format(
             str(exc), printable_usage(__doc__)))
         sys.exit(1)

@@ -45,6 +45,7 @@ class BaseFile(object):
 
     def __init__(self, item_metadata, name):
         _file = {}
+        name = name.strip('/')
         for f in item_metadata.get('files', []):
             if f.get('name') == name:
                 _file = f
@@ -68,8 +69,6 @@ class BaseFile(object):
         self.size = int(self.size) if self.size else 0
 
 
-# File class
-# ________________________________________________________________________________________
 class File(BaseFile):
     """This class represents a file in an archive.org item. You
     can use this class to access the file metadata::
@@ -120,29 +119,59 @@ class File(BaseFile):
                 'size={size!r}, '
                 'format={format!r})'.format(**self.__dict__))
 
-    # download()
-    # ____________________________________________________________________________________
     def download(self, file_path=None, verbose=None, silent=None, ignore_existing=None,
-                 checksum=None, destdir=None, retries=None, ignore_errors=None):
+                 checksum=None, destdir=None, retries=None, ignore_errors=None,
+                 fileobj=None, return_responses=None):
         """Download the file into the current working directory.
 
         :type file_path: str
         :param file_path: Download file to the given file_path.
+
+        :type verbose: bool
+        :param verbose: (optional) Turn on verbose output.
+
+        :type silent: bool
+        :param silent: (optional) Suppress all output.
 
         :type ignore_existing: bool
         :param ignore_existing: Overwrite local files if they already
                                 exist.
 
         :type checksum: bool
-        :param checksum: Skip downloading file based on checksum.
+        :param checksum: (optional) Skip downloading file based on checksum.
 
+        :type destdir: str
+        :param destdir: (optional) The directory to download files to.
+
+        :type retries: int
+        :param retries: (optional) The number of times to retry on failed
+                        requests.
+
+        :type ignore_errors: bool
+        :param ignore_errors: (optional) Don't fail if a single file fails to
+                              download, continue to download other files.
+
+        :type fileobj: file-like object
+        :param fileobj: (optional) Write data to the given file-like object
+                         (e.g. sys.stdout).
+
+        :type return_responses: bool
+        :param return_responses: (optional) Rather than downloading files to disk, return
+                                 a list of response objects.
+
+        :rtype: bool
+        :returns: True if file was successfully downloaded.
         """
         verbose = False if verbose is None else verbose
-        silent = False if silent is None else silent
         ignore_existing = False if ignore_existing is None else ignore_existing
         checksum = False if checksum is None else checksum
         retries = 2 if not retries else retries
         ignore_errors = False if not ignore_errors else ignore_errors
+        return_responses = False if not return_responses else return_responses
+        if (fileobj and silent is None) or silent is not False:
+            silent = True
+        else:
+            silent = False
 
         self.item.session._mount_http_adapter(max_retries=retries)
         file_path = self.name if not file_path else file_path
@@ -154,7 +183,7 @@ class File(BaseFile):
                 raise IOError('{} is not a directory!'.format(destdir))
             file_path = os.path.join(destdir, file_path)
 
-        if os.path.exists(file_path):
+        if not return_responses and os.path.exists(file_path):
             if ignore_existing:
                 msg = 'skipping {0}, file already exists.'.format(file_path)
                 log.info(msg)
@@ -165,7 +194,9 @@ class File(BaseFile):
                     sys.stdout.flush()
                 return
             elif checksum:
-                md5_sum = utils.get_md5(open(file_path, 'rb'))
+                with open(file_path, 'rb') as fp:
+                    md5_sum = utils.get_md5(fp)
+
                 if md5_sum == self.md5:
                     msg = ('skipping {0}, '
                            'file already exists based on checksum.'.format(file_path))
@@ -197,13 +228,18 @@ class File(BaseFile):
         try:
             response = self.item.session.get(self.url, stream=True, timeout=12)
             response.raise_for_status()
+            if return_responses:
+                return response
 
             chunk_size = 2048
-            with open(file_path, 'wb') as f:
+            if not fileobj:
+                fileobj = open(file_path, 'wb')
+
+            with fileobj:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:
-                        f.write(chunk)
-                        f.flush()
+                        fileobj.write(chunk)
+                        fileobj.flush()
         except (RetryError, HTTPError, ConnectTimeout,
                 ConnectionError, socket.error, ReadTimeout) as exc:
             msg = ('error downloading file {0}, '
@@ -222,7 +258,11 @@ class File(BaseFile):
                 raise exc
 
         # Set mtime with mtime from files.xml.
-        os.utime(file_path, (0, self.mtime))
+        try:
+            os.utime(file_path, (0, self.mtime))
+        except OSError:
+            # Probably file-like object, e.g. sys.stdout.
+            pass
 
         msg = 'downloaded {0}/{1} to {2}'.format(self.identifier,
                                                  self.name,
@@ -260,7 +300,7 @@ class File(BaseFile):
                       without sending the delete request.
 
         """
-        cascade_delete = False if not cascade_delete else True
+        cascade_delete = '0' if not cascade_delete else '1'
         access_key = self.item.session.access_key if not access_key else access_key
         secret_key = self.item.session.secret_key if not secret_key else secret_key
         debug = False if not debug else debug
@@ -276,7 +316,7 @@ class File(BaseFile):
         request = iarequest.S3Request(
             method='DELETE',
             url=url,
-            headers={'x-archive-cascade-delete': int(cascade_delete)},
+            headers={'x-archive-cascade-delete': cascade_delete},
             access_key=access_key,
             secret_key=secret_key
         )
@@ -288,7 +328,7 @@ class File(BaseFile):
                 if cascade_delete:
                     msg += ' and all derivative files.'
                 print(msg, file=sys.stderr)
-            prepared_request = request.prepare()
+            prepared_request = self.item.session.prepare_request(request)
 
             try:
                 resp = self.item.session.send(prepared_request)
@@ -308,3 +348,16 @@ class File(BaseFile):
                 # handling for IA-S3 uploads.
                 url_prefix = '{0}//s3.us.archive.org'.format(self.item.session.protocol)
                 del self.item.session.adapters[url_prefix]
+
+
+class OnTheFlyFile(File):
+    def __init__(self, item, name):
+        """
+        :type item: Item
+        :param item: The item that the file is part of.
+
+        :type name: str
+        :param name: The filename of the file.
+
+        """
+        super(OnTheFlyFile, self).__init__(item.item_metadata, name)

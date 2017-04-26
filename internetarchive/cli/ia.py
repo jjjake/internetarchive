@@ -42,6 +42,8 @@ commands:
     search    Search Archive.org.
     tasks     Retrieve information about your Archive.org catalog tasks.
     list      List files in a given item.
+    copy      Copy files in archive.org items.
+    move      Move/rename files in archive.org items.
 
 Documentation for 'ia' is available at:
 
@@ -76,6 +78,8 @@ cmd_aliases = dict(
     se='search',
     ta='tasks',
     ls='list',
+    cp='copy',
+    mv='move',
 )
 
 

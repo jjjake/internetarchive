@@ -137,11 +137,13 @@ class Catalog(object):
             ))
 
         if identifier:
-            self.url = 'http://archive.org/history/{id}'.format(id=identifier)
+            self.url = '{0}//archive.org/history/{1}'.format(self.session.protocol,
+                                                             identifier)
         elif task_ids:
-            self.url = 'http://cat-tracey.archive.org/catalog.php'
+            self.url = '{0}//cat-tracey.archive.org/catalog.php'.format(
+                self.session.protocol)
         else:
-            self.url = 'http://archive.org/catalog.php'
+            self.url = '{0}//archive.org/catalog.php'.format(self.session.protocol)
 
         # Get tasks.
         self.tasks = self._get_tasks()
@@ -214,7 +216,8 @@ class CatalogTask(object):
         """
         if self.task_id is None:
             raise ValueError('task_id is None')
-        url = 'http://catalogd.archive.org/log/{0}'.format(self.task_id)
+        url = '{0}//catalogd.archive.org/log/{1}'.format(self.session.protocol,
+                                                         self.task_id)
         p = dict(full=1)
         r = self.session.get(url, params=p, **self.request_kwargs)
         r.raise_for_status()

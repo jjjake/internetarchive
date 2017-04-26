@@ -49,20 +49,22 @@ options:
     -s, --sleep=<i>                   The amount of time to sleep between retries
                                       [default: 30].
     --status-check                    Check if S3 is accepting requests to the given item.
+    --no-collection-check             Skip collection exists check [default: False].
 """
 from __future__ import absolute_import, unicode_literals, print_function
-import sys
-import os
-from tempfile import TemporaryFile
-import csv
 
+import csv
+import os
+import sys
+from tempfile import TemporaryFile
+
+import six
 from docopt import docopt, printable_usage
 from requests.exceptions import HTTPError
 from schema import Schema, Use, Or, And, SchemaError
-import six
 
-from internetarchive.session import ArchiveSession
 from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
+from internetarchive.session import ArchiveSession
 from internetarchive.utils import validate_ia_identifier, get_s3_xml_text
 
 
@@ -96,7 +98,10 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
             if not responses[-1].status_code:
                 return responses
             filename = responses[-1].request.url.split('/')[-1]
-            msg = get_s3_xml_text(responses[-1].content)
+            try:
+                msg = get_s3_xml_text(responses[-1].content)
+            except:
+                msg = responses[-1].content
             print(' error uploading {0}: {2}'.format(filename, msg), file=sys.stderr)
 
     return responses
@@ -126,15 +131,15 @@ def main(argv, session):
         '--remote-name': Or(None,
             Use(lambda x: x.decode(sys.getfilesystemencoding()) if six.PY2 else x)),
         '--spreadsheet': Or(None, os.path.isfile,
-            error='--spreadsheet should be a readable file.'),
+                            error='--spreadsheet should be a readable file.'),
         '--metadata': Or(None, And(Use(get_args_dict), dict),
-            error='--metadata must be formatted as --metadata="key:value"'),
+                         error='--metadata must be formatted as --metadata="key:value"'),
         '--header': Or(None, And(Use(get_args_dict), dict),
-            error='--header must be formatted as --header="key:value"'),
+                       error='--header must be formatted as --header="key:value"'),
         '--retries': Use(lambda x: int(x[0]) if x else 0),
         '--sleep': Use(lambda l: int(l[0]), error='--sleep value must be an integer.'),
-        '--size-hint': Or(Use(lambda l: int(l[0]) if l else None), int, None,
-            error='--size-hint value must be an integer.'),
+        '--size-hint': Or(Use(lambda l: str(l[0]) if l else None), int, None,
+                          error='--size-hint value must be an integer.'),
         '--status-check': bool,
     })
     try:
@@ -142,6 +147,17 @@ def main(argv, session):
     except SchemaError as exc:
         print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
         sys.exit(1)
+
+    # Make sure the collection being uploaded to exists.
+    collection_id = args['--metadata'].get('collection')
+    if collection_id and not args['--no-collection-check'] and not args['--status-check']:
+        collection = session.get_item(collection_id)
+        if not collection.exists:
+            sys.stderr.write(
+                'You must upload to a collection that exists. '
+                '"{0}" does not exist.\n{1}\n'.format(collection_id,
+                                                      printable_usage(__doc__)))
+            sys.exit(1)
 
     # Status check.
     if args['--status-check']:
@@ -202,29 +218,30 @@ def main(argv, session):
     # Bulk upload using spreadsheet.
     else:
         # Use the same session for each upload request.
-        session = ArchiveSession()
-        spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
-        prev_identifier = None
-        for row in spreadsheet:
-            local_file = row['file']
-            identifier = row['identifier']
-            del row['file']
-            del row['identifier']
-            if (not identifier) and (prev_identifier):
-                identifier = prev_identifier
-            item = session.get_item(identifier)
-            # TODO: Clean up how indexed metadata items are coerced
-            # into metadata.
-            md_args = ['{0}:{1}'.format(k.lower(), v) for (k, v) in row.items() if v]
-            metadata = get_args_dict(md_args)
-            upload_kwargs['metadata'].update(metadata)
-            r = _upload_files(item, local_file, upload_kwargs, prev_identifier, session)
-            for _r in r:
-                if args['--debug']:
-                    break
-                if (not _r) or (not _r.ok):
-                    ERRORS = True
-            prev_identifier = identifier
+        with open(args['--spreadsheet'], 'rU') as csvfp:
+            spreadsheet = csv.DictReader(csvfp)
+            prev_identifier = None
+            for row in spreadsheet:
+                local_file = row['file']
+                identifier = row['identifier']
+                del row['file']
+                del row['identifier']
+                if (not identifier) and (prev_identifier):
+                    identifier = prev_identifier
+                item = session.get_item(identifier)
+                # TODO: Clean up how indexed metadata items are coerced
+                # into metadata.
+                md_args = ['{0}:{1}'.format(k.lower(), v) for (k, v) in row.items() if v]
+                metadata = get_args_dict(md_args)
+                upload_kwargs['metadata'].update(metadata)
+                r = _upload_files(item, local_file, upload_kwargs, prev_identifier,
+                                  session)
+                for _r in r:
+                    if args['--debug']:
+                        break
+                    if (not _r) or (not _r.ok):
+                        ERRORS = True
+                prev_identifier = identifier
 
     if ERRORS:
         sys.exit(1)

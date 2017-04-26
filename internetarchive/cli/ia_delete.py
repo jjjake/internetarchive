@@ -68,8 +68,8 @@ def main(argv, session):
         '--format': list,
         '--glob': list,
         'delete': bool,
-        '<identifier>': Or(None, And(str, validate_ia_identifier, error=invalid_id_msg)),
         '--retries': Use(lambda i: int(i[0])),
+        '<identifier>': str,
     })
     try:
         args = s.validate(args)

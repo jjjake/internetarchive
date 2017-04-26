@@ -26,11 +26,12 @@ internetarchive.item
 """
 from __future__ import absolute_import, unicode_literals, print_function
 
-from logging import getLogger
-from fnmatch import fnmatch
 import os
-from time import sleep
 import sys
+from fnmatch import fnmatch
+from logging import getLogger
+from time import sleep
+
 try:
     from functools import total_ordering
 except ImportError:
@@ -46,12 +47,10 @@ from requests.exceptions import HTTPError
 import attr
 
 from internetarchive.utils import IdentifierListAsItems, get_md5, chunk_generator, \
-    IterableToFileAdapter, iter_directory, recursive_file_count
+    IterableToFileAdapter, iter_directory, recursive_file_count, norm_filepath
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
 from internetarchive.utils import get_s3_xml_text, get_file_size
-from internetarchive import __version__
-
 
 log = getLogger(__name__)
 
@@ -266,38 +265,66 @@ class Item(BaseItem):
                  retries=None,
                  item_index=None,
                  ignore_errors=None,
-                 on_the_fly=None):
+                 on_the_fly=None,
+                 return_responses=None):
         """Download files from an item.
 
         :param files: (optional) Only download files matching given file names.
 
         :type formats: str
-        :param formats: (optional) Only download files matching the given Formats.
+        :param formats: (optional) Only download files matching the given
+                        Formats.
 
         :type glob_pattern: str
-        :param glob_pattern: (optional) Only download files matching the given glob
-                             pattern.
+        :param glob_pattern: (optional) Only download files matching the given
+                             glob pattern.
 
-        :type clobber: bool
-        :param clobber: (optional) Overwrite local files if they already exist.
+        :type dry_run: bool
+        :param dry_run: (optional) Output download URLs to stdout, don't
+                        download anything.
 
-        :type no_clobber: bool
-        :param no_clobber: (optional) Do not overwrite local files if they already exist,
-                           or raise an IOError exception.
+        :type verbose: bool
+        :param verbose: (optional) Turn on verbose output.
+
+        :type silent: bool
+        :param silent: (optional) Suppress all output.
+
+        :type ignore_existing: bool
+        :param ignore_existing: (optional) Skip files that already exist
+                                locally.
 
         :type checksum: bool
         :param checksum: (optional) Skip downloading file based on checksum.
 
+        :type destdir: str
+        :param destdir: (optional) The directory to download files to.
+
         :type no_directory: bool
-        :param no_directory: (optional) Download files to current working directory rather
-                             than creating an item directory.
+        :param no_directory: (optional) Download files to current working
+                             directory rather than creating an item directory.
+
+        :type retries: int
+        :param retries: (optional) The number of times to retry on failed
+                        requests.
+
+        :type item_index: int
+        :param item_index: (optional) The index of the item for displaying
+                           progress in bulk downloads.
+
+        :type ignore_errors: bool
+        :param ignore_errors: (optional) Don't fail if a single file fails to
+                              download, continue to download other files.
 
         :type on_the_fly: bool
         :param on_the_fly: (optional) Download on-the-fly files (i.e. derivative EPUB,
                            MOBI, DAISY files).
 
+        :type return_responses: bool
+        :param return_responses: (optional) Rather than downloading files to disk, return
+                                 a list of response objects.
+
         :rtype: bool
-        :returns: True if if files have been downloaded successfully.
+        :returns: True if if all files have been downloaded successfully.
         """
         dry_run = False if dry_run is None else dry_run
         verbose = False if verbose is None else verbose
@@ -306,6 +333,7 @@ class Item(BaseItem):
         ignore_errors = False if not ignore_errors else ignore_errors
         checksum = False if checksum is None else checksum
         no_directory = False if no_directory is None else no_directory
+        return_responses = False if not return_responses else True
 
         if not dry_run:
             if item_index and verbose is True:
@@ -353,6 +381,7 @@ class Item(BaseItem):
                 print(msg, end='')
 
         errors = list()
+        responses = list()
         for f in files:
             if no_directory:
                 path = f.name
@@ -362,7 +391,9 @@ class Item(BaseItem):
                 print(f.url)
                 continue
             r = f.download(path, verbose, silent, ignore_existing, checksum, destdir,
-                           retries, ignore_errors)
+                           retries, ignore_errors, None, return_responses)
+            if return_responses:
+                responses.append(r)
             if r is False:
                 errors.append(f.name)
         if silent is False and verbose is False and dry_run is False:
@@ -370,7 +401,10 @@ class Item(BaseItem):
                 print(' - errors')
             else:
                 print(' - success')
-        return errors
+        if return_responses:
+            return responses
+        else:
+            return errors
 
     def modify_metadata(self, metadata,
                         target=None,
@@ -417,17 +451,21 @@ class Item(BaseItem):
             protocol=self.session.protocol,
             identifier=self.identifier)
         request = MetadataRequest(
+            method='POST',
             url=url,
             metadata=metadata,
+            headers=self.session.headers,
             source_metadata=self.item_metadata.get(target.split('/')[0], {}),
             target=target,
             priority=priority,
             access_key=access_key,
             secret_key=secret_key,
             append=append)
-        if debug:
-            return request
+        # Must use Session.prepare_request to make sure session settings
+        # are used on request!
         prepared_request = request.prepare()
+        if debug:
+            return prepared_request
         resp = self.session.send(prepared_request, **request_kwargs)
         # Re-initialize the Item object with the updated metadata.
         self.refresh()
@@ -519,7 +557,13 @@ class Item(BaseItem):
         md5_sum = None
 
         if not hasattr(body, 'read'):
+            filename = body
             body = open(body, 'rb')
+        else:
+            if key:
+                filename = key
+            else:
+                filename = body.name
 
         size = get_file_size(body)
 
@@ -527,10 +571,10 @@ class Item(BaseItem):
             headers['x-archive-size-hint'] = str(size)
 
         # Build IA-S3 URL.
-        key = body.name.split('/')[-1] if key is None else key
+        key = norm_filepath(filename).split('/')[-1] if key is None else key
         base_url = '{0.session.protocol}//s3.us.archive.org/{0.identifier}'.format(self)
         url = '{0}/{1}'.format(
-            base_url, urllib.parse.quote(key.lstrip('/').encode('utf-8')))
+            base_url, urllib.parse.quote(norm_filepath(key).lstrip('/').encode('utf-8')))
 
         # Skip based on checksum.
         if checksum:
@@ -547,9 +591,11 @@ class Item(BaseItem):
                         'and verified, deleting '
                         'local copy'.format(i=self.identifier,
                                             f=key))
-                    os.remove(body.name)
+                    body.close()
+                    os.remove(filename)
                 # Return an empty response object if checksums match.
                 # TODO: Is there a better way to handle this?
+                body.close()
                 return Response()
 
         # require the Content-MD5 header when delete is True.
@@ -576,6 +622,7 @@ class Item(BaseItem):
             else:
                 data = body
 
+            headers.update(self.session.headers)
             request = S3Request(method='PUT',
                                 url=url,
                                 headers=headers,
@@ -587,7 +634,9 @@ class Item(BaseItem):
             return request
 
         if debug:
-            return _build_request()
+            prepared_request = self.session.prepare_request(_build_request())
+            body.close()
+            return prepared_request
         else:
             try:
                 error_msg = ('s3 is overloaded, sleeping for '
@@ -606,6 +655,7 @@ class Item(BaseItem):
                     prepared_request = request.prepare()
                     response = self.session.send(prepared_request,
                                                  stream=True,
+                                                 timeout=120,
                                                  **request_kwargs)
                     if (response.status_code == 503) and (retries > 0):
                         log.info(error_msg)
@@ -619,16 +669,18 @@ class Item(BaseItem):
                             log.info('maximum retries exceeded, upload failed.')
                         break
                 response.raise_for_status()
-                log.info('uploaded {f} to {u}'.format(f=key, u=url))
+                log.info(u'uploaded {f} to {u}'.format(f=key, u=url))
                 if delete and response.status_code == 200:
                     log.info(
                         '{f} successfully uploaded to '
                         'https://archive.org/download/{i}/{f} and verified, deleting '
-                        'local copy'.format(i=self.identifier,
-                                            f=key))
-                    os.remove(body.name)
+                        'local copy'.format(i=self.identifier, f=key))
+                    body.close()
+                    os.remove(filename)
+                body.close()
                 return response
             except HTTPError as exc:
+                body.close()
                 msg = get_s3_xml_text(exc.response.content)
                 error_msg = (' error uploading {0} to {1}, '
                              '{2}'.format(key, self.identifier, msg))
@@ -670,9 +722,8 @@ class Item(BaseItem):
             >>> item.upload('/path/to/image.jpg', metadata=md, queue_derive=False)
             True
 
-        :rtype: bool
-        :returns: True if the request was successful and all files were
-                  uploaded, False otherwise.
+        :rtype: list
+        :returns: A list of requests.Response objects.
         """
         queue_derive = True if queue_derive is None else queue_derive
         if isinstance(files, dict):
@@ -682,7 +733,10 @@ class Item(BaseItem):
 
         responses = []
         file_index = 0
-        total_files = recursive_file_count(files)
+        if checksum:
+            total_files = recursive_file_count(files, item=self, checksum=True)
+        else:
+            total_files = recursive_file_count(files, item=self, checksum=False)
         for f in files:
             if isinstance(f, six.string_types) and os.path.isdir(f):
                 for filepath, key in iter_directory(f):
@@ -695,6 +749,7 @@ class Item(BaseItem):
                         _queue_derive = False
                     if not f.endswith('/'):
                         key = '{0}/{1}'.format(f, key)
+                    key = norm_filepath(key)
                     resp = self.upload_file(filepath,
                                             key=key,
                                             metadata=metadata,
@@ -748,6 +803,7 @@ class Item(BaseItem):
 
 class Collection(Item):
     """This class represents an archive.org collection."""
+
     def __init__(self, *args, **kwargs):
         self.searches = {}
         if isinstance(args[0], Item):

@@ -209,9 +209,6 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, metadata={},
                 source_metadata=None, target=None, priority=None, append=None):
-
-        method = 'POST' if not method else method
-
         self.prepare_method(method)
         self.prepare_url(url, params)
         self.prepare_headers(headers)
@@ -247,7 +244,6 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             destination_metadata = source_metadata.copy()
             prepared_metadata = prepare_metadata(metadata, source_metadata, append)
             destination_metadata.update(prepared_metadata)
-            #raise ValueError('"{0}" is not a supported metadata target.'.format(target))
 
         # Delete metadata items where value is REMOVE_TAG.
         destination_metadata = dict(
@@ -296,14 +292,13 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
     def rm_index(key):
         return key.split('[')[0]
 
-    #contains_index = lambda k: re.search(r'\[\d+\]', k)
-    #get_index = lambda k: int(re.search(r'(?<=\[)\d+(?=\])', k).group())
-    #rm_index = lambda k: k.split('[')[0]
-
     # Create indexed_keys counter dict. i.e.: {'subject': 3} -- subject
     # (with the index removed) appears 3 times in the metadata dict.
     indexed_keys = {}
     for key in metadata:
+        # Convert number values to strings!
+        if isinstance(metadata[key], (six.integer_types, float, complex)):
+            metadata[key] = str(metadata[key])
         if not get_index(key):
             continue
         count = len([x for x in metadata if rm_index(x) == rm_index(key)])

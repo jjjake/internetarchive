@@ -22,8 +22,10 @@
 usage:
     ia tasks [--verbose] [--task=<task_id>...] [--get-task-log=<task_id>]
              [--green-rows] [--blue-rows] [--red-rows] [--parameter=<k:v>...]
+             [--json]
     ia tasks [--verbose] <identifier>
              [--green-rows] [--blue-rows] [--red-rows] [--parameter=<k:v>...]
+             [--json]
     ia tasks --help
 
 options:
@@ -35,10 +37,12 @@ options:
     -b, --blue-rows               Return information about running tasks.
     -r, --red-rows                Return information about tasks that have failed.
     -p, --parameter=<k:v>...      Return tasks matching the given parameter.
+    -j, --json                    Output detailed information in JSON.
 
 """
 from __future__ import absolute_import, print_function, unicode_literals
 import sys
+import json
 
 from docopt import docopt
 
@@ -90,6 +94,20 @@ def main(argv, session):
             sys.exit(1)
 
         for t in tasks:
+            if args['--json']:
+                task_args = dict((k.decode('utf-8'), v.decode('utf-8'))
+                                 for k, v in t.args.items())
+                j = dict(
+                    identifier=t.identifier,
+                    task_id=t.task_id,
+                    server=t.server,
+                    time=t.time,
+                    command=t.command,
+                    row_type=t.row_type,
+                    args=task_args,
+                )
+                print(json.dumps(j))
+                continue
             task_info = [
                 t.identifier, t.task_id, t.server, t.time, t.command,
                 row_types[t.row_type],

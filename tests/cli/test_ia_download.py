@@ -1,184 +1,86 @@
-import os
 import sys
-inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, inc_path)
-import shutil
-from subprocess import Popen, PIPE
+
+from tests.conftest import call_cmd, NASA_EXPECTED_FILES, files_downloaded
 
 
-protocol = 'http:'
+def test_no_args(tmpdir_ch):
+    call_cmd('ia --insecure download nasa')
+    assert files_downloaded(path='nasa') == NASA_EXPECTED_FILES
 
 
-def call(cmd):
-    proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = proc.communicate()
-    return (proc.returncode, stdout, stderr)
-
-
-def parse_output(output):
-    return set([x for x in output[:-1].split('\n') if 'nasa:' not in x])
-
-
-def rm(path):
-    try:
-        shutil.rmtree(path)
-    except:
-        try:
-            os.remove(path)
-        except:
-            pass
-
-
-def test_no_args():
-    rm('nasa')
-
-    cmd = 'ia --insecure download nasa'
-    exit_code, stdout, stderr = call(cmd)
-    test_output = set([
-        'globe_west_540.jpg',
-        'nasa_archive.torrent',
-        'nasa_files.xml',
-        'nasa_meta.xml',
-        'nasa_reviews.xml',
-        'NASAarchiveLogo.jpg',
-        'globe_west_540_thumb.jpg',
-    ])
-    assert set(os.listdir('nasa')) == test_output
-    assert exit_code == 0
-
-    rm('nasa')
-
-
-def test_https():
-    rm('nasa')
-
-    cmd = 'ia download nasa'
-    exit_code, stdout, stderr = call(cmd)
+def test_https(tmpdir_ch):
     if sys.version_info < (2, 7, 9):
-        assert exit_code == 1
+        stdout, stderr = call_cmd('ia download nasa', expected_exit_code=1)
         assert 'You are attempting to make an HTTPS' in stderr
     else:
-        test_output = set([
-            'globe_west_540.jpg',
-            'nasa_archive.torrent',
-            'nasa_files.xml',
-            'nasa_meta.xml',
-            'nasa_reviews.xml',
-            'NASAarchiveLogo.jpg',
-            'globe_west_540_thumb.jpg',
-        ])
-        assert set(os.listdir('nasa')) == test_output
-        assert exit_code == 0
-
-    rm('nasa')
+        call_cmd('ia download nasa')
+        assert files_downloaded(path='nasa') == NASA_EXPECTED_FILES
 
 
 def test_dry_run():
-    cmd = 'ia --insecure download --dry-run nasa'
-    exit_code, stdout, stderr = call(cmd)
-    test_output_set = set([
-        '{0}//archive.org/download/nasa/NASAarchiveLogo.jpg'.format(protocol),
-        '{0}//archive.org/download/nasa/globe_west_540.jpg'.format(protocol),
-        '{0}//archive.org/download/nasa/nasa_reviews.xml'.format(protocol),
-        '{0}//archive.org/download/nasa/nasa_meta.xml'.format(protocol),
-        '{0}//archive.org/download/nasa/nasa_archive.torrent'.format(protocol),
-        '{0}//archive.org/download/nasa/nasa_files.xml'.format(protocol),
-        '{0}//archive.org/download/nasa/globe_west_540_thumb.jpg'.format(protocol),
-    ])
-    assert parse_output(stdout.decode('utf-8')) == test_output_set
-    assert exit_code == 0
+    nasa_url = 'http://archive.org/download/nasa/'
+    expected_urls = set([nasa_url + f for f in NASA_EXPECTED_FILES])
+
+    stdout, stderr = call_cmd('ia --insecure download --dry-run nasa')
+    output_lines = stdout.split('\n')
+    dry_run_urls = set([x.strip() for x in output_lines if x and 'nasa:' not in x])
+
+    assert expected_urls == dry_run_urls
 
 
-def test_glob():
-    rm('nasa')
-
-    cmd = 'ia --insecure download --glob="*jpg" nasa'
-    exit_code, stdout, stderr = call(cmd)
-    test_output = set([
+def test_glob(tmpdir_ch):
+    expected_files = set([
         'globe_west_540.jpg',
         'NASAarchiveLogo.jpg',
-        'globe_west_540_thumb.jpg',
+        'globe_west_540_thumb.jpg'
     ])
-    assert set(os.listdir('nasa')) == test_output
-    assert exit_code == 0
 
-    rm('nasa')
-
-
-def test_format():
-    rm('nasa')
-
-    cmd = 'ia --insecure download --format="Archive BitTorrent" nasa'
-    exit_code, stdout, stderr = call(cmd)
-    assert os.listdir('nasa') == ['nasa_archive.torrent']
-    assert exit_code == 0
-
-    rm('nasa')
+    call_cmd('ia --insecure download --glob="*jpg" nasa')
+    assert files_downloaded(path='nasa') == expected_files
 
 
-def test_clobber():
-    rm('nasa')
+def test_format(tmpdir_ch):
+    call_cmd('ia --insecure download --format="Archive BitTorrent" nasa')
+    assert files_downloaded(path='nasa') == set(['nasa_archive.torrent'])
 
+
+def test_clobber(tmpdir_ch):
     cmd = 'ia --insecure download nasa nasa_meta.xml'
-    exit_code, stdout, stderr = call(cmd)
-    assert os.listdir('nasa') == ['nasa_meta.xml']
-    assert exit_code == 0
+    call_cmd(cmd)
+    assert files_downloaded('nasa') == set(['nasa_meta.xml'])
 
-    exit_code, stdout, stderr = call(cmd)
-    assert os.listdir('nasa') == ['nasa_meta.xml']
-    assert 'nasa: . - success\n' == stdout.decode('utf-8')
-    assert exit_code == 0
-
-    rm('nasa')
+    stdout, stderr = call_cmd(cmd)
+    assert files_downloaded('nasa') == set(['nasa_meta.xml'])
+    assert 'nasa: . - success' == stdout
 
 
-def test_checksum():
-    rm('nasa')
+def test_checksum(tmpdir_ch):
+    call_cmd('ia --insecure download nasa nasa_meta.xml')
+    assert files_downloaded('nasa') == set(['nasa_meta.xml'])
 
-    cmd = 'ia --insecure download nasa nasa_meta.xml'
-    exit_code, stdout, stderr = call(cmd)
-    assert os.listdir('nasa') == ['nasa_meta.xml']
-    assert exit_code == 0
+    stdout, stderr = call_cmd('ia --insecure download --checksum nasa nasa_meta.xml')
+    assert files_downloaded('nasa') == set(['nasa_meta.xml'])
 
-    cmd = 'ia --insecure download --checksum nasa nasa_meta.xml'
-    exit_code, stdout, stderr = call(cmd)
-    assert 'nasa: . - success\n' == stdout.decode('utf-8')
-    assert exit_code == 0
-
-    rm('nasa')
+    assert 'nasa: . - success' == stdout
 
 
-def test_no_directories():
-    rm('nasa_meta.xml')
-
-    cmd = 'ia --insecure download --no-directories nasa nasa_meta.xml'
-    exit_code, stdout, stderr = call(cmd)
-    assert 'nasa_meta.xml' in os.listdir('.')
-    assert exit_code == 0
-
-    rm('nasa_meta.xml')
+def test_no_directories(tmpdir_ch):
+    call_cmd('ia --insecure download --no-directories nasa nasa_meta.xml')
+    assert files_downloaded('.') == set(['nasa_meta.xml'])
 
 
-def test_destdir(tmpdir):
-    tmpdir.chdir()
-    rm('thisdirdoesnotexist')
-
+def test_destdir(tmpdir_ch):
     cmd = 'ia --insecure download --destdir=thisdirdoesnotexist/ nasa nasa_meta.xml'
-    exit_code, stdout, stderr = call(cmd)
-    assert '--destdir must be a valid path to a directory.' in stderr.decode('utf-8')
-    assert exit_code == 1
+    stdout, stderr = call_cmd(cmd, expected_exit_code=1)
 
-    tmpdir.mkdir('thisdirdoesnotexist/')
-    exit_code, stdout, stderr = call(cmd)
-    assert 'nasa_meta.xml' in os.listdir(os.path.join(str(tmpdir),
-                                         'thisdirdoesnotexist/nasa'))
-    assert exit_code == 0
+    assert '--destdir must be a valid path to a directory.' in stderr
 
-    cmd = ('ia --insecure download --no-directories --destdir=thisdirdoesnotexist/ '
+    tmpdir_ch.mkdir('thisdirdoesnotexist/')
+    call_cmd(cmd)
+    assert files_downloaded('thisdirdoesnotexist/nasa') == set(['nasa_meta.xml'])
+
+    tmpdir_ch.mkdir('dir2/')
+    cmd = ('ia --insecure download --no-directories --destdir=dir2/ '
            'nasa nasa_meta.xml')
-    exit_code, stdout, stderr = call(cmd)
-    assert 'nasa_meta.xml' in os.listdir(os.path.join(str(tmpdir),
-                                         'thisdirdoesnotexist/'))
-    assert exit_code == 0
-
-    rm('thisdirdoesnotexist')
+    call_cmd(cmd)
+    assert files_downloaded('dir2') == set(['nasa_meta.xml'])

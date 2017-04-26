@@ -3,8 +3,87 @@
 Release History
 ---------------
 
-1.0.9 (?)
+1.6.0 (?)
 +++++++++
+
+**Features and Improvements**
+
+- Added 60 second timeout to all upload requests.
+
+**Bugfixes**
+
+- Fixed bug in upload where derives weren't being queued in some cases where checksum=True was set.
+- Fixed bug where ``ia tasks`` and other ``Catalog`` functions were always using HTTP even when it should have been HTTPS.
+- ``ia metadata`` was exiting with a non-zero status for "no changes to xml" errors.
+  This now exits with 0, as nearly every time this happens it should not be considered an "error".
+
+1.5.0 (2017-02-17)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Added option to download() for returning a list of response objects
+  rather than writing files to disk.
+
+1.4.0 (2017-01-26)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Another bugfix for setting mtime correctly after ``fileobj`` functionality was added to ``ia download``.
+
+1.3.0 (2017-01-26)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed bug where download was trying to set mtime, even when ``fileobj`` was set to ``True``
+  (e.g. ``ia download <id> <file> --stdout``).
+
+1.2.0 (2017-01-26)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Added ``ia copy`` and ``ia move`` for copying and moving files in archive.org items.
+- Added support for outputing JSON in ``ia tasks``.
+- Added support to ``ia download`` to write to stdout instead of file.
+
+**Bugfixes**
+
+- Fixed bug in upload where AttributeError was rasied when trying to upload file-like objects without a name attribute.
+- Removed identifier validation from ``ia delete``.
+  If an identifier already exists, we don't need to validate it.
+  This only makes things annoying if an identifier exists but fails ``internetarchive`` id validation.
+- Fixed bug where error message isn't returned in ``ia upload`` if the response body is not XML.
+  Ideally IA-S3 would always return XML, but that's not the case as of now.
+  Try to dump the HTML in the S3 response if unable to parse XML.
+- Fixed bug where ArchiveSession headers weren't being sent in prepared requests.
+- Fixed bug in ``ia upload --size-hint`` where value was an integer, but requests requries it to be a string.
+- Added support for downloading files to stdout in ``ia download`` and ``File.download``.
+
+1.1.0 (2016-11-18)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Make sure collection exists when creating new item via ``ia upload``. If it doesn't, upload will fail.
+- Refactored tests.
+
+**Bugfixes**
+
+- Fixed bug where the full filepath was being set as the remote filename in Windows.
+- Convert all metadata header values to strings for compatability with ``requests>=2.11.0``.
+
+1.0.10 (2016-09-20)
++++++++++++++++++++
+
+**Bugfixes**
+
+- Convert x-archive-cascade-delete headers to strings for compatability with ``requests>=2.11.0``.
+
+1.0.9 (2016-08-16)
+++++++++++++++++++
 
 **Features and Improvements**
 
@@ -74,8 +153,11 @@ Release History
 - All search requests now require authentication via IA-S3 keys.
   You can run ``ia configure`` to generate a config file that will be used to authenticate all search requests automatically. 
   For more details refer to the following links:
-    http://internetarchive.readthedocs.io/en/latest/quickstart.html?highlight=configure#configuring
-    http://internetarchive.readthedocs.io/en/latest/api.html#configuration
+
+  http://internetarchive.readthedocs.io/en/latest/quickstart.html?highlight=configure#configuring
+
+  http://internetarchive.readthedocs.io/en/latest/api.html#configuration
+
 - Added ability to specify your own filepath in ``ia configure`` and ``internetarchive.configure()``.
 
 **Bugfixes**

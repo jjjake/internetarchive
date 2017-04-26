@@ -80,7 +80,7 @@ All of the top-level keys in ``item.item_metadata`` are available as attributes:
     'ia801507.us.archive.org'
     >>> item.item_size
     161752024
-    >>> item.files[0].name
+    >>> item.files[0]['name']
     'blank.txt'
     >>> item.metadata['identifier']
     'iacli-test-item301'

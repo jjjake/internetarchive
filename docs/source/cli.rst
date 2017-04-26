@@ -133,13 +133,13 @@ You can use the ``--retries`` parameter to retry on errors (i.e. if IA-S3 is ove
     
     $ ia upload <identifier> file1 --retries 10
 
-Refer to `archive.org Identifiers <identifiers.html>`_ for more information on creating valid archive.org identifiers.
+Refer to `archive.org Identifiers <metadata.html#archive-org-identifiers>`_ for more information on creating valid archive.org identifiers.
 Please also read the `Internet Archive Items <items.html>`_ page before getting started.
 
 Bulk Uploading
 ^^^^^^^^^^^^^^
 
-Uploading in bulk can be done similarily to `Modifying Metadata in Bulk`_. The only difference is that you must provide a ``file`` column which contains a relative or absolute path to your file. Please see `uploading.csv <https://archive.org/download/ia-pex/uploading.csv>`_ for an example.
+Uploading in bulk can be done similarly to `Modifying Metadata in Bulk`_. The only difference is that you must provide a ``file`` column which contains a relative or absolute path to your file. Please see `uploading.csv <https://archive.org/download/ia-pex/uploading.csv>`_ for an example.
 
 Once you are ready to start your upload, simply run:
 
@@ -171,7 +171,9 @@ Download specific files matching a glob pattern:
 
 .. code:: bash
 
-    $ ia download TripDown1905 --glob=\*.mp4
+    $ ia download TripDown1905 --glob="*.mp4"
+
+Note that you may have to escpae the ``*`` differently depending on your shell (e.g. ``\*.mp4``, ``'*.mp4'``, etc.).
 
 Download only files of a specific format:
 
@@ -179,6 +181,7 @@ Download only files of a specific format:
 
     $ ia download TripDown1905 --format='512Kb MPEG4'
 
+Note that ``--format`` cannot be used with ``--glob``.
 You can get a list of the formats a given item like so:
 
 .. code:: bash
@@ -296,3 +299,25 @@ You can list files in an item like so:
     $ ia list goodytwoshoes00newyiala
 
 See ``ia help list`` for more details.
+
+
+Copy
+----
+
+You can copy files in archive.org items like so:
+
+.. code:: bash
+
+    $ ia copy <src-identifier>/<src-filename> <dest-identifier>/<dest-filename>
+
+If you're copying your file to a new item, you can provide metadata as well:
+
+.. code:: bash
+
+    $ ia copy <src-identifier>/<src-filename> <dest-identifier>/<dest-filename> --metadata 'title:My New Item' --metadata collection:test_collection
+
+
+Move
+----
+
+``ia move`` works just like ``ia copy`` except the source file is deleted after the file has been successfully copied.

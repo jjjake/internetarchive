@@ -61,8 +61,12 @@ def modify_metadata(item, metadata, args):
                              priority=args['--priority'])
     if not r.json()['success']:
         error_msg = r.json()['error']
-        print('{0} - error ({1}): {2}'.format(item.identifier, r.status_code, error_msg),
-              file=sys.stderr)
+        if 'no changes' in r.content.decode('utf-8'):
+            etype = 'warning'
+        else:
+            etype = 'error'
+        print('{0} - {1} ({2}): {3}'.format(
+            item.identifier, etype, r.status_code, error_msg), file=sys.stderr)
         return r
     print('{0} - success: {1}'.format(item.identifier, r.json()['log']))
     return r
@@ -117,7 +121,15 @@ def main(argv, session):
                 if all(r.status_code == 200 for r in responses):
                     sys.exit(0)
                 else:
-                    sys.exit(1)
+                    for r in responses:
+                        if r.status_code == 200:
+                            continue
+                        # We still want to exit 0 if the non-200 is a
+                        # "no changes to xml" error.
+                        elif 'no changes' in r.content.decode('utf-8'):
+                            continue
+                        else:
+                            sys.exit(1)
 
         # Get metadata.
         elif args['--formats']:
@@ -135,20 +147,27 @@ def main(argv, session):
     if args['--spreadsheet']:
         if not args['--priority']:
             args['--priority'] = -5
-        spreadsheet = csv.DictReader(open(args['--spreadsheet'], 'rU'))
-        responses = []
-        for row in spreadsheet:
-            if not row['identifier']:
-                continue
-            item = session.get_item(row['identifier'])
-            if row.get('file'):
-                del row['file']
-            metadata = dict((k.lower(), v) for (k, v) in row.items() if v)
-            responses.append(modify_metadata(item, metadata, args))
+        with open(args['--spreadsheet'], 'rU') as csvfp:
+            spreadsheet = csv.DictReader(csvfp)
+            responses = []
+            for row in spreadsheet:
+                if not row['identifier']:
+                    continue
+                item = session.get_item(row['identifier'])
+                if row.get('file'):
+                    del row['file']
+                metadata = dict((k.lower(), v) for (k, v) in row.items() if v)
+                responses.append(modify_metadata(item, metadata, args))
 
-        if all(r.status_code == 200 for r in responses):
-            sys.exit(0)
-        else:
-            sys.exit(1)
-
-    sys.exit(0)
+            if all(r.status_code == 200 for r in responses):
+                sys.exit(0)
+            else:
+                for r in responses:
+                    if r.status_code == 200:
+                        continue
+                    # We still want to exit 0 if the non-200 is a
+                    # "no changes to xml" error.
+                    elif 'no changes' in r.content.decode('utf-8'):
+                        continue
+                    else:
+                        sys.exit(1)

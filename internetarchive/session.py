@@ -106,7 +106,7 @@ class ArchiveSession(requests.sessions.Session):
         self.http_adapter_kwargs = http_adapter_kwargs
 
         self.headers = default_headers()
-        self.headers['User-Agent'] = self._get_user_agent_string()
+        self.headers.update({'User-Agent': self._get_user_agent_string()})
         self._mount_http_adapter()
 
         logging_config = self.config.get('logging', {})
@@ -183,7 +183,7 @@ class ArchiveSession(requests.sessions.Session):
         _log = logging.getLogger(logger_name)
         _log.setLevel(logging.DEBUG)
 
-        fh = logging.FileHandler(path)
+        fh = logging.FileHandler(path, encoding='utf-8')
         fh.setLevel(_log_level[log_level])
 
         formatter = logging.Formatter(log_format)
@@ -213,7 +213,10 @@ class ArchiveSession(requests.sessions.Session):
                          'retrieving now.'.format(identifier))
             item_metadata = self.get_metadata(identifier, request_kwargs)
         mediatype = item_metadata.get('metadata', {}).get('mediatype')
-        item_class = self.ITEM_MEDIATYPE_TABLE.get(mediatype, Item)
+        try:
+            item_class = self.ITEM_MEDIATYPE_TABLE.get(mediatype, Item)
+        except TypeError:
+            item_class = Item
         return item_class(self, identifier, item_metadata)
 
     def get_metadata(self, identifier, request_kwargs=None):

@@ -1,19 +1,11 @@
 import os
-import sys
-inc_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, inc_path)
+
+from tests.conftest import NASA_METADATA_PATH, PROTOCOL, IaRequestsMock
 
 import responses
 
 import internetarchive.session
 from internetarchive import __version__
-
-
-protocol = 'https:'
-
-
-ROOT_DIR = os.getcwd()
-TEST_JSON_FILE = os.path.join(ROOT_DIR, 'tests/data/nasa_meta.json')
 
 
 CONFIG = {
@@ -41,7 +33,7 @@ def test_archive_session(tmpdir):
     assert CONFIG == s.config
     assert s.cookies == CONFIG['cookies']
     assert s.secure is True
-    assert s.protocol == protocol
+    assert s.protocol == PROTOCOL
     assert s.access_key == 'test_access'
     assert s.secret_key == 'test_secret'
     assert s.headers['user-agent'].startswith('internetarchive/{0}'.format(__version__))
@@ -50,13 +42,12 @@ def test_archive_session(tmpdir):
 def test_get_item(tmpdir):
     tmpdir.chdir()
 
-    with open(TEST_JSON_FILE, 'r') as fh:
+    with open(NASA_METADATA_PATH, 'r') as fh:
         item_metadata = fh.read().strip()
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(PROTOCOL),
                  body=item_metadata,
-                 status=200,
                  content_type='application/json')
 
         s = internetarchive.session.ArchiveSession()
@@ -65,7 +56,7 @@ def test_get_item(tmpdir):
         assert item.identifier == 'nasa'
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(protocol),
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(PROTOCOL),
                  body=item_metadata,
                  status=400,
                  content_type='application/json')
@@ -96,10 +87,9 @@ def test_s3_is_overloaded():
         "over_limit": 0
     }"""
 
-    with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(protocol),
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(PROTOCOL),
                  body=test_body,
-                 status=200,
                  content_type='application/json')
         s = internetarchive.session.ArchiveSession(CONFIG)
         r = s.s3_is_overloaded('nasa')
@@ -123,9 +113,8 @@ def test_s3_is_overloaded():
     }"""
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(protocol),
+        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(PROTOCOL),
                  body=test_body,
-                 status=200,
                  content_type='application/json')
         s = internetarchive.session.ArchiveSession(CONFIG)
         r = s.s3_is_overloaded('nasa')

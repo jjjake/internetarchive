@@ -26,14 +26,15 @@ This module provides utility functions for the internetarchive library.
 :copyright: (C) 2012-2016 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-import sys
 import hashlib
 import os
 import re
-from itertools import starmap
-from six.moves import zip_longest
+import sys
 from collections import Mapping
+from itertools import starmap
 from xml.dom.minidom import parseString
+
+from six.moves import zip_longest
 
 
 def deep_update(d, u):
@@ -70,6 +71,13 @@ def needs_quote(s):
     except (UnicodeDecodeError, UnicodeEncodeError):
         return True
     return re.search(r'\s', s) is not None
+
+
+def norm_filepath(fp):
+    fp = fp.replace(os.path.sep, '/')
+    if not fp[0] == '/':
+        fp = '/' + fp
+    return fp.replace(':', '')
 
 
 def get_md5(file_object):
@@ -122,6 +130,7 @@ class IterableToFileAdapter(object):
 class IdentifierListAsItems(object):
     """This class is a lazily-loaded list of Items, accessible by index or identifier.
     """
+
     def __init__(self, id_list_or_single_id, session):
         self.ids = id_list_or_single_id \
             if isinstance(id_list_or_single_id, list) \
@@ -158,6 +167,7 @@ def get_s3_xml_text(xml_str):
                 if node.nodeType == node.TEXT_NODE:
                     text += node.data
         return text
+
     tag_names = ['Message', 'Resource']
     p = parseString(xml_str)
     _msg = _get_tag_text('Message', p)
@@ -191,12 +201,25 @@ def iter_directory(directory):
             yield (filepath, key)
 
 
-def recursive_file_count(files):
+def recursive_file_count(files, item=None, checksum=False):
     """Given a filepath or list of filepaths, return the total number of files."""
     if not isinstance(files, (list, set)):
         files = [files]
     total_files = 0
-    for f in files:
+    if checksum is True:
+        md5s = [f.get('md5') for f in item.files]
+    else:
+        md5s = list()
+    if isinstance(files, dict):
+        # make sure to use local filenames.
+        _files = files.values()
+        print(_files)
+    else:
+        if isinstance(files[0], tuple):
+            _files = dict(files).values()
+        else:
+            _files = files
+    for f in _files:
         try:
             is_dir = os.path.isdir(f)
         except TypeError:
@@ -207,7 +230,15 @@ def recursive_file_count(files):
                 is_dir = False
         if is_dir:
             for x, _ in iter_directory(f):
-                total_files += 1
+                lmd5 = get_md5(open(x, 'rb'))
+                if lmd5 in md5s:
+                    continue
+                else:
+                    total_files += 1
         else:
-            total_files += 1
+            lmd5 = get_md5(open(f, 'rb'))
+            if lmd5 in md5s:
+                continue
+            else:
+                total_files += 1
     return total_files

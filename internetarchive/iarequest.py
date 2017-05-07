@@ -151,7 +151,8 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                 # translate two hyphens in a row (--) into an underscore (_).
                 header_key = header_key.replace('_', '--')
                 headers[header_key] = value
-        super(S3PreparedRequest, self).prepare_headers(headers)
+        super(S3PreparedRequest, self).prepare_headers(
+                {k: str(v) for k, v in headers.items()})
 
 
 class MetadataRequest(requests.models.Request):

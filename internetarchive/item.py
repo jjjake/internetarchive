@@ -578,6 +578,10 @@ class Item(BaseItem):
 
         size = get_file_size(body)
 
+        # Support for uploading empty files.
+        if size == 0:
+            headers['Content-Length'] = '0'
+
         if not headers.get('x-archive-size-hint'):
             headers['x-archive-size-hint'] = str(size)
 
@@ -619,6 +623,11 @@ class Item(BaseItem):
             body.seek(0, os.SEEK_SET)
             if verbose:
                 try:
+                    # hack to raise exception so we get some output for
+                    # empty files.
+                    if size == 0:
+                        raise Exception
+
                     chunk_size = 1048576
                     expected_size = size / chunk_size + 1
                     chunks = chunk_generator(body, chunk_size)
@@ -664,6 +673,13 @@ class Item(BaseItem):
                             continue
                     request = _build_request()
                     prepared_request = request.prepare()
+
+                    # chunked transer-encoding is NOT supported by IA-S3.
+                    # It should NEVER be set. Requests adds it in certain
+                    # scenarios (e.g. if content-length is 0). Stop it.
+                    if prepared_request.headers.get('transfer-encoding') == 'chunked':
+                        del prepared_request.headers['transfer-encoding']
+
                     response = self.session.send(prepared_request,
                                                  stream=True,
                                                  timeout=120,

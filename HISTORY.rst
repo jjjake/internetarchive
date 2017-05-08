@@ -9,6 +9,7 @@ Release History
 **Features and Improvements**
 
 - Added 60 second timeout to all upload requests.
+- Added support for uploading empty files.
 
 **Bugfixes**
 

@@ -44,8 +44,10 @@ log = logging.getLogger(__name__)
 class BaseFile(object):
 
     def __init__(self, item_metadata, name, file_metadata=None):
-        name = name.strip('/')
         if file_metadata is None:
+            file_metadata = dict()
+        name = name.strip('/')
+        if not file_metadata:
             for f in item_metadata.get('files', []):
                 if f.get('name') == name:
                     file_metadata = f

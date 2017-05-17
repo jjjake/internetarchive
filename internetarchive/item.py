@@ -215,13 +215,17 @@ class Item(BaseItem):
             item_metadata = self.session.get_metadata(self.identifier, **kwargs)
         self.load(item_metadata)
 
-    def get_file(self, file_name):
+    def get_file(self, file_name, file_metadata=None):
         """Get a :class:`File <File>` object for the named file.
 
         :rtype: :class:`internetarchive.File <File>`
         :returns: An :class:`internetarchive.File <File>` object.
+
+        :type file_metadata: dict
+        :param file_metadata: (optional) a dict of metadata for the
+                              given fille.
         """
-        return File(self, file_name)
+        return File(self, file_name, file_metadata)
 
     def get_files(self, files=None, formats=None, glob_pattern=None, on_the_fly=None):
         files = [] if not files else files
@@ -246,7 +250,7 @@ class Item(BaseItem):
 
         if not any(k for k in [files, formats, glob_pattern]):
             for f in item_files:
-                yield self.get_file(f.get('name'))
+                yield self.get_file(f.get('name'), file_metadata=f)
 
         for f in item_files:
             if f.get('name') in files:

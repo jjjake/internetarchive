@@ -43,13 +43,13 @@ log = logging.getLogger(__name__)
 
 class BaseFile(object):
 
-    def __init__(self, item_metadata, name):
-        _file = {}
+    def __init__(self, item_metadata, name, file_metadata=None):
         name = name.strip('/')
-        for f in item_metadata.get('files', []):
-            if f.get('name') == name:
-                _file = f
-                break
+        if file_metadata is None:
+            for f in item_metadata.get('files', []):
+                if f.get('name') == name:
+                    file_metadata = f
+                    break
 
         self.identifier = item_metadata.get('metadata', {}).get('identifier')
         self.name = name
@@ -61,10 +61,10 @@ class BaseFile(object):
         self.mtime = None
         self.crc32 = None
 
-        self.exists = True if _file else False
+        self.exists = True if file_metadata else False
 
-        for key in _file:
-            setattr(self, key, _file[key])
+        for key in file_metadata:
+            setattr(self, key, file_metadata[key])
         self.mtime = float(self.mtime) if self.mtime else 0
         self.size = int(self.size) if self.size else 0
 
@@ -95,7 +95,7 @@ class File(BaseFile):
     <https://archive.org/account/s3.php>`__
 
     """
-    def __init__(self, item, name):
+    def __init__(self, item, name, file_metadata=None):
         """
         :type item: Item
         :param item: The item that the file is part of.
@@ -103,8 +103,11 @@ class File(BaseFile):
         :type name: str
         :param name: The filename of the file.
 
+        :type file_metadata: dict
+        :param file_metadata: (optional) a dict of metadata for the
+                              given fille.
         """
-        super(File, self).__init__(item.item_metadata, name)
+        super(File, self).__init__(item.item_metadata, name, file_metadata)
         self.item = item
         url_parts = dict(
             protocol=item.session.protocol,

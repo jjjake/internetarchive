@@ -53,7 +53,8 @@ options:
 """
 from __future__ import absolute_import, unicode_literals, print_function
 
-import csv
+import io
+from backports import csv
 import os
 import sys
 from tempfile import TemporaryFile
@@ -218,7 +219,7 @@ def main(argv, session):
     # Bulk upload using spreadsheet.
     else:
         # Use the same session for each upload request.
-        with open(args['--spreadsheet'], 'rU') as csvfp:
+        with io.open(args['--spreadsheet'], 'rU', newline='', encoding='utf-8') as csvfp:
             spreadsheet = csv.DictReader(csvfp)
             prev_identifier = None
             for row in spreadsheet:

@@ -18,6 +18,7 @@ Release History
 - Fixed bug where ``ia tasks`` and other ``Catalog`` functions were always using HTTP even when it should have been HTTPS.
 - ``ia metadata`` was exiting with a non-zero status for "no changes to xml" errors.
   This now exits with 0, as nearly every time this happens it should not be considered an "error".
+- Added unicode support to ``ia upload --spreadsheet`` using the ``backports.csv`` module.
 
 1.5.0 (2017-02-17)
 ++++++++++++++++++

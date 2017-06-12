@@ -46,7 +46,8 @@ try:
     import ujson as json
 except ImportError:
     import json
-import csv
+import io
+from backports import csv
 
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Or, And, Use
@@ -147,7 +148,7 @@ def main(argv, session):
     if args['--spreadsheet']:
         if not args['--priority']:
             args['--priority'] = -5
-        with open(args['--spreadsheet'], 'rU') as csvfp:
+        with io.open(args['--spreadsheet'], 'rU', newline='', encoding='utf-8') as csvfp:
             spreadsheet = csv.DictReader(csvfp)
             responses = []
             for row in spreadsheet:

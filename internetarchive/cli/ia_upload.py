@@ -58,6 +58,7 @@ from backports import csv
 import os
 import sys
 from tempfile import TemporaryFile
+from copy import deepcopy
 
 import six
 from docopt import docopt, printable_usage
@@ -223,6 +224,7 @@ def main(argv, session):
             spreadsheet = csv.DictReader(csvfp)
             prev_identifier = None
             for row in spreadsheet:
+                upload_kwargs_copy = deepcopy(upload_kwargs)
                 local_file = row['file']
                 identifier = row['identifier']
                 del row['file']
@@ -234,8 +236,8 @@ def main(argv, session):
                 # into metadata.
                 md_args = ['{0}:{1}'.format(k.lower(), v) for (k, v) in row.items() if v]
                 metadata = get_args_dict(md_args)
-                upload_kwargs['metadata'].update(metadata)
-                r = _upload_files(item, local_file, upload_kwargs, prev_identifier,
+                upload_kwargs_copy['metadata'].update(metadata)
+                r = _upload_files(item, local_file, upload_kwargs_copy, prev_identifier,
                                   session)
                 for _r in r:
                     if args['--debug']:

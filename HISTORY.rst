@@ -19,6 +19,8 @@ Release History
 - ``ia metadata`` was exiting with a non-zero status for "no changes to xml" errors.
   This now exits with 0, as nearly every time this happens it should not be considered an "error".
 - Added unicode support to ``ia upload --spreadsheet`` using the ``backports.csv`` module.
+- Fixed bug in ``ia upload --spreadsheet`` where some metadata was accidentally being copied from previous rows
+  (e.g. when multiple subjects were used).
 
 1.5.0 (2017-02-17)
 ++++++++++++++++++

@@ -102,6 +102,7 @@ def main(argv, session):
                     task_id=t.task_id,
                     server=t.server,
                     time=t.time,
+                    submitter=t.submitter,
                     command=t.command,
                     row_type=t.row_type,
                     args=task_args,

@@ -37,7 +37,7 @@ Usage::
 from __future__ import absolute_import
 
 __title__ = 'internetarchive'
-__version__ = '1.6.0.dev8'
+__version__ = '1.6.0.dev9'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
 __copyright__ = 'Copyright (C) 2012-2016 Internet Archive'

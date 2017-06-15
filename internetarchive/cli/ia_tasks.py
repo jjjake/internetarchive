@@ -104,7 +104,7 @@ def main(argv, session):
                     time=t.time,
                     submitter=t.submitter,
                     command=t.command,
-                    row_type=t.row_type,
+                    row_type=row_types[t.row_type],
                     args=task_args,
                 )
                 print(json.dumps(j))

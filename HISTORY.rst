@@ -22,6 +22,7 @@ Release History
 - Fixed bug in ``ia upload --spreadsheet`` where some metadata was accidentally being copied from previous rows
   (e.g. when multiple subjects were used).
 - Submitter wasn't being added to ``ia tasks --json`` ouptut, it now is.
+- ``row_type`` in ``ia tasks --json`` was returning integer for row-type rather than name (e.g. 'red').
 
 1.5.0 (2017-02-17)
 ++++++++++++++++++

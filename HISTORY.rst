@@ -11,6 +11,7 @@ Release History
 - Added 60 second timeout to all upload requests.
 - Added support for uploading empty files.
 - Refactored ``Item.get_files()`` to be faster, especially for items with many files.
+- Updated search to use IA-S3 keys for auth instead of cookies.
 
 **Bugfixes**
 

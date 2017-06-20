@@ -34,7 +34,7 @@ from logging import getLogger
 
 import six
 
-from internetarchive.auth import S3PostAuth
+from internetarchive.auth import S3Auth
 
 
 log = getLogger(__name__)
@@ -72,7 +72,7 @@ class Search(object):
             self.session.protocol)
         self.search_url = '{0}//archive.org/advancedsearch.php'.format(
             self.session.protocol)
-        self.auth = S3PostAuth(self.session.access_key, self.session.secret_key)
+        self.auth = S3Auth(self.session.access_key, self.session.secret_key)
 
         # Initialize params.
         default_params = dict(q=query, REQUIRE_AUTH='true')

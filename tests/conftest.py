@@ -121,7 +121,7 @@ def nasa_item():
 
 @pytest.fixture
 def session():
-    return get_session()
+    return get_session(config=dict(s3=dict(access='access', secret='secret')))
 
 
 @pytest.fixture

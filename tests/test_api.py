@@ -239,7 +239,7 @@ def test_download(tmpdir):
         assert load_file('nasa/nasa_meta.xml') == 'test content'
 
 
-def test_search_items():
+def test_search_items(session):
     results_url = ('{0}//archive.org/services/search/v1/scrape'
                    '?q=identifier%3Anasa&count=10000&REQUIRE_AUTH=true'.format(PROTOCOL))
     count_url = ('{0}//archive.org/services/search/v1/scrape'
@@ -253,7 +253,7 @@ def test_search_items():
                  body='{"items":[],"count":0,"total":1}',
                  match_querystring=True,
                  content_type='application/json; charset=UTF-8')
-        r = search_items('identifier:nasa')
+        r = search_items('identifier:nasa', archive_session=session)
         expected_results = [{'identifier': 'nasa'}]
         assert r.num_found == 1
         assert iter(r).search == r
@@ -263,7 +263,7 @@ def test_search_items():
         assert list(r.iter_as_results()) == expected_results
 
 
-def test_search_items_with_fields():
+def test_search_items_with_fields(session):
     _j = json.loads(TEST_SCRAPE_RESPONSE)
     _j['items'] = [
         {'identifier': 'nasa', 'title': 'NASA Images'}
@@ -283,22 +283,23 @@ def test_search_items_with_fields():
                  body='{"items":[],"count":0,"total":1}',
                  match_querystring=True,
                  content_type='application/json; charset=UTF-8')
-        r = search_items('identifier:nasa', fields=['identifier', 'title'])
+        r = search_items('identifier:nasa', fields=['identifier', 'title'],
+                         archive_session=session)
         assert list(r) == [{'identifier': 'nasa', 'title': 'NASA Images'}]
 
 
-def test_search_items_as_items():
+def test_search_items_as_items(session):
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.POST,
                  '{0}//archive.org/services/search/v1/scrape'.format(PROTOCOL),
                  body=TEST_SCRAPE_RESPONSE)
         rsps.add_metadata_mock('nasa')
-        r = search_items('identifier:nasa')
+        r = search_items('identifier:nasa', archive_session=session)
         assert [x.identifier for x in r.iter_as_items()] == ['nasa']
         assert r.iter_as_items().search == r
 
 
-def test_page_row_specification():
+def test_page_row_specification(session):
     _j = json.loads(TEST_SEARCH_RESPONSE)
     _j['response']['docs'] = [{'identifier': 'nasa'}]
     _j['response']['numFound'] = 1
@@ -312,8 +313,8 @@ def test_page_row_specification():
                  body='{"items":[],"count":0,"total":1}',
                  match_querystring=False,
                  content_type='application/json; charset=UTF-8')
-        r = search_items('identifier:nasa', params={
-            'page': '1', 'rows': '1'})
+        r = search_items('identifier:nasa', params={'page': '1', 'rows': '1'},
+                         archive_session=session)
         assert [x.identifier for x in r.iter_as_items()] == ['nasa']
         assert r.iter_as_items().search == r
         assert len(r.iter_as_items()) == 1

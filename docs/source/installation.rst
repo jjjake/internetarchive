@@ -7,7 +7,8 @@ Installation
 System-Wide Installation
 ------------------------
 
-Installing the ``internetarchive`` library globally on your system can be done with `pip <http://www.pip-installer.org/>`_::
+Installing the ``internetarchive`` library globally on your system can be done with `pip <http://www.pip-installer.org/>`_.
+This is the recommended method for installing ``internetarchive`` (`see below <installation.html#installing-pip>`_ for details on installing pip)::
     
     $ sudo pip install internetarchive
 
@@ -27,6 +28,24 @@ You can use the ``--ignore-installed`` parameter in ``pip`` to ignore the librar
     $ sudo pip install --ignore-installed internetarchive
 
 More details on this issue can be found here: https://github.com/pypa/pip/issues/3165
+
+Installing Pip
+~~~~~~~~~~~~~~
+
+The easiest way to install ``pip`` is probably using your operating systems package manager.
+
+Mac OS, with `homebrew <https://brew.sh/>`_::
+
+    $ brew install pip
+
+Ubuntu, with `apt-get <https://help.ubuntu.com/community/AptGet/Howto>`_::
+
+    $ sudo apt-get install python-pip
+
+If your OS doesn't have a package manager, you can also `install pip with get-pip.py <https://pip.pypa.io/en/stable/installing/>`_::
+
+    $ curl -LOs https://bootstrap.pypa.io/get-pip.py
+    $ python get-pip.py
 
 
 virtualenv

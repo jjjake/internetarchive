@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.7.0 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug in upload where users were unable to add their own timeout via ``request_kwargs``.
+
 1.6.0 (2017-06-27)
 ++++++++++++++++++
 

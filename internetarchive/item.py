@@ -569,6 +569,8 @@ class Item(BaseItem):
         retries_sleep = 30 if retries_sleep is None else retries_sleep
         debug = False if debug is None else debug
         request_kwargs = {} if request_kwargs is None else request_kwargs
+        if 'timeout' not in request_kwargs:
+            request_kwargs['timeout'] = 120
         md5_sum = None
 
         if not hasattr(body, 'read'):
@@ -686,7 +688,6 @@ class Item(BaseItem):
 
                     response = self.session.send(prepared_request,
                                                  stream=True,
-                                                 timeout=120,
                                                  **request_kwargs)
                     if (response.status_code == 503) and (retries > 0):
                         log.info(error_msg)

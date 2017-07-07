@@ -6,6 +6,10 @@ Release History
 1.7.0 (?)
 +++++++++
 
+**Feautres and Improvements**
+
+- Loosened up ``jsonpatch`` requirements, as the metadata API now supports more recent versions of the JSON Patch standard.
+
 **Bugfixes**
 
 - Fixed bug in upload where users were unable to add their own timeout via ``request_kwargs``.

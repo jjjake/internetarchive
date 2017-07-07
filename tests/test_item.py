@@ -540,8 +540,7 @@ def test_modify_metadata(nasa_item, nasa_metadata):
         assert set(p.data.keys()) == set(expected_data.keys())
         assert p.data['priority'] == expected_data['priority']
         assert p.data['-target'] == expected_data['-target']
-        assert p.data['-patch'] == expected_data['-patch']
-
+        assert all(v in p.data['-patch'] for v in ['/foo', 'bar'])
         # Test no changes.
         md = {'title': 'NASA Images'}
         p = nasa_item.modify_metadata(md, debug=True)
@@ -555,7 +554,11 @@ def test_modify_metadata(nasa_item, nasa_metadata):
             '-target': 'metadata',
             '-patch': json.dumps([{"remove": "/title"}])
         }
-        assert p.data == expected_data
+        assert set(p.data.keys()) == set(expected_data.keys())
+        assert p.data['priority'] == expected_data['priority']
+        assert p.data['-target'] == expected_data['-target']
+        assert '/title' in str(p.data['-patch'])
+        assert 'remove' in str(p.data['-patch'])
 
         # Test add array.
         md = {'subject': ['one', 'two', 'last']}
@@ -565,7 +568,10 @@ def test_modify_metadata(nasa_item, nasa_metadata):
             '-target': 'metadata',
             '-patch': json.dumps([{"add": "/subject", "value": ["one", "two", "last"]}])
         }
-        assert p.data == expected_data
+        assert set(p.data.keys()) == set(expected_data.keys())
+        assert p.data['priority'] == expected_data['priority']
+        assert p.data['-target'] == expected_data['-target']
+        assert '["one", "two", "last"]' in str(p.data['-patch'])
 
         # Test indexed mod.
         nasa_item.item_metadata['metadata']['subject'] = ['first', 'middle', 'last']
@@ -580,7 +586,7 @@ def test_modify_metadata(nasa_item, nasa_metadata):
         # Avoid comparing the json strings, because they are not in a canonical form
         assert set(p.data.keys()) == set(expected_data.keys())
         assert all(p.data[k] == expected_data[k] for k in ['priority', '-target'])
-        assert json.loads(p.data['-patch']) == json.loads(expected_data['-patch'])
+        assert '/subject/2' in p.data['-patch']
 
         # Test priority.
         md = {'title': 'NASA Images'}

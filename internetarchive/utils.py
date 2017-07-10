@@ -34,6 +34,7 @@ from collections import Mapping
 from itertools import starmap
 from xml.dom.minidom import parseString
 
+import six
 from six.moves import zip_longest
 
 
@@ -77,6 +78,8 @@ def norm_filepath(fp):
     fp = fp.replace(os.path.sep, '/')
     if not fp[0] == '/':
         fp = '/' + fp
+    if isinstance(fp, six.binary_type):
+        fp = fp.decode('utf-8')
     return fp.replace(':', '')
 
 

@@ -9,10 +9,12 @@ Release History
 **Feautres and Improvements**
 
 - Loosened up ``jsonpatch`` requirements, as the metadata API now supports more recent versions of the JSON Patch standard.
+- Added support for building "snap" packages (https://snapcraft.io/).
 
 **Bugfixes**
 
 - Fixed bug in upload where users were unable to add their own timeout via ``request_kwargs``.
+- Fixed bug where files with non-ascii filenames failed to upload on some platforms.
 
 1.6.0 (2017-06-27)
 ++++++++++++++++++

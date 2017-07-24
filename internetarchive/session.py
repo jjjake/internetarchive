@@ -321,14 +321,17 @@ class ArchiveSession(requests.sessions.Session):
         else:
             return _catalog.tasks
 
-    def s3_is_overloaded(self, identifier=None, access_key=None):
+    def s3_is_overloaded(self, identifier=None, access_key=None, request_kwargs=None):
         u = '{protocol}//s3.us.archive.org'.format(protocol=self.protocol)
         p = dict(
             check_limit=1,
             accesskey=access_key,
             bucket=identifier,
         )
-        r = self.get(u, params=p)
+        request_kwargs = {} if not request_kwargs else request_kwargs
+        if 'timeout' not in request_kwargs:
+            request_kwargs['timeout'] = 12
+        r = self.get(u, params=p, **request_kwargs)
         try:
             j = r.json()
         except ValueError:

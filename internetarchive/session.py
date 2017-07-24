@@ -328,7 +328,10 @@ class ArchiveSession(requests.sessions.Session):
             accesskey=access_key,
             bucket=identifier,
         )
-        r = self.get(u, params=p)
+        try:
+            r = self.get(u, params=p, timeout=12)
+        except:
+            return True
         try:
             j = r.json()
         except ValueError:

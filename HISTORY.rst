@@ -16,6 +16,8 @@ Release History
 - Fixed bug in upload where users were unable to add their own timeout via ``request_kwargs``.
 - Fixed bug where files with non-ascii filenames failed to upload on some platforms.
 - Fixed bug in upload where metadata keys with an index (e.g. ``subject[0]``) would make the request fail if the key was the only indexed key provided.
+- Added a default timeout to ``ArchiveSession.s3_is_overloaded()``.
+  If it times out now, it returns ``True`` (as in, yes, S3 is overloaded).
 
 1.6.0 (2017-06-27)
 ++++++++++++++++++

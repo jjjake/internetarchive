@@ -299,7 +299,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
         # Convert number values to strings!
         if isinstance(metadata[key], (six.integer_types, float, complex)):
             metadata[key] = str(metadata[key])
-        if not get_index(key):
+        if get_index(key) is None:
             continue
         count = len([x for x in metadata if rm_index(x) == rm_index(key)])
         indexed_keys[rm_index(key)] = count

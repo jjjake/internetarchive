@@ -45,7 +45,7 @@ setup(
         'schema>=0.4.0,<0.6.0',
         'backports.csv',
     ] + (['total-ordering'] if sys.version_info < (2, 7) else []),
-    classifiers=(
+    classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Natural Language :: English',
@@ -53,5 +53,5 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
-    )
+    ]
 )

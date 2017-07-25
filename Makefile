@@ -19,7 +19,6 @@ test:
 publish:
 	git tag -a v$(VERSION) -m 'version $(VERSION)'
 	git push --tags
-	python setup.py register
 	python setup.py sdist upload
 	python setup.py bdist_wheel upload
 

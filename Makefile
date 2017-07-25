@@ -16,14 +16,12 @@ pep8-test:
 test:
 	py.test --pep8 --cov-report term-missing --cov internetarchive
 
-publish: binary
+publish:
 	git tag -a v$(VERSION) -m 'version $(VERSION)'
 	git push --tags
 	python setup.py register
 	python setup.py sdist upload
 	python setup.py bdist_wheel upload
-	./ia-$(VERSION)-py2.py3-none-any.pex upload ia-pex ia-$(VERSION)-py2.py3-none-any.pex --no-derive
-	./ia-$(VERSION)-py2.py3-none-any.pex upload ia-pex ia-$(VERSION)-py2.py3-none-any.pex --remote-name=ia --no-derive
 
 docs-init:
 	pip install -r docs/requirements.txt
@@ -34,8 +32,8 @@ docs:
 
 binary:
 	# This requires using https://github.com/jjjake/pex which has been hacked for multi-platform support.
-	pex . --python python3.4 --python python2 --python-shebang='/usr/bin/env python' -e internetarchive.cli.ia:main -o ia-$(VERSION)-py2.py3-none-any.pex
+	pex . --python python3.6 --python python2 --python-shebang='/usr/bin/env python' -e internetarchive.cli.ia:main -o ia-$(VERSION)-py2.py3-none-any.pex
 
-publish-binary: binary
-	./ia-$(VERSION)-py2.pex upload ia-pex ia-$(VERSION)-py2.pex --no-derive
-	./ia-$(VERSION)-py2.pex upload ia-pex ia-$(VERSION)-py2.pex --remote-name=ia --no-derive
+publish-binary:
+	./ia-$(VERSION)-py2.py3-none-any.pex upload ia-pex ia-$(VERSION)-py2.py3-none-any.pex --no-derive
+	./ia-$(VERSION)-py2.py3-none-any.pex upload ia-pex ia-$(VERSION)-py2.py3-none-any.pex --remote-name=ia --no-derive

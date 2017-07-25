@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.7.1 (2017-07-25)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed bug in ``ia upload`` where all commands would fail if multiple collections were specified (e.g. -m collection:foo -m collection:bar).
+
 1.7.0 (2017-07-25)
 ++++++++++++++++++
 

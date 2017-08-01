@@ -1,0 +1,4 @@
+pytest
+pytest-pep8
+pytest-capturelog
+responses==0.5.0

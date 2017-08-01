@@ -564,7 +564,7 @@ class Item(BaseItem):
         verify = True if verify is None else verify
         delete = False if delete is None else delete
         # Set checksum after delete.
-        checksum = True if delete or checksum is None else checksum
+        checksum = True if delete else checksum
         retries = 0 if retries is None else retries
         retries_sleep = 30 if retries_sleep is None else retries_sleep
         debug = False if debug is None else debug

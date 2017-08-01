@@ -8,6 +8,13 @@ Release History
 
 **Bugfixes**
 
+- Fixed bug in ``Item.upload_file()`` where ``checksum`` was being set to ``True`` if it was set to ``None``.
+
+1.7.1 (2017-07-25)
+++++++++++++++++++
+
+**Bugfixes**
+
 - Fixed bug in ``ia upload`` where all commands would fail if multiple collections were specified (e.g. -m collection:foo -m collection:bar).
 
 1.7.0 (2017-07-25)

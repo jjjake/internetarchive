@@ -84,11 +84,11 @@ Install ``internetarchive`` into your virtualenv::
 Snap
 ----
 
-You can install the latest `ia` [snap](https://snapcraft.io), and help testing the most recent changes of the master branch in [all the supported Linux distros](https://snapcraft.io/docs/core/install) with:
+You can install the latest ``ia`` `snap <https://snapcraft.io>`_, and help testing the most recent changes of the master branch in `all the supported Linux distros <https://snapcraft.io/docs/core/install>`_ with::
 
     $ sudo snap install ia --edge
 
-Every time a new version of `ia` is pushed to the store, you will get it updated automatically.
+Every time a new version of ``ia`` is pushed to the store, you will get it updated automatically.
 
 Binaries
 --------

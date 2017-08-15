@@ -3,6 +3,16 @@
 Release History
 ---------------
 
+1.7.2 (?)
++++++++++
+
+**Bugfixes**
+
+- ``internetarchive.utils.get_s3_xml_text()`` is used to parse errors returned by S3 in XML.
+  Sometimes there is no XML in the response.
+  Most of the time this is due to 5xx errors.
+  Either way, we want to always return the HTTPError, even if the XML parsing fails.
+
 1.7.1 (2017-07-25)
 ++++++++++++++++++
 

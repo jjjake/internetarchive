@@ -172,14 +172,17 @@ def get_s3_xml_text(xml_str):
         return text
 
     tag_names = ['Message', 'Resource']
-    p = parseString(xml_str)
-    _msg = _get_tag_text('Message', p)
-    _resource = _get_tag_text('Resource', p)
-    # Avoid weird Resource text that contains PUT method.
-    if _resource and "'PUT" not in _resource:
-        return '{0} - {1}'.format(_msg, _resource.strip())
-    else:
-        return _msg
+    try:
+        p = parseString(xml_str)
+        _msg = _get_tag_text('Message', p)
+        _resource = _get_tag_text('Resource', p)
+        # Avoid weird Resource text that contains PUT method.
+        if _resource and "'PUT" not in _resource:
+            return '{0} - {1}'.format(_msg, _resource.strip())
+        else:
+            return _msg
+    except:
+        return str(xml_str)
 
 
 def get_file_size(file_obj):

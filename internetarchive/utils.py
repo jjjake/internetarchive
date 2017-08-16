@@ -80,7 +80,7 @@ def norm_filepath(fp):
         fp = '/' + fp
     if isinstance(fp, six.binary_type):
         fp = fp.decode('utf-8')
-    return fp.replace(':', '')
+    return fp
 
 
 def get_md5(file_object):

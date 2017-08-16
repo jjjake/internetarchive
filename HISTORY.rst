@@ -12,6 +12,7 @@ Release History
   Sometimes there is no XML in the response.
   Most of the time this is due to 5xx errors.
   Either way, we want to always return the HTTPError, even if the XML parsing fails.
+- Fixed a regression where ``:`` was being stripped from filenames in upload.
 
 1.7.1 (2017-07-25)
 ++++++++++++++++++

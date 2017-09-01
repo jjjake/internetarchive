@@ -182,7 +182,7 @@ class File(BaseFile):
         file_path = self.name if not file_path else file_path
 
         if destdir:
-            if not os.path.exists(destdir):
+            if not os.path.exists(destdir) and return_responses is not True:
                 os.mkdir(destdir)
             if os.path.isfile(destdir):
                 raise IOError('{} is not a directory!'.format(destdir))
@@ -227,7 +227,9 @@ class File(BaseFile):
                     return
 
         parent_dir = os.path.dirname(file_path)
-        if parent_dir != '' and not os.path.exists(parent_dir):
+        if parent_dir != '' \
+                and not os.path.exists(parent_dir) \
+                and return_responses is not True:
             os.makedirs(parent_dir)
 
         try:

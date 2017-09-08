@@ -242,7 +242,11 @@ def recursive_file_count(files, item=None, checksum=False):
                 else:
                     total_files += 1
         else:
-            lmd5 = get_md5(open(f, 'rb'))
+            try:
+                lmd5 = get_md5(open(f, 'rb'))
+            except TypeError:
+                # Support file-like objects.
+                lmd5 = get_md5(f)
             if lmd5 in md5s:
                 continue
             else:

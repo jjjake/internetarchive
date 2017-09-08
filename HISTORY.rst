@@ -14,6 +14,7 @@ Release History
   Either way, we want to always return the HTTPError, even if the XML parsing fails.
 - Fixed a regression where ``:`` was being stripped from filenames in upload.
 - Do not create a directory in ``download()`` when ``return_responses`` is ``True``.
+- Fixed bug in upload where file-like objects were failing with a TypeError exception.
 
 1.7.1 (2017-07-25)
 ++++++++++++++++++

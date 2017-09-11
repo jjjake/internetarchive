@@ -58,8 +58,8 @@ def main(argv, session=None):
         six.text_type: Use(bool),
         '<query>': Use(lambda x: ' '.join(x)),
         '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
-         '--header': Or(None, And(Use(get_args_dict), dict),
-             error='--header must be formatted as --header="key:value"'),
+        '--header': Or(None, And(Use(get_args_dict), dict),
+                       error='--header must be formatted as --header="key:value"'),
         '--sort': list,
         '--field': list,
     })

@@ -6,6 +6,10 @@ Release History
 1.7.2 (?)
 +++++++++
 
+**Feautres and Improvements**
+
+- Added support for adding custom headers to ``ia search``.
+
 **Bugfixes**
 
 - ``internetarchive.utils.get_s3_xml_text()`` is used to parse errors returned by S3 in XML.

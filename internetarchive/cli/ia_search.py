@@ -26,6 +26,7 @@ usage:
 options:
     -h, --help
     -p, --parameters=<key:value>...  Parameters to send with your query.
+    -H, --header=<key:value>...      Add custom headers to your search request.
     -s, --sort=<field order>...      Sort search results by specified fields.
                                      <order> can be either "asc" for ascending
                                      and "desc" for descending.
@@ -42,7 +43,7 @@ except ImportError:
 from itertools import chain
 
 from docopt import docopt, printable_usage
-from schema import Schema, SchemaError, Use
+from schema import Schema, SchemaError, Use, Or, And
 import six
 
 from internetarchive import search_items
@@ -57,6 +58,8 @@ def main(argv, session=None):
         six.text_type: Use(bool),
         '<query>': Use(lambda x: ' '.join(x)),
         '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
+         '--header': Or(None, And(Use(get_args_dict), dict),
+             error='--header must be formatted as --header="key:value"'),
         '--sort': list,
         '--field': list,
     })
@@ -73,7 +76,8 @@ def main(argv, session=None):
     search = session.search_items(args['<query>'],
                                   fields=fields,
                                   sorts=sorts,
-                                  params=args['--parameters'])
+                                  params=args['--parameters'],
+                                  request_kwargs=dict(headers=args['--header']))
 
     try:
         if args['--num-found']:

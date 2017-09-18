@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2016 Internet Archive
+# Copyright (C) 2012-2017 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -23,7 +23,7 @@ internetarchive.auth
 
 This module contains the Archive.org authentication handlers for Requests.
 
-:copyright: (C) 2012-2016 by Internet Archive.
+:copyright: (C) 2012-2017 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 from requests.auth import AuthBase

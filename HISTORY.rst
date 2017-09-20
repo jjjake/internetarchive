@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.7.3 (2017-09-20)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed bug in search where search requests were failing with ``KeyError: 'items'``.
+
 1.7.2 (2017-09-11)
 ++++++++++++++++++
 

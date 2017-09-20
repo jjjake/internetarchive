@@ -133,7 +133,7 @@ class Search(object):
             self._handle_scrape_error(j)
 
             self.params['cursor'] = j.get('cursor')
-            for item in j['items']:
+            for item in j['docs']:
                 yield item
             if 'cursor' not in j:
                 break

@@ -8,6 +8,14 @@ Release History
 
 **Bugfixes**
 
+- The scraping API has reverted to using ``items`` key rather than ``docs`` key.
+  v1.7.3 will still work, but this change keeps ia consistent with the API.
+
+1.7.3 (2017-09-20)
+++++++++++++++++++
+
+**Bugfixes**
+
 - Fixed bug in search where search requests were failing with ``KeyError: 'items'``.
 
 1.7.2 (2017-09-11)

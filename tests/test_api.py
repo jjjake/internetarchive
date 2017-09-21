@@ -24,7 +24,7 @@ TEST_SCRAPE_RESPONSE = json.dumps(_j)
 
 
 def test_get_session_with_config():
-    s = get_session(config={'s3': {'access': 'key'}, 'gengeral':{'secure': False}})
+    s = get_session(config={'s3': {'access': 'key'}, 'gengeral': {'secure': False}})
     assert s.access_key == 'key'
 
 

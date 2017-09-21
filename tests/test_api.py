@@ -317,4 +317,3 @@ def test_page_row_specification(session):
                          archive_session=session)
         assert r.iter_as_items().search == r
         assert len(r.iter_as_items()) == 1
-    assert [x.identifier for x in r.iter_as_items()] == ['nasa']

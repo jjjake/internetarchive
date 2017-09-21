@@ -40,7 +40,7 @@ def test_ia_search_num_found(capsys):
                '?q=collection%3Anasa&total_only=true'
                '&REQUIRE_AUTH=true&count=10000'.format(PROTOCOL))
         rsps.add(responses.POST, url,
-                 body='{"docs":[],"count":0,"total":50}',
+                 body='{"items":[],"count":0,"total":50}',
                  match_querystring=True)
 
         ia_call(['ia', 'search', 'collection:nasa', '--num-found'])

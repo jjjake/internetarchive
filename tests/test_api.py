@@ -19,7 +19,7 @@ TEST_SEARCH_RESPONSE = load_test_data_file('advanced_search_response.json')
 TEST_SCRAPE_RESPONSE = load_test_data_file('scrape_response.json')
 _j = json.loads(TEST_SCRAPE_RESPONSE)
 del _j['cursor']
-_j['docs'] = [{'identifier': 'nasa'}]
+_j['items'] = [{'identifier': 'nasa'}]
 TEST_SCRAPE_RESPONSE = json.dumps(_j)
 
 
@@ -250,7 +250,7 @@ def test_search_items(session):
                  body=TEST_SCRAPE_RESPONSE,
                  match_querystring=True)
         rsps.add(responses.POST, count_url,
-                 body='{"docs":[],"count":0,"total":1}',
+                 body='{"items":[],"count":0,"total":1}',
                  match_querystring=True,
                  content_type='application/json; charset=UTF-8')
         r = search_items('identifier:nasa', archive_session=session)
@@ -265,7 +265,7 @@ def test_search_items(session):
 
 def test_search_items_with_fields(session):
     _j = json.loads(TEST_SCRAPE_RESPONSE)
-    _j['docs'] = [
+    _j['items'] = [
         {'identifier': 'nasa', 'title': 'NASA Images'}
     ]
     search_response_str = json.dumps(_j)
@@ -280,7 +280,7 @@ def test_search_items_with_fields(session):
                  match_querystring=True,
                  body=search_response_str)
         rsps.add(responses.POST, count_url,
-                 body='{"docs":[],"count":0,"total":1}',
+                 body='{"items":[],"count":0,"total":1}',
                  match_querystring=True,
                  content_type='application/json; charset=UTF-8')
         r = search_items('identifier:nasa', fields=['identifier', 'title'],
@@ -301,7 +301,7 @@ def test_search_items_as_items(session):
 
 def test_page_row_specification(session):
     _j = json.loads(TEST_SEARCH_RESPONSE)
-    _j['response']['docs'] = [{'identifier': 'nasa'}]
+    _j['response']['items'] = [{'identifier': 'nasa'}]
     _j['response']['numFound'] = 1
     _search_r = json.dumps(_j)
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
@@ -310,7 +310,7 @@ def test_page_row_specification(session):
         rsps.add_metadata_mock('nasa')
         rsps.add(responses.POST,
                  '{0}//archive.org/services/search/v1/scrape'.format(PROTOCOL),
-                 body='{"docs":[],"count":0,"total":1}',
+                 body='{"items":[],"count":0,"total":1}',
                  match_querystring=False,
                  content_type='application/json; charset=UTF-8')
         r = search_items('identifier:nasa', params={'page': '1', 'rows': '1'},

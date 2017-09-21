@@ -315,6 +315,6 @@ def test_page_row_specification(session):
                  content_type='application/json; charset=UTF-8')
         r = search_items('identifier:nasa', params={'page': '1', 'rows': '1'},
                          archive_session=session)
-        assert [x.identifier for x in r.iter_as_items()] == ['nasa']
         assert r.iter_as_items().search == r
         assert len(r.iter_as_items()) == 1
+    assert [x.identifier for x in r.iter_as_items()] == ['nasa']

@@ -11,7 +11,7 @@ import responses
 def test_ia_search_itemlist(capsys):
     test_scrape_response = load_test_data_file('scrape_response.json')
 
-    with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         url1 = ('{0}//archive.org/services/search/v1/scrape'
                 '?q=collection%3Aattentionkmartshoppers'
                 '&REQUIRE_AUTH=true&count=10000'.format(PROTOCOL))

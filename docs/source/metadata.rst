@@ -138,7 +138,7 @@ The mediatype metadata field recognizes a limited set of values:
   The Live Music Archive has very specific upload requirements.
   Please consult the `documentation <https://www.archive.org/about/faqs.php#Live_Music_Archive>`_ for the Live Music Archive prior to creating items for it.
 - ``image``: Items which predominantly consist of image files should receive a mediatype value of ``image``.
-  Currently these items will not available for browsing or online viewing in Internet Archive but they will require no additional changes when this mediatype receives additional support in the Archive.
+  Currently these items will not be available for browsing or online viewing in Internet Archive but they will require no additional changes when this mediatype receives additional support in the Archive.
 - ``movies``: All videos (television, features, shorts, etc.) should receive a mediatype value of ``movies``.
   These items will be displayed with an online video player.
 - ``software``: Items with a mediatype of ``software`` are accessible to browse via Internet Archive's `software collection <http://www.archive.org/details/software>`_.
@@ -160,7 +160,7 @@ Its presence is enough to trigger not including the metadata in the search engin
 
 If an item's metadata has already been indexed in the search engine, setting ``noindex`` will remove it from the index.
 
-Items whose metadata is not not included in the search engine index are not considered "public" per se and therefore will not have a value in the ``publicdate`` metadata field (see below).
+Items whose metadata is not included in the search engine index are not considered "public" per se and therefore will not have a value in the ``publicdate`` metadata field (see below).
 
 notes
 ^^^^^
@@ -188,6 +188,10 @@ The date the metadata is added to the index is the public date for the item.
 
 Please use an `ISO 8601`_ compatible format for this date.
 For instance, these are all valid date formats:
+
+- YYYY
+- YYYY-MM-DD
+- YYYY-MM-DD HH:MM:SS
 
 While it is possible to set the ``publicdate`` metadata value it is not recommended.
 This value is typically set by automated processes.

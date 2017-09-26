@@ -47,7 +47,7 @@ Metadata
 Reading Metadata
 ^^^^^^^^^^^^^^^^
 
-You can use ``ia`` to read and write metadata from archive.org. To retrieve all of an items metadata in JSON, simply:
+You can use ``ia`` to read and write metadata from archive.org. To retrieve all of an item's metadata in JSON, simply:
 
 .. code:: bash
 

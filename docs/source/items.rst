@@ -40,7 +40,7 @@ Collections
 All items must be part of a collection.
 A collection is simply an item with special characteristics.
 Besides an image file for the collection logo, files should **never** be uploaded directly to a collection item.
-Items can be assigned to a collection at the time of creation, or after the item has been created by modifying the ``collection`` element in an items metadata to contain the identifier for the given collection (i.e. ``ia metadata <identifier> -m collection:<collection-identifier>``.
+Items can be assigned to a collection at the time of creation, or after the item has been created by modifying the ``collection`` element in an item's metadata to contain the identifier for the given collection (i.e. ``ia metadata <identifier> -m collection:<collection-identifier>``.
 Currently collections can only be created by archive.org staff.
 Please contact `info@archive.org <mailto:info@archive.org>`_ if you need a collection.
 

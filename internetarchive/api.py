@@ -500,7 +500,7 @@ def search_items(query,
                   https://archive.org/advancedsearch.php#raw for help formatting your
                   query.
 
-    :type fields: bool
+    :type fields: list
     :param fields: (optional) The metadata fields to return in the search results.
 
     :type params: dict

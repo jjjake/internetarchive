@@ -259,7 +259,8 @@ class ArchiveSession(requests.sessions.Session):
                      fields=None,
                      sorts=None,
                      params=None,
-                     request_kwargs=None):
+                     request_kwargs=None,
+                     max_retries=None):
         """Search for items on Archive.org.
 
         :type query: str
@@ -281,7 +282,8 @@ class ArchiveSession(requests.sessions.Session):
                       fields=fields,
                       sorts=sorts,
                       params=params,
-                      request_kwargs=request_kwargs)
+                      request_kwargs=request_kwargs,
+                      max_retries=None)
 
     def get_tasks(self,
                   identifier=None,

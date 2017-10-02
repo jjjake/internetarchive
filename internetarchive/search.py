@@ -59,7 +59,8 @@ class Search(object):
                  fields=None,
                  sorts=None,
                  params=None,
-                 request_kwargs=None):
+                 request_kwargs=None,
+                 max_retries=None):
         params = params or {}
 
         self.session = archive_session
@@ -73,6 +74,7 @@ class Search(object):
         self.search_url = '{0}//archive.org/advancedsearch.php'.format(
             self.session.protocol)
         self.auth = S3Auth(self.session.access_key, self.session.secret_key)
+        self.max_retries = max_retries if max_retries else 5
 
         # Initialize params.
         default_params = dict(q=query, REQUIRE_AUTH='true')
@@ -90,10 +92,10 @@ class Search(object):
 
         # Set timeout.
         if 'timeout' not in self.request_kwargs:
-            self.request_kwargs['timeout'] = 12
+            self.request_kwargs['timeout'] = 24
 
         # Set retries.
-        self.session._mount_http_adapter(max_retries=5)
+        self.session.mount_http_adapter(max_retries=self.max_retries)
 
     def __repr__(self):
         return 'Search(query={query!r})'.format(query=self.query)

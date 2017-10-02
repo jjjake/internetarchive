@@ -107,7 +107,7 @@ class ArchiveSession(requests.sessions.Session):
 
         self.headers = default_headers()
         self.headers.update({'User-Agent': self._get_user_agent_string()})
-        self._mount_http_adapter()
+        self.mount_http_adapter()
 
         logging_config = self.config.get('logging', {})
         if logging_config.get('level'):
@@ -129,10 +129,23 @@ class ArchiveSession(requests.sessions.Session):
         return 'internetarchive/{0} ({1} {2}; N; {3}; {4}) Python/{5}'.format(
             __version__, uname[0], uname[-1], lang, self.access_key, py_version)
 
-    def _mount_http_adapter(self, protocol=None, max_retries=None,
+    def mount_http_adapter(self, protocol=None, max_retries=None,
                             status_forcelist=None, host=None):
         """Mount an HTTP adapter to the
         :class:`ArchiveSession <ArchiveSession>` object.
+
+        :type protocol: str
+        :param protocol: HTTP protocol to mount your adapter to (e.g. 'https://').
+
+        :type max_retries: int, object
+        :param max_retries: The number of times to retry a failed request.
+                            This can also be an `urllib3.Retry` object.
+
+        :type status_forcelist: list
+        :param status_forcelist: A list of status codes (as int's) to retry on.
+
+        :type host: str
+        :param host: The host to mount your adapter to.
         """
         protocol = protocol if protocol else self.protocol
         host = host if host else 'archive.org'

@@ -178,7 +178,7 @@ class File(BaseFile):
         else:
             silent = False
 
-        self.item.session._mount_http_adapter(max_retries=retries)
+        self.item.session.mount_http_adapter(max_retries=retries)
         file_path = self.name if not file_path else file_path
 
         if destdir:
@@ -317,7 +317,7 @@ class File(BaseFile):
         url = '{0}//s3.us.archive.org/{1}/{2}'.format(self.item.session.protocol,
                                                       self.identifier,
                                                       self.name)
-        self.item.session._mount_http_adapter(max_retries=max_retries,
+        self.item.session.mount_http_adapter(max_retries=max_retries,
                                               status_forcelist=[503],
                                               host='s3.us.archive.org')
         request = iarequest.S3Request(

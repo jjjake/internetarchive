@@ -3,8 +3,15 @@
 Release History
 ---------------
 
-1.7.3 (2017-09-20)
-++++++++++++++++++
+1.7.4 (?)
++++++++++
+
+**Feautres and Improvements**
+
+- Increased timeout in search from 12 seconds to 24.
+- Added ability to set the ``max_retries`` in :func:`internetarchive.search_items`.
+- Made :meth:`internetarchive.ArchiveSession.mount_http_adapter` a public method for supporting complex custom retry logic.
+- Added ``--timeout`` option to ``ia search`` for setting a custom timeout.
 
 **Bugfixes**
 

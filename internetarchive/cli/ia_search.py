@@ -33,6 +33,7 @@ options:
     -i, --itemlist                   Output identifiers only.
     -f, --field=<field>...           Metadata fields to return.
     -n, --num-found                  Print the number of results to stdout.
+    -t, --timeout=<seconds>          Set the timeout in seconds [default: 24].
 """
 from __future__ import absolute_import, print_function, unicode_literals
 import sys
@@ -45,6 +46,7 @@ from itertools import chain
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Use, Or, And
 import six
+from requests.exceptions import ConnectTimeout
 
 from internetarchive import search_items
 from internetarchive.cli.argparser import get_args_dict
@@ -62,6 +64,8 @@ def main(argv, session=None):
                        error='--header must be formatted as --header="key:value"'),
         '--sort': list,
         '--field': list,
+        '--timeout': Use(lambda x: float(x[0]),
+                         error='--timeout must be integer or float.')
     })
     try:
         args = s.validate(args)
@@ -73,11 +77,16 @@ def main(argv, session=None):
     fields = list(chain.from_iterable([x.split(',') for x in args['--field']]))
     sorts = list(chain.from_iterable([x.split(',') for x in args['--sort']]))
 
+    r_kwargs = dict(
+        headers=args['--header'],
+        timeout=args['--timeout'],
+    )
+
     search = session.search_items(args['<query>'],
                                   fields=fields,
                                   sorts=sorts,
                                   params=args['--parameters'],
-                                  request_kwargs=dict(headers=args['--header']))
+                                  request_kwargs=r_kwargs)
 
     try:
         if args['--num-found']:
@@ -92,3 +101,7 @@ def main(argv, session=None):
                 print(j)
     except ValueError as e:
         print('error: {0}'.format(e), file=sys.stderr)
+    except ConnectTimeout as exc:
+        print('error: Request timed out. Increase the --timeout and try again.',
+              file=sys.stderr)
+        sys.exit(1)

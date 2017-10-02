@@ -492,7 +492,8 @@ def search_items(query,
                  config=None,
                  config_file=None,
                  http_adapter_kwargs=None,
-                 request_kwargs=None):
+                 request_kwargs=None,
+                 max_retries=None):
     """Search for items on Archive.org.
 
     :type query: str
@@ -510,6 +511,31 @@ def search_items(query,
     :type config: dict
     :param secure: (optional) Configuration options for session.
 
+    :type config_file: str
+    :param config_file: (optional) A path to a config file used to configure your session.
+
+    :type http_adapter_kwargs: dict
+    :param http_adapter_kwargs: (optional) Keyword arguments that
+                                :py:class:`requests.adapters.HTTPAdapter` takes.
+
+    :type request_kwargs: dict
+    :param request_kwargs: (optional) Keyword arguments that
+                           :py:class:`requests.Request` takes.
+
+    :type max_retries: int, object
+    :param max_retries: The number of times to retry a failed request.
+                        This can also be an `urllib3.Retry` object.
+                        If you need more control (e.g. `status_forcelist`), use a
+                        `ArchiveSession` object, and mount your own adapter after the
+                        session object has been initialized. For example::
+
+                        >>> s = get_session()
+                        >>> s.mount_http_adapter()
+                        >>> search_results = s.search_items('nasa')
+
+                        See :meth:`ArchiveSession.mount_http_adapter`
+                        for more details.
+
     :returns: A :class:`Search` object, yielding search results.
     """
     if not archive_session:
@@ -518,7 +544,8 @@ def search_items(query,
                                         fields=fields,
                                         sorts=sorts,
                                         params=params,
-                                        request_kwargs=request_kwargs)
+                                        request_kwargs=request_kwargs,
+                                        max_retries=max_retries)
 
 
 def configure(username=None, password=None, config_file=None):

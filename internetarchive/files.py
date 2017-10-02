@@ -318,8 +318,8 @@ class File(BaseFile):
                                                       self.identifier,
                                                       self.name)
         self.item.session.mount_http_adapter(max_retries=max_retries,
-                                              status_forcelist=[503],
-                                              host='s3.us.archive.org')
+                                             status_forcelist=[503],
+                                             host='s3.us.archive.org')
         request = iarequest.S3Request(
             method='DELETE',
             url=url,

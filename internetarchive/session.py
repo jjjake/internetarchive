@@ -130,7 +130,7 @@ class ArchiveSession(requests.sessions.Session):
             __version__, uname[0], uname[-1], lang, self.access_key, py_version)
 
     def mount_http_adapter(self, protocol=None, max_retries=None,
-                            status_forcelist=None, host=None):
+                           status_forcelist=None, host=None):
         """Mount an HTTP adapter to the
         :class:`ArchiveSession <ArchiveSession>` object.
 

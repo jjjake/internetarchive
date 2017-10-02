@@ -132,7 +132,7 @@ class Item(BaseItem):
     Or to modify the metadata for an item::
 
         >>> metadata = dict(title='The Stairs')
-        >>> item.modify(metadata)
+        >>> item.modify_metadata(metadata)
         >>> print(item.metadata['title'])
         'The Stairs'
 

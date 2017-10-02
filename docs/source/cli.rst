@@ -173,7 +173,7 @@ Download specific files matching a glob pattern:
 
     $ ia download TripDown1905 --glob="*.mp4"
 
-Note that you may have to escpae the ``*`` differently depending on your shell (e.g. ``\*.mp4``, ``'*.mp4'``, etc.).
+Note that you may have to escape the ``*`` differently depending on your shell (e.g. ``\*.mp4``, ``'*.mp4'``, etc.).
 
 Download only files of a specific format:
 
@@ -182,7 +182,7 @@ Download only files of a specific format:
     $ ia download TripDown1905 --format='512Kb MPEG4'
 
 Note that ``--format`` cannot be used with ``--glob``.
-You can get a list of the formats a given item like so:
+You can get a list of the formats of a given item like so:
 
 .. code:: bash
 

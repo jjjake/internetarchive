@@ -283,7 +283,7 @@ class ArchiveSession(requests.sessions.Session):
                       sorts=sorts,
                       params=params,
                       request_kwargs=request_kwargs,
-                      max_retries=None)
+                      max_retries=max_retries)
 
     def get_tasks(self,
                   identifier=None,

@@ -758,6 +758,7 @@ class Item(BaseItem):
         :returns: A list of requests.Response objects.
         """
         queue_derive = True if queue_derive is None else queue_derive
+        remote_dir_name = None
         if isinstance(files, dict):
             files = list(files.items())
         if not isinstance(files, (list, tuple)):
@@ -770,7 +771,10 @@ class Item(BaseItem):
         else:
             total_files = recursive_file_count(files, item=self, checksum=False)
         for f in files:
-            if isinstance(f, string_types) and os.path.isdir(f):
+            if (isinstance(f, string_types) and os.path.isdir(f)) or (os.path.isdir(f[-1])):
+                if isinstance(f, tuple):
+                    remote_dir_name = f[0]
+                    f = f[-1]
                 for filepath, key in iter_directory(f):
                     file_index += 1
                     # Set derive header if queue_derive is True,
@@ -780,7 +784,12 @@ class Item(BaseItem):
                     else:
                         _queue_derive = False
                     if not f.endswith('/'):
-                        key = '{0}/{1}'.format(f, key)
+                        if remote_dir_name:
+                            key = '{0}/{1}/{2}'.format(remote_dir_name, f, key)
+                        else:
+                            key = '{0}/{1}'.format(f, key)
+                    elif remote_dir_name:
+                        key = '{0}/{1}'.format(remote_dir_name, key)
                     key = norm_filepath(key)
                     resp = self.upload_file(filepath,
                                             key=key,

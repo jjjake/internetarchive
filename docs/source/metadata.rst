@@ -9,6 +9,9 @@ Metadata is a very important element of items in the Internet Archive.
 Metadata allows people to locate and view information.
 Items with little or poor metadata may never be seen and can become lost.
 
+Note that metadata keys must be valid XML tags.
+Please refer to the XML Naming Rules section `here <https://www.w3schools.com/xml/xml_elements.asp>`_.
+
 
 Archive.org Identifiers
 -----------------------

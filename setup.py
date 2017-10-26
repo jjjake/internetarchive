@@ -42,7 +42,7 @@ setup(
         'docopt>=0.6.0,<0.7.0',
         'clint>=0.4.0,<0.6.0',
         'six>=1.0.0,<2.0.0',
-        'schema>=0.4.0,<0.6.0',
+        'schema>=0.4.0',
         'backports.csv',
     ] + (['total-ordering'] if sys.version_info < (2, 7) else []),
     classifiers=[

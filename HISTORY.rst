@@ -3,8 +3,8 @@
 Release History
 ---------------
 
-1.7.4 (?)
-+++++++++
+1.7.4 (2017-11-06)
+++++++++++++++++++
 
 **Feautres and Improvements**
 
@@ -12,6 +12,7 @@ Release History
 - Added ability to set the ``max_retries`` in :func:`internetarchive.search_items`.
 - Made :meth:`internetarchive.ArchiveSession.mount_http_adapter` a public method for supporting complex custom retry logic.
 - Added ``--timeout`` option to ``ia search`` for setting a custom timeout.
+- Loosened requirements for schema library to ``schema>=0.4.0``.
 
 **Bugfixes**
 

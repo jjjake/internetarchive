@@ -3,6 +3,17 @@
 Release History
 ---------------
 
+1.7.5 (?)
++++++++++
+
+**Feautres and Improvements**
+
+- Turned on ``x-archive-keep-old-version`` S3 header by default for all ``ia upload``, ``ia delete``, ``ia copy``, and ``ia move`` commands.
+  This means that any ``ia`` command that clobbers or deletes a command, will save a version of the file in ``<identifier>/history/files/$key.~N~``.
+  This is only on by default in the CLI, and not in the Python lib.
+  It can be turne off by adding ``-H x-archive-keep-old-version:0`` to any ``ia upload``, ``ia delete``, ``ia copy``, or ``ia move`` command.
+
+
 1.7.4 (2017-11-06)
 ++++++++++++++++++
 

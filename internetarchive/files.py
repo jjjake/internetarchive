@@ -283,7 +283,7 @@ class File(BaseFile):
         return True
 
     def delete(self, cascade_delete=None, access_key=None, secret_key=None, verbose=None,
-               debug=None, retries=None):
+               debug=None, retries=None, headers=None):
         """Delete a file from the Archive. Note: Some files -- such as
         <itemname>_meta.xml -- cannot be deleted.
 
@@ -313,6 +313,10 @@ class File(BaseFile):
         debug = False if not debug else debug
         verbose = False if not verbose else verbose
         max_retries = 2 if retries is None else retries
+        headers = dict() if headers is None else headers
+
+        if not 'x-archive-cascade-delete' in headers:
+            headers['x-archive-cascade-delete'] = cascade_delete
 
         url = '{0}//s3.us.archive.org/{1}/{2}'.format(self.item.session.protocol,
                                                       self.identifier,
@@ -323,7 +327,7 @@ class File(BaseFile):
         request = iarequest.S3Request(
             method='DELETE',
             url=url,
-            headers={'x-archive-cascade-delete': cascade_delete},
+            headers=headers,
             access_key=access_key,
             secret_key=secret_key
         )

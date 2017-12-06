@@ -27,6 +27,7 @@ options:
     -h, --help
     -m, --metadata=<key:value>...  Metadata to add to your new item, if you are moving
                                    the file to a new item.
+    -H, --header=<key:value>...    S3 HTTP headers to send with your request.
 """
 from __future__ import print_function, absolute_import
 import sys
@@ -34,6 +35,7 @@ import sys
 from docopt import docopt
 
 from internetarchive.cli import ia_copy
+from internetarchive.cli.argparser import get_args_dict
 
 
 def main(argv, session):
@@ -47,7 +49,7 @@ def main(argv, session):
 
     # Call ia_copy.
     r, src_file = ia_copy.main(argv, session, cmd='move')
-    dr = src_file.delete(cascade_delete=True)
+    dr = src_file.delete(headers=get_args_dict(args['--header']), cascade_delete=True)
     if dr.status_code == 204:
         print('success: moved {} to {}'.format(src_path, dest_path))
         sys.exit(0)

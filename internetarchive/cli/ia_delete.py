@@ -26,17 +26,18 @@ usage:
 
 options:
     -h, --help
-    -q, --quiet                Print status to stdout.
-    -c, --cascade              Delete all derivative files associated with the given file.
-    -a, --all                  Delete all files in the given item (Note: Some files, such
-                               as <identifier>_meta.xml and <identifier>_files.xml, cannot
-                               be deleted)
-    -d, --dry-run              Output files to be deleted to stdout, but don't actually
-                               delete.
-    -g, --glob=<pattern>       Only delete files matching the given pattern.
-    -f, --format=<format>...   Only only delete files matching the specified format(s).
-    -R, --retries=<i>          Number of times to retry if S3 returns a 503 SlowDown
-                               error [default: 2].
+    -q, --quiet                  Print status to stdout.
+    -c, --cascade                Delete all derivative files associated with the given file.
+    -H, --header=<key:value>...  S3 HTTP headers to send with your request.
+    -a, --all                    Delete all files in the given item (Note: Some files, such
+                                 as <identifier>_meta.xml and <identifier>_files.xml, cannot
+                                 be deleted)
+    -d, --dry-run                Output files to be deleted to stdout, but don't actually
+                                 delete.
+    -g, --glob=<pattern>         Only delete files matching the given pattern.
+    -f, --format=<format>...     Only only delete files matching the specified format(s).
+    -R, --retries=<i>            Number of times to retry if S3 returns a 503 SlowDown
+                                 error [default: 2].
 """
 from __future__ import absolute_import, print_function, unicode_literals
 
@@ -48,8 +49,7 @@ from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Use, Or, And
 
 from internetarchive.utils import get_s3_xml_text
-from internetarchive.utils import validate_ia_identifier
-from internetarchive.cli.argparser import convert_str_list_to_unicode
+from internetarchive.cli.argparser import convert_str_list_to_unicode, get_args_dict
 
 
 def main(argv, session):
@@ -66,6 +66,8 @@ def main(argv, session):
         '<file>': And(list, Use(
             lambda x: convert_str_list_to_unicode(x) if six.PY2 else x)),
         '--format': list,
+        '--header': Or(None, And(Use(get_args_dict), dict),
+                       error='--header must be formatted as --header="key:value"'),
         '--glob': list,
         'delete': bool,
         '--retries': Use(lambda i: int(i[0])),
@@ -84,6 +86,10 @@ def main(argv, session):
 
     # Files that cannot be deleted via S3.
     no_delete = ['_meta.xml', '_files.xml', '_meta.sqlite']
+
+    # Add keep-old-version by default.
+    if 'x-archive-keep-old-version' not in args['--header']:
+        args['--header']['x-archive-keep-old-version'] = '1'
 
     if verbose:
         sys.stdout.write('Deleting files from {0}\n'.format(item.identifier))
@@ -112,6 +118,7 @@ def main(argv, session):
         sys.exit(1)
 
     errors = False
+
     for f in files:
         if not f:
             if verbose:
@@ -126,6 +133,7 @@ def main(argv, session):
         try:
             resp = f.delete(verbose=verbose,
                             cascade_delete=args['--cascade'],
+                            headers=args['--headers'],
                             retries=args['--retries'])
         except requests.exceptions.RetryError as e:
             print(' error: max retries exceeded for {0}'.format(f.name), file=sys.stderr)

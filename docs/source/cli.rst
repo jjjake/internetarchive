@@ -149,6 +149,12 @@ You can use the ``--retries`` parameter to retry on errors (i.e. if IA-S3 is ove
     
     $ ia upload <identifier> file1 --retries 10
 
+Note that ``ia upload`` makes a backup of any files that are clobbered.
+They are saved to a directory in the item named ``history/files/``.
+The fiels are named in the format ``$key.~N~``.
+These files can be deleted like normal files.
+You can also prevent the backup from happening on clobbers by adding ``-H x-archive-keep-old-version:0`` to your command.
+
 Refer to `archive.org Identifiers <metadata.html#archive-org-identifiers>`_ for more information on creating valid archive.org identifiers.
 Please also read the `Internet Archive Items <items.html>`_ page before getting started.
 
@@ -250,6 +256,12 @@ Delete all files in an item:
 
     $ ia delete <identifier> --all
 
+Note that ``ia delete`` makes a backup of any files that are deleted.
+They are saved to a directory in the item named ``history/files/``.
+The fiels are named in the format ``$key.~N~``.
+These files can be deleted like normal files.
+You can also prevent the backup from happening on deletes by adding ``-H x-archive-keep-old-version:0`` to your command.
+
 See ``ia help delete`` for more details.
 
 
@@ -332,8 +344,19 @@ If you're copying your file to a new item, you can provide metadata as well:
 
     $ ia copy <src-identifier>/<src-filename> <dest-identifier>/<dest-filename> --metadata 'title:My New Item' --metadata collection:test_collection
 
+Note that ``ia copy`` makes a backup of any files that are clobbered.
+They are saved to a directory in the item named ``history/files/``.
+The fiels are named in the format ``$key.~N~``.
+These files can be deleted like normal files.
+You can also prevent the backup from happening on clobbers by adding ``-H x-archive-keep-old-version:0`` to your command.
 
 Move
 ----
 
 ``ia move`` works just like ``ia copy`` except the source file is deleted after the file has been successfully copied.
+
+Note that ``ia move`` makes a backup of any files that are clobbered or deleted.
+They are saved to a directory in the item named ``history/files/``.
+The fiels are named in the format ``$key.~N~``.
+These files can be deleted like normal files.
+You can also prevent the backup from happening on clobbers or deletes by adding ``-H x-archive-keep-old-version:0`` to your command.

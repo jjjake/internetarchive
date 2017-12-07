@@ -27,11 +27,12 @@ usage:
 options:
     -h, --help
     -q, --quiet                  Print status to stdout.
-    -c, --cascade                Delete all derivative files associated with the given file.
+    -c, --cascade                Delete all derivative files associated with the given
+                                 file.
     -H, --header=<key:value>...  S3 HTTP headers to send with your request.
-    -a, --all                    Delete all files in the given item (Note: Some files, such
-                                 as <identifier>_meta.xml and <identifier>_files.xml, cannot
-                                 be deleted)
+    -a, --all                    Delete all files in the given item (Note: Some files,
+                                 such as <identifier>_meta.xml and <identifier>_files.xml,
+                                 cannot be deleted)
     -d, --dry-run                Output files to be deleted to stdout, but don't actually
                                  delete.
     -g, --glob=<pattern>         Only delete files matching the given pattern.

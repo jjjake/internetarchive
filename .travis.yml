@@ -6,7 +6,6 @@ env:
   - TOX_ENV=py36
   - TOX_ENV=py34
   - TOX_ENV=py27
-  - TOX_ENV=py26
 script: 
   - tox -e $TOX_ENV
 branches:
@@ -18,4 +17,3 @@ addons:
       - deadsnakes
     packages:
       - python3.6
-      - python2.6

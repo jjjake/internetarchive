@@ -43,13 +43,18 @@ def main(argv, session):
     src_path = args['<src-identifier>/<src-file>']
     dest_path = args['<dest-identifier>/<dest-file>']
 
+    headers = get_args_dict(args['--header'])
+    # Add keep-old-version by default.
+    if 'x-archive-keep-old-version' not in args['--header']:
+        headers['x-archive-keep-old-version'] = '1'
+
     # First we use ia_copy, prep argv for ia_copy.
     argv.pop(0)
     argv = ['copy'] + argv
 
     # Call ia_copy.
     r, src_file = ia_copy.main(argv, session, cmd='move')
-    dr = src_file.delete(headers=get_args_dict(args['--header']), cascade_delete=True)
+    dr = src_file.delete(headers=headers, cascade_delete=True)
     if dr.status_code == 204:
         print('success: moved {} to {}'.format(src_path, dest_path))
         sys.exit(0)

@@ -21,7 +21,7 @@ def test_ia_upload(tmpdir_ch, caplog):
         ia_call(['ia', '--log', 'upload', 'nasa', 'test.txt'])
 
     assert ('uploaded test.txt to {0}//s3.us.archive.org/nasa/'
-            'test.txt'.format(PROTOCOL)) in caplog.text()
+            'test.txt'.format(PROTOCOL)) in caplog.text
 
 
 def test_ia_upload_status_check(capsys):
@@ -123,7 +123,7 @@ def test_ia_upload_unicode(tmpdir_ch, caplog):
 
     assert (u'uploaded தமிழ் - baz ∆.txt to {0}//s3.us.archive.org/nasa/'
             u'%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20'
-            u'baz%20%E2%88%86.txt'.format(PROTOCOL)) in caplog.text()
+            u'baz%20%E2%88%86.txt'.format(PROTOCOL)) in caplog.text
 
 
 def test_ia_upload_remote_name(tmpdir_ch, caplog):
@@ -139,4 +139,4 @@ def test_ia_upload_remote_name(tmpdir_ch, caplog):
                  'hi.txt'])
 
     assert ('uploaded hi.txt to {0}//s3.us.archive.org/nasa/'
-            'hi.txt'.format(PROTOCOL)) in caplog.text()
+            'hi.txt'.format(PROTOCOL)) in caplog.text

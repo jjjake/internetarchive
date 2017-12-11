@@ -27,6 +27,7 @@ options:
     -h, --help
     -m, --metadata=<key:value>...  Metadata to add to your new item, if you are moving
                                    the file to a new item.
+    -H, --header=<key:value>...    S3 HTTP headers to send with your request.
 """
 from __future__ import print_function, absolute_import
 import sys
@@ -72,6 +73,8 @@ def main(argv, session, cmd='copy'):
         '<dest-identifier>/<dest-file>': str,
         '--metadata': Or(None, And(Use(get_args_dict), dict),
                          error='--metadata must be formatted as --metadata="key:value"'),
+        '--header': Or(None, And(Use(get_args_dict), dict),
+                       error='--header must be formatted as --header="key:value"'),
     })
 
     try:
@@ -83,15 +86,18 @@ def main(argv, session, cmd='copy'):
         print('{0}\n{1}'.format(str(exc), usage), file=sys.stderr)
         sys.exit(1)
 
-    headers = {
-        'x-amz-copy-source': '/{}'.format(src_path),
-        'x-amz-metadata-directive': 'COPY',
-    }
+    args['--header']['x-amz-copy-source'] = '/{}'.format(src_path)
+    args['--header']['x-amz-metadata-directive'] = 'COPY'
+    args['--header']
+    # Add keep-old-version by default.
+    if 'x-archive-keep-old-version' not in args['--header']:
+        args['--header']['x-archive-keep-old-version'] = '1'
+
     url = '{}//s3.us.archive.org/{}'.format(session.protocol, dest_path)
     req = ia.iarequest.S3Request(url=url,
                                  method='PUT',
                                  metadata=args['--metadata'],
-                                 headers=headers,
+                                 headers=args['--header'],
                                  access_key=session.access_key,
                                  secret_key=session.secret_key)
     p = req.prepare()

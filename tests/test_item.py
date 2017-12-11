@@ -205,8 +205,8 @@ def test_download_checksum(tmpdir, caplog):
         nasa_item.download(files='nasa_meta.xml', checksum=True)
         nasa_item.download(files='nasa_meta.xml', checksum=True)
 
-        assert 'skipping nasa' in caplog.text()
-        assert 'nasa_meta.xml, file already exists based on checksum.' in caplog.text()
+        assert 'skipping nasa' in caplog.text
+        assert 'nasa_meta.xml, file already exists based on checksum.' in caplog.text
 
 
 def test_download_destdir(tmpdir, nasa_item):

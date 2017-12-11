@@ -180,6 +180,9 @@ def main(argv, session):
     # Upload keyword arguments.
     if args['--size-hint']:
         args['--header']['x-archive-size-hint'] = args['--size-hint']
+    # Upload with backups turned on by default.
+    if not args['--header'].get('x-archive-keep-old-version'):
+        args['--header']['x-archive-keep-old-version'] = '1'
 
     queue_derive = True if args['--no-derive'] is False else False
     verbose = True if args['--quiet'] is False else False

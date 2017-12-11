@@ -91,6 +91,22 @@ You can also create new targets if they don't exist:
 
     $ ia metadata <identifier> --target="extra_metadata" --modify="foo:bar"
 
+There is also an ``--append`` option which allows you to append a string to an existing metadata element.
+Currently this only works on existing metadata elements that are strings (i.e. it will not append to metadata elements that are arrays, like ``collection``). 
+For example, if your item's title was ``Foo`` and you wanted it to be ``Foo Bar``, you could simply do:
+
+.. code:: bash
+
+    $ ia metadata <identifier> --append="title: Bar"
+
+If you would like to add a new value to an existing field that is an array (like ``subject`` or ``collection``), you can use the following syntax:
+
+.. code:: bash
+
+    $ ia metadata <identifier> --modify="subject[99]:another subject"
+
+Assuming you don't have 99 subjects already, this command would append ``another subject`` to the items list of subjects.
+
 Refer to `Internet Archive Metadata <metadata.html>`_ for more specific details regarding metadata and archive.org.
 
 
@@ -132,6 +148,12 @@ You can use the ``--retries`` parameter to retry on errors (i.e. if IA-S3 is ove
 .. code:: bash
     
     $ ia upload <identifier> file1 --retries 10
+
+Note that ``ia upload`` makes a backup of any files that are clobbered.
+They are saved to a directory in the item named ``history/files/``.
+The fiels are named in the format ``$key.~N~``.
+These files can be deleted like normal files.
+You can also prevent the backup from happening on clobbers by adding ``-H x-archive-keep-old-version:0`` to your command.
 
 Refer to `archive.org Identifiers <metadata.html#archive-org-identifiers>`_ for more information on creating valid archive.org identifiers.
 Please also read the `Internet Archive Items <items.html>`_ page before getting started.
@@ -234,6 +256,12 @@ Delete all files in an item:
 
     $ ia delete <identifier> --all
 
+Note that ``ia delete`` makes a backup of any files that are deleted.
+They are saved to a directory in the item named ``history/files/``.
+The fiels are named in the format ``$key.~N~``.
+These files can be deleted like normal files.
+You can also prevent the backup from happening on deletes by adding ``-H x-archive-keep-old-version:0`` to your command.
+
 See ``ia help delete`` for more details.
 
 
@@ -316,8 +344,19 @@ If you're copying your file to a new item, you can provide metadata as well:
 
     $ ia copy <src-identifier>/<src-filename> <dest-identifier>/<dest-filename> --metadata 'title:My New Item' --metadata collection:test_collection
 
+Note that ``ia copy`` makes a backup of any files that are clobbered.
+They are saved to a directory in the item named ``history/files/``.
+The fiels are named in the format ``$key.~N~``.
+These files can be deleted like normal files.
+You can also prevent the backup from happening on clobbers by adding ``-H x-archive-keep-old-version:0`` to your command.
 
 Move
 ----
 
 ``ia move`` works just like ``ia copy`` except the source file is deleted after the file has been successfully copied.
+
+Note that ``ia move`` makes a backup of any files that are clobbered or deleted.
+They are saved to a directory in the item named ``history/files/``.
+The fiels are named in the format ``$key.~N~``.
+These files can be deleted like normal files.
+You can also prevent the backup from happening on clobbers or deletes by adding ``-H x-archive-keep-old-version:0`` to your command.

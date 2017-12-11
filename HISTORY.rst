@@ -3,8 +3,19 @@
 Release History
 ---------------
 
-1.7.4 (?)
-+++++++++
+1.7.5 (2017-12-07)
+++++++++++++++++++
+
+**Feautres and Improvements**
+
+- Turned on ``x-archive-keep-old-version`` S3 header by default for all ``ia upload``, ``ia delete``, ``ia copy``, and ``ia move`` commands.
+  This means that any ``ia`` command that clobbers or deletes a command, will save a version of the file in ``<identifier>/history/files/$key.~N~``.
+  This is only on by default in the CLI, and not in the Python lib.
+  It can be turne off by adding ``-H x-archive-keep-old-version:0`` to any ``ia upload``, ``ia delete``, ``ia copy``, or ``ia move`` command.
+
+
+1.7.4 (2017-11-06)
+++++++++++++++++++
 
 **Feautres and Improvements**
 
@@ -12,6 +23,7 @@ Release History
 - Added ability to set the ``max_retries`` in :func:`internetarchive.search_items`.
 - Made :meth:`internetarchive.ArchiveSession.mount_http_adapter` a public method for supporting complex custom retry logic.
 - Added ``--timeout`` option to ``ia search`` for setting a custom timeout.
+- Loosened requirements for schema library to ``schema>=0.4.0``.
 
 **Bugfixes**
 

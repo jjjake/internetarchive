@@ -188,7 +188,7 @@ class File(BaseFile):
                 raise IOError('{} is not a directory!'.format(destdir))
             file_path = os.path.join(destdir, file_path)
 
-        if not return_responses and os.path.exists(file_path):
+        if not return_responses and os.path.exists(file_path.encode('utf-8')):
             if ignore_existing:
                 msg = 'skipping {0}, file already exists.'.format(file_path)
                 log.info(msg)
@@ -213,7 +213,7 @@ class File(BaseFile):
                         sys.stdout.flush()
                     return
             else:
-                st = os.stat(file_path)
+                st = os.stat(file_path.encode('utf-8'))
                 if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
                         or self.name.endswith('_files.xml') and st.st_size != 0:
                     msg = ('skipping {0}, file already exists '
@@ -240,7 +240,7 @@ class File(BaseFile):
 
             chunk_size = 2048
             if not fileobj:
-                fileobj = open(file_path, 'wb')
+                fileobj = open(file_path.encode('utf-8'), 'wb')
 
             with fileobj:
                 for chunk in response.iter_content(chunk_size=chunk_size):
@@ -266,7 +266,7 @@ class File(BaseFile):
 
         # Set mtime with mtime from files.xml.
         try:
-            os.utime(file_path, (0, self.mtime))
+            os.utime(file_path.encode('utf-8'), (0, self.mtime))
         except OSError:
             # Probably file-like object, e.g. sys.stdout.
             pass
@@ -283,7 +283,7 @@ class File(BaseFile):
         return True
 
     def delete(self, cascade_delete=None, access_key=None, secret_key=None, verbose=None,
-               debug=None, retries=None):
+               debug=None, retries=None, headers=None):
         """Delete a file from the Archive. Note: Some files -- such as
         <itemname>_meta.xml -- cannot be deleted.
 
@@ -313,6 +313,10 @@ class File(BaseFile):
         debug = False if not debug else debug
         verbose = False if not verbose else verbose
         max_retries = 2 if retries is None else retries
+        headers = dict() if headers is None else headers
+
+        if 'x-archive-cascade-delete' not in headers:
+            headers['x-archive-cascade-delete'] = cascade_delete
 
         url = '{0}//s3.us.archive.org/{1}/{2}'.format(self.item.session.protocol,
                                                       self.identifier,
@@ -323,7 +327,7 @@ class File(BaseFile):
         request = iarequest.S3Request(
             method='DELETE',
             url=url,
-            headers={'x-archive-cascade-delete': cascade_delete},
+            headers=headers,
             access_key=access_key,
             secret_key=secret_key
         )

@@ -773,7 +773,7 @@ class Item(BaseItem):
         for f in files:
             if (isinstance(f, string_types) and os.path.isdir(f)) or (os.path.isdir(f[-1])):
                 if isinstance(f, tuple):
-                    remote_dir_name = f[0]
+                    remote_dir_name = f[0].strip('/')
                     f = f[-1]
                 for filepath, key in iter_directory(f):
                     file_index += 1
@@ -785,7 +785,7 @@ class Item(BaseItem):
                         _queue_derive = False
                     if not f.endswith('/'):
                         if remote_dir_name:
-                            key = '{0}/{1}/{2}'.format(remote_dir_name, f, key)
+                            key = '{0}{1}/{2}'.format(remote_dir_name, f, key)
                         else:
                             key = '{0}/{1}'.format(f, key)
                     elif remote_dir_name:

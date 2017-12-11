@@ -771,7 +771,8 @@ class Item(BaseItem):
         else:
             total_files = recursive_file_count(files, item=self, checksum=False)
         for f in files:
-            if (isinstance(f, string_types) and os.path.isdir(f)) or (os.path.isdir(f[-1])):
+            if (isinstance(f, string_types) and os.path.isdir(f)) \
+                    or (os.path.isdir(f[-1])):
                 if isinstance(f, tuple):
                     remote_dir_name = f[0].strip('/')
                     f = f[-1]

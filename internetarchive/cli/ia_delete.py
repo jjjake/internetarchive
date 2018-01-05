@@ -134,7 +134,7 @@ def main(argv, session):
         try:
             resp = f.delete(verbose=verbose,
                             cascade_delete=args['--cascade'],
-                            headers=args['--headers'],
+                            headers=args['--header'],
                             retries=args['--retries'])
         except requests.exceptions.RetryError as e:
             print(' error: max retries exceeded for {0}'.format(f.name), file=sys.stderr)

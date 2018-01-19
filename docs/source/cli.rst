@@ -228,7 +228,7 @@ See ``ia help download`` for more details.
 Downloading On-The-Fly Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Some files on archive.org are generated on-the-fly as requested. This currently includes non-original files of the formats EPUB, MOBI, and DAISY. These files can be downloaded using the ``--on-the-fly`` parameter:
+Some files on archive.org are generated on-the-fly as requested. This currently includes non-original files of the formats EPUB, MOBI, DAISY, and archive.org's own MARC XML. These files can be downloaded using the ``--on-the-fly`` parameter:
 
 .. code:: bash
 

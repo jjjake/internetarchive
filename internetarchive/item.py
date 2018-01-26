@@ -244,6 +244,7 @@ class Item(BaseItem):
                 '{0}.epub'.format(self.identifier),
                 '{0}.mobi'.format(self.identifier),
                 '{0}_daisy.zip'.format(self.identifier),
+                '{0}_archive_marc.xml'.format(self.identifier),
             ]
             for f in otf_files:
                 item_files.append(dict(name=f, otf=True))

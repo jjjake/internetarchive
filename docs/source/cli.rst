@@ -151,7 +151,7 @@ You can use the ``--retries`` parameter to retry on errors (i.e. if IA-S3 is ove
 
 Note that ``ia upload`` makes a backup of any files that are clobbered.
 They are saved to a directory in the item named ``history/files/``.
-The fiels are named in the format ``$key.~N~``.
+The files are named in the format ``$key.~N~``.
 These files can be deleted like normal files.
 You can also prevent the backup from happening on clobbers by adding ``-H x-archive-keep-old-version:0`` to your command.
 
@@ -228,7 +228,7 @@ See ``ia help download`` for more details.
 Downloading On-The-Fly Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Some files on archive.org are generated on-the-fly as requested. This currently includes non-original files of the formats EPUB, MOBI, and DAISY. These files can be downloaded using the ``--on-the-fly`` parameter:
+Some files on archive.org are generated on-the-fly as requested. This currently includes non-original files of the formats EPUB, MOBI, DAISY, and archive.org's own MARC XML. These files can be downloaded using the ``--on-the-fly`` parameter:
 
 .. code:: bash
 
@@ -258,7 +258,7 @@ Delete all files in an item:
 
 Note that ``ia delete`` makes a backup of any files that are deleted.
 They are saved to a directory in the item named ``history/files/``.
-The fiels are named in the format ``$key.~N~``.
+The files are named in the format ``$key.~N~``.
 These files can be deleted like normal files.
 You can also prevent the backup from happening on deletes by adding ``-H x-archive-keep-old-version:0`` to your command.
 
@@ -346,7 +346,7 @@ If you're copying your file to a new item, you can provide metadata as well:
 
 Note that ``ia copy`` makes a backup of any files that are clobbered.
 They are saved to a directory in the item named ``history/files/``.
-The fiels are named in the format ``$key.~N~``.
+The files are named in the format ``$key.~N~``.
 These files can be deleted like normal files.
 You can also prevent the backup from happening on clobbers by adding ``-H x-archive-keep-old-version:0`` to your command.
 
@@ -357,6 +357,6 @@ Move
 
 Note that ``ia move`` makes a backup of any files that are clobbered or deleted.
 They are saved to a directory in the item named ``history/files/``.
-The fiels are named in the format ``$key.~N~``.
+The files are named in the format ``$key.~N~``.
 These files can be deleted like normal files.
 You can also prevent the backup from happening on clobbers or deletes by adding ``-H x-archive-keep-old-version:0`` to your command.

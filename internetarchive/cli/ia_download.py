@@ -48,8 +48,8 @@ options:
                                                  ia metadata --formats <identifier>
 
     --on-the-fly                             Download on-the-fly files, as well as other matching
-                                             files. on-the-fly files includ derivative EPUB, MOBI
-                                             and DAISY files [default: True].
+                                             files. on-the-fly files include derivative EPUB, MOBI
+                                             and DAISY files [default: False].
     --no-directories                         Download files into working directory. Do not
                                              create item directories.
     --destdir=<dir>                          The destination directory to download files

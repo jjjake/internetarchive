@@ -56,7 +56,7 @@ def test_ia_upload_debug(capsys, tmpdir_ch, nasa_mocker):
     assert 's3.us.archive.org/nasa/test.txt' in out
     assert 'Accept:*/*' in out
     assert 'Authorization:LOW ' in out
-    assert 'Connection:keep-alive' in out
+    assert 'Connection:close' in out
     assert 'Content-Length:3' in out
     assert 'Accept-Encoding:gzip, deflate' in out
 
@@ -102,7 +102,7 @@ def test_ia_upload_size_hint(capsys, tmpdir_ch, nasa_mocker):
     assert 'x-archive-size-hint:30' in out
     assert 'Accept:*/*' in out
     assert 'Authorization:LOW ' in out
-    assert 'Connection:keep-alive' in out
+    assert 'Connection:close' in out
     assert 'Content-Length:3' in out
     assert 'Accept-Encoding:gzip, deflate' in out
 

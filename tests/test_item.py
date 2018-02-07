@@ -36,7 +36,7 @@ EXPECTED_S3_HEADERS = {
     'authorization': 'LOW a:b',
     'accept': '*/*',
     'accept-encoding': 'gzip, deflate',
-    'connection': 'keep-alive',
+    'connection': 'close',
 }
 
 

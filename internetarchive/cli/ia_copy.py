@@ -37,6 +37,7 @@ from schema import Schema, Use, Or, And, SchemaError
 
 import internetarchive as ia
 from internetarchive.cli.argparser import get_args_dict
+from internetarchive.utils import get_s3_xml_text
 
 
 def assert_src_file_exists(src_location):
@@ -67,10 +68,13 @@ def main(argv, session, cmd='copy'):
     # Validate args.
     s = Schema({
         str: Use(bool),
-        '<src-identifier>/<src-file>': And(str, assert_src_file_exists, error=(
+        '<src-identifier>/<src-file>': And(str, And(And(str, lambda x: '/' in x,
+            error='Destiantion not formatted correctly. See usage example.'),
+            assert_src_file_exists, error=(
             'https://archive.org/download/{} does not exist. '
-            'Please check the identifier and filepath and retry.'.format(src_path))),
-        '<dest-identifier>/<dest-file>': str,
+            'Please check the identifier and filepath and retry.'.format(src_path)))),
+        '<dest-identifier>/<dest-file>': And(str, lambda x: '/' in x,
+            error='Destiantion not formatted correctly. See usage example.'),
         '--metadata': Or(None, And(Use(get_args_dict), dict),
                          error='--metadata must be formatted as --metadata="key:value"'),
         '--header': Or(None, And(Use(get_args_dict), dict),
@@ -103,9 +107,14 @@ def main(argv, session, cmd='copy'):
     p = req.prepare()
     r = session.send(p)
     if r.status_code != 200:
-        print('error: failed to {} {} to {}. {}'.format(cmd, src_path))
+        try:
+            msg = get_s3_xml_text(r.text)
+        except Exception as e:
+            msg = r.text
+        print('error: failed to {} "{}" to "{}" - {}'.format(
+            cmd, src_path, dest_path, msg))
         sys.exit(1)
     elif cmd == 'copy':
-        print('success: copied {} to {}.'.format(src_path, dest_path))
+        print('success: copied "{}" to "{}".'.format(src_path, dest_path))
     else:
         return (r, SRC_FILE)

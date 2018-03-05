@@ -32,7 +32,8 @@ options:
 from __future__ import print_function, absolute_import
 import sys
 
-from docopt import docopt
+from docopt import docopt, printable_usage
+from schema import Schema, And, Use, SchemaError
 
 from internetarchive.cli import ia_copy
 from internetarchive.cli.argparser import get_args_dict
@@ -42,6 +43,22 @@ def main(argv, session):
     args = docopt(__doc__, argv=argv)
     src_path = args['<src-identifier>/<src-file>']
     dest_path = args['<dest-identifier>/<dest-file>']
+
+        # Validate args.
+    s = Schema({
+        str: Use(bool),
+        '--metadata': list,
+        '--header': list,
+        '<src-identifier>/<src-file>': And(str, lambda x: '/' in x,
+            error='Source not formatted correctly. See usage example.'),
+        '<dest-identifier>/<dest-file>': And(str, lambda x: '/' in x,
+            error='Destiantion not formatted correctly. See usage example.'),
+    })
+    try:
+        args = s.validate(args)
+    except SchemaError as exc:
+        print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
+        sys.exit(1)
 
     headers = get_args_dict(args['--header'])
     # Add keep-old-version by default.

@@ -44,7 +44,7 @@ def main(argv, session):
     src_path = args['<src-identifier>/<src-file>']
     dest_path = args['<dest-identifier>/<dest-file>']
 
-        # Validate args.
+    # Validate args.
     s = Schema({
         str: Use(bool),
         '--metadata': list,

@@ -3,6 +3,19 @@
 Release History
 ---------------
 
+1.7.7 (2018-03-05)
+++++++++++++++++++
+
+**Feautres and Improvements**
+
+- Added support for downloading on-the-fly archive_marc.xml files.
+
+**Bugfixes**
+
+- Improved syntax checking in ``ia move`` and ``ia copy``.
+- Added ``Connection:close`` header to all requests to force close connections after each request.
+  This is a workaround for dealing with a bug on archive.org servers where the server hangs up before sending the complete response.
+
 1.7.6 (2018-01-05)
 ++++++++++++++++++
 

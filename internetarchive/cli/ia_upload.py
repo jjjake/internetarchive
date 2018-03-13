@@ -54,11 +54,16 @@ options:
 from __future__ import absolute_import, unicode_literals, print_function
 
 import io
-from backports import csv
 import os
 import sys
 from tempfile import TemporaryFile
 from copy import deepcopy
+
+PY2 = sys.version_info[0] == 2
+if PY2:
+    from backports import csv
+else:
+    import csv
 
 import six
 from docopt import docopt, printable_usage

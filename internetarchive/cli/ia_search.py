@@ -50,6 +50,7 @@ from requests.exceptions import ConnectTimeout
 
 from internetarchive import search_items
 from internetarchive.cli.argparser import get_args_dict
+from internetarchive.exceptions import AuthenticationError
 
 
 def main(argv, session=None):
@@ -104,4 +105,7 @@ def main(argv, session=None):
     except ConnectTimeout as exc:
         print('error: Request timed out. Increase the --timeout and try again.',
               file=sys.stderr)
+        sys.exit(1)
+    except AuthenticationError as exc:
+        print('error: {}'.format(exc))
         sys.exit(1)

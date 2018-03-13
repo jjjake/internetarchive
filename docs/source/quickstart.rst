@@ -8,7 +8,7 @@ Configuring
 -----------
 
 Certain functionality of the internetarchive Python library requires your archive.org credentials.
-Your `IA-S3 keys <https://archive.org/account/s3.php>`_ are required for uploading and modifying metadata, and your archive.org logged-in cookies are required for downloading access-restricted content and viewing your task history.
+Your `IA-S3 keys <https://archive.org/account/s3.php>`_ are required for uploading, searching, and modifying metadata, and your archive.org logged-in cookies are required for downloading access-restricted content and viewing your task history.
 To automatically create a config file with your archive.org credentials, you can use the ``ia`` command-line tool::
 
     $ ia configure

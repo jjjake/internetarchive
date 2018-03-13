@@ -59,12 +59,6 @@ import sys
 from tempfile import TemporaryFile
 from copy import deepcopy
 
-PY2 = sys.version_info[0] == 2
-if PY2:
-    from backports import csv
-else:
-    import csv
-
 import six
 from docopt import docopt, printable_usage
 from requests.exceptions import HTTPError
@@ -73,6 +67,13 @@ from schema import Schema, Use, Or, And, SchemaError
 from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
 from internetarchive.session import ArchiveSession
 from internetarchive.utils import validate_ia_identifier, get_s3_xml_text
+
+# Only import backports.csv for Python2 (in support of FreeBSD port).
+PY2 = sys.version_info[0] == 2
+if PY2:
+    from backports import csv
+else:
+    import csv
 
 
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):

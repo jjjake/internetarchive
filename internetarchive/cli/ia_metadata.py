@@ -48,17 +48,18 @@ except ImportError:
     import json
 import io
 
-PY2 = sys.version_info[0] == 2
-if PY2:
-    from backports import csv
-else:
-    import csv
-
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Or, And, Use
 import six
 
 from internetarchive.cli.argparser import get_args_dict
+
+# Only import backports.csv for Python2 (in support of FreeBSD port).
+PY2 = sys.version_info[0] == 2
+if sys.version_info[0] == 2:
+    from backports import csv
+else:
+    import csv
 
 
 def modify_metadata(item, metadata, args):

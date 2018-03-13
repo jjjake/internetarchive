@@ -107,5 +107,5 @@ def main(argv, session=None):
               file=sys.stderr)
         sys.exit(1)
     except AuthenticationError as exc:
-        print('error: {}'.format(exc))
+        print('error: {}'.format(exc), file=sys.stderr)
         sys.exit(1)

@@ -47,7 +47,12 @@ try:
 except ImportError:
     import json
 import io
-from backports import csv
+
+PY2 = sys.version_info[0] == 2
+if PY2:
+    from backports import csv
+else:
+    import csv
 
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Or, And, Use

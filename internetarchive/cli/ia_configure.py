@@ -63,7 +63,7 @@ def main(argv, session):
                 sys.exit(1)
             username, _, password = n.hosts['archive.org']
             config_file_path = configure(username, password,
-                    config_file=session.config_file)
+                                         config_file=session.config_file)
             print('Config saved to: {0}'.format(config_file_path))
 
         # Interactive input.

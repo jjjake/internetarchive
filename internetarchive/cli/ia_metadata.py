@@ -20,24 +20,30 @@
 """Retrieve and modify Archive.org metadata.
 
 usage:
-    ia metadata <identifier>... [--modify=<key:value>...] [--target=<target>]
-                                [--priority=<priority>]
-    ia metadata <identifier>... [--append=<key:value>...] [--priority=<priority>]
     ia metadata <identifier>... [--exists | --formats]
+    ia metadata <identifier>... --modify=<key:value>... [--target=<target>]
+                                [--priority=<priority>]
+    ia metadata <identifier>... --remove=<key:value>... [--priority=<priority>]
+    ia metadata <identifier>... [--append=<key:value>... | --append-list=<key:value>...]
+                                [--priority=<priority>]
     ia metadata --spreadsheet=<metadata.csv> [--priority=<priority>]
-                                             [--modify=<key:value>...]
+                [--modify=<key:value>...]
     ia metadata --help
 
 options:
     -h, --help
-    -m, --modify=<key:value>          Modify the metadata of an item.
-    -t, --target=<target>             The metadata target to modify.
-    -a, --append=<key:value>          Append metadata to an element.
-    -s, --spreadsheet=<metadata.csv>  Modify metadata in bulk using a spreadsheet as
-                                      input.
-    -e, --exists                      Check if an item exists
-    -F, --formats                     Return the file-formats the given item contains.
-    -p, --priority=<priority>         Set the task priority.
+    -m, --modify=<key:value>            Modify the metadata of an item.
+    -t, --target=<target>               The metadata target to modify.
+    -a, --append=<key:value>...         Append a string to a metadata element.
+    -A, --append-list=<key:value>...    Append a field to a metadata element.
+    -s, --spreadsheet=<metadata.csv>    Modify metadata in bulk using a spreadsheet as
+                                        input.
+    -e, --exists                        Check if an item exists
+    -F, --formats                       Return the file-formats the given item contains.
+    -p, --priority=<priority>           Set the task priority.
+    -r, --remove=<key:value>...         Remove <key:value> from a metadata element.
+                                        Works on both single and multi-field metadata
+                                        elements.
 """
 from __future__ import absolute_import, unicode_literals, print_function
 import sys
@@ -47,6 +53,7 @@ try:
 except ImportError:
     import json
 import io
+from collections import defaultdict
 
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Or, And, Use
@@ -64,8 +71,9 @@ else:
 
 def modify_metadata(item, metadata, args):
     append = True if args['--append'] else False
+    append_list = True if args['--append-list'] else False
     r = item.modify_metadata(metadata, target=args['--target'], append=append,
-                             priority=args['--priority'])
+                             priority=args['--priority'], append_list=append_list)
     if not r.json()['success']:
         error_msg = r.json()['error']
         if 'no changes' in r.content.decode('utf-8'):
@@ -79,6 +87,42 @@ def modify_metadata(item, metadata, args):
     return r
 
 
+def remove_metadata(item, metadata, args):
+    md = defaultdict(list)
+    for key in metadata:
+        if not item.metadata.get(key):
+            print('{0}/metadata/{1} does not exist, skipping.'.format(
+                item.identifier, key), file=sys.stderr)
+            continue
+        elif not isinstance(item.metadata[key], list):
+            if key == 'collection':
+                print('{} - error: all collections would be removed, '
+                      'not submitting task.'.format(item.identifier), file=sys.stderr)
+                sys.exit(1)
+            if item.metadata[key] == metadata[key]:
+                md[key] = 'REMOVE_TAG'
+            continue
+
+        for x in item.metadata[key]:
+            if x not in metadata[key]:
+                md[key].append(x)
+
+        if len(md[key]) == len(item.metadata[key]):
+            del md[key]
+
+    if md.get('collection') == []:
+        print('{} - error: all collections would be removed, not submitting task.'.format(
+            item.identifier), file=sys.stderr)
+        sys.exit(1)
+    elif not md:
+        print('{} - warning: nothing needed to be removed.'.format(
+            item.identifier), file=sys.stderr)
+        sys.exit(0)
+
+    r = modify_metadata(item, md, args)
+    return r
+
+
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
 
@@ -88,6 +132,8 @@ def main(argv, session):
         '<identifier>': list,
         '--modify': list,
         '--append': list,
+        '--append-list': list,
+        '--remove': list,
         '--spreadsheet': Or(None, And(lambda f: os.path.exists(f),
                             error='<file> should be a readable file or directory.')),
         '--target': Or(None, str),
@@ -120,10 +166,28 @@ def main(argv, session):
                     sys.exit(1)
 
         # Modify metadata.
-        elif args['--modify'] or args['--append']:
-            metadata_args = args['--modify'] if args['--modify'] else args['--append']
-            metadata = get_args_dict(metadata_args)
-            responses.append(modify_metadata(item, metadata, args))
+        elif args['--modify'] or args['--append'] or args['--append-list'] \
+                or args['--remove']:
+            if args['--modify']:
+                metadata_args = args['--modify']
+            elif args['--append']:
+                metadata_args = args['--append']
+            elif args['--append-list']:
+                metadata_args = args['--append-list']
+            if args['--remove']:
+                metadata_args = args['--remove']
+            try:
+                metadata = get_args_dict(metadata_args)
+            except ValueError:
+                print("error: The value of --modify, --remove, --append or --append-list "
+                      "is invalid. It must be formatted as: --modify=key:value",
+                      file=sys.stderr)
+                sys.exit(1)
+
+            if args['--remove']:
+                responses.append(remove_metadata(item, metadata, args))
+            else:
+                responses.append(modify_metadata(item, metadata, args))
             if (i + 1) == len(args['<identifier>']):
                 if all(r.status_code == 200 for r in responses):
                     sys.exit(0)

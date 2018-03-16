@@ -425,6 +425,7 @@ class Item(BaseItem):
     def modify_metadata(self, metadata,
                         target=None,
                         append=None,
+                        append_list=None,
                         priority=None,
                         access_key=None,
                         secret_key=None,
@@ -476,7 +477,8 @@ class Item(BaseItem):
             priority=priority,
             access_key=access_key,
             secret_key=secret_key,
-            append=append)
+            append=append,
+            append_list=append_list)
         # Must use Session.prepare_request to make sure session settings
         # are used on request!
         prepared_request = request.prepare()

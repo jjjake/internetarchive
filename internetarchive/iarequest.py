@@ -163,6 +163,7 @@ class MetadataRequest(requests.models.Request):
                  access_key=None,
                  secret_key=None,
                  append=None,
+                 append_list=None,
                  **kwargs):
 
         super(MetadataRequest, self).__init__(**kwargs)
@@ -176,6 +177,7 @@ class MetadataRequest(requests.models.Request):
         self.target = target
         self.priority = priority
         self.append = append
+        self.append_list = append_list
 
     def prepare(self):
         p = MetadataPreparedRequest()
@@ -196,6 +198,7 @@ class MetadataRequest(requests.models.Request):
             source_metadata=self.source_metadata,
             target=self.target,
             append=self.append,
+            append_list=self.append_list,
         )
         return p
 
@@ -208,12 +211,13 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
 
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, metadata={},
-                source_metadata=None, target=None, priority=None, append=None):
+                source_metadata=None, target=None, priority=None, append=None,
+                append_list=None):
         self.prepare_method(method)
         self.prepare_url(url, params)
         self.prepare_headers(headers)
         self.prepare_cookies(cookies)
-        self.prepare_body(metadata, source_metadata, target, priority, append)
+        self.prepare_body(metadata, source_metadata, target, priority, append, append_list)
         self.prepare_auth(auth, url)
         # Note that prepare_auth must be last to enable authentication schemes
         # such as OAuth to work on a fully prepared request.
@@ -221,7 +225,8 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         # This MUST go after prepare_auth. Authenticators could add a hook
         self.prepare_hooks(hooks)
 
-    def prepare_body(self, metadata, source_metadata, target, priority, append):
+    def prepare_body(self, metadata, source_metadata, target, priority, append,
+                     append_list):
         priority = -5 if not priority else priority
 
         if not source_metadata:
@@ -229,7 +234,8 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             source_metadata = r.json().get(target.split('/')[0], {})
         if 'metadata' in target:
             destination_metadata = source_metadata.copy()
-            prepared_metadata = prepare_metadata(metadata, source_metadata, append)
+            prepared_metadata = prepare_metadata(metadata, source_metadata, append,
+                                                 append_list)
             destination_metadata.update(prepared_metadata)
         elif 'files' in target:
             filename = '/'.join(target.split('/')[1:])
@@ -261,7 +267,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         super(MetadataPreparedRequest, self).prepare_body(self.data, None)
 
 
-def prepare_metadata(metadata, source_metadata=None, append=False):
+def prepare_metadata(metadata, source_metadata=None, append=False, append_list=False):
     """Prepare a metadata dict for an
     :class:`S3PreparedRequest <S3PreparedRequest>` or
     :class:`MetadataPreparedRequest <MetadataPreparedRequest>` object.
@@ -327,9 +333,18 @@ def prepare_metadata(metadata, source_metadata=None, append=False):
             except IndexError:
                 prepared_metadata[rm_index(key)].append(metadata[key])
         # If append is True, append value to source_metadata value.
+        elif append_list and source_metadata.get(key):
+            if metadata[key] in source_metadata[key]:
+                continue
+            if not isinstance(metadata[key], list):
+                metadata[key] = [metadata[key]]
+            if not isinstance(source_metadata[key], list):
+                prepared_metadata[key] = [source_metadata[key]] + metadata[key]
+            else:
+                prepared_metadata[key] = source_metadata[key] + metadata[key]
         elif append and source_metadata.get(key):
             prepared_metadata[key] = '{0} {1}'.format(
-                source_metadata[key].encode('utf-8'), metadata[key])
+                source_metadata[key], metadata[key])
         else:
             prepared_metadata[key] = metadata[key]
 

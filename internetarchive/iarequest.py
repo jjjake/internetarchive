@@ -217,7 +217,8 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         self.prepare_url(url, params)
         self.prepare_headers(headers)
         self.prepare_cookies(cookies)
-        self.prepare_body(metadata, source_metadata, target, priority, append, append_list)
+        self.prepare_body(metadata, source_metadata, target, priority, append,
+                          append_list)
         self.prepare_auth(auth, url)
         # Note that prepare_auth must be last to enable authentication schemes
         # such as OAuth to work on a fully prepared request.

@@ -3,6 +3,17 @@
 Release History
 ---------------
 
+1.8.0 (?)
++++++++++
+
+**Feautres and Improvements**
+
+- Only use backports.csv for python2 in support of FreeBDS port.
+- Added a nicer error message to ``ia search`` for authentication errors.
+- Added support for using netrc files in ``ia configure``.
+- Added ``--remove`` option to ``ia metadata`` for removing values from single or mutli-field metadata elements.
+- Added support for appending a metadata value to an existing metadata element (as a new entry, not simply appending to a string).
+
 1.7.7 (2018-03-05)
 ++++++++++++++++++
 

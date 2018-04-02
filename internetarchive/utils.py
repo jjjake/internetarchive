@@ -219,7 +219,6 @@ def recursive_file_count(files, item=None, checksum=False):
     if isinstance(files, dict):
         # make sure to use local filenames.
         _files = files.values()
-        print(_files)
     else:
         if isinstance(files[0], tuple):
             _files = dict(files).values()
@@ -252,6 +251,7 @@ def recursive_file_count(files, item=None, checksum=False):
             else:
                 total_files += 1
     return total_files
+
 
 def is_dir(obj):
     """Special is_dir function to handle file-like object cases that

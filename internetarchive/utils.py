@@ -232,7 +232,7 @@ def recursive_file_count(files, item=None, checksum=False):
             try:
                 f = f[0]
                 is_dir = os.path.isdir(f)
-            except AttributeError:
+            except (AttributeError, TypeError):
                 is_dir = False
         if is_dir:
             for x, _ in iter_directory(f):
@@ -252,3 +252,11 @@ def recursive_file_count(files, item=None, checksum=False):
             else:
                 total_files += 1
     return total_files
+
+def is_dir(obj):
+    """Special is_dir function to handle file-like object cases that
+    cannot be stat'd"""
+    try:
+        return os.path.isdir(obj)
+    except TypeError as exc:
+        return False

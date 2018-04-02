@@ -49,7 +49,7 @@ from internetarchive.utils import IdentifierListAsItems, get_md5, chunk_generato
     IterableToFileAdapter, iter_directory, recursive_file_count, norm_filepath
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
-from internetarchive.utils import get_s3_xml_text, get_file_size
+from internetarchive.utils import get_s3_xml_text, get_file_size, is_dir
 
 log = getLogger(__name__)
 
@@ -774,8 +774,8 @@ class Item(BaseItem):
         else:
             total_files = recursive_file_count(files, item=self, checksum=False)
         for f in files:
-            if (isinstance(f, string_types) and os.path.isdir(f)) \
-                    or (isinstance(f, tuple) and os.path.isdir(f[-1])):
+            if (isinstance(f, string_types) and is_dir(f)) \
+                    or (isinstance(f, tuple) and is_dir(f[-1])):
                 if isinstance(f, tuple):
                     remote_dir_name = f[0].strip('/')
                     f = f[-1]

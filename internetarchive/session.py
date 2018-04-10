@@ -24,39 +24,43 @@ internetarchive.session
 This module provides an ArchiveSession object to manage and persist
 settings across the internetarchive package.
 
-:copyright: (C) 2012-2017 by Internet Archive.
+:copyright: (C) 2012-2018 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import, unicode_literals
-
-import os
+import logging
 import locale
 import sys
-import logging
 import platform
-import warnings
+from time import sleep
+try:
+    import ujson as json
+except ImportError:
+    import json
 
-import requests.sessions
-from requests.utils import default_headers
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3 import Retry
+from six import BytesIO
+from six.moves import urllib_parse
+import pycurl
 
-from internetarchive import __version__
 from internetarchive.config import get_config
 from internetarchive.item import Item, Collection
-from internetarchive.search import Search
 from internetarchive.catalog import Catalog
+from internetarchive import __version__
+from internetarchive.models import ArchiveRequest, ArchiveResponse
 
 
 logger = logging.getLogger(__name__)
 
+# TODO: delete this block.
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+logger.addHandler(ch)
 
-class ArchiveSession(requests.sessions.Session):
+
+class ArchiveSession(object):
     """The :class:`ArchiveSession <internetarchive.ArchiveSession>`
     object collects together useful functionality from `internetarchive`
     as well as important data such as configuration information and
-    credentials.  It is subclassed from
-    :class:`requests.Session <requests.Session>`.
+    credentials.
 
     Usage::
 
@@ -73,8 +77,7 @@ class ArchiveSession(requests.sessions.Session):
     def __init__(self,
                  config=None,
                  config_file=None,
-                 debug=None,
-                 http_adapter_kwargs=None):
+                 debug=None):
         """Initialize :class:`ArchiveSession <ArchiveSession>` object with config.
 
         :type config: dict
@@ -85,40 +88,21 @@ class ArchiveSession(requests.sessions.Session):
         :param config_file: (optional) Path to config file used for initializing the
                             :class:`ArchiveSession <ArchiveSession>` object.
 
-        :type http_adapter_kwargs: dict
-        :param http_adapter_kwargs: (optional) Keyword arguments used to initialize the
-                                    :class:`requests.adapters.HTTPAdapter <HTTPAdapter>`
-                                    object.
-
         :returns: :class:`ArchiveSession` object.
         """
-        super(ArchiveSession, self).__init__()
-        http_adapter_kwargs = {} if not http_adapter_kwargs else http_adapter_kwargs
-        debug = False if not debug else True
-
         self.config = get_config(config, config_file)
         self.config_file = config_file
-        self.cookies.update(self.config.get('cookies', {}))
+        self.cookies = self.config.get('cookies', {})
         self.secure = self.config.get('general', {}).get('secure', True)
         self.protocol = 'https:' if self.secure else 'http:'
         self.access_key = self.config.get('s3', {}).get('access')
         self.secret_key = self.config.get('s3', {}).get('secret')
-        self.http_adapter_kwargs = http_adapter_kwargs
-
-        self.headers = default_headers()
-        self.headers.update({'User-Agent': self._get_user_agent_string()})
-        self.headers.update({'Connection': 'close'})
-
-        self.mount_http_adapter()
+        self.headers = self._default_headers()
 
         logging_config = self.config.get('logging', {})
         if logging_config.get('level'):
             self.set_file_logger(logging_config.get('level', 'NOTSET'),
                                  logging_config.get('file', 'internetarchive.log'))
-            if debug or (logger.level <= 10):
-                self.set_file_logger(logging_config.get('level', 'NOTSET'),
-                                     logging_config.get('file', 'internetarchive.log'),
-                                     'requests.packages.urllib3')
 
     def _get_user_agent_string(self):
         """Generate a User-Agent string to be sent with every request."""
@@ -131,44 +115,29 @@ class ArchiveSession(requests.sessions.Session):
         return 'internetarchive/{0} ({1} {2}; N; {3}; {4}) Python/{5}'.format(
             __version__, uname[0], uname[-1], lang, self.access_key, py_version)
 
-    def mount_http_adapter(self, protocol=None, max_retries=None,
-                           status_forcelist=None, host=None):
-        """Mount an HTTP adapter to the
-        :class:`ArchiveSession <ArchiveSession>` object.
+    def _default_headers(self):
+        cookie_header = ('logged-in-user={logged-in-user}; '
+                         'logged-in-sig={logged-in-sig}').format(**self.cookies)
+        h = {
+                'Authorization': 'LOW {0}:{1}'.format(self.access_key, self.secret_key),
+                'Cookie': cookie_header,
+                'User-Agent': self._get_user_agent_string(),
+        }
+        return h
 
-        :type protocol: str
-        :param protocol: HTTP protocol to mount your adapter to (e.g. 'https://').
+    def _request(self, method, url,
+                 params=None, data=None, headers=None, output_file=None, retries=None):
+        req = ArchiveRequest(
+                method=method.upper(),
+                url=url,
+                headers=headers,
+                output_file=output_file,
+        )
+        resp = req.send(retries=retries)
+        return resp
 
-        :type max_retries: int, object
-        :param max_retries: The number of times to retry a failed request.
-                            This can also be an `urllib3.Retry` object.
-
-        :type status_forcelist: list
-        :param status_forcelist: A list of status codes (as int's) to retry on.
-
-        :type host: str
-        :param host: The host to mount your adapter to.
-        """
-        protocol = protocol if protocol else self.protocol
-        host = host if host else 'archive.org'
-        if max_retries is None:
-            max_retries = self.http_adapter_kwargs.get('max_retries', 3)
-
-        if not status_forcelist:
-            status_forcelist = [500, 501, 502, 503, 504]
-        if max_retries and isinstance(max_retries, (int, float)):
-            max_retries = Retry(total=max_retries,
-                                connect=max_retries,
-                                read=max_retries,
-                                redirect=False,
-                                method_whitelist=Retry.DEFAULT_METHOD_WHITELIST,
-                                status_forcelist=status_forcelist,
-                                backoff_factor=1)
-        self.http_adapter_kwargs['max_retries'] = max_retries
-        max_retries_adapter = HTTPAdapter(**self.http_adapter_kwargs)
-        # Don't mount on s3.us.archive.org, only archive.org!
-        # IA-S3 requires a more complicated retry workflow.
-        self.mount('{0}//{1}'.format(protocol, host), max_retries_adapter)
+    def get(self, url, **kwargs):
+        return self._request('GET', url, **kwargs)
 
     def set_file_logger(self, log_level, path, logger_name='internetarchive'):
         """Convenience function to quickly configure any level of
@@ -206,27 +175,16 @@ class ArchiveSession(requests.sessions.Session):
 
         _log.addHandler(fh)
 
-    def get_item(self, identifier, item_metadata=None, request_kwargs=None):
+    def get_item(self, identifier):
         """A method for creating :class:`internetarchive.Item <Item>` and
         :class:`internetarchive.Collection <Collection>` objects.
 
         :type identifier: str
         :param identifier: A globally unique Archive.org identifier.
-
-        :type item_metadata: dict
-        :param item_metadata: (optional) A metadata dict used to initialize the Item or
-                              Collection object. Metadata will automatically be retrieved
-                              from Archive.org if nothing is provided.
-
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments to be used in
-                                    :meth:`requests.sessions.Session.get` request.
         """
-        request_kwargs = {} if not request_kwargs else request_kwargs
-        if not item_metadata:
-            logger.debug('no metadata provided for "{0}", '
-                         'retrieving now.'.format(identifier))
-            item_metadata = self.get_metadata(identifier, request_kwargs)
+        u = '{0}//archive.org/metadata/{1}'.format(self.protocol, identifier)
+        r = self.get(u)
+        item_metadata = r.json
         mediatype = item_metadata.get('metadata', {}).get('mediatype')
         try:
             item_class = self.ITEM_MEDIATYPE_TABLE.get(mediatype, Item)
@@ -234,58 +192,35 @@ class ArchiveSession(requests.sessions.Session):
             item_class = Item
         return item_class(self, identifier, item_metadata)
 
-    def get_metadata(self, identifier, request_kwargs=None):
-        """Get an item's metadata from the `Metadata API
-        <http://blog.archive.org/2013/07/04/metadata-api/>`__
-
-        :type identifier: str
-        :param identifier: Globally unique Archive.org identifier.
-
-        :rtype: dict
-        :returns: Metadat API response.
-        """
-        request_kwargs = {} if not request_kwargs else request_kwargs
-        url = '{0}//archive.org/metadata/{1}'.format(self.protocol, identifier)
-        if 'timeout' not in request_kwargs:
-            request_kwargs['timeout'] = 12
-        try:
-            resp = self.get(url, **request_kwargs)
-            resp.raise_for_status()
-        except Exception as exc:
-            error_msg = 'Error retrieving metadata from {0}, {1}'.format(url, exc)
-            logger.error(error_msg)
-            raise type(exc)(error_msg)
-        return resp.json()
-
     def search_items(self, query,
-                     fields=None,
-                     sorts=None,
-                     params=None,
-                     request_kwargs=None,
-                     max_retries=None):
-        """Search for items on Archive.org.
+                      fields=None,
+                      sorts=None,
+                      params=None,
+                      max_retries=None):
+         """Search for items on Archive.org.
 
-        :type query: str
-        :param query: The Archive.org search query to yield results for. Refer to
-                      https://archive.org/advancedsearch.php#raw for help formatting your
-                      query.
+         :type query: str
+         :param query: The Archive.org search query to yield results for. Refer to
+                       https://archive.org/advancedsearch.php#raw for help formatting your
+                       query.
 
-        :type fields: bool
-        :param fields: (optional) The metadata fields to return in the search results.
+         :type fields: bool
+         :param fields: (optional) The metadata fields to return in the search results.
 
-        :type params: dict
-        :param params: (optional) The URL parameters to send with each request sent to the
-                       Archive.org Advancedsearch Api.
+         :type params: dict
+         :param params: (optional) The URL parameters to send with each request sent to the
+                        Archive.org Advancedsearch Api.
 
-        :returns: A :class:`Search` object, yielding search results.
-        """
-        request_kwargs = {} if not request_kwargs else request_kwargs
-        return Search(self, query,
-                      fields=fields,
-                      sorts=sorts,
-                      params=params,
-                      request_kwargs=request_kwargs,
-                      max_retries=max_retries)
+         :returns: A :class:`Search` object, yielding search results.
+         """
+         # TODO: Make Search pycurl.
+         request_kwargs = {} if not request_kwargs else request_kwargs
+         return Search(self, query,
+                       fields=fields,
+                       sorts=sorts,
+                       params=params,
+                       request_kwargs=request_kwargs,
+                       max_retries=max_retries)
 
     def get_tasks(self,
                   identifier=None,
@@ -293,8 +228,7 @@ class ArchiveSession(requests.sessions.Session):
                   task_type=None,
                   params=None,
                   config=None,
-                  verbose=None,
-                  request_kwargs=None):
+                  verbose=None):
         """Get tasks from the Archive.org catalog. ``internetarchive`` must be configured
         with your logged-in-* cookies to use this function. If no arguments are provided,
         all queued tasks for the user will be returned.
@@ -325,61 +259,30 @@ class ArchiveSession(requests.sessions.Session):
 
         :returns: A set of :class:`CatalogTask` objects.
         """
-        request_kwargs = {} if not request_kwargs else request_kwargs
+         # TODO: Make Catalog pycurl.
         _catalog = Catalog(self,
                            identifier=identifier,
                            task_id=task_id,
                            params=params,
                            config=config,
-                           verbose=verbose,
-                           request_kwargs=request_kwargs)
+                           verbose=verbose)
         if task_type:
             return eval('_catalog.{0}_rows'.format(task_type.lower()))
         else:
             return _catalog.tasks
 
-    def s3_is_overloaded(self, identifier=None, access_key=None, request_kwargs=None):
-        request_kwargs = {} if not request_kwargs else request_kwargs
-        if 'timeout' not in request_kwargs:
-            request_kwargs['timeout'] = 12
-
-        u = '{protocol}//s3.us.archive.org'.format(protocol=self.protocol)
+    def s3_is_overloaded(self, identifier=None):
+        # TODO: add docstring.
         p = dict(
             check_limit=1,
-            accesskey=access_key,
+            accesskey=self.access_key,
             bucket=identifier,
         )
+        u = '{0}//s3.us.archive.org?{1}'.format(self.protocol, urllib_parse.urlencode(p))
         try:
-            r = self.get(u, params=p, **request_kwargs)
-        except:
-            return True
-        try:
-            j = r.json()
-        except ValueError:
-            return True
-        if j.get('over_limit') == 0:
-            return False
-        else:
-            return True
-
-    def send(self, request, **kwargs):
-        # Catch urllib3 warnings for HTTPS related errors.
-        insecure = False
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always')
-            r = super(ArchiveSession, self).send(request, **kwargs)
-            if self.protocol == 'http:':
-                return r
-            insecure_warnings = ['SNIMissingWarning', 'InsecurePlatformWarning']
-            if w:
-                for e in w:
-                    if any(x in str(e) for x in insecure_warnings):
-                        insecure = True
-                        break
-        if insecure:
-            from requests.exceptions import RequestException
-            msg = ('You are attempting to make an HTTPS request on an insecure platform,'
-                   ' please see:\n\n\thttps://internetarchive.readthedocs.org'
-                   '/en/latest/troubleshooting.html#https-issues\n')
-            raise RequestException(msg)
-        return r
+            r = self.get(u)
+            if r.json.get('over_limit') == 0:
+                return False
+        except Exception as exc:
+            pass
+        return True

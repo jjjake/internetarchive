@@ -38,7 +38,7 @@ from internetarchive import auth
 from internetarchive.exceptions import AuthenticationError
 
 
-def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=None):
+def get_session(config=None, config_file=None, debug=None):
     """Return a new :class:`ArchiveSession` object. The :class:`ArchiveSession`
     object is the main interface to the ``internetarchive`` lib. It allows you to
     persist certain parameters across tasks.
@@ -48,10 +48,6 @@ def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=N
 
     :type config_file: str
     :param config_file: (optional) A path to a config file used to configure your session.
-
-    :type http_adapter_kwargs: dict
-    :param http_adapter_kwargs: (optional) Keyword arguments that
-                                :py:class:`requests.adapters.HTTPAdapter` takes.
 
     :returns: :class:`ArchiveSession` object.
 
@@ -72,7 +68,7 @@ def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=N
         >>> s.get_tasks(task_ids=31643513)[0].server
         'ia311234'
     """
-    return session.ArchiveSession(config, config_file, debug, http_adapter_kwargs)
+    return session.ArchiveSession(config, config_file, debug)
 
 
 def get_item(identifier,

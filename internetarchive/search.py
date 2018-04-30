@@ -60,7 +60,8 @@ class Search(object):
                  sorts=None,
                  params=None,
                  request_kwargs=None,
-                 max_retries=None):
+                 max_retries=None,
+                 timeout=None):
         params = params or {}
 
         self.session = archive_session
@@ -75,9 +76,11 @@ class Search(object):
             self.session.protocol)
         self.auth = S3Auth(self.session.access_key, self.session.secret_key)
         self.max_retries = max_retries if max_retries is not None else 5
+        self.timeout = timeout if timeout is not None else 24
 
         # Initialize params.
-        default_params = dict(q=query, REQUIRE_AUTH='true')
+        #default_params = dict(q=query, REQUIRE_AUTH='true')
+        default_params = dict(q=query)
         if 'page' not in params:
             default_params['count'] = 10000
         else:
@@ -89,13 +92,6 @@ class Search(object):
             del params['index']
         self.params = default_params.copy()
         self.params.update(params)
-
-        # Set timeout.
-        if 'timeout' not in self.request_kwargs:
-            self.request_kwargs['timeout'] = 24
-
-        # Set retries.
-        self.session.mount_http_adapter(max_retries=self.max_retries)
 
     def __repr__(self):
         return 'Search(query={query!r})'.format(query=self.query)
@@ -129,9 +125,10 @@ class Search(object):
         while True:
             r = self.session.post(self.scrape_url,
                                   params=self.params,
-                                  auth=self.auth,
+                                  retries=self.max_retries,
+                                  timeout=self.timeout,
                                   **self.request_kwargs)
-            j = r.json()
+            j = r.json
             self._handle_scrape_error(j)
 
             self.params['cursor'] = j.get('cursor')

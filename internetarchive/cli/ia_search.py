@@ -87,7 +87,7 @@ def main(argv, session=None):
                                   fields=fields,
                                   sorts=sorts,
                                   params=args['--parameters'],
-                                  request_kwargs=r_kwargs)
+                                  timeout=args['--timeout'])
 
     try:
         if args['--num-found']:

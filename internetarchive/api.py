@@ -30,7 +30,6 @@ from __future__ import absolute_import
 
 from six.moves import input
 from getpass import getpass
-import requests
 
 from internetarchive import session
 from internetarchive import config as config_module
@@ -38,7 +37,7 @@ from internetarchive import auth
 from internetarchive.exceptions import AuthenticationError
 
 
-def get_session(config=None, config_file=None, debug=None):
+def get_session(config=None, config_file=None, debug=None, verbose=None):
     """Return a new :class:`ArchiveSession` object. The :class:`ArchiveSession`
     object is the main interface to the ``internetarchive`` lib. It allows you to
     persist certain parameters across tasks.
@@ -68,7 +67,7 @@ def get_session(config=None, config_file=None, debug=None):
         >>> s.get_tasks(task_ids=31643513)[0].server
         'ia311234'
     """
-    return session.ArchiveSession(config, config_file, debug)
+    return session.ArchiveSession(config, config_file, debug, verbose)
 
 
 def get_item(identifier,
@@ -489,7 +488,8 @@ def search_items(query,
                  config_file=None,
                  http_adapter_kwargs=None,
                  request_kwargs=None,
-                 max_retries=None):
+                 max_retries=None,
+                 timeout=None):
     """Search for items on Archive.org.
 
     :type query: str
@@ -541,7 +541,8 @@ def search_items(query,
                                         sorts=sorts,
                                         params=params,
                                         request_kwargs=request_kwargs,
-                                        max_retries=max_retries)
+                                        max_retries=max_retries,
+                                        timeout=timeout)
 
 
 def configure(username=None, password=None, config_file=None):
@@ -587,9 +588,9 @@ def get_user_info(access_key, secret_key):
     """
     u = 'https://s3.us.archive.org'
     p = dict(check_auth=1)
-    r = requests.get(u, params=p, auth=auth.S3Auth(access_key, secret_key))
-    r.raise_for_status()
-    j = r.json()
+    s = get_session(config=dict(s3=dict(access=access_key, secret=secret_key)))
+    r = s.get(u, params=p)
+    j = r.json
     if j.get('error'):
         raise AuthenticationError(j.get('error'))
     else:

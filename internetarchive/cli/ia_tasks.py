@@ -40,7 +40,7 @@ options:
     -j, --json                    Output detailed information in JSON.
 
 """
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, print_function
 import sys
 import json
 
@@ -95,8 +95,7 @@ def main(argv, session):
 
         for t in tasks:
             if args['--json']:
-                task_args = dict((k.decode('utf-8'), v.decode('utf-8'))
-                                 for k, v in t.args.items())
+                task_args = dict((k, v) for k, v in t.args.items())
                 j = dict(
                     identifier=t.identifier,
                     task_id=t.task_id,

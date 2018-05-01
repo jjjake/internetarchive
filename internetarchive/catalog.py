@@ -34,8 +34,8 @@ except ImportError:
     import json
 from logging import getLogger
 
+import six
 from six.moves.urllib.parse import parse_qsl
-from six import string_types
 
 from internetarchive.utils import map2x
 
@@ -190,8 +190,11 @@ class CatalogTask(object):
             if key:
                 setattr(self, key, value)
         # special handling for 'args' - parse it into a dict if it is a string
-        if isinstance(self.args, string_types):
-            self.args = dict(x for x in parse_qsl(self.args.encode('utf-8')))
+        if isinstance(self.args, six.string_types):
+            if six.PY2:
+                self.args = dict(x for x in parse_qsl(self.args.encode('utf-8')))
+            else:
+                self.args = dict(x for x in parse_qsl(self.args))
 
     def __repr__(self):
         return ('CatalogTask(identifier={identifier},'

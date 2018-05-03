@@ -29,7 +29,7 @@ Custom config files can be specified when instantiating an :class:`ArchiveSessio
 
 Or an :class:`Item` object::
 
-    >>> form internetarchive import get_item
+    >>> from internetarchive import get_item
     >>> item = get_item('nasa', config_file='/home/jake/.config/ia-alternate.ini')
 
 IA-S3 Configuration

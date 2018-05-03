@@ -33,7 +33,7 @@ from __future__ import print_function, absolute_import
 import sys
 
 from docopt import docopt, printable_usage
-from schema import Schema, And, Use, SchemaError
+from schema import Schema, And, Use, Or, SchemaError
 
 from internetarchive.cli import ia_copy
 from internetarchive.cli.argparser import get_args_dict
@@ -48,7 +48,8 @@ def main(argv, session):
     s = Schema({
         str: Use(bool),
         '--metadata': list,
-        '--header': list,
+        '--header': Or(None, And(Use(get_args_dict), dict),
+            error='--header must be formatted as --header="key:value"'),
         '<src-identifier>/<src-file>': And(str, lambda x: '/' in x,
             error='Source not formatted correctly. See usage example.'),
         '<dest-identifier>/<dest-file>': And(str, lambda x: '/' in x,
@@ -60,7 +61,6 @@ def main(argv, session):
         print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
         sys.exit(1)
 
-    headers = get_args_dict(args['--header'])
     # Add keep-old-version by default.
     if 'x-archive-keep-old-version' not in args['--header']:
         headers['x-archive-keep-old-version'] = '1'
@@ -71,7 +71,7 @@ def main(argv, session):
 
     # Call ia_copy.
     r, src_file = ia_copy.main(argv, session, cmd='move')
-    dr = src_file.delete(headers=headers, cascade_delete=True)
+    dr = src_file.delete(headers=args['--header'], cascade_delete=True)
     if dr.status_code == 204:
         print('success: moved {} to {}'.format(src_path, dest_path))
         sys.exit(0)

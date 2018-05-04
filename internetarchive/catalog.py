@@ -23,19 +23,19 @@ internetarchive.catalog
 
 This module contains objects for interacting with the Archive.org catalog.
 
-:copyright: (C) 2012-2017 by Internet Archive.
+:copyright: (C) 2012-2018 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 from __future__ import absolute_import
 
+from logging import getLogger
 try:
     import ujson as json
 except ImportError:
     import json
-from logging import getLogger
 
+import six
 from six.moves.urllib.parse import parse_qsl
-from six import string_types
 
 from internetarchive.utils import map2x
 
@@ -155,9 +155,8 @@ class Catalog(object):
 
     def _get_tasks(self):
         r = self.session.get(self.url, params=self.params, **self.request_kwargs)
-        content = r.content.decode('utf-8')
         # Convert JSONP to JSON (then parse the JSON).
-        json_str = content[(content.index("(") + 1):content.rindex(")")]
+        json_str = r.body[(r.body.index("(") + 1):r.body.rindex(")")]
         try:
             return [CatalogTask(t, self) for t in json.loads(json_str)]
         except ValueError:
@@ -190,8 +189,11 @@ class CatalogTask(object):
             if key:
                 setattr(self, key, value)
         # special handling for 'args' - parse it into a dict if it is a string
-        if isinstance(self.args, string_types):
-            self.args = dict(x for x in parse_qsl(self.args.encode('utf-8')))
+        if isinstance(self.args, six.string_types):
+            if six.PY2:
+                self.args = dict(x for x in parse_qsl(self.args.encode('utf-8')))
+            else:
+                self.args = dict(x for x in parse_qsl(self.args))
 
     def __repr__(self):
         return ('CatalogTask(identifier={identifier},'
@@ -220,5 +222,4 @@ class CatalogTask(object):
                                                          self.task_id)
         p = dict(full=1)
         r = self.session.get(url, params=p, **self.request_kwargs)
-        r.raise_for_status()
-        return r.content.decode('utf-8')
+        return r.body

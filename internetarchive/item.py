@@ -683,7 +683,7 @@ class Item(BaseItem):
                     request = _build_request()
                     prepared_request = request.prepare()
 
-                    # chunked transer-encoding is NOT supported by IA-S3.
+                    # chunked transfer-encoding is NOT supported by IA-S3.
                     # It should NEVER be set. Requests adds it in certain
                     # scenarios (e.g. if content-length is 0). Stop it.
                     if prepared_request.headers.get('transfer-encoding') == 'chunked':

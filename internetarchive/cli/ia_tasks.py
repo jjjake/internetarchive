@@ -44,6 +44,7 @@ from __future__ import absolute_import, print_function
 import sys
 import json
 
+import six
 from docopt import docopt
 
 from internetarchive.cli.argparser import get_args_dict
@@ -109,14 +110,22 @@ def main(argv, session):
                 print(json.dumps(j))
                 continue
             task_info = [
-                t.identifier, t.task_id, t.server, t.time, t.command,
+                t.identifier, str(t.task_id), t.server, t.time, t.command,
                 row_types[t.row_type],
             ]
             if args['--verbose']:
                 # parse task args and append to task_info list.
-                targs = '\t'.join(['{0}={1}'.format(k, v) for (k, v) in t.args.items()])
+                _targs = list()
+                for k in t.args:
+                    if six.PY2:
+                        v = t.args[k].decode('utf-8')
+                        k = k.decode('utf-8')
+                    else:
+                        v = t.args[k]
+                    _targs.append(u'{0}={1}'.format(k, v))
+                targs = '\t'.join(_targs)
                 task_info += [t.submitter, targs]
-            print('\t'.join([str(x) for x in task_info]))
+            print('\t'.join(task_info))
     except NameError as exc:
         print('error: {0}'.format(exc.message), file=sys.stderr)
         sys.exit(1)

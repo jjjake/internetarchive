@@ -54,6 +54,7 @@ except ImportError:
     import json
 import io
 from collections import defaultdict
+from copy import copy
 
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Or, And, Use
@@ -90,25 +91,34 @@ def modify_metadata(item, metadata, args):
 def remove_metadata(item, metadata, args):
     md = defaultdict(list)
     for key in metadata:
-        if not item.metadata.get(key):
+        src_md = copy(item.metadata.get(key))
+        if not src_md:
             print('{0}/metadata/{1} does not exist, skipping.'.format(
                 item.identifier, key), file=sys.stderr)
             continue
-        elif not isinstance(item.metadata[key], list):
-            if key == 'collection':
+        elif not isinstance(src_md, list):
+            if key == 'subject':
+                src_md = src_md.split(';')
+            elif key == 'collection':
                 print('{} - error: all collections would be removed, '
                       'not submitting task.'.format(item.identifier), file=sys.stderr)
                 sys.exit(1)
-            if item.metadata[key] == metadata[key]:
-                md[key] = 'REMOVE_TAG'
-            continue
 
-        for x in item.metadata[key]:
+            if src_md == metadata[key]:
+                md[key] = 'REMOVE_TAG'
+                continue
+
+        for x in src_md:
             if x not in metadata[key]:
                 md[key].append(x)
 
-        if len(md[key]) == len(item.metadata[key]):
+        if len(md[key]) == len(src_md):
             del md[key]
+
+        # Workaround to avoid empty lists or strings as values.
+        # TODO: Shouldn't the metadata api handle this?
+        if len(src_md) == 1 and metadata[key] in src_md:
+            md[key] = 'REMOVE_TAG'
 
     if md.get('collection') == []:
         print('{} - error: all collections would be removed, not submitting task.'.format(

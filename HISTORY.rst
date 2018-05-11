@@ -14,6 +14,12 @@ Release History
 - Added ``--remove`` option to ``ia metadata`` for removing values from single or mutli-field metadata elements.
 - Added support for appending a metadata value to an existing metadata element (as a new entry, not simply appending to a string).
 
+**Bugfixes**
+
+- Fixed bug in upload where StringIO objects were not uploadable.
+- Fixed encoding issues that were causing some ``ia tasks`` commands to fail.
+- Fixed bug where keep-old-version wasn't working in ``ia move``.
+
 1.7.7 (2018-03-05)
 ++++++++++++++++++
 

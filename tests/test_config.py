@@ -28,9 +28,13 @@ def test_get_auth_config():
             "s3secretkey": "test-secret",
             "s3accesskey": "test-access"
         },
+        "screenname": "foo",
         "success": 1
     }"""
     responses.add(responses.GET, 'https://archive.org/account/s3.php',
+                  body=test_body, adding_headers=headers,
+                  content_type='application/json')
+    responses.add(responses.GET, 'https://s3.us.archive.org',
                   body=test_body, adding_headers=headers,
                   content_type='application/json')
 

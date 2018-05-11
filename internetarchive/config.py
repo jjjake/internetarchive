@@ -34,6 +34,7 @@ import requests
 
 from internetarchive.exceptions import AuthenticationError
 from internetarchive.utils import deep_update
+from internetarchive import auth
 
 
 def get_auth_config(username, password):
@@ -48,7 +49,6 @@ def get_auth_config(username, password):
         # Attache logged-in-* cookies to Session.
         u = 'https://archive.org/account/login.php'
         r = s.post(u, data=payload, cookies={'test-cookie': '1'})
-
         if 'logged-in-sig' not in s.cookies:
             raise AuthenticationError('Authentication failed. '
                                       'Please check your credentials and try again.')
@@ -58,19 +58,33 @@ def get_auth_config(username, password):
         p = dict(output_json=1)
         r = s.get(u, params=p)
         j = r.json()
-
+        access_key = j['key']['s3accesskey']
+        secret_key = j['key']['s3secretkey']
         if not j or not j.get('key'):
-            raise requests.exceptions.HTTPError(
-                'Authorization failed. Please check your credentials and try again.')
+            raise AuthenticationError('Authentication failed. '
+                                      'Please check your credentials and try again.')
+
+        # Get user info (screenname).
+        u = 'https://s3.us.archive.org'
+        p = dict(check_auth=1)
+        r = requests.get(u, params=p, auth=auth.S3Auth(access_key, secret_key))
+        r.raise_for_status()
+        j = r.json()
+        if j.get('error'):
+            raise AuthenticationError(j.get('error'))
+        user_info = j['screenname']
 
         auth_config = {
             's3': {
-                'access': j['key']['s3accesskey'],
-                'secret': j['key']['s3secretkey'],
+                'access': access_key,
+                'secret': secret_key,
             },
             'cookies': {
                 'logged-in-user': s.cookies['logged-in-user'],
                 'logged-in-sig': s.cookies['logged-in-sig'],
+            },
+            'general': {
+                'screenname': user_info,
             }
         }
 
@@ -91,6 +105,10 @@ def write_config_file(username, password, config_file=None):
     cookies = auth_config.get('cookies', {})
     config.set('cookies', 'logged-in-user', cookies.get('logged-in-user'))
     config.set('cookies', 'logged-in-sig', cookies.get('logged-in-sig'))
+
+    # General.
+    screenname = auth_config['general']['screenname']
+    config.set('general', 'screenname', screenname)
 
     # Write config file.
     with open(config_file, 'w') as fh:
@@ -119,10 +137,16 @@ def parse_config_file(config_file=None):
         config.add_section('cookies')
         config.set('cookies', 'logged-in-user', None)
         config.set('cookies', 'logged-in-sig', None)
+
     if config.has_section('general'):
         for k, v in config.items('general'):
             if k in ['secure']:
                 config.set('general', k, config.getboolean('general', k))
+        if not config.get('general', 'screenname'):
+            config.set('general', 'screenname', None)
+    else:
+        config.add_section('general')
+        config.set('general', 'screenname', None)
 
     return (config_file, config)
 

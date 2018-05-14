@@ -32,10 +32,10 @@ import logging
 import socket
 
 import six.moves.urllib as urllib
-from requests.exceptions import HTTPError, RetryError, ConnectTimeout, \
-    ConnectionError, ReadTimeout
+import pycurl
 
-from internetarchive import iarequest, utils
+#from internetarchive import iarequest, utils
+from internetarchive import utils
 
 
 log = logging.getLogger(__name__)
@@ -185,7 +185,8 @@ class File(BaseFile):
         else:
             silent = False
 
-        self.item.session.mount_http_adapter(max_retries=retries)
+        # TODO: add retries.
+        #self.item.session.mount_http_adapter(max_retries=retries)
         file_path = self.name if not file_path else file_path
 
         if destdir:
@@ -240,22 +241,12 @@ class File(BaseFile):
             os.makedirs(parent_dir)
 
         try:
-            response = self.item.session.get(self.url, stream=True, timeout=12)
-            response.raise_for_status()
+            response = self.item.session.get(self.url, output_file=file_path, connect_timeout=12)
+
             if return_responses:
                 return response
 
-            chunk_size = 2048
-            if not fileobj:
-                fileobj = open(file_path.encode('utf-8'), 'wb')
-
-            with fileobj:
-                for chunk in response.iter_content(chunk_size=chunk_size):
-                    if chunk:
-                        fileobj.write(chunk)
-                        fileobj.flush()
-        except (RetryError, HTTPError, ConnectTimeout,
-                ConnectionError, socket.error, ReadTimeout) as exc:
+        except pycurl.error as exc:
             msg = ('error downloading file {0}, '
                    'exception raised: {1}'.format(file_path, exc))
             log.error(msg)
@@ -330,9 +321,10 @@ class File(BaseFile):
         url = '{0}//s3.us.archive.org/{1}/{2}'.format(self.item.session.protocol,
                                                       self.identifier,
                                                       self.name)
-        self.item.session.mount_http_adapter(max_retries=max_retries,
-                                             status_forcelist=[503],
-                                             host='s3.us.archive.org')
+        # TODO: add retries.
+        #self.item.session.mount_http_adapter(max_retries=max_retries,
+        #                                     status_forcelist=[503],
+        #                                     host='s3.us.archive.org')
         request = iarequest.S3Request(
             method='DELETE',
             url=url,
@@ -353,8 +345,7 @@ class File(BaseFile):
             try:
                 resp = self.item.session.send(prepared_request)
                 resp.raise_for_status()
-            except (RetryError, HTTPError, ConnectTimeout,
-                    ConnectionError, socket.error, ReadTimeout) as exc:
+            except pycurl.error as exc:
                 error_msg = 'Error deleting {0}, {1}'.format(url, exc)
                 log.error(error_msg)
                 raise

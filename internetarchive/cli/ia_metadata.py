@@ -75,16 +75,16 @@ def modify_metadata(item, metadata, args):
     append_list = True if args['--append-list'] else False
     r = item.modify_metadata(metadata, target=args['--target'], append=append,
                              priority=args['--priority'], append_list=append_list)
-    if not r.json()['success']:
-        error_msg = r.json()['error']
-        if 'no changes' in r.content.decode('utf-8'):
+    if not r.json['success']:
+        error_msg = r.json['error']
+        if 'no changes' in r.text:
             etype = 'warning'
         else:
             etype = 'error'
         print('{0} - {1} ({2}): {3}'.format(
             item.identifier, etype, r.status_code, error_msg), file=sys.stderr)
         return r
-    print('{0} - success: {1}'.format(item.identifier, r.json()['log']))
+    print('{0} - success: {1}'.format(item.identifier, r.json['log']))
     return r
 
 
@@ -207,7 +207,7 @@ def main(argv, session):
                             continue
                         # We still want to exit 0 if the non-200 is a
                         # "no changes to xml" error.
-                        elif 'no changes' in r.content.decode('utf-8'):
+                        elif 'no changes' in r.text:
                             continue
                         else:
                             sys.exit(1)

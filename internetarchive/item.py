@@ -41,15 +41,14 @@ from copy import deepcopy
 
 from six import string_types
 from six.moves import urllib
-from requests import Response
 from clint.textui import progress
-from requests.exceptions import HTTPError
 
 from internetarchive.utils import IdentifierListAsItems, get_md5, chunk_generator, \
     IterableToFileAdapter, iter_directory, recursive_file_count, norm_filepath
 from internetarchive.files import File
-from internetarchive.iarequest import MetadataRequest, S3Request
-from internetarchive.utils import get_s3_xml_text, get_file_size, is_dir
+from internetarchive.models import ArchiveRequest
+from internetarchive.utils import get_s3_xml_text, get_file_size, is_dir, \
+    prepare_md_body, prepare_metadata, prepare_s3_headers
 
 log = getLogger(__name__)
 
@@ -212,7 +211,7 @@ class Item(BaseItem):
 
     def refresh(self, item_metadata=None, **kwargs):
         if not item_metadata:
-            item_metadata = self.session.get_metadata(self.identifier, **kwargs)
+            item_metadata = self.session.get_item(self.identifier, **kwargs).item_metadata
         self.load(item_metadata)
 
     def get_file(self, file_name, file_metadata=None):
@@ -483,24 +482,11 @@ class Item(BaseItem):
         url = '{protocol}//archive.org/metadata/{identifier}'.format(
             protocol=self.session.protocol,
             identifier=self.identifier)
-        request = MetadataRequest(
-            method='POST',
-            url=url,
-            metadata=metadata,
-            headers=self.session.headers,
-            source_metadata=self.item_metadata.get(target.split('/')[0], {}),
-            target=target,
-            priority=priority,
-            access_key=access_key,
-            secret_key=secret_key,
-            append=append,
-            append_list=append_list)
-        # Must use Session.prepare_request to make sure session settings
-        # are used on request!
-        prepared_request = request.prepare()
-        if debug:
-            return prepared_request
-        resp = self.session.send(prepared_request, **request_kwargs)
+        src_md = self.item_metadata.get(target.split('/')[0], dict())
+        body = prepare_md_body(metadata, src_md, target, priority, append, append_list)
+        body['access'] = access_key
+        body['secret'] = secret_key
+        resp = self.session.post(url=url, data=body)
         # Re-initialize the Item object with the updated metadata.
         self.refresh()
         return resp
@@ -636,47 +622,15 @@ class Item(BaseItem):
                 # Return an empty response object if checksums match.
                 # TODO: Is there a better way to handle this?
                 body.close()
-                return Response()
+                # TODO: what should we return?
+                #return requests.Response()
+                return
 
         # require the Content-MD5 header when delete is True.
         if verify or delete:
             if not md5_sum:
                 md5_sum = get_md5(body)
             headers['Content-MD5'] = md5_sum
-
-        def _build_request():
-            body.seek(0, os.SEEK_SET)
-            if verbose:
-                try:
-                    # hack to raise exception so we get some output for
-                    # empty files.
-                    if size == 0:
-                        raise Exception
-
-                    chunk_size = 1048576
-                    expected_size = size / chunk_size + 1
-                    chunks = chunk_generator(body, chunk_size)
-                    progress_generator = progress.bar(
-                        chunks,
-                        expected_size=expected_size,
-                        label=' uploading {f}: '.format(f=key))
-                    data = IterableToFileAdapter(progress_generator, size)
-                except:
-                    print(' uploading {f}'.format(f=key))
-                    data = body
-            else:
-                data = body
-
-            headers.update(self.session.headers)
-            request = S3Request(method='PUT',
-                                url=url,
-                                headers=headers,
-                                data=data,
-                                metadata=metadata,
-                                access_key=access_key,
-                                secret_key=secret_key,
-                                queue_derive=queue_derive)
-            return request
 
         if debug:
             prepared_request = self.session.prepare_request(_build_request())
@@ -696,18 +650,13 @@ class Item(BaseItem):
                                 print(' warning: {0}'.format(error_msg), file=sys.stderr)
                             retries -= 1
                             continue
-                    request = _build_request()
-                    prepared_request = request.prepare()
-
-                    # chunked transfer-encoding is NOT supported by IA-S3.
-                    # It should NEVER be set. Requests adds it in certain
-                    # scenarios (e.g. if content-length is 0). Stop it.
-                    if prepared_request.headers.get('transfer-encoding') == 'chunked':
-                        del prepared_request.headers['transfer-encoding']
-
-                    response = self.session.send(prepared_request,
-                                                 stream=True,
-                                                 **request_kwargs)
+                    body.seek(0, os.SEEK_SET)
+                    headers.update(self.session.headers)
+                    headers['Content-Length'] = int(size)
+                    prepared_headers = prepare_s3_headers(headers, metadata, queue_derive)
+                    response = self.session.put(url=url,
+                                                headers=prepared_headers,
+                                                input_file_obj=body)
                     if (response.status_code == 503) and (retries > 0):
                         log.info(error_msg)
                         if verbose:
@@ -719,7 +668,6 @@ class Item(BaseItem):
                         if response.status_code == 503:
                             log.info('maximum retries exceeded, upload failed.')
                         break
-                response.raise_for_status()
                 log.info(u'uploaded {f} to {u}'.format(f=key, u=url))
                 if delete and response.status_code == 200:
                     log.info(
@@ -730,7 +678,7 @@ class Item(BaseItem):
                     os.remove(filename)
                 body.close()
                 return response
-            except HTTPError as exc:
+            except pycurl.error as exc:
                 body.close()
                 msg = get_s3_xml_text(exc.response.content)
                 error_msg = (' error uploading {0} to {1}, '
@@ -738,7 +686,7 @@ class Item(BaseItem):
                 log.error(error_msg)
                 if verbose:
                     print(' error uploading {0}: {1}'.format(key, msg), file=sys.stderr)
-                # Raise HTTPError with error message.
+                # Raise pycurl.error with error message.
                 raise type(exc)(error_msg, response=exc.response, request=exc.request)
 
     def upload(self, files,

@@ -22,11 +22,12 @@
 
 usage:
     ia [--help | --version]
-    ia [--config-file FILE] [--log | --debug] [--insecure] <command> [<args>]...
+    ia [--verbose] [--config-file FILE] [--log | --debug] [--insecure] <command> [<args>]...
 
 options:
     -h, --help
     -v, --version
+    -V, --verbose           Turn pycurl verbosity on [default: False].
     -c, --config-file FILE  Use FILE as config file.
     -l, --log               Turn on logging [default: False].
     -d, --debug             Turn on verbose logging [default: False].
@@ -152,7 +153,8 @@ def main():
 
     session = get_session(config_file=args['--config-file'],
                           config=config,
-                          debug=args['--debug'])
+                          debug=args['--debug'],
+                          verbose=args['--verbose'])
 
     ia_module = load_ia_module(cmd)
     try:

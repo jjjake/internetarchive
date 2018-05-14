@@ -154,7 +154,7 @@ class Catalog(object):
     def _get_tasks(self):
         r = self.session.get(self.url, params=self.params, **self.request_kwargs)
         # Convert JSONP to JSON (then parse the JSON).
-        json_str = r.body[(r.body.index("(") + 1):r.body.rindex(")")]
+        json_str = r.text[(r.text.index("(") + 1):r.text.rindex(")")]
         try:
             return [CatalogTask(t, self) for t in json.loads(json_str)]
         except ValueError:

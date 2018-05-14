@@ -30,70 +30,12 @@ import os
 from collections import defaultdict
 from six.moves import configparser
 
-import requests
-
-from internetarchive.exceptions import AuthenticationError
 from internetarchive.utils import deep_update
 from internetarchive import auth
 
 
-def get_auth_config(username, password):
-    payload = dict(
-        username=username,
-        password=password,
-        remember='CHECKED',
-        action='login',
-    )
-
-    with requests.Session() as s:
-        # Attache logged-in-* cookies to Session.
-        u = 'https://archive.org/account/login.php'
-        r = s.post(u, data=payload, cookies={'test-cookie': '1'})
-        if 'logged-in-sig' not in s.cookies:
-            raise AuthenticationError('Authentication failed. '
-                                      'Please check your credentials and try again.')
-
-        # Get S3 keys.
-        u = 'https://archive.org/account/s3.php'
-        p = dict(output_json=1)
-        r = s.get(u, params=p)
-        j = r.json()
-        access_key = j['key']['s3accesskey']
-        secret_key = j['key']['s3secretkey']
-        if not j or not j.get('key'):
-            raise AuthenticationError('Authentication failed. '
-                                      'Please check your credentials and try again.')
-
-        # Get user info (screenname).
-        u = 'https://s3.us.archive.org'
-        p = dict(check_auth=1)
-        r = requests.get(u, params=p, auth=auth.S3Auth(access_key, secret_key))
-        r.raise_for_status()
-        j = r.json()
-        if j.get('error'):
-            raise AuthenticationError(j.get('error'))
-        user_info = j['screenname']
-
-        auth_config = {
-            's3': {
-                'access': access_key,
-                'secret': secret_key,
-            },
-            'cookies': {
-                'logged-in-user': s.cookies['logged-in-user'],
-                'logged-in-sig': s.cookies['logged-in-sig'],
-            },
-            'general': {
-                'screenname': user_info,
-            }
-        }
-
-    return auth_config
-
-
-def write_config_file(username, password, config_file=None):
+def write_config_file(auth_config, config_file=None):
     config_file, config = parse_config_file(config_file)
-    auth_config = get_auth_config(username, password)
 
     # S3 Keys.
     access = auth_config.get('s3', {}).get('access')

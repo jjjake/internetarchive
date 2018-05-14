@@ -33,7 +33,6 @@ from getpass import getpass
 
 from internetarchive import session
 from internetarchive import config as config_module
-from internetarchive import auth
 from internetarchive.exceptions import AuthenticationError
 
 
@@ -74,8 +73,7 @@ def get_item(identifier,
              config=None,
              config_file=None,
              archive_session=None,
-             debug=None,
-             http_adapter_kwargs=None,
+             verbose=None,
              request_kwargs=None):
     """Get an :class:`Item` object.
 
@@ -92,13 +90,12 @@ def get_item(identifier,
     :param archive_session: (optional) An :class:`ArchiveSession` object can be provided
                             via the ``archive_session`` parameter.
 
-    :type http_adapter_kwargs: dict
-    :param http_adapter_kwargs: (optional) Keyword arguments that
-                                :py:class:`requests.adapters.HTTPAdapter` takes.
+    :type verbose: bool
+    :param verbose: (optional) Turn on pycurl verbosity.
 
     :type request_kwargs: dict
     :param request_kwargs: (optional) Keyword arguments that
-                           :py:class:`requests.Request` takes.
+                           :py:class:`internetarchive.models.ArchiveRequest` takes.
 
     Usage:
         >>> from internetarchive import get_item
@@ -107,7 +104,7 @@ def get_item(identifier,
         121084
     """
     if not archive_session:
-        archive_session = get_session(config, config_file, debug, http_adapter_kwargs)
+        archive_session = get_session(config, config_file, verbose=verbose)
     return archive_session.get_item(identifier, request_kwargs=request_kwargs)
 
 
@@ -572,7 +569,9 @@ def configure(username=None, password=None, config_file=None):
     """
     username = input('Email address: ') if not username else username
     password = getpass('Password: ') if not password else password
-    config_file_path = config_module.write_config_file(username, password, config_file)
+    s = get_session()
+    auth_config = s.get_auth_config(username, password)
+    config_file_path = config_module.write_config_file(auth_config, config_file)
     return config_file_path
 
 

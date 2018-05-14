@@ -24,11 +24,17 @@ internetarchive.models
 :copyright: (C) 2012-2018 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+import os
 import json
 import pycurl
 from six import BytesIO
 import logging
 from time import sleep
+import sys
+
+from six.moves import urllib_parse
+import six
+import pycurl
 
 
 logger = logging.getLogger(__name__)
@@ -36,26 +42,57 @@ logger = logging.getLogger(__name__)
 
 class ArchiveRequest(object):
 
-    def __init__(self, method, url,
-                 headers=None,
-                 verbose=False,
-                 output_file=None):
-        self.c = pycurl.Curl()
+    def __init__(self, curl_instance=None, method=None, url=None, headers=None,
+            input_file_obj=None, data=None, params=None, metadata=None, source_metadata=None,
+            target=None, priority=None, append=None, append_list=None, verbose=False,
+            output_file=None, access_key=None, secret_key=None, timeout=None,
+            connect_timeout=None):
+        headers = headers if headers else dict()
+        self.params = params if params else dict()
+        self.c = curl_instance if curl_instance else pycurl.Curl()
         self.headers = headers if headers else dict()
+        self.data = data if data else dict()
+        self.body = None
+        self.access_key = access_key
+        self.secret_key = secret_key
+
         if not output_file:
             self.output_file = None
             self._buffer = BytesIO()
             self.c.setopt(self.c.WRITEDATA, self._buffer)
         else:
             self._buffer = None
-            self.output_file = output_file
-            self.c.setopt(pycurl.WRITEDATA, self.output_file)
+            if os.path.exists(output_file):
+                self.output_file = open(output_file, 'ab')
+                self.c.setopt(self.c.RESUME_FROM, os.path.getsize(output_file))
+            else:
+                self.output_file = open(output_file, 'wb')
+            self.c.setopt(self.c.WRITEDATA, self.output_file)
+            self.c.setopt(self.c.NOPROGRESS, False)
 
-        self.c.setopt(self.c.URL, url)
+        if timeout:
+            self.c.setopt(self.c.TIMEOUT, int(timeout))
+        if connect_timeout:
+            self.c.setopt(self.c.CONNECTTIMEOUT, int(connect_timeout))
+
+        if self.params:
+            self.url = '{0}?{1}'.format(url, urllib_parse.urlencode(self.params))
+        else:
+            self.url = url
+        self.c.setopt(self.c.URL, self.url)
         self.c.setopt(self.c.FOLLOWLOCATION, 1)
-        self.prepare_headers()
 
-        #self.headers.update(headers)
+        self.prepare_headers()
+        self.headers.update(headers)
+
+        if method == 'POST':
+            self.prepare_body()
+
+        if method == 'PUT':
+            self.c.setopt(self.c.READFUNCTION, input_file_obj.read)
+            self.c.setopt(self.c.CUSTOMREQUEST, "PUT")
+            self.c.setopt(self.c.POST, 1)
+            self.c.setopt(self.c.NOPROGRESS, False)
 
         if verbose:
             self.c.setopt(self.c.VERBOSE, True)
@@ -67,33 +104,9 @@ class ArchiveRequest(object):
             prepared_headers.append(h)
         self.c.setopt(pycurl.HTTPHEADER, prepared_headers)
 
-
-    def send(self, retries=None, status_forcelist=None):
-        if not status_forcelist:
-            status_forcelist = [500, 501, 502, 503, 504]
-        retries = 3 if retries is None else retries
-
-        tries = 1
-        backoff=2
-        while True:
-            sleep_time = (tries*backoff)
-            self.c.perform()
-            status_code = self.c.getinfo(self.c.RESPONSE_CODE)
-
-            if status_code == 200:
-                break
-            elif status_code in status_forcelist:
-                if tries > retries:
-                    break
-                logger.warning('Retrying')
-                sleep(sleep_time)
-                pass
-            else:
-                break
-
-            tries += 1
-
-        return ArchiveResponse(self)
+    def prepare_body(self):
+        self.body = urllib_parse.urlencode(self.data)
+        self.c.setopt(pycurl.POSTFIELDS, self.body)
 
 
 class ArchiveResponse(object):
@@ -101,14 +114,30 @@ class ArchiveResponse(object):
     def __init__(self, request):
         self.c = request.c
         self._buffer = request._buffer
-        self.status_code = self.c.getinfo(self.c.RESPONSE_CODE)
+        self.headers = dict()
+        self.status_code = None
+        self.request = request
 
+        self._body = None
+        self._text = None
         self._json = None
-        if not request.output_file:
-            self.body = self._buffer.getvalue().decode('utf-8')
 
     def __repr__(self):
         return r'<ArchiveResponse [{}]>'.format(self.status_code)
+
+    @property
+    def body(self):
+        if not self._body:
+            if not self.request.output_file:
+                self._body = self._buffer.getvalue()
+        return self._body
+
+    @property
+    def text(self):
+        if not self._text:
+            if not self.request.output_file:
+                self._text = self._buffer.getvalue().decode('utf-8')
+        return self._text
 
     @property
     def json(self):
@@ -121,3 +150,41 @@ class ArchiveResponse(object):
 
     def close(self):
         self.c.close()
+
+    def header_function(self, header_line):
+        # HTTP standard specifies that headers are encoded in iso-8859-1.
+        # On Python 2, decoding step can be skipped.
+        # On Python 3, decoding step is required.
+        if six.PY2:
+            header_line = header_line
+        else:
+            header_line = header_line.decode('iso-8859-1')
+
+        # Header lines include the first status line (HTTP/1.x ...).
+        # We are going to ignore all lines that don't have a colon in them.
+        # This will botch headers that are split on multiple lines...
+        if ':' not in header_line:
+            return
+
+        # Break the header line into header name and value.
+        name, value = header_line.split(':', 1)
+
+        # Remove whitespace that may be present.
+        # Header lines include the trailing newline, and there may be whitespace
+        # around the colon.
+        name = name.strip()
+        value = value.strip()
+
+        # Header names are case insensitive.
+        # Lowercase name here.
+        name = name.lower()
+
+        # Now we can actually record the header name and value.
+        # Note: this only works when headers are not duplicated, see below.
+        if name in self.headers:
+            if isinstance(self.headers[name], list):
+                self.headers[name].append(value)
+            else:
+                self.headers[name] = [self.headers[name], value]
+        else:
+            self.headers[name] = value

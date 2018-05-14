@@ -31,13 +31,9 @@ import logging
 import locale
 import sys
 import platform
+from copy import copy
 from time import sleep
-try:
-    import ujson as json
-except ImportError:
-    import json
 
-from six import BytesIO
 from six.moves import urllib_parse
 import pycurl
 
@@ -46,6 +42,8 @@ from internetarchive.item import Item, Collection
 from internetarchive.catalog import Catalog
 from internetarchive import __version__
 from internetarchive.models import ArchiveRequest, ArchiveResponse
+from internetarchive.search import Search
+from internetarchive.exceptions import AuthenticationError
 
 
 logger = logging.getLogger(__name__)
@@ -77,7 +75,8 @@ class ArchiveSession(object):
     def __init__(self,
                  config=None,
                  config_file=None,
-                 debug=None):
+                 headers=None,
+                 verbose=None):
         """Initialize :class:`ArchiveSession <ArchiveSession>` object with config.
 
         :type config: dict
@@ -88,8 +87,16 @@ class ArchiveSession(object):
         :param config_file: (optional) Path to config file used for initializing the
                             :class:`ArchiveSession <ArchiveSession>` object.
 
+        :type headers: dict
+        :param headers: (optional) HTTP headers to add to every request.
+
+        :type verbose: bool
+        :param verbose: (optional) Toggle pycurl verbosity on or off.
+
         :returns: :class:`ArchiveSession` object.
         """
+        headers = dict() if not headers else headers
+
         self.config = get_config(config, config_file)
         self.config_file = config_file
         self.cookies = self.config.get('cookies', {})
@@ -97,7 +104,14 @@ class ArchiveSession(object):
         self.protocol = 'https:' if self.secure else 'http:'
         self.access_key = self.config.get('s3', {}).get('access')
         self.secret_key = self.config.get('s3', {}).get('secret')
+        self.verbose = verbose
+
         self.headers = self._default_headers()
+        self.headers.update(headers)
+
+        self.curl_instance = pycurl.Curl()
+        self.curl_instance.setopt(self.curl_instance.USERAGENT,
+                                  self._get_user_agent_string())
 
         logging_config = self.config.get('logging', {})
         if logging_config.get('level'):
@@ -116,28 +130,100 @@ class ArchiveSession(object):
             __version__, uname[0], uname[-1], lang, self.access_key, py_version)
 
     def _default_headers(self):
-        cookie_header = ('logged-in-user={logged-in-user}; '
-                         'logged-in-sig={logged-in-sig}').format(**self.cookies)
         h = {
                 'Authorization': 'LOW {0}:{1}'.format(self.access_key, self.secret_key),
-                'Cookie': cookie_header,
                 'User-Agent': self._get_user_agent_string(),
         }
         return h
 
     def _request(self, method, url,
-                 params=None, data=None, headers=None, output_file=None, retries=None):
+                 params=None, data=None, headers=None, cookies=None, output_file=None,
+                 retries=None, timeout=None, connect_timeout=None, input_file_obj=None):
+        headers = headers if headers else dict()
+        data = data if data else dict()
+        _headers = copy(self.headers)
+        _headers.update(headers)
+
+        cookies = {'test-cookie': '1'}
+        self.prepare_cookies(cookies)
+
         req = ArchiveRequest(
+                curl_instance=self.curl_instance,
                 method=method.upper(),
                 url=url,
-                headers=headers,
+                data=data,
+                params=params,
+                headers=_headers,
                 output_file=output_file,
+                input_file_obj=input_file_obj,
+                access_key=self.access_key,
+                secret_key=self.secret_key,
+                verbose=self.verbose,
+                timeout=timeout,
+                connect_timeout=connect_timeout,
         )
-        resp = req.send(retries=retries)
-        return resp
 
-    def get(self, url, **kwargs):
-        return self._request('GET', url, **kwargs)
+        r = self.send(req, retries=retries)
+        return r
+
+    def prepare_cookies(self, cookies):
+        cookie_str = ('logged-in-user={logged-in-user};'
+                      'logged-in-sig={logged-in-sig};').format(**self.cookies)
+        for k in cookies:
+            cookie_str += '{0}={1};'.format(k, cookies[k])
+        cookie_str = cookie_str.strip(';')
+        self.curl_instance.setopt(self.curl_instance.COOKIE, cookie_str)
+
+    def send(self, request, retries=None, status_forcelist=None):
+        if not status_forcelist:
+            status_forcelist = [500, 501, 502, 503, 504]
+        retries = 3 if retries is None else retries
+
+        response = ArchiveResponse(request)
+        self.curl_instance.setopt(self.curl_instance.HEADERFUNCTION,
+                                  response.header_function)
+
+        tries = 0
+        backoff = 2
+        while True:
+            tries += 1
+            if tries > retries:
+                break
+
+            sleep_time = (tries*backoff)
+            try:
+                self.curl_instance.perform()
+                status_code = self.curl_instance.getinfo(self.curl_instance.RESPONSE_CODE)
+                response.status_code = status_code
+                break
+            except pycurl.error as exc:
+                logger.error(exc)
+                if tries < retries:
+                    # TODO: improve retry msg.
+                    logger.warning('Retrying')
+                    continue
+                else:
+                    exit_code, msg = exc.args
+                    sys.exit(exit_code)
+
+            if status_code in status_forcelist:
+                # TODO: improve retry msg.
+                logger.warning('Retrying')
+                sleep(sleep_time)
+                continue
+
+        self.curl_instance.reset() # Reset curl instance.
+
+        return response
+
+    def get(self, url, **request_kwargs):
+        return self._request('GET', url, **request_kwargs)
+
+    def post(self, url, **request_kwargs):
+        return self._request('POST', url, **request_kwargs)
+
+    def put(self, url, **request_kwargs):
+        return self._request('PUT', url, **request_kwargs)
 
     def set_file_logger(self, log_level, path, logger_name='internetarchive'):
         """Convenience function to quickly configure any level of
@@ -175,7 +261,7 @@ class ArchiveSession(object):
 
         _log.addHandler(fh)
 
-    def get_item(self, identifier):
+    def get_item(self, identifier, **request_kwargs):
         """A method for creating :class:`internetarchive.Item <Item>` and
         :class:`internetarchive.Collection <Collection>` objects.
 
@@ -183,7 +269,7 @@ class ArchiveSession(object):
         :param identifier: A globally unique Archive.org identifier.
         """
         u = '{0}//archive.org/metadata/{1}'.format(self.protocol, identifier)
-        r = self.get(u)
+        r = self.get(u, **request_kwargs)
         item_metadata = r.json
         mediatype = item_metadata.get('metadata', {}).get('mediatype')
         try:
@@ -193,34 +279,34 @@ class ArchiveSession(object):
         return item_class(self, identifier, item_metadata)
 
     def search_items(self, query,
-                      fields=None,
-                      sorts=None,
-                      params=None,
-                      max_retries=None):
-         """Search for items on Archive.org.
+                     fields=None,
+                     sorts=None,
+                     params=None,
+                     max_retries=None,
+                     timeout=None):
+        """Search for items on Archive.org.
 
-         :type query: str
-         :param query: The Archive.org search query to yield results for. Refer to
-                       https://archive.org/advancedsearch.php#raw for help formatting your
-                       query.
+        :type query: str
+        :param query: The Archive.org search query to yield results for. Refer to
+                      https://archive.org/advancedsearch.php#raw for help formatting your
+                      query.
 
-         :type fields: bool
-         :param fields: (optional) The metadata fields to return in the search results.
+        :type fields: bool
+        :param fields: (optional) The metadata fields to return in the search results.
 
-         :type params: dict
-         :param params: (optional) The URL parameters to send with each request sent to the
-                        Archive.org Advancedsearch Api.
+        :type params: dict
+        :param params: (optional) The URL parameters to send with each request sent to the
+                       Archive.org Advancedsearch Api.
 
-         :returns: A :class:`Search` object, yielding search results.
-         """
-         # TODO: Make Search pycurl.
-         request_kwargs = {} if not request_kwargs else request_kwargs
-         return Search(self, query,
-                       fields=fields,
-                       sorts=sorts,
-                       params=params,
-                       request_kwargs=request_kwargs,
-                       max_retries=max_retries)
+        :returns: A :class:`Search` object, yielding search results.
+        """
+        # TODO: Make Search pycurl.
+        return Search(self, query,
+                      fields=fields,
+                      sorts=sorts,
+                      params=params,
+                      max_retries=max_retries,
+                      timeout=timeout)
 
     def get_tasks(self,
                   identifier=None,
@@ -259,7 +345,7 @@ class ArchiveSession(object):
 
         :returns: A set of :class:`CatalogTask` objects.
         """
-         # TODO: Make Catalog pycurl.
+        # TODO: Make Catalog pycurl.
         _catalog = Catalog(self,
                            identifier=identifier,
                            task_ids=task_ids,
@@ -286,3 +372,46 @@ class ArchiveSession(object):
         except Exception as exc:
             pass
         return True
+
+    def get_auth_config(self, username, password):
+        # logged-in-* cookies.
+        payload = dict(
+            username=username,
+            password=password,
+            remember='CHECKED',
+            action='login',
+            submit='Log in',
+        )
+        url = 'https://archive.org/account/login.php'
+        r = self.post(url, data=payload)
+        cookies = r.headers['set-cookie']
+        if not any(['logged-in-' in x for x in cookies]):
+            raise AuthenticationError('Authentication failed. '
+                                      'Please check your credentials and try again.')
+        auth_config = dict(s3=dict(), cookies=dict())
+        for c in cookies:
+            if 'logged-in' in c:
+                k, v = c.split('=', 1)
+                v = v.split(';')[0]
+                auth_config['cookies'][k] = v
+
+        # S3 Keys.
+        u = 'https://archive.org/account/s3.php'
+        p = dict(output_json=1)
+        r = self.get(u, params=p)
+        j = r.json
+        if not j or not j.get('key'):
+            raise AuthenticationError('Authorization failed. Please check your '
+                                      'credentials and try again.')
+        auth_config['s3']['access'] = j['key']['s3accesskey']
+        auth_config['s3']['secret'] = j['key']['s3secretkey']
+
+        # Screenname.
+        u = 'https://s3.us.archive.org'
+        p = dict(check_auth=1)
+        r = self.get(u, params=p)
+        if r.json.get('error'):
+            raise AuthenticationError(r.json.get('error'))
+        auth_config['general'] = dict(screenname=r.json['screenname'])
+
+        return auth_config

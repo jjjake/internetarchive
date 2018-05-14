@@ -110,7 +110,7 @@ def main(argv, session):
                 print(json.dumps(j))
                 continue
             task_info = [
-                t.identifier, str(t.task_id), t.server, t.time, t.command,
+                t.identifier, str(t.task_id), str(t.server), t.time, t.command,
                 row_types[t.row_type],
             ]
             if args['--verbose']:

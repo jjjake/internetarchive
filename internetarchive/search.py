@@ -34,8 +34,6 @@ from logging import getLogger
 
 import six
 
-from internetarchive.auth import S3Auth
-
 
 log = getLogger(__name__)
 

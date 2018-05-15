@@ -48,10 +48,10 @@ from internetarchive.exceptions import AuthenticationError
 
 logger = logging.getLogger(__name__)
 
-# TODO: delete this block.
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-logger.addHandler(ch)
+## TODO: delete this block.
+#ch = logging.StreamHandler()
+#ch.setLevel(logging.DEBUG)
+#logger.addHandler(ch)
 
 
 class ArchiveSession(object):
@@ -204,7 +204,7 @@ class ArchiveSession(object):
                     continue
                 else:
                     exit_code, msg = exc.args
-                    sys.exit(exit_code)
+                    raise(exc)
 
             if status_code in status_forcelist:
                 # TODO: improve retry msg.

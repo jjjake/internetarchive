@@ -45,7 +45,6 @@ from __future__ import absolute_import, print_function, unicode_literals
 import sys
 import six
 
-import requests.exceptions
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Use, Or, And
 
@@ -136,7 +135,8 @@ def main(argv, session):
                             cascade_delete=args['--cascade'],
                             headers=args['--header'],
                             retries=args['--retries'])
-        except requests.exceptions.RetryError as e:
+        # TODO: don't use bare exception.
+        except Exception as e:
             print(' error: max retries exceeded for {0}'.format(f.name), file=sys.stderr)
             errors = True
             continue

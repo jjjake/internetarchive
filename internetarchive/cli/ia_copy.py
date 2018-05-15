@@ -37,7 +37,7 @@ from schema import Schema, Use, Or, And, SchemaError
 
 import internetarchive as ia
 from internetarchive.cli.argparser import get_args_dict
-from internetarchive.utils import get_s3_xml_text
+from internetarchive.utils import get_s3_xml_text, prepare_md_body
 
 
 def assert_src_file_exists(src_location):
@@ -98,12 +98,9 @@ def main(argv, session, cmd='copy'):
         args['--header']['x-archive-keep-old-version'] = '1'
 
     url = '{}//s3.us.archive.org/{}'.format(session.protocol, dest_path)
-    req = ia.iarequest.S3Request(url=url,
-                                 method='PUT',
-                                 metadata=args['--metadata'],
-                                 headers=args['--header'],
-                                 access_key=session.access_key,
-                                 secret_key=session.secret_key)
+    h = prepare_md_body(args['--metadata'])
+    args['--header'].update(h)
+    req = session.put(url=url, headers=args['--header'])
     p = req.prepare()
     r = session.send(p)
     if r.status_code != 200:

@@ -109,7 +109,7 @@ class Search(object):
         self.params['output'] = 'json'
 
         r = self.session.get(self.search_url, params=self.params, **self.request_kwargs)
-        j = r.json()
+        j = r.json
         for item in j.get('response', {}).get('docs', []):
             yield item
 
@@ -147,7 +147,7 @@ class Search(object):
             r = self.session.post(self.scrape_url,
                                   params=p,
                                   **self.request_kwargs)
-            j = r.json()
+            j = r.json
             self._handle_scrape_error(j)
             self._num_found = j.get('total')
         return self._num_found

@@ -153,7 +153,6 @@ def main():
 
     session = get_session(config_file=args['--config-file'],
                           config=config,
-                          debug=args['--debug'],
                           verbose=args['--verbose'])
 
     ia_module = load_ia_module(cmd)

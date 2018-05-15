@@ -226,6 +226,9 @@ class ArchiveSession(object):
     def put(self, url, **request_kwargs):
         return self._request('PUT', url, **request_kwargs)
 
+    def delete(self, url, **request_kwargs):
+        return self._request('DELETE', url, **request_kwargs)
+
     def set_file_logger(self, log_level, path, logger_name='internetarchive'):
         """Convenience function to quickly configure any level of
         logging to a file.
@@ -301,7 +304,6 @@ class ArchiveSession(object):
 
         :returns: A :class:`Search` object, yielding search results.
         """
-        # TODO: Make Search pycurl.
         return Search(self, query,
                       fields=fields,
                       sorts=sorts,
@@ -346,7 +348,6 @@ class ArchiveSession(object):
 
         :returns: A set of :class:`CatalogTask` objects.
         """
-        # TODO: Make Catalog pycurl.
         _catalog = Catalog(self,
                            identifier=identifier,
                            task_id=task_id,
@@ -359,7 +360,14 @@ class ArchiveSession(object):
             return _catalog.tasks
 
     def s3_is_overloaded(self, identifier=None):
-        # TODO: add docstring.
+        """Check to see if S3 is overloaded.
+
+        :type identifier: str
+        :param identifier: (optional) If provided, check to see if a specific item is
+                           being rate-limited.
+
+        :returns: ``True`` if S3 is overloaded, otherwise ``False``.
+        """
         p = dict(
             check_limit=1,
             accesskey=self.access_key,
@@ -375,6 +383,16 @@ class ArchiveSession(object):
         return True
 
     def get_auth_config(self, username, password):
+        """Get your archive.org credentials given your username and password.
+
+        :type username: str
+        :param username: The email address associated with your archive.org account.
+
+        :type password: str
+        :param password: Your archive.org password.
+
+        :returns: A dict containing your logged-in-* cookies, IA-S3 keys, and screenname.
+        """
         # logged-in-* cookies.
         payload = dict(
             username=username,

@@ -87,9 +87,12 @@ class ArchiveRequest(object):
 
         if method == 'PUT':
             self.c.setopt(self.c.READFUNCTION, input_file_obj.read)
-            self.c.setopt(self.c.CUSTOMREQUEST, "PUT")
+            self.c.setopt(self.c.CUSTOMREQUEST, 'PUT')
             self.c.setopt(self.c.POST, 1)
             self.c.setopt(self.c.NOPROGRESS, False)
+
+        if method == 'DELETE':
+            self.c.setopt(self.c.CUSTOMREQUEST, 'DELETE')
 
         if verbose:
             self.c.setopt(self.c.VERBOSE, True)
@@ -144,6 +147,13 @@ class ArchiveResponse(object):
             except ValueError:
                 return dict()
         return self._json
+
+    @property
+    def ok(self):
+        if self.status_code == 200:
+            return True
+        else:
+            return False
 
     def close(self):
         self.c.close()

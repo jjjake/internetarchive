@@ -46,7 +46,7 @@ from itertools import chain
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Use, Or, And
 import six
-from requests.exceptions import ConnectTimeout
+import pycurl
 
 from internetarchive import search_items
 from internetarchive.cli.argparser import get_args_dict
@@ -102,10 +102,12 @@ def main(argv, session=None):
                 print(j)
     except ValueError as e:
         print('error: {0}'.format(e), file=sys.stderr)
-    except ConnectTimeout as exc:
-        print('error: Request timed out. Increase the --timeout and try again.',
-              file=sys.stderr)
-        sys.exit(1)
+    except pycurl.error as exc:
+        exit_code, msg = exc.args
+        if 'timed out' in msg:
+            msg += ', increase the --timeout and try again'
+        print('error: {}'.format(msg), file=sys.stderr)
+        sys.exit(exit_code)
     except AuthenticationError as exc:
         print('error: {}'.format(exc), file=sys.stderr)
         sys.exit(1)

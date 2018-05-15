@@ -61,7 +61,6 @@ from copy import deepcopy
 
 import six
 from docopt import docopt, printable_usage
-from requests.exceptions import HTTPError
 from schema import Schema, Use, Or, And, SchemaError
 
 from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
@@ -85,7 +84,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
     try:
         response = item.upload(files, **upload_kwargs)
         responses += response
-    except HTTPError as exc:
+    except pycurl.error as exc:
         responses += [exc.response]
     finally:
         # Debug mode.
@@ -110,7 +109,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
                 msg = get_s3_xml_text(responses[-1].text)
             except:
                 msg = responses[-1].text
-            print(' error uploading {0}: {2}'.format(filename, msg), file=sys.stderr)
+            print(' error uploading {0}: {1}'.format(filename, msg), file=sys.stderr)
 
     return responses
 

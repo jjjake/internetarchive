@@ -708,7 +708,7 @@ class Item(BaseItem):
             True
 
         :rtype: list
-        :returns: A list of requests.Response objects.
+        :returns: A list of ArchiveResponse objects.
         """
         queue_derive = True if queue_derive is None else queue_derive
         remote_dir_name = None

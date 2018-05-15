@@ -156,7 +156,6 @@ def modify_metadata(identifier, metadata,
                     priority=None,
                     access_key=None,
                     secret_key=None,
-                    debug=None,
                     request_kwargs=None,
                     **get_item_kwargs):
     """Modify the metadata of an existing item on Archive.org.
@@ -183,14 +182,9 @@ def modify_metadata(identifier, metadata,
     :type secret_key: str
     :param secret_key: (optional) IA-S3 secret_key to use when making the given request.
 
-    :type debug: bool
-    :param debug: (optional) set to True to return a :class:`requests.Request <Request>`
-                  object instead of sending request. Defaults to ``False``.
-
     :param \*\*get_item_kwargs: (optional) Arguments that ``get_item`` takes.
 
-    :returns: :class:`requests.Response` object or :class:`requests.Request` object if
-              debug is ``True``.
+    :returns: :class:`ArchiveResponse` object.
     """
     item = get_item(identifier, **get_item_kwargs)
     return item.modify_metadata(metadata, target, append, priority, access_key,
@@ -264,7 +258,7 @@ def upload(identifier, files,
 
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
 
-    :returns: A list of :py:class:`requests.Response` objects.
+    :returns: A list of :py:class:`ArchiveResponse` objects.
     """
     item = get_item(identifier, **get_item_kwargs)
     return item.upload(files,
@@ -489,7 +483,6 @@ def search_items(query,
                  archive_session=None,
                  config=None,
                  config_file=None,
-                 http_adapter_kwargs=None,
                  request_kwargs=None,
                  max_retries=None,
                  timeout=None):
@@ -513,13 +506,9 @@ def search_items(query,
     :type config_file: str
     :param config_file: (optional) A path to a config file used to configure your session.
 
-    :type http_adapter_kwargs: dict
-    :param http_adapter_kwargs: (optional) Keyword arguments that
-                                :py:class:`requests.adapters.HTTPAdapter` takes.
-
     :type request_kwargs: dict
     :param request_kwargs: (optional) Keyword arguments that
-                           :py:class:`requests.Request` takes.
+                           :py:class:`ArchiveRequest` takes.
 
     :type max_retries: int, object
     :param max_retries: The number of times to retry a failed request.

@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2017 Internet Archive
+# Copyright (C) 2012-2018 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -212,7 +212,8 @@ class ArchiveSession(object):
                 sleep(sleep_time)
                 continue
 
-        self.curl_instance.reset() # Reset curl instance.
+        # Reset curl instance after each request.
+        self.curl_instance.reset()
 
         return response
 

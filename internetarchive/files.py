@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2017 Internet Archive
+# Copyright (C) 2012-2018 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -21,7 +21,7 @@
 internetarchive.files
 ~~~~~~~~~~~~~~~~~~~~~
 
-:copyright: (C) 2012-2017 by Internet Archive.
+:copyright: (C) 2012-2018 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 from __future__ import absolute_import, unicode_literals, print_function
@@ -34,7 +34,6 @@ import socket
 import six.moves.urllib as urllib
 import pycurl
 
-#from internetarchive import iarequest, utils
 from internetarchive import utils
 
 
@@ -185,8 +184,6 @@ class File(BaseFile):
         else:
             silent = False
 
-        # TODO: add retries.
-        #self.item.session.mount_http_adapter(max_retries=retries)
         file_path = self.name if not file_path else file_path
 
         if destdir:
@@ -241,7 +238,9 @@ class File(BaseFile):
             os.makedirs(parent_dir)
 
         try:
-            response = self.item.session.get(self.url, output_file=file_path, connect_timeout=12)
+            response = self.item.session.get(self.url,
+                                             output_file=file_path,
+                                             connect_timeout=12)
 
             if return_responses:
                 return response
@@ -321,10 +320,6 @@ class File(BaseFile):
         url = '{0}//s3.us.archive.org/{1}/{2}'.format(self.item.session.protocol,
                                                       self.identifier,
                                                       self.name)
-        # TODO: add retries.
-        #self.item.session.mount_http_adapter(max_retries=max_retries,
-        #                                     status_forcelist=[503],
-        #                                     host='s3.us.archive.org')
         request = iarequest.S3Request(
             method='DELETE',
             url=url,

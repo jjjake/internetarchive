@@ -26,11 +26,8 @@ internetarchive.models
 """
 import os
 import json
-import pycurl
 from six import BytesIO
 import logging
-from time import sleep
-import sys
 
 from six.moves import urllib_parse
 import six
@@ -43,10 +40,10 @@ logger = logging.getLogger(__name__)
 class ArchiveRequest(object):
 
     def __init__(self, curl_instance=None, method=None, url=None, headers=None,
-            input_file_obj=None, data=None, params=None, metadata=None, source_metadata=None,
-            target=None, priority=None, append=None, append_list=None, verbose=False,
-            output_file=None, access_key=None, secret_key=None, timeout=None,
-            connect_timeout=None):
+                 input_file_obj=None, data=None, params=None, metadata=None,
+                 source_metadata=None, target=None, priority=None, append=None,
+                 append_list=None, verbose=False, output_file=None, access_key=None,
+                 secret_key=None, timeout=None, connect_timeout=None):
         headers = headers if headers else dict()
         self.params = params if params else dict()
         self.c = curl_instance if curl_instance else pycurl.Curl()

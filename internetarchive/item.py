@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2017 Internet Archive
+# Copyright (C) 2012-2018 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -21,7 +21,7 @@
 internetarchive.item
 ~~~~~~~~~~~~~~~~~~~~
 
-:copyright: (C) 2012-2017 by Internet Archive.
+:copyright: (C) 2012-2018 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 from __future__ import absolute_import, unicode_literals, print_function
@@ -41,14 +41,13 @@ from copy import deepcopy
 
 from six import string_types
 from six.moves import urllib
-from clint.textui import progress
+import pycurl
 
-from internetarchive.utils import IdentifierListAsItems, get_md5, chunk_generator, \
-    IterableToFileAdapter, iter_directory, recursive_file_count, norm_filepath
+from internetarchive.utils import IdentifierListAsItems, get_md5, iter_directory, \
+    recursive_file_count, norm_filepath
 from internetarchive.files import File
-from internetarchive.models import ArchiveRequest
 from internetarchive.utils import get_s3_xml_text, get_file_size, is_dir, \
-    prepare_md_body, prepare_metadata, prepare_s3_headers
+    prepare_md_body, prepare_s3_headers
 
 log = getLogger(__name__)
 
@@ -632,10 +631,12 @@ class Item(BaseItem):
                 md5_sum = get_md5(body)
             headers['Content-MD5'] = md5_sum
 
+        # TODO: remove debug?
         if debug:
-            prepared_request = self.session.prepare_request(_build_request())
-            body.close()
-            return prepared_request
+            pass
+            #prepared_request = self.session.prepare_request(_build_request())
+            #body.close()
+            #return prepared_request
         else:
             try:
                 error_msg = ('s3 is overloaded, sleeping for '

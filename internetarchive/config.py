@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2017 Internet Archive
+# Copyright (C) 2012-2018 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -21,7 +21,7 @@
 internetarchive.config
 ~~~~~~~~~~~~~~~~~~~~~~
 
-:copyright: (C) 2012-2017 by Internet Archive.
+:copyright: (C) 2012-2018 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 from __future__ import absolute_import
@@ -32,7 +32,6 @@ from six.moves import configparser
 
 from internetarchive.utils import deep_update
 from internetarchive import auth
-
 
 def write_config_file(auth_config, config_file=None):
     config_file, config = parse_config_file(config_file)

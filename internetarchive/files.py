@@ -272,22 +272,13 @@ class File(BaseFile):
             sys.stdout.flush()
         return True
 
-    def delete(self, cascade_delete=None, access_key=None, secret_key=None, verbose=None,
-               debug=None, retries=None, headers=None):
+    def delete(self, cascade_delete=None, verbose=None, retries=None, headers=None):
         """Delete a file from the Archive. Note: Some files -- such as
         <itemname>_meta.xml -- cannot be deleted.
 
         :type cascade_delete: bool
         :param cascade_delete: (optional) Also deletes files derived from the file, and
                                files the file was derived from.
-
-        :type access_key: str
-        :param access_key: (optional) IA-S3 access_key to use when making the given
-                           request.
-
-        :type secret_key: str
-        :param secret_key: (optional) IA-S3 secret_key to use when making the given
-                           request.
 
         :type verbose: bool
         :param verbose: (optional) Print actions to stdout.
@@ -298,9 +289,6 @@ class File(BaseFile):
 
         """
         cascade_delete = '0' if not cascade_delete else '1'
-        access_key = self.item.session.access_key if not access_key else access_key
-        secret_key = self.item.session.secret_key if not secret_key else secret_key
-        debug = False if not debug else debug
         verbose = False if not verbose else verbose
         max_retries = 2 if retries is None else retries
         headers = dict() if headers is None else headers
@@ -311,40 +299,23 @@ class File(BaseFile):
         url = '{0}//s3.us.archive.org/{1}/{2}'.format(self.item.session.protocol,
                                                       self.identifier,
                                                       self.name)
-        request = iarequest.S3Request(
-            method='DELETE',
-            url=url,
-            headers=headers,
-            access_key=access_key,
-            secret_key=secret_key
-        )
-        if debug:
-            return request
-        else:
-            if verbose:
-                msg = ' deleting: {0}'.format(self.name)
-                if cascade_delete:
-                    msg += ' and all derivative files.'
-                print(msg, file=sys.stderr)
-            prepared_request = self.item.session.prepare_request(request)
+        if verbose:
+            msg = ' deleting: {0}'.format(self.name)
+            if cascade_delete:
+                msg += ' and all derivative files.'
+            print(msg, file=sys.stderr)
 
-            try:
-                resp = self.item.session.send(prepared_request)
-                resp.raise_for_status()
-            except pycurl.error as exc:
-                error_msg = 'Error deleting {0}, {1}'.format(url, exc)
-                log.error(error_msg)
-                raise
-            else:
-                return resp
-            finally:
-                # The retry adapter is mounted to the session object.
-                # Make sure to remove it after delete, so it isn't
-                # mounted if and when the session object is used for an
-                # upload. This is important because we use custom retry
-                # handling for IA-S3 uploads.
-                url_prefix = '{0}//s3.us.archive.org'.format(self.item.session.protocol)
-                del self.item.session.adapters[url_prefix]
+        try:
+            resp = self.item.session.delete(
+                url=url,
+                headers=headers,
+            )
+        except pycurl.error as exc:
+            error_msg = 'Error deleting {0}, {1}'.format(url, exc)
+            log.error(error_msg)
+            raise
+        else:
+            return resp
 
 
 class OnTheFlyFile(File):

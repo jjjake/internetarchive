@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2017 Internet Archive
+# Copyright (C) 2012-2018 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -24,7 +24,7 @@ internetarchive.search
 This module provides objects for interacting with the Archive.org
 search engine.
 
-:copyright: (C) 2012-2017 by Internet Archive.
+:copyright: (C) 2012-2018 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 from __future__ import absolute_import, unicode_literals
@@ -72,13 +72,11 @@ class Search(object):
             self.session.protocol)
         self.search_url = '{0}//archive.org/advancedsearch.php'.format(
             self.session.protocol)
-        self.auth = S3Auth(self.session.access_key, self.session.secret_key)
         self.max_retries = max_retries if max_retries is not None else 5
         self.timeout = timeout if timeout is not None else 24
 
         # Initialize params.
-        #default_params = dict(q=query, REQUIRE_AUTH='true')
-        default_params = dict(q=query)
+        default_params = dict(q=query, REQUIRE_AUTH='true')
         if 'page' not in params:
             default_params['count'] = 10000
         else:
@@ -148,7 +146,6 @@ class Search(object):
             p['total_only'] = 'true'
             r = self.session.post(self.scrape_url,
                                   params=p,
-                                  auth=self.auth,
                                   **self.request_kwargs)
             j = r.json()
             self._handle_scrape_error(j)

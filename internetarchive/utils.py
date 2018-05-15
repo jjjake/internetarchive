@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2017 Internet Archive
+# Copyright (C) 2012-2018 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -23,7 +23,7 @@ internetarchive.utils
 
 This module provides utility functions for the internetarchive library.
 
-:copyright: (C) 2012-2017 by Internet Archive.
+:copyright: (C) 2012-2018 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 import hashlib
@@ -102,14 +102,6 @@ def get_md5(file_object):
     return m.hexdigest()
 
 
-def chunk_generator(fp, chunk_size):
-    while True:
-        chunk = fp.read(chunk_size)
-        if not chunk:
-            break
-        yield chunk
-
-
 def suppress_keyboard_interrupt_message():
     """Register a new excepthook to suppress KeyboardInterrupt
     exception messages, and exit with status code 130.
@@ -124,18 +116,6 @@ def suppress_keyboard_interrupt_message():
             sys.exit(130)
 
     sys.excepthook = new_hook
-
-
-class IterableToFileAdapter(object):
-    def __init__(self, iterable, size):
-        self.iterator = iter(iterable)
-        self.length = size
-
-    def read(self, size=-1):  # TBD: add buffer for `len(data) > size` case
-        return next(self.iterator, b'')
-
-    def __len__(self):
-        return self.length
 
 
 class IdentifierListAsItems(object):
@@ -381,9 +361,6 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
 def prepare_md_body(metadata, source_metadata, target, priority, append, append_list):
     priority = -5 if not priority else priority
 
-    #if not source_metadata:
-    #    r = requests.get(self.url)
-    #    source_metadata = r.json().get(target.split('/')[0], {})
     if 'metadata' in target:
         destination_metadata = source_metadata.copy()
         prepared_metadata = prepare_metadata(metadata, source_metadata, append,

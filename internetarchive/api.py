@@ -195,8 +195,14 @@ def modify_metadata(identifier, metadata,
               debug is ``True``.
     """
     item = get_item(identifier, **get_item_kwargs)
-    return item.modify_metadata(metadata, target, append, priority, access_key,
-                                secret_key, debug, request_kwargs)
+    return item.modify_metadata(metadata,
+                                target=target,
+                                append=append,
+                                priority=priority,
+                                access_key=access_key,
+                                secret_key=secret_key,
+                                debug=debug,
+                                request_kwargs=request_kwargs)
 
 
 def upload(identifier, files,

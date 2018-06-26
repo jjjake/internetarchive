@@ -126,7 +126,7 @@ class File(BaseFile):
 
     def download(self, file_path=None, verbose=None, silent=None, ignore_existing=None,
                  checksum=None, destdir=None, retries=None, ignore_errors=None,
-                 fileobj=None, return_responses=None):
+                 fileobj=None, return_responses=None, no_change_timestamp=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -164,6 +164,11 @@ class File(BaseFile):
         :param return_responses: (optional) Rather than downloading files to disk, return
                                  a list of response objects.
 
+        :type no_change_timestamp: bool
+        :param no_change_timestamp: (optional) If True, leave the time stamp as the
+                                    current time instead of changing it to that given in
+                                    the original archive.
+
         :rtype: bool
         :returns: True if file was successfully downloaded.
         """
@@ -173,6 +178,8 @@ class File(BaseFile):
         retries = 2 if not retries else retries
         ignore_errors = False if not ignore_errors else ignore_errors
         return_responses = False if not return_responses else return_responses
+        no_change_timestamp = False if not no_change_timestamp else no_change_timestamp
+
         if (fileobj and silent is None) or silent is not False:
             silent = True
         else:
@@ -266,6 +273,8 @@ class File(BaseFile):
 
         # Set mtime with mtime from files.xml.
         try:
+            if not no_change_timestamp:
+                # If we haven't been told to leave the timestamp unchanged...
             os.utime(file_path.encode('utf-8'), (0, self.mtime))
         except OSError:
             # Probably file-like object, e.g. sys.stdout.

@@ -1,4 +1,6 @@
 import sys
+import os
+import time
 
 from tests.conftest import call_cmd, NASA_EXPECTED_FILES, files_downloaded
 
@@ -84,3 +86,22 @@ def test_destdir(tmpdir_ch):
            'nasa nasa_meta.xml')
     call_cmd(cmd)
     assert files_downloaded('dir2') == set(['nasa_meta.xml'])
+           'nasa nasa_meta.xml')
+    call_cmd(cmd)
+    assert files_downloaded('dir2') == set(['nasa_meta.xml'])
+
+
+def test_no_change_timestamp(tmpdir_ch):
+    # TODO: Handle the case of daylight savings time
+
+    now = time.time()
+    call_cmd('ia --insecure download --no-change-timestamp nasa')
+
+    for path, dirnames, filenames in os.walk(tmpdir_ch):
+        for d in dirnames:
+            p = os.path.join(path, d)
+            assert os.stat(p).st_mtime >= now
+
+        for f in filenames:
+            p = os.path.join(path, f)
+            assert os.stat(p).st_mtime >= now

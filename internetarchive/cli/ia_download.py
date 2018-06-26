@@ -55,6 +55,8 @@ options:
     --destdir=<dir>                          The destination directory to download files
                                              and item directories to.
     -s, --stdout                             Write file contents to stdout.
+    --no-change-timestamp                    Don't change the timestamp of downloaded files to reflect
+                                             the source material.
 """
 from __future__ import print_function, absolute_import
 import os
@@ -94,6 +96,7 @@ def main(argv, session):
         '--retries': Use(lambda x: x[0]),
         '--search-parameters': Use(lambda x: get_args_dict(x, query_string=True)),
         '--on-the-fly': Use(bool),
+        '--no-change-timestamp': Use(bool)
     })
 
     # Filenames should be unicode literals. Support PY2 and PY3.
@@ -201,6 +204,7 @@ def main(argv, session):
             item_index=item_index,
             ignore_errors=True,
             on_the_fly=args['--on-the-fly'],
+            no_change_timestamp=args['--no-change-timestamp']
         )
         if _errors:
             errors.append(_errors)

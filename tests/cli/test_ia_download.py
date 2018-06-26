@@ -94,7 +94,7 @@ def test_no_change_timestamp(tmpdir_ch):
     now = time.time()
     call_cmd('ia --insecure download --no-change-timestamp nasa')
 
-    for path, dirnames, filenames in os.walk(tmpdir_ch):
+    for path, dirnames, filenames in os.walk(str(tmpdir_ch)):
         for d in dirnames:
             p = os.path.join(path, d)
             assert os.stat(p).st_mtime >= now

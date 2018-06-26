@@ -273,7 +273,6 @@ class File(BaseFile):
 
         # Set mtime with mtime from files.xml.
             if not no_change_timestamp:
-                # If we haven't been told to leave the timestamp unchanged...
             try:
             os.utime(file_path.encode('utf-8'), (0, self.mtime))
         except OSError:

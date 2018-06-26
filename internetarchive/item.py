@@ -414,7 +414,8 @@ class Item(BaseItem):
                 print(f.url)
                 continue
             r = f.download(path, verbose, silent, ignore_existing, checksum, destdir,
-                           retries, ignore_errors, None, return_responses)
+                           retries, ignore_errors, None, return_responses,
+                           no_change_timestamp)
             if return_responses:
                 responses.append(r)
             if r is False:

@@ -282,7 +282,8 @@ class Item(BaseItem):
                  item_index=None,
                  ignore_errors=None,
                  on_the_fly=None,
-                 return_responses=None):
+                 return_responses=None,
+                 no_change_timestamp=None):
         """Download files from an item.
 
         :param files: (optional) Only download files matching given file names.
@@ -339,6 +340,11 @@ class Item(BaseItem):
         :param return_responses: (optional) Rather than downloading files to disk, return
                                  a list of response objects.
 
+        :type no_change_timestamp: bool
+        :param no_change_timestamp: (optional) If True, leave the time stamp as the
+                                    current time instead of changing it to that given in
+                                    the original archive.
+
         :rtype: bool
         :returns: True if if all files have been downloaded successfully.
         """
@@ -350,6 +356,7 @@ class Item(BaseItem):
         checksum = False if checksum is None else checksum
         no_directory = False if no_directory is None else no_directory
         return_responses = False if not return_responses else True
+        no_change_timestamp = False if not no_change_timestamp else no_change_timestamp
 
         if not dry_run:
             if item_index and verbose is True:
@@ -407,7 +414,8 @@ class Item(BaseItem):
                 print(f.url)
                 continue
             r = f.download(path, verbose, silent, ignore_existing, checksum, destdir,
-                           retries, ignore_errors, None, return_responses)
+                           retries, ignore_errors, None, return_responses,
+                           no_change_timestamp)
             if return_responses:
                 responses.append(r)
             if r is False:

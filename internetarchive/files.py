@@ -272,12 +272,13 @@ class File(BaseFile):
                 raise exc
 
         # Set mtime with mtime from files.xml.
-            if not no_change_timestamp:
+        if not no_change_timestamp:
+            # If we want to set the timestamp to that of the original archive...
             try:
-            os.utime(file_path.encode('utf-8'), (0, self.mtime))
-        except OSError:
-            # Probably file-like object, e.g. sys.stdout.
-            pass
+                os.utime(file_path.encode('utf-8'), (0, self.mtime))
+            except OSError:
+                # Probably file-like object, e.g. sys.stdout.
+                pass
 
         msg = 'downloaded {0}/{1} to {2}'.format(self.identifier,
                                                  self.name,

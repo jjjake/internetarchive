@@ -272,9 +272,9 @@ class File(BaseFile):
                 raise exc
 
         # Set mtime with mtime from files.xml.
-        try:
             if not no_change_timestamp:
                 # If we haven't been told to leave the timestamp unchanged...
+            try:
             os.utime(file_path.encode('utf-8'), (0, self.mtime))
         except OSError:
             # Probably file-like object, e.g. sys.stdout.

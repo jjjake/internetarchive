@@ -86,9 +86,6 @@ def test_destdir(tmpdir_ch):
            'nasa nasa_meta.xml')
     call_cmd(cmd)
     assert files_downloaded('dir2') == set(['nasa_meta.xml'])
-           'nasa nasa_meta.xml')
-    call_cmd(cmd)
-    assert files_downloaded('dir2') == set(['nasa_meta.xml'])
 
 
 def test_no_change_timestamp(tmpdir_ch):

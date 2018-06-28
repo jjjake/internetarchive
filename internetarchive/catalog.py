@@ -65,7 +65,7 @@ class Catalog(object):
 
     def __init__(self, archive_session,
                  identifier=None,
-                 task_ids=None,
+                 task_id=None,
                  params=None,
                  config=None,
                  verbose=None,
@@ -78,8 +78,8 @@ class Catalog(object):
         :param identifier: (optional) The Archive.org identifier for which to retrieve
                            tasks for.
 
-        :type task_ids: int or str
-        :param task_ids: (optional) The task_ids to retrieve from the Archive.org catalog.
+        :type task_id: int or str
+        :param task_id: (optional) The task_id to retrieve from the Archive.org catalog.
 
         :type params: dict
         :param params: (optional) The URL parameters to send with each request sent to the
@@ -93,7 +93,7 @@ class Catalog(object):
                         each catalog task returned. Verbose is set to ``True`` by default.
 
         """
-        task_ids = [] if not task_ids else task_ids
+        task_id = [] if not task_id else task_id
         params = {} if not params else params
         config = {} if not config else config
         verbose = '1' if verbose is None or verbose is True else '0'
@@ -124,23 +124,21 @@ class Catalog(object):
         )
         self.params.update(params)
         # Return user's current tasks as default.
-        if not identifier and not task_ids and not params:
+        if not identifier and not task_id and not params:
             self.params['justme'] = 1
 
-        if task_ids:
-            if not isinstance(task_ids, (set, list)):
-                task_ids = [task_ids]
-            task_ids = [str(t) for t in task_ids]
+        if task_id:
+            task_id = str(task_id)
             self.params.update(dict(
-                where='task_id in({tasks})'.format(tasks=','.join(task_ids)),
+                search_task_id=task_id,
                 history=999999999999999999999,  # TODO: is there a better way?
             ))
 
         if identifier:
             self.url = '{0}//archive.org/history/{1}'.format(self.session.protocol,
                                                              identifier)
-        elif task_ids:
-            self.url = '{0}//cat-tracey.archive.org/catalog.php'.format(
+        elif task_id:
+            self.url = '{0}//catalogd.archive.org/catalog.php'.format(
                 self.session.protocol)
         else:
             self.url = '{0}//archive.org/catalog.php'.format(self.session.protocol)

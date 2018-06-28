@@ -289,7 +289,7 @@ class ArchiveSession(requests.sessions.Session):
 
     def get_tasks(self,
                   identifier=None,
-                  task_ids=None,
+                  task_id=None,
                   task_type=None,
                   params=None,
                   config=None,
@@ -303,8 +303,8 @@ class ArchiveSession(requests.sessions.Session):
         :param identifier: (optional) The Archive.org identifier for which to retrieve
                            tasks for.
 
-        :type task_ids: int or str
-        :param task_ids: (optional) The task_ids to retrieve from the Archive.org catalog.
+        :type task_id: int or str
+        :param task_id: (optional) The task_id to retrieve from the Archive.org catalog.
 
         :type task_type: str
         :param task_type: (optional) The type of tasks to retrieve from the Archive.org
@@ -328,7 +328,7 @@ class ArchiveSession(requests.sessions.Session):
         request_kwargs = {} if not request_kwargs else request_kwargs
         _catalog = Catalog(self,
                            identifier=identifier,
-                           task_ids=task_ids,
+                           task_id=task_id,
                            params=params,
                            config=config,
                            verbose=verbose,

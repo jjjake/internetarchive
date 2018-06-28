@@ -76,7 +76,7 @@ def main(argv, session):
                                           task_type=task_type,
                                           params=params)
             elif args['--get-task-log']:
-                task = session.get_tasks(task_ids=args['--get-task-log'], params=params)
+                task = session.get_tasks(task_id=args['--get-task-log'], params=params)
                 if task:
                     log = task[0].task_log()
                     sys.exit(print(log))
@@ -85,7 +85,7 @@ def main(argv, session):
                           'for {0}\n'.format(args['--get-task-log']), file=sys.stderr)
                     sys.exit(1)
             elif args['--task']:
-                tasks = session.get_tasks(task_ids=args['--task'], params=params)
+                tasks = session.get_tasks(task_id=args['--task'], params=params)
             else:
                 tasks = session.get_tasks(task_type=task_type, params=params)
         except ValueError as exc:

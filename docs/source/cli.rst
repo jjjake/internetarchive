@@ -91,21 +91,21 @@ You can also create new targets if they don't exist:
 
     $ ia metadata <identifier> --target="extra_metadata" --modify="foo:bar"
 
-There is also an ``--append`` option which allows you to append a string to an existing metadata element.
-Currently this only works on existing metadata elements that are strings (i.e. it will not append to metadata elements that are arrays, like ``collection``). 
+There is also an ``--append`` option which allows you to append a string to an existing metadata strings (Note: use ``--append-list`` for appending elments to a list).
 For example, if your item's title was ``Foo`` and you wanted it to be ``Foo Bar``, you could simply do:
 
 .. code:: bash
 
     $ ia metadata <identifier> --append="title: Bar"
 
-If you would like to add a new value to an existing field that is an array (like ``subject`` or ``collection``), you can use the following syntax:
+If you would like to add a new value to an existing field that is an array (like ``subject`` or ``collection``), you can use the ``--append-list`` option:
 
 .. code:: bash
 
-    $ ia metadata <identifier> --modify="subject[99]:another subject"
+    $ ia metadata <identifier> --append-list="subject:another subject"
 
-Assuming you don't have 99 subjects already, this command would append ``another subject`` to the items list of subjects.
+This command would append ``another subject`` to the items list of subjects, if it doesn't already exist (i.e. no duplicate elements are added).
+
 
 Refer to `Internet Archive Metadata <metadata.html>`_ for more specific details regarding metadata and archive.org.
 

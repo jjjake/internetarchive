@@ -21,6 +21,8 @@ To automatically create a config file with your archive.org credentials, you can
 
 Your config file will be saved to ``$HOME/.config/ia.ini``, or ``$HOME/.ia`` if you do not have a ``.config`` directory in ``$HOME``. Alternatively, you can specify your own path to save the config to via ``ia --config-file '~/.ia-custom-config' configure``.
 
+If you have a netc file with your archive.org credentials in it, you can simply run ``ia configure --netrc``.
+Note that Python's netrc library does not currently support passphrases, or passwords with spaces in them, and therefore not currently suported here.
 
 Uploading
 ---------

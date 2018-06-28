@@ -106,6 +106,14 @@ If you would like to add a new value to an existing field that is an array (like
 
 This command would append ``another subject`` to the items list of subjects, if it doesn't already exist (i.e. no duplicate elements are added).
 
+Metadata fields or elements can be removed with the ``--remove`` option:
+
+.. code:: bash
+
+    $ ia metadata <identifier> --remove="subject:another subject"
+
+This would remove ``another subject`` from the items subject field, regardless of whether or not the field is a single or multi-value field.
+
 
 Refer to `Internet Archive Metadata <metadata.html>`_ for more specific details regarding metadata and archive.org.
 

@@ -155,6 +155,7 @@ def get_files(identifier,
 def modify_metadata(identifier, metadata,
                     target=None,
                     append=None,
+                    append_list=None,
                     priority=None,
                     access_key=None,
                     secret_key=None,
@@ -175,6 +176,10 @@ def modify_metadata(identifier, metadata,
     :type append: bool
     :param append: (optional) set to True to append metadata values to current values
                    rather than replacing. Defaults to ``False``.
+
+    :type append_list: bool
+    :param append_list: (optional) Append values to an existing multi-value
+                        metadata field. No duplicate values will be added.
 
     :type priority: int
     :param priority: (optional) Set task priority.
@@ -198,6 +203,7 @@ def modify_metadata(identifier, metadata,
     return item.modify_metadata(metadata,
                                 target=target,
                                 append=append,
+                                append_list=append_list,
                                 priority=priority,
                                 access_key=access_key,
                                 secret_key=secret_key,

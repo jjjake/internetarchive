@@ -454,6 +454,14 @@ class Item(BaseItem):
         :type priority: int
         :param priority: (optional) Set task priority.
 
+        :type append: bool
+        :param append: (optional) Append value to an existing multi-value
+                       metadata field.
+
+        :type append_list: bool
+        :param append_list: (optional) Append values to an existing multi-value
+                            metadata field. No duplicate values will be added.
+
         Usage::
 
             >>> import internetarchive

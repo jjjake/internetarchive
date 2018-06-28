@@ -335,14 +335,16 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
                 prepared_metadata[rm_index(key)].append(metadata[key])
         # If append is True, append value to source_metadata value.
         elif append_list and source_metadata.get(key):
-            if metadata[key] in source_metadata[key]:
-                continue
             if not isinstance(metadata[key], list):
                 metadata[key] = [metadata[key]]
-            if not isinstance(source_metadata[key], list):
-                prepared_metadata[key] = [source_metadata[key]] + metadata[key]
-            else:
-                prepared_metadata[key] = source_metadata[key] + metadata[key]
+            for v in metadata[key]:
+                if v in source_metadata[key]:
+                    continue
+                if not isinstance(source_metadata[key], list):
+                    prepared_metadata[key] = [source_metadata[key]]
+                else:
+                    prepared_metadata[key] = source_metadata[key]
+                prepared_metadata[key].append(v)
         elif append and source_metadata.get(key):
             prepared_metadata[key] = '{0} {1}'.format(
                 source_metadata[key], metadata[key])

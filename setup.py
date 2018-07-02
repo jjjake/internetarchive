@@ -37,6 +37,7 @@ setup(
         ],
     },
     install_requires=[
+        'pycurl',
         'jsonpatch>=0.4',
         'docopt>=0.6.0,<0.7.0',
         'six>=1.0.0,<2.0.0',

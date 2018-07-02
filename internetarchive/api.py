@@ -36,7 +36,8 @@ from internetarchive import config as config_module
 from internetarchive.exceptions import AuthenticationError
 
 
-def get_session(config=None, config_file=None, headers=None, verbose=None):
+def get_session(config=None, config_file=None, headers=None, verbose=None,
+                debug_callback=None):
     """Return a new :class:`ArchiveSession` object. The :class:`ArchiveSession`
     object is the main interface to the ``internetarchive`` lib. It allows you to
     persist certain parameters across tasks.
@@ -52,6 +53,12 @@ def get_session(config=None, config_file=None, headers=None, verbose=None):
 
     :type verbose: bool
     :param verbose: (optional) Toggle pycurl verbosity on or off.
+
+    :type debug_callback: func
+    :param debug_callback: (optional) Provide a custom debug callback function to pycurl.
+                           See the following documenation for details:
+
+                       http://pycurl.io/docs/latest/callbacks.html#example-debug-callbacks
 
     :returns: :class:`ArchiveSession` object.
 
@@ -72,7 +79,7 @@ def get_session(config=None, config_file=None, headers=None, verbose=None):
         >>> s.get_tasks(task_ids=31643513)[0].server
         'ia311234'
     """
-    return session.ArchiveSession(config, config_file, headers, verbose)
+    return session.ArchiveSession(config, config_file, headers, verbose, debug_callback)
 
 
 def get_item(identifier,
@@ -592,10 +599,10 @@ def get_user_info(access_key, secret_key):
     :type secret_key: str
     :param secret_key: IA-S3 secret_key to use when making the given request.
     """
-    u = 'https://s3.us.archive.org'
-    p = dict(check_auth=1)
     s = get_session(config=dict(s3=dict(access=access_key, secret=secret_key)))
-    r = s.get(u, params=p)
+    url = s.make_url(host='s3.us.archive.org')
+    p = dict(check_auth=1)
+    r = s.get(url, params=p)
     j = r.json
     if j.get('error'):
         raise AuthenticationError(j.get('error'))

@@ -31,7 +31,7 @@ from collections import defaultdict
 from six.moves import configparser
 
 from internetarchive.utils import deep_update
-from internetarchive import auth
+
 
 def write_config_file(auth_config, config_file=None):
     config_file, config = parse_config_file(config_file)

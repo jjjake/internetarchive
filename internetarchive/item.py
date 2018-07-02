@@ -183,25 +183,17 @@ class Item(BaseItem):
         def __init__(self, itm_obj):
             self._itm_obj = itm_obj
             self._paths = []
-            self._make_URL('details')
-            self._make_URL('metadata')
-            self._make_URL('download')
-            self._make_URL('history')
-            self._make_URL('edit')
-            self._make_URL('editxml')
-            self._make_URL('manage')
-            if self._itm_obj.metadata.get('mediatype') == 'collection':
-                self._make_tab_URL('about')
-                self._make_tab_URL('collection')
+            self._make_url('details')
+            self._make_url('metadata')
+            self._make_url('download')
+            self._make_url('history')
+            self._make_url('edit')
+            self._make_url('editxml')
+            self._make_url('manage')
 
-        def _make_tab_URL(self, tab):
-            """Make URLs for the separate tabs of Collections details page."""
-            self._make_URL(tab, self.details + "&tab={tab}".format(tab=tab))
-
-        DEFAULT_URL_FORMAT = '{0.session.protocol}//archive.org/{path}/{0.identifier}'
-
-        def _make_URL(self, path, url_format=DEFAULT_URL_FORMAT):
-            setattr(self, path, url_format.format(self._itm_obj, path=path))
+        def _make_url(self, path):
+            setattr(self, path, self._itm_obj.session.make_url('{}/{}'.format(
+                path, self._itm_obj.identifier)))
             self._paths.append(path)
 
         def __str__(self):
@@ -462,9 +454,7 @@ class Item(BaseItem):
         debug = False if debug is None else debug
         request_kwargs = {} if not request_kwargs else request_kwargs
 
-        url = '{protocol}//archive.org/metadata/{identifier}'.format(
-            protocol=self.session.protocol,
-            identifier=self.identifier)
+        url = self.session.make_url('/metadata/{}'.format(self.identifier))
         src_md = self.item_metadata.get(target.split('/')[0], dict())
         body = prepare_md_body(metadata, src_md, target, priority, append, append_list)
         body['access'] = access_key
@@ -581,7 +571,7 @@ class Item(BaseItem):
 
         # Build IA-S3 URL.
         key = norm_filepath(filename).split('/')[-1] if key is None else key
-        base_url = '{0.session.protocol}//s3.us.archive.org/{0.identifier}'.format(self)
+        base_url = self.session.make_url(path=self.identifier, host='s3.us.archive.org')
         url = '{0}/{1}'.format(
             base_url, urllib.parse.quote(norm_filepath(key).lstrip('/').encode('utf-8')))
 

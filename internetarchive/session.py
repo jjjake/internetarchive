@@ -76,7 +76,8 @@ class ArchiveSession(object):
                  config=None,
                  config_file=None,
                  headers=None,
-                 verbose=None):
+                 verbose=None,
+                 debug_callback=None):
         """Initialize :class:`ArchiveSession <ArchiveSession>` object with config.
 
         :type config: dict
@@ -102,9 +103,11 @@ class ArchiveSession(object):
         self.cookies = self.config.get('cookies', {})
         self.secure = self.config.get('general', {}).get('secure', True)
         self.protocol = 'https:' if self.secure else 'http:'
+        self.host = self.config.get('general', {}).get('host', 'archive.org')
         self.access_key = self.config.get('s3', {}).get('access')
         self.secret_key = self.config.get('s3', {}).get('secret')
         self.verbose = verbose
+        self.debug_callback = debug_callback
 
         self.headers = self._default_headers()
         self.headers.update(headers)
@@ -136,6 +139,15 @@ class ArchiveSession(object):
         }
         return h
 
+    def make_url(self, path=None, host=None):
+        host = self.host if host is None else host
+        if path:
+            path = path.lstrip('/')
+            url = '{}//{}/{}'.format(self.protocol, host, path)
+        else:
+            url = '{}//{}'.format(self.protocol, host, path)
+        return url
+
     def _request(self, method, url,
                  params=None, data=None, headers=None, cookies=None, output_file=None,
                  retries=None, timeout=None, connect_timeout=None, input_file_obj=None):
@@ -162,6 +174,9 @@ class ArchiveSession(object):
                 timeout=timeout,
                 connect_timeout=connect_timeout,
         )
+
+        if self.debug_callback:
+            self.curl_instance.setopt(pycurl.DEBUGFUNCTION, self.debug_callback)
 
         r = self.send(req, retries=retries)
         return r
@@ -272,8 +287,8 @@ class ArchiveSession(object):
         :type identifier: str
         :param identifier: A globally unique Archive.org identifier.
         """
-        u = '{0}//archive.org/metadata/{1}'.format(self.protocol, identifier)
-        r = self.get(u, **request_kwargs)
+        url = self.make_url('/metadata/{}'.format(identifier))
+        r = self.get(url, **request_kwargs)
         item_metadata = r.json
         mediatype = item_metadata.get('metadata', {}).get('mediatype')
         try:
@@ -373,9 +388,9 @@ class ArchiveSession(object):
             accesskey=self.access_key,
             bucket=identifier,
         )
-        u = '{0}//s3.us.archive.org?{1}'.format(self.protocol, urllib_parse.urlencode(p))
+        url = self.make_url(host='s3.us.archive.org')
         try:
-            r = self.get(u)
+            r = self.get(url, params=p)
             if r.json.get('over_limit') == 0:
                 return False
         except Exception as exc:
@@ -401,7 +416,7 @@ class ArchiveSession(object):
             action='login',
             submit='Log in',
         )
-        url = 'https://archive.org/account/login.php'
+        url = self.make_url('account/login.php')
         r = self.post(url, data=payload)
         cookies = r.headers['set-cookie']
         if not any(['logged-in-' in x for x in cookies]):
@@ -415,9 +430,9 @@ class ArchiveSession(object):
                 auth_config['cookies'][k] = v
 
         # S3 Keys.
-        u = 'https://archive.org/account/s3.php'
+        url = self.make_url('/account/s3.php')
         p = dict(output_json=1)
-        r = self.get(u, params=p)
+        r = self.get(url, params=p)
         j = r.json
         if not j or not j.get('key'):
             raise AuthenticationError('Authorization failed. Please check your '
@@ -426,9 +441,9 @@ class ArchiveSession(object):
         auth_config['s3']['secret'] = j['key']['s3secretkey']
 
         # Screenname.
-        u = 'https://s3.us.archive.org'
+        url = self.make_url(host='s3.us.archive.org')
         p = dict(check_auth=1)
-        r = self.get(u, params=p)
+        r = self.get(url, params=p)
         if r.json.get('error'):
             raise AuthenticationError(r.json.get('error'))
         auth_config['general'] = dict(screenname=r.json['screenname'])

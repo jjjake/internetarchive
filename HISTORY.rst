@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+1.8.2 (2018-07-02)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed bug in ``ia tasks --task-id`` where no task was being returned.
+- Fixed bug in ``internetarchive.get_tasks()`` where it was not possible to query by ``task_id``.
+
 1.8.1 (2018-06-28)
 ++++++++++++++++++
 

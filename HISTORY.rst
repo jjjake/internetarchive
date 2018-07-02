@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.8.1 (2018-06-28)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed bug in ``ia tasks --get-task-log`` that was returning an unable to parse JSON error.
+
 1.8.0 (2018-06-28)
 ++++++++++++++++++
 

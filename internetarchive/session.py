@@ -34,7 +34,6 @@ import platform
 from copy import copy
 from time import sleep
 
-from six.moves import urllib_parse
 import pycurl
 
 from internetarchive.config import get_config
@@ -93,6 +92,12 @@ class ArchiveSession(object):
 
         :type verbose: bool
         :param verbose: (optional) Toggle pycurl verbosity on or off.
+
+        :type debug_callback: func
+        :param debug_callback: (optional) Provide a custom debug callback function to
+                               pycurl. See the following documenation for details:
+
+                   http://pycurl.io/docs/latest/callbacks.html#example-debug-callbacks
 
         :returns: :class:`ArchiveSession` object.
         """

@@ -447,7 +447,7 @@ def delete(identifier,
 
 
 def get_tasks(identifier=None,
-              task_ids=None,
+              task_id=None,
               task_type=None,
               params=None,
               config=None,
@@ -464,8 +464,8 @@ def get_tasks(identifier=None,
     :param identifier: (optional) The Archive.org identifier for which to retrieve tasks
                        for.
 
-    :type task_ids: int or str
-    :param task_ids: (optional) The task_ids to retrieve from the Archive.org catalog.
+    :type task_id: int or str
+    :param task_is: (optional) The task_id to retrieve from the Archive.org catalog.
 
     :type task_type: str
     :param task_type: (optional) The type of tasks to retrieve from the Archive.org
@@ -489,7 +489,7 @@ def get_tasks(identifier=None,
     if not archive_session:
         archive_session = get_session(config, config_file, http_adapter_kwargs)
     return archive_session.get_tasks(identifier=identifier,
-                                     task_ids=task_ids,
+                                     task_id=task_id,
                                      params=params,
                                      config=config,
                                      verbose=verbose,

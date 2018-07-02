@@ -128,6 +128,8 @@ class Catalog(object):
             self.params['justme'] = 1
 
         if task_id:
+            if isinstance(task_id, list):
+                task_id = task_id[0]
             task_id = str(task_id)
             self.params.update(dict(
                 search_task_id=task_id,

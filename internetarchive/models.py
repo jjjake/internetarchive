@@ -33,6 +33,8 @@ from six.moves import urllib_parse
 import six
 import pycurl
 
+from internetarchive.utils import FileReader
+
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +88,7 @@ class ArchiveRequest(object):
             self.prepare_body()
 
         if method == 'PUT':
-            self.c.setopt(self.c.READFUNCTION, input_file_obj.read)
+            self.c.setopt(self.c.READFUNCTION, FileReader(input_file_obj).read_callback)
             self.c.setopt(self.c.CUSTOMREQUEST, 'PUT')
             self.c.setopt(self.c.POST, 1)
             self.c.setopt(self.c.NOPROGRESS, False)

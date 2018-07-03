@@ -159,7 +159,6 @@ def get_s3_xml_text(xml_str):
                     text += node.data
         return text
 
-    tag_names = ['Message', 'Resource']
     try:
         p = parseString(xml_str)
         _msg = _get_tag_text('Message', p)
@@ -445,3 +444,14 @@ def prepare_s3_headers(headers, metadata, queue_derive=True):
             header_key = header_key.replace('_', '--')
             headers[header_key] = value
     return headers
+
+
+class FileReader:
+    def __init__(self, fp):
+        self.fp = fp
+
+    def read_callback(self, size):
+        try:
+            return self.fp.read(size)
+        except KeyboardInterrupt:
+            sys.exit(130)

@@ -488,12 +488,13 @@ class Item(BaseItem):
                     secret_key=None,
                     queue_derive=None,
                     verbose=None,
+                    quiet=None,
+                    progress_bar=None,
                     verify=None,
                     checksum=None,
                     delete=None,
                     retries=None,
                     retries_sleep=None,
-                    debug=None,
                     request_kwargs=None):
         """Upload a single file to an item. The item will be created
         if it does not exist.
@@ -536,10 +537,6 @@ class Item(BaseItem):
         :type verbose: bool
         :param verbose: (optional) Print progress to stdout.
 
-        :type debug: bool
-        :param debug: (optional) Set to True to print headers to stdout, and
-                      exit without sending the upload request.
-
         Usage::
 
             >>> import internetarchive
@@ -561,7 +558,6 @@ class Item(BaseItem):
         checksum = True if delete else checksum
         retries = 0 if retries is None else retries
         retries_sleep = 30 if retries_sleep is None else retries_sleep
-        debug = False if debug is None else debug
         request_kwargs = {} if request_kwargs is None else request_kwargs
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 120
@@ -576,11 +572,10 @@ class Item(BaseItem):
             else:
                 filename = body.name
 
-        size = get_file_size(body)
+        if not quiet and not verbose:
+            print('* uploading {}/{}'.format(self.identifier, filename), file=sys.stderr)
 
-        # Support for uploading empty files.
-        if size == 0:
-            headers['Content-Length'] = '0'
+        size = get_file_size(body)
 
         if not headers.get('x-archive-size-hint'):
             headers['x-archive-size-hint'] = str(size)
@@ -621,64 +616,60 @@ class Item(BaseItem):
                 md5_sum = get_md5(body)
             headers['Content-MD5'] = md5_sum
 
-        # TODO: remove debug?
-        if debug:
-            pass
-            #prepared_request = self.session.prepare_request(_build_request())
-            #body.close()
-            #return prepared_request
-        else:
-            try:
-                error_msg = ('s3 is overloaded, sleeping for '
-                             '{0} seconds and retrying. '
-                             '{1} retries left.'.format(retries_sleep, retries))
-                while True:
-                    if retries > 0:
-                        if self.session.s3_is_overloaded(access_key):
-                            sleep(retries_sleep)
-                            log.info(error_msg)
-                            if verbose:
-                                print(' warning: {0}'.format(error_msg), file=sys.stderr)
-                            retries -= 1
-                            continue
-                    body.seek(0, os.SEEK_SET)
-                    headers.update(self.session.headers)
-                    headers['Content-Length'] = int(size)
-                    prepared_headers = prepare_s3_headers(headers, metadata, queue_derive)
-                    response = self.session.put(url=url,
-                                                headers=prepared_headers,
-                                                input_file_obj=body)
-                    if (response.status_code == 503) and (retries > 0):
+        try:
+            error_msg = ('s3 is overloaded, sleeping for '
+                         '{0} seconds and retrying. '
+                         '{1} retries left.'.format(retries_sleep, retries))
+            while True:
+                if retries > 0:
+                    if self.session.s3_is_overloaded(access_key):
+                        sleep(retries_sleep)
                         log.info(error_msg)
                         if verbose:
                             print(' warning: {0}'.format(error_msg), file=sys.stderr)
-                        sleep(retries_sleep)
                         retries -= 1
                         continue
-                    else:
-                        if response.status_code == 503:
-                            log.info('maximum retries exceeded, upload failed.')
-                        break
-                log.info(u'uploaded {f} to {u}'.format(f=key, u=url))
-                if delete and response.status_code == 200:
-                    log.info(
-                        '{f} successfully uploaded to '
-                        'https://archive.org/download/{i}/{f} and verified, deleting '
-                        'local copy'.format(i=self.identifier, f=key))
-                    body.close()
-                    os.remove(filename)
+                body.seek(0, os.SEEK_SET)
+                headers.update(self.session.headers)
+                headers['Content-Length'] = int(size)
+                prepared_headers = prepare_s3_headers(headers, metadata, queue_derive)
+                response = self.session.put(url=url,
+                                            headers=prepared_headers,
+                                            verbose=verbose,
+                                            quiet=quiet,
+                                            input_file_obj=body,
+                                            progress_bar=progress_bar)
+                if (response.status_code == 503) and (retries > 0):
+                    log.info(error_msg)
+                    if verbose:
+                        print(' warning: {0}'.format(error_msg), file=sys.stderr)
+                    sleep(retries_sleep)
+                    retries -= 1
+                    continue
+                else:
+                    if response.status_code == 503:
+                        log.info('maximum retries exceeded, upload failed.')
+                    break
+            log.info(u'uploaded {f} to {u}'.format(f=key, u=url))
+            if delete and response.status_code == 200:
+                log.info(
+                    '{f} successfully uploaded to '
+                    'https://archive.org/download/{i}/{f} and verified, deleting '
+                    'local copy'.format(i=self.identifier, f=key))
                 body.close()
-                return response
-            except pycurl.error as exc:
-                body.close()
-                msg = get_s3_xml_text(exc.response.content)
-                error_msg = (' error uploading {0} to {1}, '
-                             '{2}'.format(key, self.identifier, msg))
-                log.error(error_msg)
-                if verbose:
-                    print(' error uploading {0}: {1}'.format(key, msg), file=sys.stderr)
-                # Raise pycurl.error with error message.
-                raise type(exc)(error_msg, response=exc.response, request=exc.request)
+                os.remove(filename)
+            body.close()
+            return response
+        except pycurl.error as exc:
+            body.close()
+            msg = get_s3_xml_text(exc.response.content)
+            error_msg = (' error uploading {0} to {1}, '
+                         '{2}'.format(key, self.identifier, msg))
+            log.error(error_msg)
+            if verbose:
+                print(' error uploading {0}: {1}'.format(key, msg), file=sys.stderr)
+            # Raise pycurl.error with error message.
+            raise type(exc)(error_msg, response=exc.response, request=exc.request)
 
     def upload(self, files,
                metadata=None,
@@ -687,12 +678,13 @@ class Item(BaseItem):
                secret_key=None,
                queue_derive=None,
                verbose=None,
+               quiet=None,
+               progress_bar=None,
                verify=None,
                checksum=None,
                delete=None,
                retries=None,
                retries_sleep=None,
-               debug=None,
                request_kwargs=None):
         """Upload files to an item. The item will be created if it
         does not exist.
@@ -758,12 +750,13 @@ class Item(BaseItem):
                                             secret_key=secret_key,
                                             queue_derive=_queue_derive,
                                             verbose=verbose,
+                                            quiet=quiet,
+                                            progress_bar=progress_bar,
                                             verify=verify,
                                             checksum=checksum,
                                             delete=delete,
                                             retries=retries,
                                             retries_sleep=retries_sleep,
-                                            debug=debug,
                                             request_kwargs=request_kwargs)
                     responses.append(resp)
             else:
@@ -790,12 +783,13 @@ class Item(BaseItem):
                                         secret_key=secret_key,
                                         queue_derive=_queue_derive,
                                         verbose=verbose,
+                                        quiet=quiet,
+                                        progress_bar=progress_bar,
                                         verify=verify,
                                         checksum=checksum,
                                         delete=delete,
                                         retries=retries,
                                         retries_sleep=retries_sleep,
-                                        debug=debug,
                                         request_kwargs=request_kwargs)
                 responses.append(resp)
         return responses

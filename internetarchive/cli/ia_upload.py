@@ -30,8 +30,6 @@ usage:
 options:
     -h, --help
     -q, --quiet                       Turn off ia's output [default: False].
-    -d, --debug                       Print S3 request parameters to stdout and exit
-                                      without sending request.
     -r, --remote-name=<name>          When uploading data from stdin, this option sets the
                                       remote filename.
     -S, --spreadsheet=<metadata.csv>  bulk uploading.
@@ -50,6 +48,7 @@ options:
                                       [default: 30].
     --status-check                    Check if S3 is accepting requests to the given item.
     --no-collection-check             Skip collection exists check [default: False].
+    --no-progress-bar                 Disable progress bar [default: False].
 """
 from __future__ import absolute_import, unicode_literals, print_function
 
@@ -62,9 +61,9 @@ from copy import deepcopy
 import six
 from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
+import pycurl
 
 from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
-from internetarchive.session import ArchiveSession
 from internetarchive.utils import validate_ia_identifier, get_s3_xml_text
 
 # Only import backports.csv for Python2 (in support of FreeBSD port).
@@ -78,27 +77,12 @@ else:
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
     """Helper function for calling :meth:`Item.upload`"""
     responses = []
-    if (upload_kwargs['verbose']) and (prev_identifier != item.identifier):
-        print('{0}:'.format(item.identifier))
-
     try:
         response = item.upload(files, **upload_kwargs)
         responses += response
     except pycurl.error as exc:
         responses += [exc.response]
     finally:
-        # Debug mode.
-        if upload_kwargs['debug']:
-            for i, r in enumerate(responses):
-                if i != 0:
-                    print('---')
-                headers = '\n'.join(
-                    [' {0}:{1}'.format(k, v) for (k, v) in r.headers.items()]
-                )
-                print('Endpoint:\n {0}\n'.format(r.url))
-                print('HTTP Headers:\n{0}'.format(headers))
-                return responses
-
         # Format error message for any non 200 responses that
         # we haven't caught yet,and write to stderr.
         if responses and responses[-1] and responses[-1].status_code != 200:
@@ -155,6 +139,8 @@ def main(argv, session):
         print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
         sys.exit(1)
 
+    progress_bar = True if args['--no-progress-bar'] is False else False
+
     # Make sure the collection being uploaded to exists.
     collection_id = args['--metadata'].get('collection')
     if collection_id and not args['--no-collection-check'] and not args['--status-check']:
@@ -190,14 +176,14 @@ def main(argv, session):
         args['--header']['x-archive-keep-old-version'] = '1'
 
     queue_derive = True if args['--no-derive'] is False else False
-    verbose = True if args['--quiet'] is False else False
 
     upload_kwargs = dict(
         metadata=args['--metadata'],
         headers=args['--header'],
-        debug=args['--debug'],
         queue_derive=queue_derive,
-        verbose=verbose,
+        verbose=session.verbose,
+        quiet=args['--quiet'],
+        progress_bar=progress_bar,
         verify=args['--verify'],
         checksum=args['--checksum'],
         retries=args['--retries'],
@@ -222,8 +208,6 @@ def main(argv, session):
             files = local_file
 
         for _r in _upload_files(item, files, upload_kwargs):
-            if args['--debug']:
-                break
             if (not _r) or (not _r.ok):
                 ERRORS = True
 
@@ -250,8 +234,6 @@ def main(argv, session):
                 r = _upload_files(item, local_file, upload_kwargs_copy, prev_identifier,
                                   session)
                 for _r in r:
-                    if args['--debug']:
-                        break
                     if (not _r) or (not _r.ok):
                         ERRORS = True
                 prev_identifier = identifier

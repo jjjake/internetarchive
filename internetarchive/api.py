@@ -222,7 +222,6 @@ def upload(identifier, files,
            delete=None,
            retries=None,
            retries_sleep=None,
-           debug=None,
            request_kwargs=None,
            **get_item_kwargs):
     """Upload files to an item. The item will be created if it does not exist.
@@ -271,10 +270,6 @@ def upload(identifier, files,
     :type retries_sleep: int
     :param retries_sleep: (optional) Amount of time to sleep between ``retries``.
 
-    :type debug: bool
-    :param debug: (optional) Set to True to print headers to stdout, and exit without
-                  sending the upload request.
-
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
 
     :returns: A list of :py:class:`ArchiveResponse` objects.
@@ -292,7 +287,6 @@ def upload(identifier, files,
                        delete=delete,
                        retries=retries,
                        retries_sleep=retries_sleep,
-                       debug=debug,
                        request_kwargs=request_kwargs)
 
 

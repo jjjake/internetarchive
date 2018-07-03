@@ -44,9 +44,11 @@ class ArchiveRequest(object):
     def __init__(self, curl_instance=None, method=None, url=None, headers=None,
                  input_file_obj=None, data=None, params=None, metadata=None,
                  source_metadata=None, target=None, priority=None, append=None,
-                 append_list=None, verbose=False, output_file=None, access_key=None,
-                 secret_key=None, timeout=None, connect_timeout=None):
+                 append_list=None, verbose=None, quiet=None, output_file=None,
+                 access_key=None, secret_key=None, timeout=None, connect_timeout=None,
+                 progress_bar=None):
         headers = headers if headers else dict()
+        verbose = False if quiet else verbose
         self.params = params if params else dict()
         self.c = curl_instance if curl_instance else pycurl.Curl()
         self.headers = headers if headers else dict()
@@ -91,7 +93,8 @@ class ArchiveRequest(object):
             self.c.setopt(self.c.READFUNCTION, FileReader(input_file_obj).read_callback)
             self.c.setopt(self.c.CUSTOMREQUEST, 'PUT')
             self.c.setopt(self.c.POST, 1)
-            self.c.setopt(self.c.NOPROGRESS, False)
+            if progress_bar and not quiet:
+                self.c.setopt(self.c.NOPROGRESS, False)
 
         if method == 'DELETE':
             self.c.setopt(self.c.CUSTOMREQUEST, 'DELETE')

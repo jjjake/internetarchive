@@ -155,11 +155,13 @@ class ArchiveSession(object):
 
     def _request(self, method, url,
                  params=None, data=None, headers=None, cookies=None, output_file=None,
-                 retries=None, timeout=None, connect_timeout=None, input_file_obj=None):
-        headers = headers if headers else dict()
+                 retries=None, timeout=None, connect_timeout=None, input_file_obj=None,
+                 verbose=None, quiet=None, progress_bar=None):
         data = data if data else dict()
+        headers = headers if headers else dict()
         _headers = copy(self.headers)
         _headers.update(headers)
+        verbose = self.verbose if verbose is None else verbose
 
         cookies = {'test-cookie': '1'}
         self.prepare_cookies(cookies)
@@ -175,9 +177,11 @@ class ArchiveSession(object):
                 input_file_obj=input_file_obj,
                 access_key=self.access_key,
                 secret_key=self.secret_key,
-                verbose=self.verbose,
+                verbose=verbose,
+                quiet=quiet,
                 timeout=timeout,
                 connect_timeout=connect_timeout,
+                progress_bar=progress_bar,
         )
 
         if self.debug_callback:

@@ -46,7 +46,7 @@ import pycurl
 from internetarchive.utils import IdentifierListAsItems, get_md5, iter_directory, \
     recursive_file_count, norm_filepath
 from internetarchive.files import File
-from internetarchive.exceptions import ItemDoesNotExist, ItemIsDark
+from internetarchive.exceptions import ItemDoesNotExist, ItemIsDark, AccessDenied
 from internetarchive.utils import get_s3_xml_text, get_file_size, is_dir, \
     prepare_md_body, prepare_s3_headers
 
@@ -382,18 +382,26 @@ class Item(BaseItem):
                 print(f.url)
                 continue
 
-            r = f.download(file_path=path,
-                           silent=silent,
-                           ignore_existing=ignore_existing,
-                           checksum=checksum,
-                           destdir=destdir,
-                           retries=retries,
-                           ignore_errors=ignore_errors,
-                           fileobj=None,
-                           return_responses=return_responses,
-                           no_change_timestamp=no_change_timestamp,
-                           print_to_stdout=print_to_stdout,
-                           progress_bar=progress_bar)
+            try:
+                r = f.download(file_path=path,
+                               silent=silent,
+                               ignore_existing=ignore_existing,
+                               checksum=checksum,
+                               destdir=destdir,
+                               retries=retries,
+                               ignore_errors=ignore_errors,
+                               fileobj=None,
+                               return_responses=return_responses,
+                               no_change_timestamp=no_change_timestamp,
+                               print_to_stdout=print_to_stdout,
+                               progress_bar=progress_bar)
+
+            except AccessDenied as exc:
+                log.error(str(exc))
+                if not ignore_errors:
+                    raise exc
+                if not silent:
+                    print('* {}'.format(str(exc), file=sys.stderr))
 
             if return_responses:
                 responses.append(r)

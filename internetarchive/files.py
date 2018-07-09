@@ -29,12 +29,12 @@ from __future__ import absolute_import, unicode_literals, print_function
 import os
 import sys
 import logging
-import socket
 
 import six.moves.urllib as urllib
 import pycurl
 
 from internetarchive import utils
+from internetarchive.exceptions import AccessDenied
 
 
 log = logging.getLogger(__name__)
@@ -123,16 +123,14 @@ class File(BaseFile):
                 'size={size!r}, '
                 'format={format!r})'.format(**self.__dict__))
 
-    def download(self, file_path=None, verbose=None, silent=None, ignore_existing=None,
-                 checksum=None, destdir=None, retries=None, ignore_errors=None,
-                 fileobj=None, return_responses=None, no_change_timestamp=None):
+    def download(self, file_path=None, silent=None, ignore_existing=None, checksum=None,
+                 destdir=None, retries=None, ignore_errors=None, fileobj=None,
+                 return_responses=None, no_change_timestamp=None, print_to_stdout=None,
+                 progress_bar=None):
         """Download the file into the current working directory.
 
         :type file_path: str
         :param file_path: Download file to the given file_path.
-
-        :type verbose: bool
-        :param verbose: (optional) Turn on verbose output.
 
         :type silent: bool
         :param silent: (optional) Suppress all output.
@@ -171,7 +169,6 @@ class File(BaseFile):
         :rtype: bool
         :returns: True if file was successfully downloaded.
         """
-        verbose = False if verbose is None else verbose
         ignore_existing = False if ignore_existing is None else ignore_existing
         checksum = False if checksum is None else checksum
         retries = 2 if not retries else retries
@@ -194,41 +191,31 @@ class File(BaseFile):
             file_path = os.path.join(destdir, file_path)
 
         if not return_responses and os.path.exists(file_path.encode('utf-8')):
-            if ignore_existing:
-                msg = 'skipping {0}, file already exists.'.format(file_path)
+            if print_to_stdout is True:
+                pass
+            elif ignore_existing:
+                msg = '* skipping {0}, file already exists.'.format(file_path)
                 log.info(msg)
-                if verbose:
-                    print(' ' + msg)
-                elif silent is False:
-                    print('.', end='')
-                    sys.stdout.flush()
+                print(msg, file=sys.stderr)
                 return
             elif checksum:
                 with open(file_path, 'rb') as fp:
                     md5_sum = utils.get_md5(fp)
 
                 if md5_sum == self.md5:
-                    msg = ('skipping {0}, '
+                    msg = ('* skipping {0}, '
                            'file already exists based on checksum.'.format(file_path))
                     log.info(msg)
-                    if verbose:
-                        print(' ' + msg)
-                    elif silent is False:
-                        print('.', end='')
-                        sys.stdout.flush()
+                    print(msg, file=sys.stderr)
                     return
             else:
                 st = os.stat(file_path.encode('utf-8'))
                 if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
                         or self.name.endswith('_files.xml') and st.st_size != 0:
-                    msg = ('skipping {0}, file already exists '
+                    msg = ('* skipping {0}, file already exists '
                            'based on length and date.'.format(file_path))
                     log.info(msg)
-                    if verbose:
-                        print(' ' + msg)
-                    elif silent is False:
-                        print('.', end='')
-                        sys.stdout.flush()
+                    print(msg, file=sys.stderr)
                     return
 
         parent_dir = os.path.dirname(file_path)
@@ -238,28 +225,37 @@ class File(BaseFile):
             os.makedirs(parent_dir)
 
         try:
+            if not silent:
+                print('* downloading {}/{} to {}'.format(
+                    self.item.identifier, self.name, file_path), file=sys.stderr)
             response = self.item.session.get(self.url,
                                              output_file=file_path,
-                                             connect_timeout=12)
+                                             connect_timeout=12,
+                                             print_to_stdout=print_to_stdout,
+                                             progress_bar=progress_bar)
+
+            if response.status_code == 403:
+                os.remove(file_path)
+                raise AccessDenied(self.item.identifier, self.name)
 
             if return_responses:
                 return response
 
         except pycurl.error as exc:
-            msg = ('error downloading file {0}, '
+            msg = ('* error downloading file {0}, '
                    'exception raised: {1}'.format(file_path, exc))
             log.error(msg)
+            print(msg, file=sys.stderr)
             if os.path.exists(file_path):
                 os.remove(file_path)
-            if verbose:
-                print(' ' + msg)
-            elif silent is False:
-                print('e', end='')
-                sys.stdout.flush()
             if ignore_errors is True:
                 return False
             else:
                 raise exc
+        finally:
+            # Delete dir if it's empty.
+            if not os.listdir(parent_dir):
+                os.rmdir(parent_dir)
 
         # Set mtime with mtime from files.xml.
         if not no_change_timestamp:
@@ -274,11 +270,6 @@ class File(BaseFile):
                                                  self.name,
                                                  file_path)
         log.info(msg)
-        if verbose:
-            print(' ' + msg)
-        elif silent is False:
-            print('d', end='')
-            sys.stdout.flush()
         return True
 
     def delete(self, cascade_delete=None, verbose=None, retries=None, headers=None):
@@ -299,7 +290,6 @@ class File(BaseFile):
         """
         cascade_delete = '0' if not cascade_delete else '1'
         verbose = False if not verbose else verbose
-        max_retries = 2 if retries is None else retries
         headers = dict() if headers is None else headers
 
         if 'x-archive-cascade-delete' not in headers:

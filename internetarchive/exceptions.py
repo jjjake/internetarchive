@@ -28,3 +28,35 @@ internetarchive.exceptions
 
 class AuthenticationError(Exception):
     """Authentication Failed"""
+
+
+class BaseItemException(Exception):
+
+    def __init__(self, identifier):
+        self.identifier = identifier
+
+
+class ItemDoesNotExist(BaseItemException):
+
+    def __str__(self):
+        return '{} does not exist'.format(self.identifier)
+
+
+class ItemIsDark(BaseItemException):
+
+    def __str__(self):
+        return '{} is dark'.format(self.identifier)
+
+
+class BaseFileException(BaseItemException):
+
+    def __init__(self, identifier, filename):
+        self.identifier = identifier
+        self.filename = filename
+
+
+class AccessDenied(BaseFileException):
+
+    def __str__(self):
+        return 'Access denied for file "{}/{}", check your config and try again.'.format(
+                self.identifier, self.filename)

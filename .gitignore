@@ -17,3 +17,7 @@ wheelhouse
 .cache
 .vagrant
 .idea
+*.img
+*.ini
+v2.7/
+v3.6/

@@ -46,9 +46,10 @@ class ArchiveRequest(object):
                  source_metadata=None, target=None, priority=None, append=None,
                  append_list=None, verbose=None, quiet=None, output_file=None,
                  access_key=None, secret_key=None, timeout=None, connect_timeout=None,
-                 progress_bar=None):
+                 print_to_stdout=None, progress_bar=None):
         headers = headers if headers else dict()
         verbose = False if quiet else verbose
+        print_to_stdout = False if not print_to_stdout else True
         self.params = params if params else dict()
         self.c = curl_instance if curl_instance else pycurl.Curl()
         self.headers = headers if headers else dict()
@@ -63,13 +64,15 @@ class ArchiveRequest(object):
             self.c.setopt(self.c.WRITEDATA, self._buffer)
         else:
             self._buffer = None
-            if os.path.exists(output_file):
-                self.output_file = open(output_file, 'ab')
-                self.c.setopt(self.c.RESUME_FROM, os.path.getsize(output_file))
-            else:
-                self.output_file = open(output_file, 'wb')
-            self.c.setopt(self.c.WRITEDATA, self.output_file)
-            self.c.setopt(self.c.NOPROGRESS, False)
+            if not print_to_stdout:
+                if os.path.exists(output_file):
+                    self.output_file = open(output_file, 'ab')
+                    self.c.setopt(self.c.RESUME_FROM, os.path.getsize(output_file))
+                else:
+                    self.output_file = open(output_file, 'wb')
+                self.c.setopt(self.c.WRITEDATA, self.output_file)
+            if progress_bar and not quiet:
+                self.c.setopt(self.c.NOPROGRESS, False)
 
         if timeout:
             self.c.setopt(self.c.TIMEOUT, int(timeout))

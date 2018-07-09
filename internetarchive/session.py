@@ -33,6 +33,7 @@ import sys
 import platform
 from copy import copy
 from time import sleep
+import re
 
 import pycurl
 
@@ -46,11 +47,6 @@ from internetarchive.exceptions import AuthenticationError
 
 
 logger = logging.getLogger(__name__)
-
-## TODO: delete this block.
-#ch = logging.StreamHandler()
-#ch.setLevel(logging.DEBUG)
-#logger.addHandler(ch)
 
 
 class ArchiveSession(object):
@@ -126,6 +122,42 @@ class ArchiveSession(object):
             self.set_file_logger(logging_config.get('level', 'NOTSET'),
                                  logging_config.get('file', 'internetarchive.log'))
 
+    def pycurl_logger(self, debug_type, debug_msg):
+        infotype_char = {
+                0: '*',  # CURLINFO_TEXT
+                1: '<',  # CURLINFO_HEADER_IN
+                2: '>',  # CURLINFO_HEADER_OUT
+                3: '{',  # CURLINFO_DATA_IN
+                4: '{',  # CURLINFO_DATA_OUT
+                5: '{',  # CURLINFO_SSL_DATA_IN
+                6: '{',  # CURLINFO_SSL_DATA_OUT
+        }
+
+        debug_msg = debug_msg.decode('ascii')
+
+        # Redact logged-in-* cookies and IA-S3 keys.
+        if 'logged-in-' in debug_msg:
+            debug_msg = re.sub('=.*?;', '=<redacted>;', debug_msg)
+        if 'Authorization: LOW' in debug_msg:
+            debug_msg = re.sub('(?<=Authorization:\ LOW\ .{16}:).*?\r\n',
+                               '<redacted>\r\n',
+                               debug_msg)
+
+        # Format request headers.
+        if debug_type == 2:
+            debug_msg = debug_msg.rstrip('\r\n\r\n').replace('\r\n', '\r\n> ') \
+                                         + '\r\n>\r\n'
+
+        debug_msg = '{} {}'.format(infotype_char[debug_type], debug_msg)
+        logger.debug(debug_msg)
+        if self.verbose:
+            if debug_type == 3:
+                print('* Ignoring the response-body', file=sys.stderr)
+                print('{{ [{} bytes data]'.format(
+                    sys.getsizeof(debug_msg)), file=sys.stderr)
+            else:
+                print(debug_msg, end='', file=sys.stderr)
+
     def _get_user_agent_string(self):
         """Generate a User-Agent string to be sent with every request."""
         uname = platform.uname()
@@ -156,11 +188,17 @@ class ArchiveSession(object):
     def _request(self, method, url,
                  params=None, data=None, headers=None, cookies=None, output_file=None,
                  retries=None, timeout=None, connect_timeout=None, input_file_obj=None,
-                 verbose=None, quiet=None, progress_bar=None):
+                 verbose=None, quiet=None, progress_bar=None, print_to_stdout=None):
         data = data if data else dict()
         headers = headers if headers else dict()
         _headers = copy(self.headers)
         _headers.update(headers)
+
+        if self.debug_callback:
+            self.curl_instance.setopt(pycurl.DEBUGFUNCTION, self.debug_callback)
+        else:
+            self.curl_instance.setopt(pycurl.DEBUGFUNCTION, self.pycurl_logger)
+
         verbose = self.verbose if verbose is None else verbose
 
         cookies = {'test-cookie': '1'}
@@ -182,10 +220,8 @@ class ArchiveSession(object):
                 timeout=timeout,
                 connect_timeout=connect_timeout,
                 progress_bar=progress_bar,
+                print_to_stdout=print_to_stdout,
         )
-
-        if self.debug_callback:
-            self.curl_instance.setopt(pycurl.DEBUGFUNCTION, self.debug_callback)
 
         r = self.send(req, retries=retries)
         return r
@@ -402,7 +438,7 @@ class ArchiveSession(object):
             r = self.get(url, params=p)
             if r.json.get('over_limit') == 0:
                 return False
-        except Exception as exc:
+        except Exception:
             pass
         return True
 

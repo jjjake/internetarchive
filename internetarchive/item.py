@@ -46,6 +46,7 @@ import pycurl
 from internetarchive.utils import IdentifierListAsItems, get_md5, iter_directory, \
     recursive_file_count, norm_filepath
 from internetarchive.files import File
+from internetarchive.exceptions import ItemDoesNotExist, ItemIsDark
 from internetarchive.utils import get_s3_xml_text, get_file_size, is_dir, \
     prepare_md_body, prepare_s3_headers
 
@@ -273,7 +274,9 @@ class Item(BaseItem):
                  ignore_errors=None,
                  on_the_fly=None,
                  return_responses=None,
-                 no_change_timestamp=None):
+                 no_change_timestamp=None,
+                 print_to_stdout=None,
+                 progress_bar=None):
         """Download files from an item.
 
         :param files: (optional) Only download files matching given file names.
@@ -348,33 +351,10 @@ class Item(BaseItem):
         return_responses = False if not return_responses else True
         no_change_timestamp = False if not no_change_timestamp else no_change_timestamp
 
-        if not dry_run:
-            if item_index and verbose is True:
-                print('{0} ({1}):'.format(self.identifier, item_index))
-            elif item_index and silent is False:
-                print('{0} ({1}): '.format(self.identifier, item_index), end='')
-            elif item_index is None and verbose is True:
-                print('{0}:'.format(self.identifier))
-            elif item_index is None and silent is False:
-                print(self.identifier, end=': ')
-            sys.stdout.flush()
-
         if self.is_dark is True:
-            msg = 'skipping {0}, item is dark'.format(self.identifier)
-            log.warning(msg)
-            if verbose:
-                print(' ' + msg)
-            elif silent is False:
-                print(msg)
-            return
+            raise ItemIsDark(self.identifier)
         elif self.metadata == {}:
-            msg = 'skipping {0}, item does not exist.'.format(self.identifier)
-            log.warning(msg)
-            if verbose:
-                print(' ' + msg)
-            elif silent is False:
-                print(msg)
-            return
+            raise ItemDoesNotExist(self.identifier)
 
         if files:
             files = self.get_files(files, on_the_fly=on_the_fly)
@@ -388,10 +368,8 @@ class Item(BaseItem):
         if not files:
             msg = 'skipping {0}, no matching files found.'.format(self.identifier)
             log.info(msg)
-            if verbose:
-                print(' ' + msg)
-            elif silent is False:
-                print(msg, end='')
+            if not silent:
+                print(msg, file=sys.stderr)
 
         errors = list()
         responses = list()
@@ -403,22 +381,25 @@ class Item(BaseItem):
             if dry_run:
                 print(f.url)
                 continue
-            r = f.download(path, verbose, silent, ignore_existing, checksum, destdir,
-                           retries, ignore_errors, None, return_responses,
-                           no_change_timestamp)
+
+            r = f.download(file_path=path,
+                           silent=silent,
+                           ignore_existing=ignore_existing,
+                           checksum=checksum,
+                           destdir=destdir,
+                           retries=retries,
+                           ignore_errors=ignore_errors,
+                           fileobj=None,
+                           return_responses=return_responses,
+                           no_change_timestamp=no_change_timestamp,
+                           print_to_stdout=print_to_stdout,
+                           progress_bar=progress_bar)
+
             if return_responses:
                 responses.append(r)
             if r is False:
                 errors.append(f.name)
-        if silent is False and verbose is False and dry_run is False:
-            if errors:
-                print(' - errors')
-            else:
-                print(' - success')
-        if return_responses:
-            return responses
-        else:
-            return errors
+        return responses
 
     def modify_metadata(self, metadata,
                         target=None,
@@ -607,7 +588,7 @@ class Item(BaseItem):
                 # TODO: Is there a better way to handle this?
                 body.close()
                 # TODO: what should we return?
-                #return requests.Response()
+                # return requests.Response()
                 return
 
         # require the Content-MD5 header when delete is True.

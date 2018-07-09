@@ -21,14 +21,13 @@
 
 usage:
     ia download <identifier> [<file>]... [options]...
-    ia download <identifier> <file> --stdout [--retries=<retries>]
+    ia download <identifier> <file> --stdout [--retries=<retries>] [--silent] [--no-progress-bar]
     ia download --itemlist=<file> [options]...
     ia download --search=<query> [options]...
     ia download --help
 
 options:
     -h, --help
-    -v, --verbose                            Turn on verbose output [default: False].
     -q, --silent                             Turn off ia's output [default: False].
     -d, --dry-run                            Print URLs to stdout and exit.
     -i, --ignore-existing                    Clobber files already downloaded.
@@ -57,6 +56,7 @@ options:
     -s, --stdout                             Write file contents to stdout.
     --no-change-timestamp                    Don't change the timestamp of downloaded files to reflect
                                              the source material.
+    -n, --no-progress-bar                    Don't print progress bar.
 """
 from __future__ import print_function, absolute_import
 import os
@@ -67,6 +67,7 @@ from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
 
 from internetarchive.cli.argparser import get_args_dict
+from internetarchive.exceptions import ItemIsDark, ItemDoesNotExist, AccessDenied
 
 
 def dir_exists(dir):
@@ -115,6 +116,10 @@ def main(argv, session):
         sys.exit(1)
 
     retries = int(args['--retries'])
+    if args['--silent'] or args['--no-progress-bar']:
+        progress_bar = False
+    else:
+        progress_bar = True
 
     if args['--itemlist']:
         with open(args['--itemlist']) as fp:
@@ -151,23 +156,8 @@ def main(argv, session):
     else:
         files = None
 
-    errors = list()
+    errors = False
     for i, identifier in enumerate(ids):
-        if args['--stdout']:
-            item = session.get_item(identifier)
-            f = list(item.get_files(args['<file>']))
-            try:
-                assert len(f) == 1
-            except AssertionError:
-                sys.stderr.write('error: {0}/{1} does not exist!\n'.format(
-                    identifier, args['<file>'][0]))
-                sys.exit(1)
-            if six.PY2:
-                stdout_buf = sys.stdout
-            else:
-                stdout_buf = sys.stdout.buffer
-            f[0].download(retries=args['--retries'], fileobj=stdout_buf)
-            sys.exit(0)
         try:
             identifier = identifier.strip()
         except AttributeError:
@@ -189,27 +179,36 @@ def main(argv, session):
                 continue
 
         # Otherwise, download the entire item.
-        _errors = item.download(
-            files=files,
-            formats=args['--format'],
-            glob_pattern=args['--glob'],
-            dry_run=args['--dry-run'],
-            verbose=args['--verbose'],
-            silent=args['--silent'],
-            ignore_existing=args['--ignore-existing'],
-            checksum=args['--checksum'],
-            destdir=args['--destdir'],
-            no_directory=args['--no-directories'],
-            retries=retries,
-            item_index=item_index,
-            ignore_errors=True,
-            on_the_fly=args['--on-the-fly'],
-            no_change_timestamp=args['--no-change-timestamp']
-        )
-        if _errors:
-            errors.append(_errors)
-    if errors:
-        # TODO: add option for a summary/report.
+        try:
+            rsps = item.download(
+                files=files,
+                formats=args['--format'],
+                glob_pattern=args['--glob'],
+                dry_run=args['--dry-run'],
+                silent=args['--silent'],
+                ignore_existing=args['--ignore-existing'],
+                checksum=args['--checksum'],
+                destdir=args['--destdir'],
+                no_directory=args['--no-directories'],
+                retries=retries,
+                item_index=item_index,
+                ignore_errors=True,
+                on_the_fly=args['--on-the-fly'],
+                no_change_timestamp=args['--no-change-timestamp'],
+                print_to_stdout=args['--stdout'],
+                progress_bar=progress_bar,
+            )
+        except ItemIsDark as exc:
+            print('* {} is dark, skipping.'.format(item.identifier), file=sys.stderr)
+        except ItemDoesNotExist as exc:
+            print('* {} does not exist, skipping.'.format(item.identifier),
+                  file=sys.stderr)
+        except AccessDenied as exc:
+            print('* {}'.format(str(exc)), file=sys.stderr)
+        finally:
+            errors = True
+
+    if errors is True:
         sys.exit(1)
     else:
         sys.exit(0)

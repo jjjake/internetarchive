@@ -200,6 +200,29 @@ Converting search results to CSV and other formats
 If you'd prefer a tab-separated spreadsheet, you can replace ``@csv`` with ``@tsv`` in the command above.
 More options can be found in the *Format strings and escaping* section in the `jq manual <https://stedolan.github.io/jq/manual/>`_.
 
+Catalog
+-------
+
+Get info on all of your IA-S3 tasks:
+
+.. code:: bash
+
+    $ ia tasks --json | jq 'select(.args.comment == "s3-put")'
+
+Or, output a link to the tasklog for each S3 task you currently have queued or running:
+
+.. code:: bash
+
+    $ ia tasks nasa --json \
+        | jq -r 'select(.args.comment == "s3-put") | "https://archive.org/log/\(.task_id)"'
+    https://archive.org/log/469558161
+    https://archive.org/log/400818482
+
+Get the identifiers for all of your redrows:
+
+.. code:: bash
+
+    $ ia tasks --json | jq -r 'select(.row_type == "red").identifier'
 
 TODO
 ____

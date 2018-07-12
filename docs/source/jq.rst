@@ -15,7 +15,7 @@ Downloading a binary
 ^^^^^^^^^^^^^^^^^^^^
 
 The easiest way to get started with ``jq`` is to download a binary.
-Binaries for Linux, OS X, and Windows are available here: `https://stedolan.github.io/jq/download/ <https://stedolan.github.io/jq/download/>`_
+Binaries for Linux, OS X, and Windows are available at `https://stedolan.github.io/jq/download/ <https://stedolan.github.io/jq/download/>`_.
 Once you find the binary for your OS, you could right-click the hypertext and copy the link to the binary.
 Then you could paste it into your terminal and download it like so:
 

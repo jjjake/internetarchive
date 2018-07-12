@@ -38,7 +38,8 @@ NASA_EXPECTED_FILES = set([
     'nasa_meta.xml',
     'nasa_reviews.xml',
     'NASAarchiveLogo.jpg',
-    'globe_west_540_thumb.jpg'
+    'globe_west_540_thumb.jpg',
+    '__ia_thumb.jpg',
 ])
 
 

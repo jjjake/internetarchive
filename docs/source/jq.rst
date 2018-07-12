@@ -8,7 +8,7 @@ It's a great tool for processing the JSON output of ``ia``.
 This document will go over how to install or download ``jq`` and how to use it with ``ia``.
 
 If you have a tip you'd like to add to this page, please email `jake@archive.org <mailto:jake@archive.org>`_ or send a pull request.
-If you're unable to figure out a ``jq`` command to do what you need and don't see it on this page, please email  `jake@archive.org <mailto:jake@archive.org>` for help.
+If you're unable to figure out a ``jq`` command to do what you need and don't see it on this page, please email  `jake@archive.org <mailto:jake@archive.org>`_ for help.
 
 Installation
 ------------

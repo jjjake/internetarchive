@@ -34,7 +34,8 @@ def test_glob(tmpdir_ch):
     expected_files = set([
         'globe_west_540.jpg',
         'NASAarchiveLogo.jpg',
-        'globe_west_540_thumb.jpg'
+        'globe_west_540_thumb.jpg',
+        '__ia_thumb.jpg',
     ])
 
     call_cmd('ia --insecure download --glob="*jpg" nasa')

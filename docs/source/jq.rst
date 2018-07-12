@@ -296,3 +296,24 @@ Get total imagecount of a collection
 
     $ ia search 'scanningcenter:uoft AND shiptracking:ace54704' -f imagecount | jq '.imagecount' | paste -sd+ - | bc
     8172
+
+Selecting files based on filesize
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Get the filenames of every file in ``goodytwoshoes00newyiala`` that is larger than 3000 bytes:
+
+.. code:: bash
+
+    $ ia metadata goodytwoshoes00newyiala \
+        | jq -r '.files[] | select(.name | endswith(".pdf")) | select((.size | tonumber) > 3000) | .name'
+    goodytwoshoes00newyiala.pdf
+    goodytwoshoes00newyiala_bw.pdf
+
+You can also include the identifier in the output like so:
+
+.. code:: bash
+
+    $ ia metadata goodytwoshoes00newyiala \
+        | jq -r '.metadata.identifier as $i | .files[] | select(.name | endswith(".pdf")) | select((.size | tonumber) > 3000) | "\($i)/\(.name)"'
+    goodytwoshoes00newyiala/goodytwoshoes00newyiala.pdf
+    goodytwoshoes00newyiala/goodytwoshoes00newyiala_bw.pdf

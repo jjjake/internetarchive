@@ -3,7 +3,7 @@
 Using jq with ia
 ================
 
-``jq`` is a lightweight and flexible command-line JSON processor.
+`jq <https://stedolan.github.io/jq/>`_ is a lightweight and flexible command-line JSON processor.
 It's a great tool for processing the JSON output of ``ia``.
 This document will go over how to install or download ``jq`` and how to use it with ``ia``.
 

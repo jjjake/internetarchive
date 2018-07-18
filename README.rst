@@ -11,7 +11,7 @@ A Python and Command-Line Interface to Archive.org
 
 This package installs a command-line tool named ``ia`` for using Archive.org from the command-line.
 It also installs the ``internetarchive`` Python module for programatic access to archive.org.
-Please report all bugs and issues on `Github <https://github.com/jjjake/ia-wrapper/issues>`__.
+Please report all bugs and issues on `Github <https://github.com/jjjake/internetarchive/issues>`__.
 
 
 Installation
@@ -35,10 +35,10 @@ Binaries of the command-line tool are also available:
 Documentation
 -------------
 
-Documentation is available at `https://internetarchive.readthedocs.io <https://internetarchive.readthedocs.io>`_.
+Documentation is available at `http://archive.org/services/docs/api/internetarchive <http://archive.org/services/docs/api/internetarchive>`_.
 
 
 Contributing
 ------------
 
-All contributions are welcome and appreciated. Please see `https://internetarchive.readthedocs.io/en/latest/contributing.html <https://internetarchive.readthedocs.io/en/latest/contributing.html>`_ for more details.
+All contributions are welcome and appreciated. Please see `http://archive.org/services/docs/api/internetarchive/contributing.html <http://archive.org/services/docs/api/internetarchive/contributing.html>`_ for more details.

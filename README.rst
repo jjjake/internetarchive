@@ -35,10 +35,10 @@ Binaries of the command-line tool are also available:
 Documentation
 -------------
 
-Documentation is available at `http://archive.org/services/docs/api/internetarchive <http://archive.org/services/docs/api/internetarchive>`_.
+Documentation is available at `https://archive.org/services/docs/api/internetarchive <https://archive.org/services/docs/api/internetarchive>`_.
 
 
 Contributing
 ------------
 
-All contributions are welcome and appreciated. Please see `http://archive.org/services/docs/api/internetarchive/contributing.html <http://archive.org/services/docs/api/internetarchive/contributing.html>`_ for more details.
+All contributions are welcome and appreciated. Please see `https://archive.org/services/docs/api/internetarchive/contributing.html <https://archive.org/services/docs/api/internetarchive/contributing.html>`_ for more details.

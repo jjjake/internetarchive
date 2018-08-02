@@ -102,7 +102,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
 
         # Format error message for any non 200 responses that
         # we haven't caught yet,and write to stderr.
-        if responses and responses[-1] and responses[-1].status_code != 200:
+        if responses and responses[-1].status_code and responses[-1].status_code != 200:
             if not responses[-1].status_code:
                 return responses
             filename = responses[-1].request.url.split('/')[-1]

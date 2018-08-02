@@ -225,7 +225,7 @@ def main(argv, session):
         for _r in _upload_files(item, files, upload_kwargs):
             if args['--debug']:
                 break
-            if (not _r) or (not _r.ok):
+            if (not _r.status_code) or (not _r.ok):
                 ERRORS = True
 
     # Bulk upload using spreadsheet.

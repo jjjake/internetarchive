@@ -28,8 +28,6 @@ User's Guide
     installation
     quickstart
     cli
-    items
-    metadata
     api
     updates
     troubleshooting

@@ -21,7 +21,7 @@ Release History
 1.8.0 (2018-06-28)
 ++++++++++++++++++
 
-**Feautres and Improvements**
+**Features and Improvements**
 
 - Only use backports.csv for python2 in support of FreeBDS port.
 - Added a nicer error message to ``ia search`` for authentication errors.
@@ -41,7 +41,7 @@ Release History
 1.7.7 (2018-03-05)
 ++++++++++++++++++
 
-**Feautres and Improvements**
+**Features and Improvements**
 
 - Added support for downloading on-the-fly archive_marc.xml files.
 
@@ -54,7 +54,7 @@ Release History
 1.7.6 (2018-01-05)
 ++++++++++++++++++
 
-**Feautres and Improvements**
+**Features and Improvements**
 
 - Added ability to set the remote-name for a directory in ``ia upload`` (previously you could only do this for single files).
 
@@ -65,7 +65,7 @@ Release History
 1.7.5 (2017-12-07)
 ++++++++++++++++++
 
-**Feautres and Improvements**
+**Features and Improvements**
 
 - Turned on ``x-archive-keep-old-version`` S3 header by default for all ``ia upload``, ``ia delete``, ``ia copy``, and ``ia move`` commands.
   This means that any ``ia`` command that clobbers or deletes a command, will save a version of the file in ``<identifier>/history/files/$key.~N~``.
@@ -75,7 +75,7 @@ Release History
 1.7.4 (2017-11-06)
 ++++++++++++++++++
 
-**Feautres and Improvements**
+**Features and Improvements**
 
 - Increased timeout in search from 12 seconds to 24.
 - Added ability to set the ``max_retries`` in :func:`internetarchive.search_items`.
@@ -98,7 +98,7 @@ Release History
 1.7.2 (2017-09-11)
 ++++++++++++++++++
 
-**Feautres and Improvements**
+**Features and Improvements**
 
 - Added support for adding custom headers to ``ia search``.
 
@@ -129,7 +129,7 @@ Release History
 1.7.0 (2017-07-25)
 ++++++++++++++++++
 
-**Feautres and Improvements**
+**Features and Improvements**
 
 - Loosened up ``jsonpatch`` requirements, as the metadata API now supports more recent versions of the JSON Patch standard.
 - Added support for building "snap" packages (https://snapcraft.io/).

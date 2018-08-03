@@ -115,7 +115,7 @@ Metadata fields or elements can be removed with the ``--remove`` option:
 This would remove ``another subject`` from the items subject field, regardless of whether or not the field is a single or multi-value field.
 
 
-Refer to `Internet Archive Metadata <metadata.html>`_ for more specific details regarding metadata and archive.org.
+Refer to `Internet Archive Metadata <//archive.org/services/docs/api/metadata-schema/index.html>`_ for more specific details regarding metadata and archive.org.
 
 
 Modifying Metadata in Bulk
@@ -163,7 +163,7 @@ The files are named in the format ``$key.~N~``.
 These files can be deleted like normal files.
 You can also prevent the backup from happening on clobbers by adding ``-H x-archive-keep-old-version:0`` to your command.
 
-Refer to `archive.org Identifiers <metadata.html#archive-org-identifiers>`_ for more information on creating valid archive.org identifiers.
+Refer to `archive.org Identifiers <//archive.org/services/docs/api/metadata-schema/index.html#archive-org-identifiers>`_ for more information on creating valid archive.org identifiers.
 Please also read the `Internet Archive Items <//archive.org/services/docs/api/items.html>`_ page before getting started.
 
 Bulk Uploading

@@ -117,7 +117,7 @@ It collects together your credentials and config.
 Item Objects
 ------------
 
-:class:`Item` objects represent `Internet Archive items <items.html>`_.
+:class:`Item` objects represent `Internet Archive items <//archive.org/services/docs/api/items.html>`_.
 From the :class:`Item` object you can create new items, upload files to existing items, read and write metadata, and download or delete files.
 
 .. autofunction:: get_item
@@ -137,7 +137,7 @@ Or :func:`internetarchive.upload`::
 
 The item will automatically be created if it does not exist.
 
-Refer to `archive.org Identifiers <metadata.html#archive-org-identifiers>`_ for more information on creating valid archive.org identifiers.
+Refer to `archive.org Identifiers <//archive.org/services/docs/api/metadata-schema/index.html#archive-org-identifiers>`_ for more information on creating valid archive.org identifiers.
 
 Setting Remote Filenames
 ^^^^^^^^^^^^^^^^^^^^^^^^

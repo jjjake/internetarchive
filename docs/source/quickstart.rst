@@ -27,7 +27,7 @@ Note that Python's netrc library does not currently support passphrases, or pass
 Uploading
 ---------
 
-Creating a new `item on archive.org <items.html>`_ and uploading files to it is as easy as::
+Creating a new `item on archive.org <//archive.org/services/docs/api/items.html>`_ and uploading files to it is as easy as::
 
     >>> from internetarchive import upload
     >>> md = dict(collection='test_collection', title='My New Item', mediatype='movies')
@@ -120,7 +120,7 @@ The default behaviour of :func:`modify_metadata <internetarchive.modify_metadata
     >>> f.title
     'My File Title'
 
-Refer to `Internet Archive Metadata <metadata.html>`_ for more specific details regarding metadata and archive.org.
+Refer to `Internet Archive Metadata <//archive.org/services/docs/api/metadata-schema/index.html>`_ for more specific details regarding metadata and archive.org.
 
 
 Downloading

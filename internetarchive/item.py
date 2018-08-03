@@ -774,6 +774,7 @@ class Item(BaseItem):
         Uploading multiple files::
 
             >>> r = item.upload(['file1.txt', 'file2.txt'])
+            >>> r = item.upload([fileobj, fileobj2])
             >>> r = item.upload(('file1.txt', 'file2.txt'))
 
         Uploading file objects:
@@ -784,6 +785,9 @@ class Item(BaseItem):
             >>> f = io.BytesIO(b"some more binary data: \\x00\\x01")
             >>> f.name = 'remote-name.txt'
             >>> r = item.upload(f)
+
+            *Note: file objects must either have a name attribute, or be uploaded in a
+            dict where the key is the remote-name*
 
         Setting the remote filename with a dict::
 

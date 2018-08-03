@@ -758,12 +758,10 @@ class Item(BaseItem):
         """Upload files to an item. The item will be created if it
         does not exist.
 
-        :type files: list
+        :type files: str, file, list, tuple, dict
         :param files: The filepaths or file-like objects to upload.
 
-        :type kwargs: dict
-        :param kwargs: The keyword arguments from the call to
-                       upload_file().
+        :param \*\*kwargs: Optional arguments that :func:`Item.upload_file()` takes.
 
         Usage::
 
@@ -771,10 +769,28 @@ class Item(BaseItem):
             >>> item = internetarchive.Item('identifier')
             >>> md = dict(mediatype='image', creator='Jake Johnson')
             >>> item.upload('/path/to/image.jpg', metadata=md, queue_derive=False)
-            True
+            [<Response [200]>]
+
+        Uploading multiple files::
+
+            >>> r = item.upload(['file1.txt', 'file2.txt'])
+            >>> r = item.upload(('file1.txt', 'file2.txt'))
+
+        Uploading file objects:
+
+            >>> import io
+            >>> f = io.BytesIO(b"some initial binary data: \\x00\\x01")
+            >>> r = item.upload({'remote-name.txt': f})
+            >>> f = io.BytesIO(b"some more binary data: \\x00\\x01")
+            >>> f.name = 'remote-name.txt'
+            >>> r = item.upload(f)
+
+        Setting the remote filename with a dict::
+
+            >>> r = item.upload({'remote-name.txt': '/path/to/local/file.txt'})
 
         :rtype: list
-        :returns: A list of requests.Response objects.
+        :returns: A list of :class:`requests.Response` objects.
         """
         queue_derive = True if queue_derive is None else queue_derive
         remote_dir_name = None

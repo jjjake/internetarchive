@@ -164,7 +164,7 @@ These files can be deleted like normal files.
 You can also prevent the backup from happening on clobbers by adding ``-H x-archive-keep-old-version:0`` to your command.
 
 Refer to `archive.org Identifiers <metadata.html#archive-org-identifiers>`_ for more information on creating valid archive.org identifiers.
-Please also read the `Internet Archive Items <items.html>`_ page before getting started.
+Please also read the `Internet Archive Items <//archive.org/services/docs/api/items.html>`_ page before getting started.
 
 Bulk Uploading
 ^^^^^^^^^^^^^^

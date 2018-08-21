@@ -63,7 +63,7 @@ def main(argv, session):
 
     # Add keep-old-version by default.
     if 'x-archive-keep-old-version' not in args['--header']:
-        headers['x-archive-keep-old-version'] = '1'
+        args['--header']['x-archive-keep-old-version'] = '1'
 
     # First we use ia_copy, prep argv for ia_copy.
     argv.pop(0)

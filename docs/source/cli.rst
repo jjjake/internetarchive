@@ -64,7 +64,7 @@ A particularly useful tool to use alongside ``ia`` is `jq <https://stedolan.gith
 Modifying Metadata
 ^^^^^^^^^^^^^^^^^^
 
-Once ``ia`` has been `configured <quickstart.html#configuring>`_, you can modify metadata:
+Once ``ia`` has been `configured <quickstart.html#configuring>`_, you can modify :doc:`metadata <metadata>`:
 
 .. code:: bash
 
@@ -142,7 +142,7 @@ Upload
 
     $ ia upload <identifier> file1 file2 --metadata="mediatype:texts" --metadata="blah:arg"
 
-Please note that, unless specified otherwise, items will be uploaded with a ``data`` mediatype. **This cannot be changed afterwards.** Therefore, you should specify a mediatype when uploading, eg. ``--metadata="mediatype:movies"``
+.. warning:: Please note that, unless specified otherwise, items will be uploaded with a ``data`` mediatype. **This cannot be changed afterwards.** Therefore, you should specify a mediatype when uploading, eg. ``--metadata="mediatype:movies"``. Similarly, if you want your upload to end up somewhere else than the default collection (currently `community texts <https://archive.org/details/opensource>`_), you should also specify a collection with ``--metadata="collection:foo"``. See :doc:`metadata` for more information.
 
 You can upload files from ``stdin``:
 

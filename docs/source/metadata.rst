@@ -63,8 +63,15 @@ Currently collections can only be created by Internet Archive staff members.
 Please `contact Internet Archive <mailto:info@archive.org?subject=[Collection Creation Request]>`_ if you need a collection created.
 
 All items **should** belong to a collection.
-If a collection is not specified at the time of upload, it will be added to the ``opensource`` collection.
-For testing purposes, you may upload to the ``test_collection`` collection.
+If a collection is not specified at the time of upload, it will be added to the `Community texts <https://archive.org/details/opensource>`_ collection.
+For testing purposes, you may upload to the ``test_collection`` collection. The following collections are also available to the public at the time of writing:
+
+ * `Community Audio <https://archive.org/details/opensource_audio>`_
+ * `Community Media <https://archive.org/details/opensource_media>`_
+ * `Community Software <https://archive.org/details/open_source_software>`_
+ * `Community Texts <https://archive.org/details/opensource>`_ (default collection)
+ * `Community Video <https://archive.org/details/opensource_movies>`_
+ * `Test collection <https://archive.org/details/test_collection>`_
 
 contributor
 ^^^^^^^^^^^

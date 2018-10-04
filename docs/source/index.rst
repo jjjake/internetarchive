@@ -28,6 +28,8 @@ User's Guide
     installation
     quickstart
     cli
+    jq
+    metadata
     api
     updates
     troubleshooting

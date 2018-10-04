@@ -1,5 +1,3 @@
-.. _jq:
-
 Using jq with ia
 ================
 
@@ -227,7 +225,7 @@ Get the identifiers for all of your redrows:
     $ ia tasks --json | jq -r 'select(.row_type == "red").identifier'
 
 TODO
-____
+----
 
 Recipes to document, work in progress...
 

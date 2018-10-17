@@ -821,13 +821,15 @@ class Item(BaseItem):
             total_files = recursive_file_count(files, item=self, checksum=True)
         else:
             total_files = recursive_file_count(files, item=self, checksum=False)
-        for f in tqdm(files, ascii=True, desc='Uploading file'):
+        for f in files:
             if (isinstance(f, string_types) and is_dir(f)) \
                     or (isinstance(f, tuple) and is_dir(f[-1])):
                 if isinstance(f, tuple):
                     remote_dir_name = f[0].strip('/')
                     f = f[-1]
-                for filepath, key in iter_directory(f):
+
+                pb = tqdm(iter_directory(f), ascii=True, desc='Uploading file')
+                for filepath, key in pb:
                     file_index += 1
                     # Set derive header if queue_derive is True,
                     # and this is the last request being made.

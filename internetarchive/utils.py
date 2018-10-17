@@ -246,9 +246,9 @@ def recursive_file_count(files, item=None, checksum=False):
             except (AttributeError, TypeError):
                 is_dir = False
         if is_dir:
-            pb = tqdm(iter_directory(f))
+            pb = tqdm(iter_directory(f), ascii=True,
+                      desc='Checking md5 for duplicate files')
             for x, _ in pb:
-                pb.set_description("Checking md5 for duplicate files")
                 with open(x, 'rb') as f_handle:
                     lmd5 = get_md5(f_handle)
                 if lmd5 in md5s:

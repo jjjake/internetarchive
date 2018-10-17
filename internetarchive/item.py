@@ -51,6 +51,18 @@ from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
 from internetarchive.utils import get_s3_xml_text, get_file_size, is_dir
 
+# Progress bars using https://github.com/tqdm/tqdm
+# Import tqdm without enforcing it as a dependency
+try:
+    from tqdm import tqdm
+except ImportError:
+    print("tqdm is not available. Progress bar functionalities will be disabled.")
+
+    def tqdm(*args, **kwargs):
+        if args:
+            return args[0]
+        return kwargs.get('iterable', None)
+
 log = getLogger(__name__)
 
 
@@ -809,7 +821,7 @@ class Item(BaseItem):
             total_files = recursive_file_count(files, item=self, checksum=True)
         else:
             total_files = recursive_file_count(files, item=self, checksum=False)
-        for f in files:
+        for f in tqdm(files, ascii=True, desc='Uploading file'):
             if (isinstance(f, string_types) and is_dir(f)) \
                     or (isinstance(f, tuple) and is_dir(f[-1])):
                 if isinstance(f, tuple):

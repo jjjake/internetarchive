@@ -37,6 +37,18 @@ from xml.dom.minidom import parseString
 import six
 from six.moves import zip_longest
 
+# Progress bars using https://github.com/tqdm/tqdm
+# Import tqdm without enforcing it as a dependency
+try:
+    from tqdm import tqdm
+except ImportError:
+    print("tqdm is not available. Progress bar functionalities will be disabled.")
+
+    def tqdm(*args, **kwargs):
+        if args:
+            return args[0]
+        return kwargs.get('iterable', None)
+
 
 def deep_update(d, u):
     for k, v in u.items():
@@ -86,7 +98,7 @@ def norm_filepath(fp):
 def get_md5(file_object):
     m = hashlib.md5()
     while True:
-        data = file_object.read(8192)
+        data = file_object.read(65535)
         if not data:
             break
         m.update(data)
@@ -234,15 +246,19 @@ def recursive_file_count(files, item=None, checksum=False):
             except (AttributeError, TypeError):
                 is_dir = False
         if is_dir:
-            for x, _ in iter_directory(f):
-                lmd5 = get_md5(open(x, 'rb'))
+            pb = tqdm(iter_directory(f))
+            for x, _ in pb:
+                pb.set_description("Checking md5 for duplicate files")
+                with open(x, 'rb') as f_handle:
+                    lmd5 = get_md5(f_handle)
                 if lmd5 in md5s:
                     continue
                 else:
                     total_files += 1
         else:
             try:
-                lmd5 = get_md5(open(f, 'rb'))
+                with open(f, 'rb') as f_handle:
+                    lmd5 = get_md5(f_handle)
             except TypeError:
                 # Support file-like objects.
                 lmd5 = get_md5(f)

@@ -56,8 +56,6 @@ from internetarchive.utils import get_s3_xml_text, get_file_size, is_dir
 try:
     from tqdm import tqdm
 except ImportError:
-    print("tqdm is not available. Progress bar functionalities will be disabled.")
-
     def tqdm(*args, **kwargs):
         if args:
             return args[0]

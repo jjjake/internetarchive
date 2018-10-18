@@ -42,8 +42,6 @@ from six.moves import zip_longest
 try:
     from tqdm import tqdm
 except ImportError:
-    print("tqdm is not available. Progress bar functionalities will be disabled.")
-
     def tqdm(*args, **kwargs):
         if args:
             return args[0]

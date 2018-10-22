@@ -17,3 +17,4 @@ wheelhouse
 .cache
 .vagrant
 .idea
+*~

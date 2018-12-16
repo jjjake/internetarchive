@@ -35,7 +35,7 @@ Binaries of the command-line tool are also available:
 Documentation
 -------------
 
-Documentation is available at `https://archive.org/services/docs/api/internetarchive <https://archive.org/services/docs/api/internetarchive>`_.
+Documentation is available at `https://internetarchive.readthedocs.io/en/latest/cli.html <https://internetarchive.readthedocs.io/en/latest/cli.html>`_.
 
 
 Contributing

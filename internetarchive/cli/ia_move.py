@@ -53,7 +53,7 @@ def main(argv, session):
         '<src-identifier>/<src-file>': And(str, lambda x: '/' in x,
             error='Source not formatted correctly. See usage example.'),
         '<dest-identifier>/<dest-file>': And(str, lambda x: '/' in x,
-            error='Destiantion not formatted correctly. See usage example.'),
+            error='Destination not formatted correctly. See usage example.'),
     })
     try:
         args = s.validate(args)

@@ -32,6 +32,7 @@ docs:
 binary:
 	# This requires using https://github.com/jjjake/pex which has been hacked for multi-platform support.
 	pex . --python python3.6 --python python2 --python-shebang='/usr/bin/env python' -e internetarchive.cli.ia:main -o ia-$(VERSION)-py2.py3-none-any.pex
+	# pex . --python python3.6 --python /usr/bin/python --python-shebang='/usr/bin/env python' --platform=linux-x86_64 --platform=macosx_10_11 -e internetarchive.cli.ia:main -o ia-1.8.1-py2.py3-none-any.pex -f wheelhouse/ --no-pypi
 
 publish-binary:
 	./ia-$(VERSION)-py2.py3-none-any.pex upload ia-pex ia-$(VERSION)-py2.py3-none-any.pex --no-derive

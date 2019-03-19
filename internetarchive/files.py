@@ -126,7 +126,8 @@ class File(BaseFile):
 
     def download(self, file_path=None, verbose=None, silent=None, ignore_existing=None,
                  checksum=None, destdir=None, retries=None, ignore_errors=None,
-                 fileobj=None, return_responses=None, no_change_timestamp=None):
+                 fileobj=None, return_responses=None, no_change_timestamp=None,
+                 params=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -169,6 +170,10 @@ class File(BaseFile):
                                     current time instead of changing it to that given in
                                     the original archive.
 
+        :type params: dict
+        :param params: (optional) URL parameters to send with
+                       download request (e.g. `cnt=0`).
+
         :rtype: bool
         :returns: True if file was successfully downloaded.
         """
@@ -179,6 +184,7 @@ class File(BaseFile):
         ignore_errors = False if not ignore_errors else ignore_errors
         return_responses = False if not return_responses else return_responses
         no_change_timestamp = False if not no_change_timestamp else no_change_timestamp
+        params = None if not params else params
 
         if (fileobj and silent is None) or silent is not False:
             silent = True
@@ -240,7 +246,10 @@ class File(BaseFile):
             os.makedirs(parent_dir)
 
         try:
-            response = self.item.session.get(self.url, stream=True, timeout=12)
+            response = self.item.session.get(self.url,
+                                             stream=True,
+                                             timeout=12,
+                                             params=params)
             response.raise_for_status()
             if return_responses:
                 return response

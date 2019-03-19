@@ -283,7 +283,8 @@ class Item(BaseItem):
                  ignore_errors=None,
                  on_the_fly=None,
                  return_responses=None,
-                 no_change_timestamp=None):
+                 no_change_timestamp=None,
+                 params=None):
         """Download files from an item.
 
         :param files: (optional) Only download files matching given file names.
@@ -345,6 +346,10 @@ class Item(BaseItem):
                                     current time instead of changing it to that given in
                                     the original archive.
 
+        :type params: dict
+        :param params: (optional) URL parameters to send with
+                       download request (e.g. `cnt=0`).
+
         :rtype: bool
         :returns: True if if all files have been downloaded successfully.
         """
@@ -357,6 +362,7 @@ class Item(BaseItem):
         no_directory = False if no_directory is None else no_directory
         return_responses = False if not return_responses else True
         no_change_timestamp = False if not no_change_timestamp else no_change_timestamp
+        params = None if not params else params
 
         if not dry_run:
             if item_index and verbose is True:
@@ -415,7 +421,7 @@ class Item(BaseItem):
                 continue
             r = f.download(path, verbose, silent, ignore_existing, checksum, destdir,
                            retries, ignore_errors, None, return_responses,
-                           no_change_timestamp)
+                           no_change_timestamp, params)
             if return_responses:
                 responses.append(r)
             if r is False:
@@ -483,12 +489,16 @@ class Item(BaseItem):
         url = '{protocol}//archive.org/metadata/{identifier}'.format(
             protocol=self.session.protocol,
             identifier=self.identifier)
+        if any('/' in k for k in metadata):
+            source_metadata = self.item_metadata
+        else:
+            source_metadata = self.item_metadata.get(target.split('/')[0], {})
         request = MetadataRequest(
             method='POST',
             url=url,
             metadata=metadata,
             headers=self.session.headers,
-            source_metadata=self.item_metadata.get(target.split('/')[0], {}),
+            source_metadata=source_metadata,
             target=target,
             priority=priority,
             access_key=access_key,

@@ -37,7 +37,7 @@ options:
     -I, --itemlist=<file>                    Download items from a specified file. Itemlists should
                                              be a plain text file with one identifier per line.
     -S, --search=<query>                     Download items returned from a specified search query.
-    -p, --search-parameters=<key:value>...   Download items returned from a specified search query.
+    -P, --search-parameters=<key:value>...   Download items returned from a specified search query.
     -g, --glob=<pattern>                     Only download files whose filename matches the
                                              given glob pattern.
     -f, --format=<format>...                 Only download files of the specified format(s).
@@ -57,6 +57,7 @@ options:
     -s, --stdout                             Write file contents to stdout.
     --no-change-timestamp                    Don't change the timestamp of downloaded files to reflect
                                              the source material.
+    -p, --parameters=<key:value>...          Parameters to send with your query (e.g. `cnt=0`).
 """
 from __future__ import print_function, absolute_import
 import os
@@ -96,7 +97,8 @@ def main(argv, session):
         '--retries': Use(lambda x: x[0]),
         '--search-parameters': Use(lambda x: get_args_dict(x, query_string=True)),
         '--on-the-fly': Use(bool),
-        '--no-change-timestamp': Use(bool)
+        '--no-change-timestamp': Use(bool),
+        '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
     })
 
     # Filenames should be unicode literals. Support PY2 and PY3.
@@ -166,7 +168,9 @@ def main(argv, session):
                 stdout_buf = sys.stdout
             else:
                 stdout_buf = sys.stdout.buffer
-            f[0].download(retries=args['--retries'], fileobj=stdout_buf)
+            f[0].download(retries=args['--retries'],
+                          fileobj=stdout_buf,
+                          params=args['--parameters'])
             sys.exit(0)
         try:
             identifier = identifier.strip()
@@ -204,7 +208,8 @@ def main(argv, session):
             item_index=item_index,
             ignore_errors=True,
             on_the_fly=args['--on-the-fly'],
-            no_change_timestamp=args['--no-change-timestamp']
+            no_change_timestamp=args['--no-change-timestamp'],
+            params=args['--parameters']
         )
         if _errors:
             errors.append(_errors)

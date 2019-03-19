@@ -54,6 +54,18 @@ def get_args_dict(args, query_string=False):
     return metadata
 
 
+def get_args_dict_many_write(metadata):
+    changes = defaultdict(list)
+    for key in metadata:
+        target = '/'.join(key.split('/')[:-1])
+        field = key.split('/')[-1]
+        if not changes[target]:
+            changes[target] = {field: metadata[key]}
+        else:
+            changes[target][field] = metadata[key]
+    return changes
+
+
 def convert_str_list_to_unicode(str_list):
     unicode_list = list()
     for x in str_list:

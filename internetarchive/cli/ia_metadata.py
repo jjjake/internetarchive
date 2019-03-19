@@ -60,7 +60,7 @@ from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Or, And, Use
 import six
 
-from internetarchive.cli.argparser import get_args_dict
+from internetarchive.cli.argparser import get_args_dict, get_args_dict_many_write
 
 # Only import backports.csv for Python2 (in support of FreeBSD port).
 PY2 = sys.version_info[0] == 2
@@ -188,6 +188,8 @@ def main(argv, session):
                 metadata_args = args['--remove']
             try:
                 metadata = get_args_dict(metadata_args)
+                if any('/' in k for k in metadata):
+                    metadata = get_args_dict_many_write(metadata)
             except ValueError:
                 print("error: The value of --modify, --remove, --append or --append-list "
                       "is invalid. It must be formatted as: --modify=key:value",

@@ -233,39 +233,77 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         if not source_metadata:
             r = requests.get(self.url)
             source_metadata = r.json().get(target.split('/')[0], {})
-        if 'metadata' in target:
-            destination_metadata = source_metadata.copy()
-            prepared_metadata = prepare_metadata(metadata, source_metadata, append,
-                                                 append_list)
-            destination_metadata.update(prepared_metadata)
-        elif 'files' in target:
-            filename = '/'.join(target.split('/')[1:])
-            for f in source_metadata:
-                if f.get('name') == filename:
-                    source_metadata = f
-                    break
-            destination_metadata = source_metadata.copy()
-            prepared_metadata = prepare_metadata(metadata, source_metadata, append)
-            destination_metadata.update(prepared_metadata)
+
+        # Write to many targets
+        if any('/' in k for k in metadata):
+            if not all('/' in k for k in metadata if k != 'metadata'):
+                raise ValueError('bad!')
+            changes = list()
+            for key in metadata:
+                if key == 'metadata':
+                    patch = prepare_metadata_patch(metadata[key],
+                                                   source_metadata['metadata'],
+                                                   append,
+                                                   append_list)
+                elif key.startswith('files/'):
+                    patch = prepare_files_patch(metadata[key],
+                                                source_metadata['files'],
+                                                append,
+                                                key)
+                changes.append({'target': key, 'patch': patch})
+            self.data = {
+                '-changes': json.dumps(changes),
+                'priority': priority,
+            }
+        # Write to single target
         else:
-            destination_metadata = source_metadata.copy()
-            prepared_metadata = prepare_metadata(metadata, source_metadata, append)
-            destination_metadata.update(prepared_metadata)
-
-        # Delete metadata items where value is REMOVE_TAG.
-        destination_metadata = dict(
-            (k, v) for (k, v) in destination_metadata.items() if v != 'REMOVE_TAG'
-        )
-
-        patch = json.dumps(make_patch(source_metadata, destination_metadata).patch)
-
-        self.data = {
-            '-patch': patch,
-            '-target': target,
-            'priority': priority,
-        }
-
+            if 'metadata' in target:
+                patch = prepare_metadata_patch(metadata,
+                                               source_metadata,
+                                               append,
+                                               append_list)
+            elif 'files' in target:
+                patch = prepare_files_patch(metadata, source_metadata, append)
+            else:
+                destination_metadata = source_metadata.copy()
+                prepared_metadata = prepare_metadata(metadata, source_metadata, append)
+                destination_metadata.update(prepared_metadata)
+            self.data = {
+                '-patch': json.dumps(patch),
+                '-target': target,
+                'priority': priority,
+            }
         super(MetadataPreparedRequest, self).prepare_body(self.data, None)
+
+
+def prepare_files_patch(metadata, source_metadata, append, target):
+    filename = '/'.join(target.split('/')[1:])
+    for f in source_metadata:
+        if f.get('name') == filename:
+            source_metadata = f
+            break
+    destination_metadata = source_metadata.copy()
+    prepared_metadata = prepare_metadata(metadata, source_metadata, append)
+    destination_metadata.update(prepared_metadata)
+    # Delete metadata items where value is REMOVE_TAG.
+    destination_metadata = dict(
+        (k, v) for (k, v) in destination_metadata.items() if v != 'REMOVE_TAG'
+    )
+    patch = make_patch(source_metadata, destination_metadata).patch
+    return patch
+
+
+def prepare_metadata_patch(metadata, source_metadata, append, append_list):
+    destination_metadata = source_metadata.copy()
+    prepared_metadata = prepare_metadata(metadata, source_metadata, append,
+                                         append_list)
+    destination_metadata.update(prepared_metadata)
+    # Delete metadata items where value is REMOVE_TAG.
+    destination_metadata = dict(
+        (k, v) for (k, v) in destination_metadata.items() if v != 'REMOVE_TAG'
+    )
+    patch = make_patch(source_metadata, destination_metadata).patch
+    return patch
 
 
 def prepare_metadata(metadata, source_metadata=None, append=False, append_list=False):

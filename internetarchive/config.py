@@ -47,7 +47,7 @@ def get_auth_config(username, password):
 
     with requests.Session() as s:
         # Attache logged-in-* cookies to Session.
-        u = 'https://archive.org/account/login.php'
+        u = 'https://archive.org/account/login'
         r = s.post(u, data=payload, cookies={'test-cookie': '1'})
         if 'logged-in-sig' not in s.cookies:
             raise AuthenticationError('Authentication failed. '

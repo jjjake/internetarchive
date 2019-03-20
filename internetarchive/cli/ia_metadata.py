@@ -25,7 +25,7 @@ usage:
                                 [--priority=<priority>]
     ia metadata <identifier>... --remove=<key:value>... [--priority=<priority>]
     ia metadata <identifier>... [--append=<key:value>... | --append-list=<key:value>...]
-                                [--priority=<priority>]
+                                [--priority=<priority>] [--target=<target>]
     ia metadata --spreadsheet=<metadata.csv> [--priority=<priority>]
                 [--modify=<key:value>...]
     ia metadata --help

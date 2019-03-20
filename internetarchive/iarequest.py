@@ -249,8 +249,10 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                     patch = prepare_files_patch(metadata[key],
                                                 source_metadata['files'],
                                                 append,
-                                                key)
-                changes.append({'target': key, 'patch': patch})
+                                                key,
+                                                append_list)
+                if patch:
+                    changes.append({'target': key, 'patch': patch})
             self.data = {
                 '-changes': json.dumps(changes),
                 'priority': priority,
@@ -263,7 +265,8 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                                                append,
                                                append_list)
             elif 'files' in target:
-                patch = prepare_files_patch(metadata, source_metadata, append)
+                patch = prepare_files_patch(metadata, source_metadata, append,
+                                            target, append_list)
             else:
                 destination_metadata = source_metadata.copy()
                 prepared_metadata = prepare_metadata(metadata, source_metadata, append)
@@ -276,14 +279,14 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         super(MetadataPreparedRequest, self).prepare_body(self.data, None)
 
 
-def prepare_files_patch(metadata, source_metadata, append, target):
+def prepare_files_patch(metadata, source_metadata, append, target, append_list):
     filename = '/'.join(target.split('/')[1:])
     for f in source_metadata:
         if f.get('name') == filename:
             source_metadata = f
             break
     destination_metadata = source_metadata.copy()
-    prepared_metadata = prepare_metadata(metadata, source_metadata, append)
+    prepared_metadata = prepare_metadata(metadata, source_metadata, append, append_list)
     destination_metadata.update(prepared_metadata)
     # Delete metadata items where value is REMOVE_TAG.
     destination_metadata = dict(

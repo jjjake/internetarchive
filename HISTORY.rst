@@ -3,13 +3,19 @@
 Release History
 ---------------
 
-1.8.2 (2018-07-02)
+1.8.2 (2019-03-21)
 ++++++++++++++++++
+
+**Features and Improvements**
+
+- Documnetation updates.
+- Added support for write-many to modify_metadata.
 
 **Bugfixes**
 
 - Fixed bug in ``ia tasks --task-id`` where no task was being returned.
 - Fixed bug in ``internetarchive.get_tasks()`` where it was not possible to query by ``task_id``.
+- Fixed TypeError bug in upload when uploading with checksum=True.
 
 1.8.1 (2018-06-28)
 ++++++++++++++++++

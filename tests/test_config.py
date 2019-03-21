@@ -20,7 +20,7 @@ def test_get_auth_config():
     headers = {'set-cookie': 'logged-in-user=test@archive.org',
                'set-cookie2': 'logged-in-sig=test-sig; version=0'}
     # set-cookie2: Ugly hack to workaround responses lack of support for multiple headers
-    responses.add(responses.POST, 'https://archive.org/account/login.php',
+    responses.add(responses.POST, 'https://archive.org/account/login',
                   adding_headers=headers)
 
     test_body = """{
@@ -69,7 +69,7 @@ def test_get_auth_config():
 @responses.activate
 def test_get_auth_config_auth_fail():
     # No logged-in-sig cookie set raises AuthenticationError.
-    responses.add(responses.POST, 'https://archive.org/account/login.php')
+    responses.add(responses.POST, 'https://archive.org/account/login')
     try:
         internetarchive.config.get_auth_config('test@example.com', 'password1')
     except AuthenticationError as exc:

@@ -92,7 +92,7 @@ class Search(object):
 
         # Set timeout.
         if 'timeout' not in self.request_kwargs:
-            self.request_kwargs['timeout'] = 24
+            self.request_kwargs['timeout'] = 300
 
         # Set retries.
         self.session.mount_http_adapter(max_retries=self.max_retries)

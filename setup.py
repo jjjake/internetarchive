@@ -43,8 +43,12 @@ setup(
         'clint>=0.4.0,<0.6.0',
         'six>=1.0.0,<2.0.0',
         'schema>=0.4.0',
-    ] + (['total-ordering'] if sys.version_info < (2, 7) else []) +
-    (['backports.csv'] if sys.version_info < (3, 0) else []),
+        'backports.csv < 1.07;python_version<"2.7"',
+        'backports.csv < 1.07;python_version<"3.4"',
+        'backports.csv;python_version>="2.7"',
+        'backports.csv;python_version>="3.4"',
+        'total-ordering;python_version<"2.7"',
+    ]
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

@@ -3,6 +3,17 @@
 Release History
 ---------------
 
+1.8.3 (2019-03-29)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Increased search timeout from 24 to 300 seconds.
+
+**Bugfixes**
+
+- Fixed bug in setup.py where backports.csv wasn't being installed when installing from pypi.
+
 1.8.2 (2019-03-21)
 ++++++++++++++++++
 

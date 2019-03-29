@@ -48,7 +48,7 @@ setup(
         'backports.csv;python_version>="2.7"',
         'backports.csv;python_version>="3.4"',
         'total-ordering;python_version<"2.7"',
-    ]
+    ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

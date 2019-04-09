@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+1.8.4 (?)
++++++++++
+
+**Features and Improvements**
+
+- It's now possible to retrieve task logs, given a task id, without first retrieving the items task history.
+- Added examples to ``ia tasks`` help.
+
 1.8.3 (2019-03-29)
 ++++++++++++++++++
 

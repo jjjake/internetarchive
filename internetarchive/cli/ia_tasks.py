@@ -36,15 +36,21 @@ options:
     -g, --green-rows              Return information about tasks that have not run.
     -b, --blue-rows               Return information about running tasks.
     -r, --red-rows                Return information about tasks that have failed.
-    -p, --parameter=<k:v>...      Return tasks matching the given parameter.
+    -p, --parameter=<k:v>...      URL parameters passed to catalog.php.
     -j, --json                    Output detailed information in JSON.
 
+examples:
+    ia tasks nasa
+    ia tasks nasa -p cmds:derive.php  # only return derive.php tasks
+    ia tasks -p mode:s3  # return all S3 tasks
+    ia tasks --get-task-log 1178878475  # get a task log for a specific task
 """
 from __future__ import absolute_import, print_function
 import sys
 import json
 
 from docopt import docopt
+from requests.exceptions import HTTPError
 
 from internetarchive.cli.argparser import get_args_dict
 
@@ -76,13 +82,13 @@ def main(argv, session):
                                           task_type=task_type,
                                           params=params)
             elif args['--get-task-log']:
-                task = session.get_tasks(task_id=args['--get-task-log'], params=params)
-                if task:
-                    log = task[0].task_log()
-                    sys.exit(print(log))
-                else:
+                try:
+                    log = session.get_task_log(args['--get-task-log'], params)
+                    print(log)
+                    sys.exit(0)
+                except HTTPError:
                     print('error retrieving task-log '
-                          'for {0}\n'.format(args['--get-task-log']), file=sys.stderr)
+                          'for {0}'.format(args['--get-task-log']), file=sys.stderr)
                     sys.exit(1)
             elif args['--task']:
                 tasks = session.get_tasks(task_id=args['--task'], params=params)

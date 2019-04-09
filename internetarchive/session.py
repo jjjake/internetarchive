@@ -45,7 +45,7 @@ from internetarchive import __version__
 from internetarchive.config import get_config
 from internetarchive.item import Item, Collection
 from internetarchive.search import Search
-from internetarchive.catalog import Catalog
+from internetarchive.catalog import Catalog, CatalogTask
 
 
 logger = logging.getLogger(__name__)
@@ -286,6 +286,9 @@ class ArchiveSession(requests.sessions.Session):
                       params=params,
                       request_kwargs=request_kwargs,
                       max_retries=max_retries)
+
+    def get_task_log(self, task_id, request_kwargs=None):
+        return CatalogTask.get_task_log(task_id, self, request_kwargs)
 
     def get_tasks(self,
                   identifier=None,

@@ -219,9 +219,31 @@ class CatalogTask(object):
         """
         if self.task_id is None:
             raise ValueError('task_id is None')
-        url = '{0}//catalogd.archive.org/log/{1}'.format(self.session.protocol,
-                                                         self.task_id)
+        return self.get_task_log(self.task_id, self.session, self.request_kwargs)
+
+    @staticmethod
+    def get_task_log(task_id, session, request_kwargs=None):
+        """Static method for getting a task log, given a task_id.
+
+        This method exists so a task log can be retrieved without
+        retrieving the items task history first.
+
+        :type task_id: str or int
+        :param task_id: The task id for the task log you'd like to fetch.
+
+        :type archive_session: :class:`ArchiveSession <ArchiveSession>`
+
+        :type request_kwargs: dict
+        :param request_kwargs: (optional) Keyword arguments that
+                               :py:class:`requests.Request` takes.
+
+        :rtype: str
+        :returns: The task log as a string.
+
+        """
+        request_kwargs = request_kwargs if request_kwargs else dict()
+        url = '{0}//catalogd.archive.org/log/{1}'.format(session.protocol, task_id)
         p = dict(full=1)
-        r = self.session.get(url, params=p, **self.request_kwargs)
+        r = session.get(url, params=p, **request_kwargs)
         r.raise_for_status()
         return r.content.decode('utf-8')

@@ -46,6 +46,7 @@ from internetarchive.config import get_config
 from internetarchive.item import Item, Collection
 from internetarchive.search import Search
 from internetarchive.catalog import Catalog, CatalogTask
+from internetarchive.utils import reraise_modify
 
 
 logger = logging.getLogger(__name__)
@@ -118,7 +119,7 @@ class ArchiveSession(requests.sessions.Session):
             if debug or (logger.level <= 10):
                 self.set_file_logger(logging_config.get('level', 'NOTSET'),
                                      logging_config.get('file', 'internetarchive.log'),
-                                     'requests.packages.urllib3')
+                                     'urllib3')
 
     def _get_user_agent_string(self):
         """Generate a User-Agent string to be sent with every request."""
@@ -370,7 +371,14 @@ class ArchiveSession(requests.sessions.Session):
         insecure = False
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always')
-            r = super(ArchiveSession, self).send(request, **kwargs)
+            try:
+                r = super(ArchiveSession, self).send(request, **kwargs)
+            except Exception as e:
+                try:
+                    reraise_modify(e, e.request.url, prepend=False)
+                except:
+                    logger.error(e)
+                    raise e
             if self.protocol == 'http:':
                 return r
             insecure_warnings = ['SNIMissingWarning', 'InsecurePlatformWarning']

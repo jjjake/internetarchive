@@ -260,3 +260,81 @@ def is_dir(obj):
         return os.path.isdir(obj)
     except TypeError as exc:
         return False
+
+
+def reraise_modify(caught_exc, append_msg, prepend=False):
+    """Append message to exception while preserving attributes.
+
+    Preserves exception class, and exception traceback.
+
+    Note:
+        This function needs to be called inside an except because
+        `sys.exc_info()` requires the exception context.
+
+    Args:
+        caught_exc(Exception): The caught exception object
+        append_msg(str): The message to append to the caught exception
+        prepend(bool): If True prepend the message to args instead of appending
+
+    Returns:
+        None
+
+    Side Effects:
+        Re-raises the exception with the preserved data / trace but
+        modified message
+    """
+    ExceptClass = type(caught_exc)
+    # Keep old traceback
+    traceback = sys.exc_info()[2]
+    if not caught_exc.args:
+        # If no args, create our own tuple
+        arg_list = [append_msg]
+    else:
+        # Take the last arg
+        # If it is a string
+        # append your message.
+        # Otherwise append it to the
+        # arg list(Not as pretty)
+        arg_list = list(caught_exc.args[:-1])
+        last_arg = caught_exc.args[-1]
+        if isinstance(last_arg, str):
+            if prepend:
+                arg_list.append(append_msg + last_arg)
+            else:
+                arg_list.append(last_arg + append_msg)
+        else:
+            arg_list += [last_arg, append_msg]
+    caught_exc.args = tuple(arg_list)
+    six.reraise(ExceptClass,
+                caught_exc,
+                traceback)
+
+
+def remove_none(obj):
+    if isinstance(obj, (list, tuple, set)):
+        return type(obj)(remove_none(x) for x in obj if x)
+    elif isinstance(obj, dict):
+        return type(obj)((remove_none(k), remove_none(v))
+          for k, v in obj.items() if k is not None and v)
+    else:
+        return obj
+
+
+def delete_items_from_dict(d, to_delete):
+    """Recursively deletes items from a dict,
+    if the item's value(s) is in ``to_delete``.
+    """
+    if not isinstance(to_delete, list):
+        to_delete = [to_delete]
+    if isinstance(d, dict):
+        for single_to_delete in set(to_delete):
+            if single_to_delete in d.values():
+                for k, v in d.copy().items():
+                    if v == single_to_delete:
+                        del d[k]
+        for k, v in d.items():
+            delete_items_from_dict(v, to_delete)
+    elif isinstance(d, list):
+        for i in d:
+            delete_items_from_dict(i, to_delete)
+    return remove_none(d)

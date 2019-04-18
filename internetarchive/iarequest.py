@@ -32,6 +32,7 @@ except ImportError:
     import json
 import re
 import copy
+import logging
 
 from six.moves import urllib
 import requests.models
@@ -40,7 +41,10 @@ from jsonpatch import make_patch
 import six
 
 from internetarchive import auth, __version__
-from internetarchive.utils import needs_quote
+from internetarchive.utils import needs_quote, delete_items_from_dict
+
+
+logger = logging.getLogger(__name__)
 
 
 class S3Request(requests.models.Request):
@@ -235,48 +239,87 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             source_metadata = r.json().get(target.split('/')[0], {})
 
         # Write to many targets
-        if any('/' in k for k in metadata):
-            if not all('/' in k for k in metadata if k != 'metadata'):
-                raise ValueError('bad!')
+        if any('/' in k for k in metadata) \
+                or all(isinstance(k, dict) for k in metadata.values()):
             changes = list()
+
+            if any(not k for k in metadata):
+                raise ValueError('Invalid metadata provided, '
+                                 'check your input and try again')
+
             for key in metadata:
                 if key == 'metadata':
-                    patch = prepare_metadata_patch(metadata[key],
-                                                   source_metadata['metadata'],
-                                                   append,
-                                                   append_list)
-                elif key.startswith('files/'):
+                    patch = prepare_patch(metadata[key],
+                                          source_metadata['metadata'],
+                                          append,
+                                          append_list)
+                elif key.startswith('files'):
                     patch = prepare_files_patch(metadata[key],
                                                 source_metadata['files'],
                                                 append,
                                                 key,
                                                 append_list)
-                if patch:
-                    changes.append({'target': key, 'patch': patch})
+                else:
+                    key = key.split('/')[0]
+                    patch = prepare_target_patch(metadata, source_metadata, append,
+                                                 target, append_list, key)
+                changes.append({'target': key, 'patch': patch})
             self.data = {
                 '-changes': json.dumps(changes),
                 'priority': priority,
             }
+            logger.debug('submitting metadata request: {}'.format(self.data))
         # Write to single target
         else:
             if 'metadata' in target:
-                patch = prepare_metadata_patch(metadata,
-                                               source_metadata,
-                                               append,
-                                               append_list)
+                patch = prepare_patch(metadata, source_metadata, append, append_list)
             elif 'files' in target:
                 patch = prepare_files_patch(metadata, source_metadata, append,
                                             target, append_list)
             else:
-                destination_metadata = source_metadata.copy()
-                prepared_metadata = prepare_metadata(metadata, source_metadata, append)
-                destination_metadata.update(prepared_metadata)
+                patch = prepare_target_patch(metadata, source_metadata, append,
+                                             target, append_list, target)
             self.data = {
                 '-patch': json.dumps(patch),
                 '-target': target,
                 'priority': priority,
             }
+            logger.debug('submitting metadata request: {}'.format(self.data))
         super(MetadataPreparedRequest, self).prepare_body(self.data, None)
+
+
+def prepare_patch(metadata, source_metadata, append, append_list=None):
+    destination_metadata = source_metadata.copy()
+    prepared_metadata = prepare_metadata(metadata, source_metadata, append, append_list)
+    if isinstance(destination_metadata, dict):
+        destination_metadata.update(prepared_metadata)
+    else:
+        destination_metadata.append(prepared_metadata)
+    # Delete metadata items where value is REMOVE_TAG.
+    destination_metadata = delete_items_from_dict(destination_metadata, 'REMOVE_TAG')
+    patch = make_patch(source_metadata, destination_metadata).patch
+    return patch
+
+
+def prepare_target_patch(metadata, source_metadata, append, target, append_list, key):
+
+    def dictify(lst, key=None, value=None):
+        if not lst:
+            return value
+        sub_dict = dictify(lst[1:], key, value)
+        for i, v in enumerate(lst):
+            md = {v: copy.deepcopy(sub_dict)}
+            return md
+
+    for _k in metadata:
+        metadata = dictify(_k.split('/')[1:], _k.split('/')[-1], metadata[_k])
+    for i, _k in enumerate(key.split('/')):
+        if i == 0:
+            source_metadata = source_metadata.get(_k, dict())
+        else:
+            source_metadata[_k] = source_metadata.get(_k, dict()).get(_k, dict())
+    patch = prepare_patch(metadata, source_metadata, append, append_list)
+    return patch
 
 
 def prepare_files_patch(metadata, source_metadata, append, target, append_list):
@@ -285,27 +328,7 @@ def prepare_files_patch(metadata, source_metadata, append, target, append_list):
         if f.get('name') == filename:
             source_metadata = f
             break
-    destination_metadata = source_metadata.copy()
-    prepared_metadata = prepare_metadata(metadata, source_metadata, append, append_list)
-    destination_metadata.update(prepared_metadata)
-    # Delete metadata items where value is REMOVE_TAG.
-    destination_metadata = dict(
-        (k, v) for (k, v) in destination_metadata.items() if v != 'REMOVE_TAG'
-    )
-    patch = make_patch(source_metadata, destination_metadata).patch
-    return patch
-
-
-def prepare_metadata_patch(metadata, source_metadata, append, append_list):
-    destination_metadata = source_metadata.copy()
-    prepared_metadata = prepare_metadata(metadata, source_metadata, append,
-                                         append_list)
-    destination_metadata.update(prepared_metadata)
-    # Delete metadata items where value is REMOVE_TAG.
-    destination_metadata = dict(
-        (k, v) for (k, v) in destination_metadata.items() if v != 'REMOVE_TAG'
-    )
-    patch = make_patch(source_metadata, destination_metadata).patch
+    patch = prepare_patch(metadata, source_metadata, append, append_list)
     return patch
 
 
@@ -379,8 +402,12 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
             if not isinstance(metadata[key], list):
                 metadata[key] = [metadata[key]]
             for v in metadata[key]:
-                if v in source_metadata[key]:
-                    continue
+                if not isinstance(source_metadata[key], list):
+                    if v in [source_metadata[key]]:
+                        continue
+                else:
+                    if v in source_metadata[key]:
+                        continue
                 if not isinstance(source_metadata[key], list):
                     prepared_metadata[key] = [source_metadata[key]]
                 else:

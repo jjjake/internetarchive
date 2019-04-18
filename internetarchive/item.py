@@ -489,9 +489,13 @@ class Item(BaseItem):
         url = '{protocol}//archive.org/metadata/{identifier}'.format(
             protocol=self.session.protocol,
             identifier=self.identifier)
-        if any('/' in k for k in metadata):
+        # TODO: currently files and metadata targets do not support dict's,
+        # but they might someday?? refactor this check.
+        if any('/' in k for k in metadata) \
+                or all(isinstance(k, dict) for k in metadata.values()):
             source_metadata = self.item_metadata
         else:
+            target = 'metadata' if target is None else target
             source_metadata = self.item_metadata.get(target.split('/')[0], {})
         request = MetadataRequest(
             method='POST',

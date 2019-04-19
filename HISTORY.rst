@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+1.8.5 (?)
++++++++++
+
+**Features and Improvements**
+
+- Improved timeout logging and exceptions.
+- Added support for arbitrary targets to metadata write.
+
 1.8.4 (2019-04-11)
 ++++++++++++++++++
 

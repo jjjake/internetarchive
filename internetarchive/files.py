@@ -117,8 +117,11 @@ class File(BaseFile):
             name=urllib.parse.quote(name.encode('utf-8')),
         )
         self.url = '{protocol}//archive.org/download/{id}/{name}'.format(**url_parts)
-        self.auth = auth.S3Auth(self.item.session.access_key,
-                                self.item.session.secret_key)
+        if self.item.session.access_key and self.item.session.secret_key:
+            self.auth = auth.S3Auth(self.item.session.access_key,
+                                    self.item.session.secret_key)
+        else:
+            self.auth = None
 
     def __repr__(self):
         return ('File(identifier={identifier!r}, '

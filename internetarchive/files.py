@@ -35,7 +35,7 @@ import six.moves.urllib as urllib
 from requests.exceptions import HTTPError, RetryError, ConnectTimeout, \
     ConnectionError, ReadTimeout
 
-from internetarchive import iarequest, utils
+from internetarchive import iarequest, utils, auth
 
 
 log = logging.getLogger(__name__)
@@ -117,6 +117,8 @@ class File(BaseFile):
             name=urllib.parse.quote(name.encode('utf-8')),
         )
         self.url = '{protocol}//archive.org/download/{id}/{name}'.format(**url_parts)
+        self.auth = auth.S3Auth(self.item.session.access_key,
+                                self.item.session.secret_key)
 
     def __repr__(self):
         return ('File(identifier={identifier!r}, '
@@ -249,6 +251,7 @@ class File(BaseFile):
             response = self.item.session.get(self.url,
                                              stream=True,
                                              timeout=12,
+                                             auth=self.auth,
                                              params=params)
             response.raise_for_status()
             if return_responses:

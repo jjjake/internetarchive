@@ -40,6 +40,7 @@ import requests.sessions
 from requests.utils import default_headers
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3 import Retry
+from six.moves.urllib.parse import urlparse
 
 from internetarchive import __version__
 from internetarchive.config import get_config
@@ -131,6 +132,14 @@ class ArchiveSession(requests.sessions.Session):
         py_version = '{0}.{1}.{2}'.format(*sys.version_info)
         return 'internetarchive/{0} ({1} {2}; N; {3}; {4}) Python/{5}'.format(
             __version__, uname[0], uname[-1], lang, self.access_key, py_version)
+
+    def rebuild_auth(self, prepared_request, response):
+        """Never rebuild auth for archive.org URLs.
+        """
+        u = urlparse(prepared_request.url)
+        if u.netloc.endswith('archive.org'):
+            return
+        super(ArchiveSession, self).rebuild_auth(prepared_request, response)
 
     def mount_http_adapter(self, protocol=None, max_retries=None,
                            status_forcelist=None, host=None):

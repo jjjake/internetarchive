@@ -61,7 +61,7 @@ from copy import deepcopy
 
 import six
 from docopt import docopt, printable_usage
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, ConnectionError
 from schema import Schema, Use, Or, And, SchemaError
 
 from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
@@ -87,6 +87,10 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
         responses += response
     except HTTPError as exc:
         responses += [exc.response]
+    except ConnectionError as exc:
+        print("Received ConnectionError while uploading. If this happens consistently,",
+              " the item you're uploading to might be full. Run --status-check!")
+        raise
     finally:
         # Debug mode.
         if upload_kwargs['debug']:

@@ -67,6 +67,7 @@ from schema import Schema, Use, Or, And, SchemaError
 from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
 from internetarchive.session import ArchiveSession
 from internetarchive.utils import validate_ia_identifier, get_s3_xml_text
+from internetarchive import get_item
 
 # Only import backports.csv for Python2 (in support of FreeBSD port).
 PY2 = sys.version_info[0] == 2
@@ -178,6 +179,10 @@ def main(argv, session):
         if session.s3_is_overloaded():
             print('warning: {0} is over limit, and not accepting requests. '
                   'Expect 503 SlowDown errors.'.format(args['<identifier>']),
+                  file=sys.stderr)
+            sys.exit(1)
+        elif get_item('{0}'.format(args['<identifier>'])).item_size >= 1099511627776:
+            print('warning: {0} is full and cannot accept uploads.'.format(args['<identifier>']),
                   file=sys.stderr)
             sys.exit(1)
         else:

@@ -247,6 +247,8 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                 raise ValueError('Invalid metadata provided, '
                                  'check your input and try again')
 
+            if target:
+                metadata = {target: metadata}
             for key in metadata:
                 if key == 'metadata':
                     patch = prepare_patch(metadata[key],
@@ -271,12 +273,15 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             logger.debug('submitting metadata request: {}'.format(self.data))
         # Write to single target
         else:
-            if 'metadata' in target:
-                patch = prepare_patch(metadata, source_metadata, append, append_list)
+            if not target or 'metadata' in target:
+                target = 'metadata'
+                patch = prepare_patch(metadata, source_metadata['metadata'], append,
+                                      append_list)
             elif 'files' in target:
-                patch = prepare_files_patch(metadata, source_metadata, append,
+                patch = prepare_files_patch(metadata, source_metadata['files'], append,
                                             target, append_list)
             else:
+                metadata = {target: metadata}
                 patch = prepare_target_patch(metadata, source_metadata, append,
                                              target, append_list, target)
             self.data = {

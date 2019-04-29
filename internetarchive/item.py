@@ -479,7 +479,6 @@ class Item(BaseItem):
         :returns: A dictionary containing the status_code and response
                   returned from the Metadata API.
         """
-        target = 'metadata' if target is None else target
         append = False if append is None else append
         access_key = self.session.access_key if not access_key else access_key
         secret_key = self.session.secret_key if not secret_key else secret_key
@@ -491,12 +490,7 @@ class Item(BaseItem):
             identifier=self.identifier)
         # TODO: currently files and metadata targets do not support dict's,
         # but they might someday?? refactor this check.
-        if any('/' in k for k in metadata) \
-                or all(isinstance(k, dict) for k in metadata.values()):
-            source_metadata = self.item_metadata
-        else:
-            target = 'metadata' if target is None else target
-            source_metadata = self.item_metadata.get(target.split('/')[0], {})
+        source_metadata = self.item_metadata
         request = MetadataRequest(
             method='POST',
             url=url,

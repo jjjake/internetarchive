@@ -179,11 +179,11 @@ def test_get_files_glob_pattern():
 def test_modify_metadata():
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, '{0}//archive.org/metadata/test'.format(PROTOCOL),
-                 body='{}')
+                body='{"metadata":{"title":"foo"}}')
         rsps.add(responses.POST, '{0}//archive.org/metadata/test'.format(PROTOCOL),
                  body=('{"success":true,"task_id":423444944,'
                        '"log":"https://catalogd.archive.org/log/423444944"}'))
-        r = modify_metadata('test', dict(foo=1))
+        r = modify_metadata('nasa', dict(foo=1))
         assert r.status_code == 200
         assert r.json() == {
             'task_id': 423444944,

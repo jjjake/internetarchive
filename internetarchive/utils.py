@@ -312,7 +312,8 @@ def reraise_modify(caught_exc, append_msg, prepend=False):
 
 def remove_none(obj):
     if isinstance(obj, (list, tuple, set)):
-        return type(obj)(remove_none(x) for x in obj if x)
+        l = type(obj)(remove_none(x) for x in obj if x)
+        return [dict(t) for t in {tuple(d.items()) for d in l}]
     elif isinstance(obj, dict):
         return type(obj)((remove_none(k), remove_none(v))
                          for k, v in obj.items() if k is not None and v)

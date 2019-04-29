@@ -239,7 +239,8 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             source_metadata = r.json().get(target.split('/')[0], {})
 
         # Write to many targets
-        if any('/' in k for k in metadata) \
+        if isinstance(metadata, list) \
+                or any('/' in k for k in metadata) \
                 or all(isinstance(k, dict) for k in metadata.values()):
             changes = list()
 
@@ -295,11 +296,22 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
 
 def prepare_patch(metadata, source_metadata, append, append_list=None):
     destination_metadata = source_metadata.copy()
-    prepared_metadata = prepare_metadata(metadata, source_metadata, append, append_list)
+    if isinstance(metadata, list):
+        prepared_metadata = metadata
+        if not destination_metadata:
+            destination_metadata = list()
+    else:
+        prepared_metadata = prepare_metadata(metadata, source_metadata, append,
+                                             append_list)
     if isinstance(destination_metadata, dict):
         destination_metadata.update(prepared_metadata)
+    elif isinstance(metadata, list) and not destination_metadata:
+        destination_metadata = metadata
     else:
-        destination_metadata.append(prepared_metadata)
+        if isinstance(prepared_metadata, list):
+            destination_metadata += prepared_metadata
+        else:
+            destination_metadata.append(prepared_metadata)
     # Delete metadata items where value is REMOVE_TAG.
     destination_metadata = delete_items_from_dict(destination_metadata, 'REMOVE_TAG')
     patch = make_patch(source_metadata, destination_metadata).patch

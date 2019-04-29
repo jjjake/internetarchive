@@ -51,6 +51,7 @@ import json
 
 from docopt import docopt
 from requests.exceptions import HTTPError
+import six
 
 from internetarchive.cli.argparser import get_args_dict
 
@@ -84,7 +85,10 @@ def main(argv, session):
             elif args['--get-task-log']:
                 try:
                     log = session.get_task_log(args['--get-task-log'], params)
-                    print(log)
+                    if six.PY2:
+                        print(log.encode('utf-8'))
+                    else:
+                        print(log)
                     sys.exit(0)
                 except HTTPError:
                     print('error retrieving task-log '

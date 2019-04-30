@@ -147,6 +147,7 @@ def test_download_io_error(tmpdir, nasa_item):
     with IaRequestsMock() as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content')
         nasa_item.download(files='nasa_meta.xml')
+        rsps.reset()
         with pytest.raises(ConnectionError):
             nasa_item.download(files='nasa_meta.xml')
 
@@ -179,6 +180,7 @@ def test_download_clobber(tmpdir, nasa_item):
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content')
         nasa_item.download(files='nasa_meta.xml')
 
+        rsps.reset()
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='new test content')
         nasa_item.download(files='nasa_meta.xml')
         load_file('nasa/nasa_meta.xml') == 'new test content'
@@ -200,6 +202,7 @@ def test_download_checksum(tmpdir, caplog):
         assert load_file('nasa/nasa_meta.xml') == 'overwrite based on md5'
 
         # test no overwrite based on checksum.
+        rsps.reset()
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body=load_test_data_file('nasa_meta.xml'))
         nasa_item.download(files='nasa_meta.xml', checksum=True)

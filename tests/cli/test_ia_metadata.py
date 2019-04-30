@@ -9,9 +9,10 @@ from tests.conftest import IaRequestsMock, ia_call
 def test_ia_metadata_exists(capsys):
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        ia_call(['ia', 'metadata', '--exists', 'nasa'])
+        ia_call(['ia', 'metadata', '--exists', 'nasa'], expected_exit_code=0)
         out, err = capsys.readouterr()
         assert out == 'nasa exists\n'
+        rsps.reset()
         rsps.add_metadata_mock('nasa', '{}')
         sys.argv = ['ia', 'metadata', '--exists', 'nasa']
         ia_call(['ia', 'metadata', '--exists', 'nasa'], expected_exit_code=1)

@@ -236,7 +236,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
 
         if not source_metadata:
             r = requests.get(self.url)
-            source_metadata = r.json().get(target.split('/')[0], {})
+            source_metadata = r.json()
 
         # Write to many targets
         if isinstance(metadata, list) \

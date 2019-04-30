@@ -36,6 +36,7 @@ def test_ia_upload_status_check(capsys):
 
         j = json.loads(STATUS_CHECK_RESPONSE)
         j['over_limit'] = 1
+        rsps.reset()
         rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(PROTOCOL),
                  body=json.dumps(j),
                  content_type='application/json')

@@ -315,7 +315,7 @@ def remove_none(obj):
         l = type(obj)(remove_none(x) for x in obj if x)
         try:
             return [dict(t) for t in {tuple(sorted(d.items())) for d in l}]
-        except AttributeError:
+        except (AttributeError, TypeError):
             return l
     elif isinstance(obj, dict):
         return type(obj)((remove_none(k), remove_none(v))

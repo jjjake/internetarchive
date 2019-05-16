@@ -309,7 +309,10 @@ def prepare_patch(metadata, source_metadata, append, append_list=None):
         destination_metadata = metadata
     else:
         if isinstance(prepared_metadata, list):
-            destination_metadata += prepared_metadata
+            if append_list:
+                destination_metadata += prepared_metadata
+            else:
+                destination_metadata = prepared_metadata
         else:
             destination_metadata.append(prepared_metadata)
     # Delete metadata items where value is REMOVE_TAG.

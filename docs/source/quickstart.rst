@@ -67,9 +67,9 @@ Reading Metadata
 You can access all of an item's metadata via the :class:`Item <internetarchive.Item>` object::
 
     >>> from internetarchive import get_item
-    >>> item = get_item('iacli-test-item301')
+    >>> item = get_item('nasa')
     >>> item.item_metadata['metadata']['title']
-    'My Title'
+    'NASA Images'
 
 :func:`get_item <internetarchive.get_item>` retrieves all of an item's metadata via the `Internet Archive Metadata API <http://blog.archive.org/2013/07/04/metadata-api/>`_. This metadata can be accessed via the ``Item.item_metadata`` attribute::
     
@@ -79,13 +79,13 @@ You can access all of an item's metadata via the :class:`Item <internetarchive.I
 All of the top-level keys in ``item.item_metadata`` are available as attributes::
 
     >>> item.server
-    'ia801507.us.archive.org'
+    'ia802606.us.archive.org'
     >>> item.item_size
-    161752024
+    126586
     >>> item.files[0]['name']
-    'blank.txt'
+    'NASAarchiveLogo.jpg'
     >>> item.metadata['identifier']
-    'iacli-test-item301'
+    'nasa'
 
 
 Writing Metadata

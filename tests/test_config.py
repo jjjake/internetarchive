@@ -17,62 +17,40 @@ from internetarchive.exceptions import AuthenticationError
 
 @responses.activate
 def test_get_auth_config():
-    headers = {'set-cookie': 'logged-in-user=test@archive.org',
-               'set-cookie2': 'logged-in-sig=test-sig; version=0'}
-    # set-cookie2: Ugly hack to workaround responses lack of support for multiple headers
-    responses.add(responses.POST, 'https://archive.org/account/login',
-                  adding_headers=headers)
-
     test_body = """{
-        "key": {
-            "s3secretkey": "test-secret",
-            "s3accesskey": "test-access"
+        "success": true,
+        "values": {
+            "cookies": {
+                "logged-in-sig": "foo-sig",
+                "logged-in-user": "foo%40example.com"
+            },
+            "email": "foo@example.com",
+            "itemname": "@jakej",
+            "s3": {
+                "access": "Ac3ssK3y",
+                "secret": "S3cretK3y"
+            },
+            "screenname":"jakej"
         },
-        "screenname": "foo",
-        "success": 1
-    }"""
-    responses.add(responses.GET, 'https://archive.org/account/s3.php',
-                  body=test_body, adding_headers=headers,
-                  content_type='application/json')
-    responses.add(responses.GET, 'https://s3.us.archive.org',
-                  body=test_body, adding_headers=headers,
-                  content_type='application/json')
-
-    class UglyHack(httplib.HTTPResponse):
-        def __init__(self, headers):
-            self.fp = True
-            if six.PY2:
-                self.msg = httplib.HTTPMessage(StringIO())
-            else:
-                self.msg = httplib.HTTPMessage()
-            for (k, v) in headers.items():
-                self.msg[k] = v
-
-    original_func = requests.adapters.HTTPAdapter.build_response
-
-    def ugly_hack_build_response(self, req, resp):
-        resp._original_response = UglyHack(resp.getheaders())
-        response = original_func(self, req, resp)
-        return response
-
-    ugly_hack = mock.patch('requests.adapters.HTTPAdapter.build_response',
-                           ugly_hack_build_response)
-    ugly_hack.start()
+        "version": 1}"""
+    responses.add(responses.POST, 'https://archive.org/services/xauthn/',
+                  body=test_body)
     r = internetarchive.config.get_auth_config('test@example.com', 'password1')
-    ugly_hack.stop()
-    assert r['s3']['access'] == 'test-access'
-    assert r['s3']['secret'] == 'test-secret'
-    assert r['cookies']['logged-in-user'] == 'test@archive.org'
-    assert r['cookies']['logged-in-sig'] == 'test-sig'
+    assert r['s3']['access'] == 'Ac3ssK3y'
+    assert r['s3']['secret'] == 'S3cretK3y'
+    assert r['cookies']['logged-in-user'] == 'foo%40example.com'
+    assert r['cookies']['logged-in-sig'] == 'foo-sig'
 
 
 @responses.activate
 def test_get_auth_config_auth_fail():
     # No logged-in-sig cookie set raises AuthenticationError.
-    responses.add(responses.POST, 'https://archive.org/account/login')
+    responses.add(responses.POST, 'https://archive.org/services/xauthn/',
+                  body='{"error": "failed"}')
     try:
-        internetarchive.config.get_auth_config('test@example.com', 'password1')
+        r = internetarchive.config.get_auth_config('test@example.com', 'password1')
     except AuthenticationError as exc:
+        return
         assert str(exc) == ('Authentication failed. Please check your credentials '
                             'and try again.')
 

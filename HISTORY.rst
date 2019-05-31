@@ -11,6 +11,11 @@ Release History
 - Improved timeout logging and exceptions.
 - Added support for arbitrary targets to metadata write.
 - IA-S3 keys now supported for auth in download.
+- Authoraization (i.e. ``ia configure``) now uses the archive.org xauthn endpoint.
+
+**Bugfixes**
+
+- fixed encoding error in --get-task-log
 
 1.8.4 (2019-04-11)
 ++++++++++++++++++

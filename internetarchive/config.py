@@ -37,57 +37,37 @@ from internetarchive.utils import deep_update
 from internetarchive import auth
 
 
-def get_auth_config(username, password):
-    payload = dict(
-        username=username,
-        password=password,
-        remember='CHECKED',
-        action='login',
-    )
-
-    with requests.Session() as s:
-        # Attache logged-in-* cookies to Session.
-        u = 'https://archive.org/account/login'
-        r = s.post(u, data=payload, cookies={'test-cookie': '1'})
-        if 'logged-in-sig' not in s.cookies:
-            raise AuthenticationError('Authentication failed. '
-                                      'Please check your credentials and try again.')
-
-        # Get S3 keys.
-        u = 'https://archive.org/account/s3.php'
-        p = dict(output_json=1)
-        r = s.get(u, params=p)
-        j = r.json()
-        access_key = j['key']['s3accesskey']
-        secret_key = j['key']['s3secretkey']
-        if not j or not j.get('key'):
-            raise AuthenticationError('Authentication failed. '
-                                      'Please check your credentials and try again.')
-
-        # Get user info (screenname).
-        u = 'https://s3.us.archive.org'
-        p = dict(check_auth=1)
-        r = requests.get(u, params=p, auth=auth.S3Auth(access_key, secret_key))
-        r.raise_for_status()
-        j = r.json()
-        if j.get('error'):
-            raise AuthenticationError(j.get('error'))
-        user_info = j['screenname']
-
-        auth_config = {
-            's3': {
-                'access': access_key,
-                'secret': secret_key,
-            },
-            'cookies': {
-                'logged-in-user': s.cookies['logged-in-user'],
-                'logged-in-sig': s.cookies['logged-in-sig'],
-            },
-            'general': {
-                'screenname': user_info,
-            }
+def get_auth_config(email, password):
+    u = 'https://archive.org/services/xauthn/'
+    p = dict(op='login')
+    d = dict(email=email, password=password)
+    r = requests.post(u, params=p, data=d)
+    j = r.json()
+    if not j.get('success'):
+        try:
+            msg = j['values']['reason']
+        except KeyError:
+            msg = j['error']
+        if msg == 'account_not_found':
+            msg = 'Account not found, check your email and try again.'
+        elif msg == 'account_bad_password':
+            msg = 'Incorrect password, try again.'
+        else:
+            msg = 'Authentication failed: {}'.format(msg)
+        raise AuthenticationError(msg)
+    auth_config = {
+        's3': {
+            'access': j['values']['s3']['access'],
+            'secret': j['values']['s3']['secret'],
+        },
+        'cookies': {
+            'logged-in-user': j['values']['cookies']['logged-in-user'],
+            'logged-in-sig': j['values']['cookies']['logged-in-sig'],
+        },
+        'general': {
+            'screenname': j['values']['screenname'],
         }
-
+    }
     return auth_config
 
 

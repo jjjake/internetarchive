@@ -15,7 +15,8 @@ Release History
 
 **Bugfixes**
 
-- fixed encoding error in --get-task-log
+- Fixed encoding error in --get-task-log
+- Fixed bug in upload where connections were not being closed in upload.
 
 1.8.4 (2019-04-11)
 ++++++++++++++++++

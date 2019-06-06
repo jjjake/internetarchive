@@ -737,6 +737,7 @@ class Item(BaseItem):
                     body.close()
                     os.remove(filename)
                 body.close()
+                response.close()
                 return response
             except HTTPError as exc:
                 body.close()

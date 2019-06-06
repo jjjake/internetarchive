@@ -110,7 +110,6 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
                 msg = get_s3_xml_text(responses[-1].content)
             except:
                 msg = responses[-1].content
-            print(' error uploading {}: {}'.format(filename, msg), file=sys.stderr)
 
     return responses
 

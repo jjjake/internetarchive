@@ -47,7 +47,7 @@ commands:
 
 Documentation for 'ia' is available at:
 
-    https://internetarchive.readthedocs.io/en/latest/cli.html
+    https://archive.org/services/docs/api/internetarchive/cli.html
 
 See 'ia help <command>' for help on a specific command.
 """

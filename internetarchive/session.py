@@ -375,6 +375,63 @@ class ArchiveSession(requests.sessions.Session):
         else:
             return True
 
+    def submit_task(self, identifier, cmd, comment=None, priority=None, data=None):
+        data = dict() if not data else data
+        data.update(dict(cmd=cmd, identifier=identifier))
+        if comment:
+            if 'args' in data:
+                data['args']['comment'] = comment
+            else:
+                data['args'] = dict(comment=comment)
+        if priority:
+            data['priority'] = priority
+        url = '{}//archive.org/services/tasks.php'.format(self.protocol)
+        headers = dict(Authorization='LOW {}:{}'.format(self.access_key, self.secret_key))
+        r = self.post(url, json=data, headers=headers)
+        return r
+
+    def _iter_tasks(self, params):
+        url = '{}//archive.org/services/tasks.php'.format(self.protocol)
+        headers = dict(Authorization='LOW {}:{}'.format(self.access_key, self.secret_key))
+        while True:
+            r = self.get(url, params=params, headers=headers)
+            j = r.json()
+            if not j.get('success'):
+                yield j
+                break
+            yield j
+            if not j.get('value', dict()).get('cursor'):
+                break
+            params['cursor'] = j['value']['cursor']
+
+    def iter_history(self, identifier, params=None):
+        params = dict() if not params else params
+        params.update(dict(identifier=identifier, history=1))
+        for j in self._iter_tasks(params):
+            if not j.get('success'):
+                yield j
+                break
+            for t in j['value']['history']:
+                yield t
+
+    def iter_catalog(self, identifier, params=None):
+        params = dict() if not params else params
+        params.update(dict(identifier=identifier, catalog=1))
+        for j in self._iter_tasks(params):
+            if not j.get('success'):
+                yield j
+                break
+            for t in j['value']['catalog']:
+                yield t
+
+    def get_task_summary(self, identifier, params=None):
+        params = dict() if not params else params
+        params.update(dict(identifier=identifier, summary=1))
+        for j in self._iter_tasks(params):
+            if not j.get('success'):
+                return j
+            return j['value']['summary']
+
     def send(self, request, **kwargs):
         # Catch urllib3 warnings for HTTPS related errors.
         insecure = False

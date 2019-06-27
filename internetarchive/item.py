@@ -215,6 +215,103 @@ class Item(BaseItem):
             item_metadata = self.session.get_metadata(self.identifier, **kwargs)
         self.load(item_metadata)
 
+    def task_summary(self, params=None):
+        """Get a summary of the items pending tasks.
+
+        :type params: dict
+        :param params: (optional) Params to send with your request.
+
+        :rtype: dict
+        """
+        return self.session.get_task_summary(self.identifier, params)
+
+    def no_tasks_pending(self, params=None):
+        """Get a list of completed catalog tasks.
+
+        :type params: dict
+        :param params: (optional) Params to send with your request.
+
+        :rtype: bool
+        :returns: `True` if no tasks are pending, otherwise `False`.
+        """
+        return all(x == 0 for x in self.task_summary(params).values())
+
+    def history(self, params=None):
+        """Get a list of completed catalog tasks.
+
+        :type params: dict
+        :param params: (optional) Params to send with your request.
+
+        :rtype: list
+        :returns: A list of task dicts.
+        """
+        history = list()
+        for t in self.session.iter_history(self.identifier, params):
+            history.append(t)
+        return history
+
+    def catalog(self, params=None):
+        """Get a list of pending catalog tasks.
+
+        :type params: dict
+        :param params: (optional) Params to send with your request.
+
+        :rtype: list
+        :returns: A list of task dicts.
+        """
+        catalog = list()
+        for t in self.session.iter_catalog(self.identifier, params):
+            catalog.append(t)
+        return catalog
+
+    def undark_item(self, comment, priority=None, data=None):
+        """Undark the item.
+
+        :type comment: str
+        :param comment: The curation comment explaining reason for
+                        undarking item
+
+        :type priority: str or int
+        :param priority: (optional) The task priority.
+
+        :type data: dict
+        :param data: (optional) Additional parameters to submit with
+                     the task.
+
+        :rtype: :class:`requests.Response`
+        """
+        r = self.session.submit_task('jj-test-item-2018-06-05',
+                                     'make_undark.php',
+                                     comment=comment,
+                                     priority=priority,
+                                     data=data)
+        r.raise_for_status()
+        return r
+
+    def dark_item(self, comment, priority=None, data=None):
+        """Dark the item.
+
+        :type comment: str
+        :param comment: The curation comment explaining reason for
+                        darking item
+
+        :type priority: str or int
+        :param priority: (optional) The task priority.
+
+        :type data: dict
+        :param data: (optional) Additional parameters to submit with
+                     the task.
+
+        :rtype: :class:`requests.Response`
+        """
+        r = self.session.submit_task('jj-test-item-2018-06-05',
+                                     'make_dark.php',
+                                     comment=comment,
+                                     priority=priority,
+                                     data=data)
+        r.raise_for_status()
+        return r
+
     def get_file(self, file_name, file_metadata=None):
         """Get a :class:`File <File>` object for the named file.
 

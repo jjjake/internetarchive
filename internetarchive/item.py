@@ -280,7 +280,7 @@ class Item(BaseItem):
 
         :rtype: :class:`requests.Response`
         """
-        r = self.session.submit_task('jj-test-item-2018-06-05',
+        r = self.session.submit_task(self.identifier,
                                      'make_undark.php',
                                      comment=comment,
                                      priority=priority,
@@ -304,7 +304,7 @@ class Item(BaseItem):
 
         :rtype: :class:`requests.Response`
         """
-        r = self.session.submit_task('jj-test-item-2018-06-05',
+        r = self.session.submit_task(self.identifier,
                                      'make_dark.php',
                                      comment=comment,
                                      priority=priority,

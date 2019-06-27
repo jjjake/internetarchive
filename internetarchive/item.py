@@ -264,7 +264,7 @@ class Item(BaseItem):
             catalog.append(t)
         return catalog
 
-    def undark_item(self, comment, priority=None, data=None):
+    def undark(self, comment, priority=None, data=None):
         """Undark the item.
 
         :type comment: str
@@ -288,7 +288,7 @@ class Item(BaseItem):
         r.raise_for_status()
         return r
 
-    def dark_item(self, comment, priority=None, data=None):
+    def dark(self, comment, priority=None, data=None):
         """Dark the item.
 
         :type comment: str

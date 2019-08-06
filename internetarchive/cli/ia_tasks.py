@@ -19,38 +19,44 @@
 
 """Retrieve information about your catalog tasks.
 
+For more information on how to use this command, refer to the
+Tasks API documentation::
+
+    https://archive.org/services/docs/api/tasks.html
+
 usage:
-    ia tasks [--verbose] [--task=<task_id>...] [--get-task-log=<task_id>]
-             [--green-rows] [--blue-rows] [--red-rows] [--parameter=<k:v>...]
-             [--json]
-    ia tasks [--verbose] <identifier>
-             [--green-rows] [--blue-rows] [--red-rows] [--parameter=<k:v>...]
-             [--json]
+    ia tasks [--task=<task_id>...] [--get-task-log=<task_id>]
+             [--parameter=<k:v>...]
+    ia tasks <identifier> [--parameter=<k:v>...]
+    ia tasks <identifier> --cmd=<command> --comment=<comment>
+                          [--data=<k:v>...]
     ia tasks --help
 
 options:
     -h, --help
-    -v, --verbose                 Ouptut detailed information for each task.
     -t, --task=<task_id>...       Return information about the given task.
     -G, --get-task-log=<task_id>  Return the given tasks task log.
-    -g, --green-rows              Return information about tasks that have not run.
-    -b, --blue-rows               Return information about running tasks.
-    -r, --red-rows                Return information about tasks that have failed.
     -p, --parameter=<k:v>...      URL parameters passed to catalog.php.
-    -j, --json                    Output detailed information in JSON.
+    -c, --cmd=<command>           The task to submit (e.g. make_dark.php).
+    -C, --comment=<command>       A reasonable explantion for why a
+                                  task is being submitted.
+    -d, --data=<k:v>...           Additional data to send when submitting
+                                  a task.
 
 examples:
     ia tasks nasa
-    ia tasks nasa -p cmds:derive.php  # only return derive.php tasks
-    ia tasks -p mode:s3  # return all S3 tasks
+    ia tasks nasa -p cmd:derive.php  # only return derive.php tasks
+    ia tasks -p 'args:*s3-put*'  # return all S3 tasks
+    ia tasks -p 'submitter=jake@archive.org'  # return all tasks submitted by a user
     ia tasks --get-task-log 1178878475  # get a task log for a specific task
+
+    ia tasks <id> --cmd make_undark.php --comment '<comment>'  # undark item
+    ia tasks <id> --cmd make_dark.php --comment '<comment>'  # dark item
 """
 from __future__ import absolute_import, print_function
 import sys
-import json
 
 from docopt import docopt
-from requests.exceptions import HTTPError
 import six
 
 from internetarchive.cli.argparser import get_args_dict
@@ -58,75 +64,58 @@ from internetarchive.cli.argparser import get_args_dict
 
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
-    params = get_args_dict(args['--parameter'], query_string=True)
 
-    row_types = {
-        -1: 'done',
-        0: 'green',
-        1: 'blue',
-        2: 'red',
-        9: 'brown',
-    }
-
-    task_type = None
-    if args['--green-rows']:
-        task_type = 'green'
-    elif args['--blue-rows']:
-        task_type = 'blue'
-    elif args['--red-rows']:
-        task_type = 'red'
-
-    try:
-        try:
-            if args['<identifier>']:
-                tasks = session.get_tasks(identifier=args['<identifier>'],
-                                          task_type=task_type,
-                                          params=params)
-            elif args['--get-task-log']:
-                try:
-                    log = session.get_task_log(args['--get-task-log'], params)
-                    if six.PY2:
-                        print(log.encode('utf-8'))
-                    else:
-                        print(log)
-                    sys.exit(0)
-                except HTTPError:
-                    print('error retrieving task-log '
-                          'for {0}'.format(args['--get-task-log']), file=sys.stderr)
-                    sys.exit(1)
-            elif args['--task']:
-                tasks = session.get_tasks(task_id=args['--task'], params=params)
-            else:
-                tasks = session.get_tasks(task_type=task_type, params=params)
-        except ValueError as exc:
-            print('error: unable to parse JSON. have you run `ia configure`?'.format(exc),
-                  file=sys.stderr)
+    # Tasks write API.
+    if args['--cmd']:
+        data = get_args_dict(args['--data'], query_string=True)
+        r = session.submit_task(args['<identifier>'],
+                                args['--cmd'],
+                                comment=args['--comment'],
+                                priority=data.get('priority'),
+                                data=data)
+        j = r.json()
+        if j.get('success'):
+            print('success: {}'.format(j.get('value', dict()).get('log')))
+            sys.exit(0)
+        else:
+            print('error: {}'.format(j.get('error')))
             sys.exit(1)
 
-        for t in tasks:
-            if args['--json']:
-                task_args = dict((k, v) for k, v in t.args.items())
-                j = dict(
-                    identifier=t.identifier,
-                    task_id=t.task_id,
-                    server=t.server,
-                    time=t.time,
-                    submitter=t.submitter,
-                    command=t.command,
-                    row_type=row_types[t.row_type],
-                    args=task_args,
-                )
-                print(json.dumps(j))
-                continue
-            task_info = [
-                t.identifier, t.task_id, t.server, t.time, t.command,
-                row_types[t.row_type],
-            ]
-            if args['--verbose']:
-                # parse task args and append to task_info list.
-                targs = '\t'.join(['{0}={1}'.format(k, v) for (k, v) in t.args.items()])
-                task_info += [t.submitter, targs]
-            print('\t'.join([str(x) for x in task_info]))
-    except NameError as exc:
-        print('error: {0}'.format(exc.message), file=sys.stderr)
-        sys.exit(1)
+    # Tasks read API.
+    params = get_args_dict(args['--parameter'], query_string=True)
+    if args['<identifier>']:
+        _params = dict(identifier=args['<identifier>'], catalog=1, history=1)
+        _params.update(params)
+        params = _params
+    elif args['--get-task-log']:
+        log = session.get_task_log(args['--get-task-log'], params)
+        if six.PY2:
+            print(log.encode('utf-8'))
+        else:
+            print(log)
+        sys.exit(0)
+
+    queryable_params = [
+        'identifier',
+        'task_id',
+        'server',
+        'cmd',
+        'args',
+        'submitter',
+        'priority',
+        'wait_admin',
+        'submittime',
+    ]
+
+    if not args['<identifier>'] \
+            and not params.get('task_id'):
+        params.update(dict(catalog=1, history=0))
+
+    if not any(x in params for x in queryable_params):
+        _params = dict(submitter='jake@archive.org', catalog=1, history=0, summary=0)
+        _params.update(params)
+        params = _params
+
+    for t in session.get_tasks(params=params):
+        print(t.json())
+        sys.stdout.flush()

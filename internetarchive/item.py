@@ -215,7 +215,7 @@ class Item(BaseItem):
             item_metadata = self.session.get_metadata(self.identifier, **kwargs)
         self.load(item_metadata)
 
-    def task_summary(self, params=None):
+    def get_task_summary(self, params=None, request_kwargs=None):
         """Get a summary of the items pending tasks.
 
         :type params: dict
@@ -223,9 +223,9 @@ class Item(BaseItem):
 
         :rtype: dict
         """
-        return self.session.get_task_summary(self.identifier, params)
+        return self.session.get_tasks_summary(self.identifier, params, request_kwargs)
 
-    def no_tasks_pending(self, params=None):
+    def no_tasks_pending(self, params=None, request_kwargs=None):
         """Get a list of completed catalog tasks.
 
         :type params: dict
@@ -234,9 +234,27 @@ class Item(BaseItem):
         :rtype: bool
         :returns: `True` if no tasks are pending, otherwise `False`.
         """
-        return all(x == 0 for x in self.task_summary(params).values())
+        return all(x == 0 for x in self.task_summary(params, request_kwargs).values())
 
-    def history(self, params=None):
+    def get_all_item_tasks(self, params=None, request_kwargs=None):
+        """Get a list of all tasks for item, pending and complete.
+
+        :type params: dict
+        :param params: (optional) Query parameters, refer to
+                       `Tasks API
+                       <https://archive.org/services/docs/api/tasks.html>`_
+                       for available parameters.
+
+        :type request_kwargs: dict
+        :param request_kwargs: (optional) Keyword arguments that
+                               :py:func:`requests.get` takes.
+
+        :rtype: List[CatalogTask]
+        """
+        params.update(dict(catalog=1, history=1))
+        return self.session.get_tasks(self.identifier, params, request_kwargs)
+
+    def get_history(self, params=None, request_kwargs=None):
         """Get a list of completed catalog tasks.
 
         :type params: dict
@@ -244,13 +262,15 @@ class Item(BaseItem):
 
         :rtype: list
         :returns: A list of task dicts.
+
+        :rtype: List[CatalogTask]
         """
         history = list()
-        for t in self.session.iter_history(self.identifier, params):
+        for t in self.session.iter_history(self.identifier, params, request_kwargs):
             history.append(t)
         return history
 
-    def catalog(self, params=None):
+    def get_catalog(self, params=None, request_kwargs=None):
         """Get a list of pending catalog tasks.
 
         :type params: dict
@@ -258,13 +278,15 @@ class Item(BaseItem):
 
         :rtype: list
         :returns: A list of task dicts.
+
+        :rtype: List[CatalogTask]
         """
         catalog = list()
-        for t in self.session.iter_catalog(self.identifier, params):
+        for t in self.session.iter_catalog(self.identifier, params, request_kwargs):
             catalog.append(t)
         return catalog
 
-    def undark(self, comment, priority=None, data=None):
+    def undark(self, comment, priority=None, data=None, request_kwargs=None):
         """Undark the item.
 
         :type comment: str
@@ -284,11 +306,12 @@ class Item(BaseItem):
                                      'make_undark.php',
                                      comment=comment,
                                      priority=priority,
-                                     data=data)
+                                     data=data,
+                                     request_kwargs=request_kwargs)
         r.raise_for_status()
         return r
 
-    def dark(self, comment, priority=None, data=None):
+    def dark(self, comment, priority=None, data=None, request_kwargs=None):
         """Dark the item.
 
         :type comment: str
@@ -308,7 +331,8 @@ class Item(BaseItem):
                                      'make_dark.php',
                                      comment=comment,
                                      priority=priority,
-                                     data=data)
+                                     data=data,
+                                     request_kwargs=request_kwargs)
         r.raise_for_status()
         return r
 

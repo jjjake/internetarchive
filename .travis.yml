@@ -4,6 +4,8 @@ install:
   - pip install tox
 env:
   - TOX_ENV=py37
+    python: 3.7
+    dist: xenial
   - TOX_ENV=py36
   - TOX_ENV=py35
   - TOX_ENV=py27
@@ -12,4 +14,3 @@ script:
 branches:
   only:
       - master  
-dist: xenial

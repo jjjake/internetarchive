@@ -531,7 +531,9 @@ class Item(BaseItem):
                 print(msg, end='')
 
         errors = list()
+        downloaded = 0
         responses = list()
+
         for f in files:
             if no_directory:
                 path = f.name
@@ -545,13 +547,20 @@ class Item(BaseItem):
                            no_change_timestamp, params)
             if return_responses:
                 responses.append(r)
+
             if r is False:
                 errors.append(f.name)
+            else:
+                downloaded += 1
+
         if silent is False and verbose is False and dry_run is False:
             if errors:
                 print(' - errors')
+            elif not downloaded:
+                print(' - download failed')
             else:
                 print(' - success')
+
         if return_responses:
             return responses
         else:

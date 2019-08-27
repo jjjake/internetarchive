@@ -32,6 +32,7 @@ import logging
 import socket
 
 import six.moves.urllib as urllib
+import six
 from requests.exceptions import HTTPError, RetryError, ConnectTimeout, \
     ConnectionError, ReadTimeout
 
@@ -109,6 +110,11 @@ class File(BaseFile):
         :param file_metadata: (optional) a dict of metadata for the
                               given fille.
         """
+        if six.PY2:
+            try:
+                name = name.decode('utf-8')
+            except UnicodeEncodeError:
+                pass
         super(File, self).__init__(item.item_metadata, name, file_metadata)
         self.item = item
         url_parts = dict(

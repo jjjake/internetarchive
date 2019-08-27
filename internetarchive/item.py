@@ -215,6 +215,127 @@ class Item(BaseItem):
             item_metadata = self.session.get_metadata(self.identifier, **kwargs)
         self.load(item_metadata)
 
+    def get_task_summary(self, params=None, request_kwargs=None):
+        """Get a summary of the items pending tasks.
+
+        :type params: dict
+        :param params: (optional) Params to send with your request.
+
+        :rtype: dict
+        """
+        return self.session.get_tasks_summary(self.identifier, params, request_kwargs)
+
+    def no_tasks_pending(self, params=None, request_kwargs=None):
+        """Get a list of completed catalog tasks.
+
+        :type params: dict
+        :param params: (optional) Params to send with your request.
+
+        :rtype: bool
+        :returns: `True` if no tasks are pending, otherwise `False`.
+        """
+        return all(x == 0 for x in self.task_summary(params, request_kwargs).values())
+
+    def get_all_item_tasks(self, params=None, request_kwargs=None):
+        """Get a list of all tasks for item, pending and complete.
+
+        :type params: dict
+        :param params: (optional) Query parameters, refer to
+                       `Tasks API
+                       <https://archive.org/services/docs/api/tasks.html>`_
+                       for available parameters.
+
+        :type request_kwargs: dict
+        :param request_kwargs: (optional) Keyword arguments that
+                               :py:func:`requests.get` takes.
+
+        :rtype: List[CatalogTask]
+        """
+        params.update(dict(catalog=1, history=1))
+        return self.session.get_tasks(self.identifier, params, request_kwargs)
+
+    def get_history(self, params=None, request_kwargs=None):
+        """Get a list of completed catalog tasks.
+
+        :type params: dict
+        :param params: (optional) Params to send with your request.
+
+        :rtype: list
+        :returns: A list of task dicts.
+
+        :rtype: List[CatalogTask]
+        """
+        history = list()
+        for t in self.session.iter_history(self.identifier, params, request_kwargs):
+            history.append(t)
+        return history
+
+    def get_catalog(self, params=None, request_kwargs=None):
+        """Get a list of pending catalog tasks.
+
+        :type params: dict
+        :param params: (optional) Params to send with your request.
+
+        :rtype: list
+        :returns: A list of task dicts.
+
+        :rtype: List[CatalogTask]
+        """
+        catalog = list()
+        for t in self.session.iter_catalog(self.identifier, params, request_kwargs):
+            catalog.append(t)
+        return catalog
+
+    def undark(self, comment, priority=None, data=None, request_kwargs=None):
+        """Undark the item.
+
+        :type comment: str
+        :param comment: The curation comment explaining reason for
+                        undarking item
+
+        :type priority: str or int
+        :param priority: (optional) The task priority.
+
+        :type data: dict
+        :param data: (optional) Additional parameters to submit with
+                     the task.
+
+        :rtype: :class:`requests.Response`
+        """
+        r = self.session.submit_task(self.identifier,
+                                     'make_undark.php',
+                                     comment=comment,
+                                     priority=priority,
+                                     data=data,
+                                     request_kwargs=request_kwargs)
+        r.raise_for_status()
+        return r
+
+    def dark(self, comment, priority=None, data=None, request_kwargs=None):
+        """Dark the item.
+
+        :type comment: str
+        :param comment: The curation comment explaining reason for
+                        darking item
+
+        :type priority: str or int
+        :param priority: (optional) The task priority.
+
+        :type data: dict
+        :param data: (optional) Additional parameters to submit with
+                     the task.
+
+        :rtype: :class:`requests.Response`
+        """
+        r = self.session.submit_task(self.identifier,
+                                     'make_dark.php',
+                                     comment=comment,
+                                     priority=priority,
+                                     data=data,
+                                     request_kwargs=request_kwargs)
+        r.raise_for_status()
+        return r
+
     def get_file(self, file_name, file_metadata=None):
         """Get a :class:`File <File>` object for the named file.
 

@@ -447,52 +447,28 @@ def delete(identifier,
 
 
 def get_tasks(identifier=None,
-              task_id=None,
-              task_type=None,
               params=None,
               config=None,
               config_file=None,
-              verbose=None,
               archive_session=None,
               http_adapter_kwargs=None,
               request_kwargs=None):
-    """Get tasks from the Archive.org catalog. ``internetarchive`` must be configured
-    with your logged-in-* cookies to use this function. If no arguments are provided,
-    all queued tasks for the user will be returned.
+    """Get tasks from the Archive.org catalog.
 
     :type identifier: str
     :param identifier: (optional) The Archive.org identifier for which to retrieve tasks
                        for.
 
-    :type task_id: int or str
-    :param task_is: (optional) The task_id to retrieve from the Archive.org catalog.
-
-    :type task_type: str
-    :param task_type: (optional) The type of tasks to retrieve from the Archive.org
-                      catalog. The types can be either "red" for failed tasks, "blue" for
-                      running tasks, "green" for pending tasks, "brown" for paused tasks,
-                      or "purple" for completed tasks.
-
     :type params: dict
     :param params: (optional) The URL parameters to send with each request sent to the
                    Archive.org catalog API.
-
-    :type config: dict
-    :param secure: (optional) Configuration options for session.
-
-    :type verbose: bool
-    :param verbose: (optional) Set to ``True`` to retrieve verbose information for each
-                    catalog task returned. verbose is set to ``True`` by default.
 
     :returns: A set of :class:`CatalogTask` objects.
     """
     if not archive_session:
         archive_session = get_session(config, config_file, http_adapter_kwargs)
     return archive_session.get_tasks(identifier=identifier,
-                                     task_id=task_id,
                                      params=params,
-                                     config=config,
-                                     verbose=verbose,
                                      request_kwargs=request_kwargs)
 
 

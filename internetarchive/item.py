@@ -216,7 +216,7 @@ class Item(BaseItem):
         self.load(item_metadata)
 
     def get_task_summary(self, params=None, request_kwargs=None):
-        """Get a summary of the items pending tasks.
+        """Get a summary of the item's pending tasks.
 
         :type params: dict
         :param params: (optional) Params to send with your request.
@@ -226,7 +226,7 @@ class Item(BaseItem):
         return self.session.get_tasks_summary(self.identifier, params, request_kwargs)
 
     def no_tasks_pending(self, params=None, request_kwargs=None):
-        """Get a list of completed catalog tasks.
+        """Get a list of completed catalog tasks for the item.
 
         :type params: dict
         :param params: (optional) Params to send with your request.
@@ -237,7 +237,7 @@ class Item(BaseItem):
         return all(x == 0 for x in self.task_summary(params, request_kwargs).values())
 
     def get_all_item_tasks(self, params=None, request_kwargs=None):
-        """Get a list of all tasks for item, pending and complete.
+        """Get a list of all tasks for the item, pending and complete.
 
         :type params: dict
         :param params: (optional) Query parameters, refer to
@@ -255,7 +255,7 @@ class Item(BaseItem):
         return self.session.get_tasks(self.identifier, params, request_kwargs)
 
     def get_history(self, params=None, request_kwargs=None):
-        """Get a list of completed catalog tasks.
+        """Get a list of completed catalog tasks for the item.
 
         :type params: dict
         :param params: (optional) Params to send with your request.
@@ -271,7 +271,7 @@ class Item(BaseItem):
         return history
 
     def get_catalog(self, params=None, request_kwargs=None):
-        """Get a list of pending catalog tasks.
+        """Get a list of pending catalog tasks for the item.
 
         :type params: dict
         :param params: (optional) Params to send with your request.

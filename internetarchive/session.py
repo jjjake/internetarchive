@@ -493,7 +493,7 @@ class ArchiveSession(requests.sessions.Session):
         if insecure:
             from requests.exceptions import RequestException
             msg = ('You are attempting to make an HTTPS request on an insecure platform,'
-                   ' please see:\n\n\thttps://internetarchive.readthedocs.org'
-                   '/en/latest/troubleshooting.html#https-issues\n')
+                   ' please see:\n\n\thttps://archive.org/services/docs/api'
+                   '/internetarchive/troubleshooting.html#https-issues\n')
             raise RequestException(msg)
         return r

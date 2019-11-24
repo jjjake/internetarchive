@@ -255,8 +255,8 @@ def upload(identifier, files,
     :param verbose: (optional) Display upload progress.
 
     :type verify: bool
-    :param verify: (optional) Verify local MD5 checksum matches the MD5 checksum of the
-                   file received by IAS3.
+    :param verify: (optional) Verify local SHA-1 checksum matches the SHA-1 checksum of
+                   the file received by IAS3.
 
     :type checksum: bool
     :param checksum: (optional) Skip uploading files based on checksum.

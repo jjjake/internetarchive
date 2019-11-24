@@ -678,7 +678,7 @@ class Item(BaseItem):
                              being derived after upload.
 
         :type verify: bool
-        :param verify: (optional) Verify local MD5 checksum matches the MD5
+        :param verify: (optional) Verify local SHA-1 checksum matches the SHA-1
                        checksum of the file received by IAS3.
 
         :type checksum: bool
@@ -728,7 +728,7 @@ class Item(BaseItem):
         request_kwargs = {} if request_kwargs is None else request_kwargs
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 120
-        md5_sum = None
+        sha1_sum = None
 
         if not hasattr(body, 'read'):
             filename = body
@@ -756,9 +756,9 @@ class Item(BaseItem):
 
         # Skip based on checksum.
         if checksum:
-            md5_sum = get_md5(body)
+            sha1_sum = get_sha1(body)
             ia_file = self.get_file(key)
-            if (not self.tasks) and (ia_file) and (ia_file.md5 == md5_sum):
+            if (not self.tasks) and (ia_file) and (ia_file.sha1 == sha1_sum):
                 log.info('{f} already exists: {u}'.format(f=key, u=url))
                 if verbose:
                     print(' {f} already exists, skipping.'.format(f=key))
@@ -778,9 +778,7 @@ class Item(BaseItem):
 
         # require the Content-MD5 header when delete is True.
         if verify or delete:
-            if not md5_sum:
-                md5_sum = get_md5(body)
-            headers['Content-MD5'] = md5_sum
+            headers['Content-MD5'] = get_md5(body)
 
         def _build_request():
             body.seek(0, os.SEEK_SET)

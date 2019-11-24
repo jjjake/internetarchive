@@ -224,9 +224,9 @@ class File(BaseFile):
                 return
             elif checksum:
                 with open(file_path, 'rb') as fp:
-                    md5_sum = utils.get_md5(fp)
+                    sha1_sum = utils.get_sha1(fp)
 
-                if md5_sum == self.md5:
+                if sha1_sum == self.sha1:
                     msg = ('skipping {0}, '
                            'file already exists based on checksum.'.format(file_path))
                     log.info(msg)

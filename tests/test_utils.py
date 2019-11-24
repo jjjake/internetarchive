@@ -32,10 +32,10 @@ def test_validate_ia_identifier():
         assert isinstance(exc, AssertionError)
 
 
-def test_get_md5():
+def test_get_sha1():
     with open(__file__, 'rb') as fp:
-        md5 = internetarchive.utils.get_md5(fp)
-    assert isinstance(md5, six.string_types)
+        sha1 = internetarchive.utils.get_sha1(fp)
+    assert isinstance(sha1, six.string_types)
 
 
 def test_map2x():

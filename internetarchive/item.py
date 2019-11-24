@@ -45,8 +45,9 @@ from requests import Response
 from clint.textui import progress
 from requests.exceptions import HTTPError
 
-from internetarchive.utils import IdentifierListAsItems, get_sha1, chunk_generator, \
-    IterableToFileAdapter, iter_directory, recursive_file_count, norm_filepath
+from internetarchive.utils import IdentifierListAsItems, get_sha1, get_md5, \
+    chunk_generator, IterableToFileAdapter, iter_directory, recursive_file_count, \
+    norm_filepath
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
 from internetarchive.utils import get_s3_xml_text, get_file_size, is_dir

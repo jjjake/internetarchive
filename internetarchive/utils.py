@@ -83,8 +83,8 @@ def norm_filepath(fp):
     return fp
 
 
-def get_sha1(file_object):
-    m = hashlib.sha1()
+def get_hash(file_object, hash_name):
+    m = hashlib.new(hash_name)
     while True:
         data = file_object.read(8192)
         if not data:
@@ -92,6 +92,14 @@ def get_sha1(file_object):
         m.update(data)
     file_object.seek(0, os.SEEK_SET)
     return m.hexdigest()
+
+
+def get_sha1(file_object):
+    return get_hash(file_object, 'sha1')
+
+
+def get_md5(file_object):
+    return get_hash(file_object, 'md5')
 
 
 def chunk_generator(fp, chunk_size):

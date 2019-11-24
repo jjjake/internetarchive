@@ -151,7 +151,7 @@ By default, the :func:`download <internetarchive.download>` function sets the ``
      skipping nasa/nasa_archive.torrent, file already exists based on length and date.
      skipping nasa/nasa_files.xml, file already exists based on length and date.
 
-Alternatively, you can skip files based on md5 checksums. This is will take longer because checksums will need to be calculated for every file already downloaded, but will be safer::
+Alternatively, you can skip files based on SHA-1 checksums. This is will take longer because checksums will need to be calculated for every file already downloaded, but will be safer::
 
     >>> download('nasa', verbose=True, checksum=True)
     nasa:

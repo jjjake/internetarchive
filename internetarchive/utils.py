@@ -83,8 +83,8 @@ def norm_filepath(fp):
     return fp
 
 
-def get_md5(file_object):
-    m = hashlib.md5()
+def get_sha1(file_object):
+    m = hashlib.sha1()
     while True:
         data = file_object.read(8192)
         if not data:

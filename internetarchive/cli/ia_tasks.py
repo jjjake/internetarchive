@@ -26,10 +26,10 @@ Tasks API documentation::
 
 usage:
     ia tasks [--task=<task_id>...] [--get-task-log=<task_id>]
-             [--parameter=<k:v>...]
-    ia tasks <identifier> [--parameter=<k:v>...]
+             [--parameter=<k:v>...] [--tab-output]
+    ia tasks <identifier> [--parameter=<k:v>...] [--tab-output]
     ia tasks <identifier> --cmd=<command> --comment=<comment>
-                          [--data=<k:v>...]
+                          [--data=<k:v>...] [--tab-output]
     ia tasks --help
 
 options:
@@ -40,6 +40,7 @@ options:
     -c, --cmd=<command>           The task to submit (e.g. make_dark.php).
     -C, --comment=<command>       A reasonable explantion for why a
                                   task is being submitted.
+    -T, --tab-output              Output task info in tab-delimited columns.
     -d, --data=<k:v>...           Additional data to send when submitting
                                   a task.
 
@@ -55,6 +56,7 @@ examples:
 """
 from __future__ import absolute_import, print_function
 import sys
+import warnings
 
 from docopt import docopt
 import six
@@ -116,6 +118,27 @@ def main(argv, session):
         _params.update(params)
         params = _params
 
+    if args['--tab-output']:
+        warn_msg = ('tab-delimited output will be removed in a future release. '
+                    'Please switch to the default JSON output.')
+        warnings.warn(warn_msg)
     for t in session.get_tasks(params=params):
-        print(t.json())
-        sys.stdout.flush()
+        # Legacy support for tab-delimted output.
+        if args['--tab-output']:
+            color = t.color if t.color else 'done'
+            task_args = '\t'.join(['{}={}'.format(k, v) for k, v in t.args.items()])
+            output = '\t'.join([str(x) for x in [
+                    t.identifier,
+                    t.task_id,
+                    t.server,
+                    t.submittime,
+                    t.cmd,
+                    color,
+                    t.submitter,
+                    task_args,
+            ] if x])
+            print(output)
+            sys.stdout.flush()
+        else:
+            print(t.json())
+            sys.stdout.flush()

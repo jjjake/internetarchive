@@ -44,7 +44,7 @@ import requests.sessions
 from requests.utils import default_headers
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3 import Retry
-from six.moves.urllib.parse import urlparse
+from six.moves.urllib.parse import urlparse, unquote
 
 from internetarchive import __version__
 from internetarchive.config import get_config
@@ -106,7 +106,14 @@ class ArchiveSession(requests.sessions.Session):
         self.config_file = config_file
         self.cookies.update(self.config.get('cookies', {}))
         self.secure = self.config.get('general', {}).get('secure', True)
+        self.host = self.config.get('general', {}).get('host', 'archive.org')
+        if 'archive.org' not in self.host:
+            self.host += '.archive.org'
         self.protocol = 'https:' if self.secure else 'http:'
+        user_email = self.config.get('cookies', dict()).get('logged-in-user')
+        user_email = user_email.split(';')[0]
+        user_email = unquote(user_email)
+        self.user_email = user_email
         self.access_key = self.config.get('s3', {}).get('access')
         self.secret_key = self.config.get('s3', {}).get('secret')
         self.http_adapter_kwargs = http_adapter_kwargs
@@ -259,7 +266,7 @@ class ArchiveSession(requests.sessions.Session):
         :returns: Metadat API response.
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
-        url = '{0}//archive.org/metadata/{1}'.format(self.protocol, identifier)
+        url = '{0}//{1}/metadata/{2}'.format(self.protocol, self.host, identifier)
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12
         try:

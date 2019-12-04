@@ -114,7 +114,8 @@ def main(argv, session):
         params.update(dict(catalog=1, history=0))
 
     if not any(x in params for x in queryable_params):
-        _params = dict(submitter='jake@archive.org', catalog=1, history=0, summary=0)
+        # TODO: WTF
+        _params = dict(submitter=session.user_email, catalog=1, history=0, summary=0)
         _params.update(params)
         params = _params
 

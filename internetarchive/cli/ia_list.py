@@ -74,8 +74,10 @@ def main(argv, session):
                         val = ';'.join(val)
                     val = val.encode('utf-8')
                 if key == 'name' and args.get('--location'):
-                    file_dict[key] = ('https://archive.org/download/'
-                                      '{id}/{f}'.format(id=item.identifier, f=val))
+                    file_dict[key] = ('https://{host}/download/'
+                                      '{id}/{f}'.format(host=session.host,
+                                                        id=item.identifier,
+                                                        f=val))
                 else:
                     file_dict[key] = val
         output.append(file_dict)

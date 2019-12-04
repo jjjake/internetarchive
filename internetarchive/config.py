@@ -37,8 +37,9 @@ from internetarchive.utils import deep_update
 from internetarchive import auth
 
 
-def get_auth_config(email, password):
-    u = 'https://archive.org/services/xauthn/'
+def get_auth_config(email, password, host=None):
+    host = host if host else 'archive.org'
+    u = 'https://{}/services/xauthn/'.format(host)
     p = dict(op='login')
     d = dict(email=email, password=password)
     r = requests.post(u, params=p, data=d)
@@ -71,9 +72,9 @@ def get_auth_config(email, password):
     return auth_config
 
 
-def write_config_file(username, password, config_file=None):
+def write_config_file(username, password, config_file=None, host=None):
     config_file, config = parse_config_file(config_file)
-    auth_config = get_auth_config(username, password)
+    auth_config = get_auth_config(username, password, host)
 
     # S3 Keys.
     access = auth_config.get('s3', {}).get('access')

@@ -121,8 +121,9 @@ class File(BaseFile):
             protocol=item.session.protocol,
             id=self.identifier,
             name=urllib.parse.quote(name.encode('utf-8')),
+            host=item.session.host,
         )
-        self.url = '{protocol}//archive.org/download/{id}/{name}'.format(**url_parts)
+        self.url = '{protocol}//{host}/download/{id}/{name}'.format(**url_parts)
         if self.item.session.access_key and self.item.session.secret_key:
             self.auth = auth.S3Auth(self.item.session.access_key,
                                     self.item.session.secret_key)

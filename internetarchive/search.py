@@ -69,10 +69,10 @@ class Search(object):
         self.sorts = sorts or list()
         self.request_kwargs = request_kwargs or dict()
         self._num_found = None
-        self.scrape_url = '{0}//archive.org/services/search/v1/scrape'.format(
-            self.session.protocol)
-        self.search_url = '{0}//archive.org/advancedsearch.php'.format(
-            self.session.protocol)
+        self.scrape_url = '{0}//{1}/services/search/v1/scrape'.format(
+            self.session.protocol, self.session.host)
+        self.search_url = '{0}//{1}/advancedsearch.php'.format(
+            self.session.protocol, self.session.host)
         self.auth = S3Auth(self.session.access_key, self.session.secret_key)
         self.max_retries = max_retries if max_retries is not None else 5
 

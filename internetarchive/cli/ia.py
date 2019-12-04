@@ -22,7 +22,7 @@
 
 usage:
     ia [--help | --version]
-    ia [--config-file FILE] [--log | --debug] [--insecure] <command> [<args>]...
+    ia [--config-file FILE] [--log | --debug] [--insecure] [--host HOST] <command> [<args>]...
 
 options:
     -h, --help
@@ -31,6 +31,8 @@ options:
     -l, --log               Turn on logging [default: False].
     -d, --debug             Turn on verbose logging [default: False].
     -i, --insecure          Use HTTP for all requests instead of HTTPS [default: false]
+    -H, --host HOST         Host to use for requests (doesn't work for requests made to
+                            s3.us.archive.org) [default: archive.org]
 
 commands:
     help      Retrieve help for subcommands.
@@ -111,7 +113,8 @@ def main():
     # Validate args.
     s = Schema({
         six.text_type: bool,
-        '--config-file': Or(None, str),
+        '--config-file': Or(None, *six.string_types),
+        '--host': Or(None, *six.string_types),
         '<args>': list,
         '<command>': Or(str, lambda _: 'help'),
     })
@@ -149,6 +152,8 @@ def main():
 
     if args['--insecure']:
         config['general'] = dict(secure=False)
+    if args['--host']:
+        config['general'] = dict(host=args['--host'])
 
     session = get_session(config_file=args['--config-file'],
                           config=config,

@@ -200,7 +200,7 @@ class Item(BaseItem):
             """Make URLs for the separate tabs of Collections details page."""
             self._make_URL(tab, self.details + "&tab={tab}".format(tab=tab))
 
-        DEFAULT_URL_FORMAT = '{0.session.protocol}//archive.org/{path}/{0.identifier}'
+        DEFAULT_URL_FORMAT = '{0.session.protocol}//{0.session.host}/{path}/{0.identifier}'
 
         def _make_URL(self, path, url_format=DEFAULT_URL_FORMAT):
             setattr(self, path, url_format.format(self._itm_obj, path=path))
@@ -615,9 +615,10 @@ class Item(BaseItem):
         debug = False if debug is None else debug
         request_kwargs = {} if not request_kwargs else request_kwargs
 
-        url = '{protocol}//archive.org/metadata/{identifier}'.format(
+        url = '{protocol}//{host}/metadata/{identifier}'.format(
             protocol=self.session.protocol,
-            identifier=self.identifier)
+            identifier=self.identifier,
+            host=self.session.host)
         # TODO: currently files and metadata targets do not support dict's,
         # but they might someday?? refactor this check.
         source_metadata = self.item_metadata

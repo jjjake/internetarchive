@@ -91,7 +91,7 @@ class Catalog(object):
         self.session = archive_session
         self.auth = auth.S3Auth(self.session.access_key, self.session.secret_key)
         self.request_kwargs = request_kwargs if request_kwargs else dict()
-        self.url = '{}//archive.org/services/tasks.php'.format(self.session.protocol)
+        self.url = '{}//{}/services/tasks.php'.format(self.session.protocol, self.session.host)
 
     def get_summary(self, identifier=None, params=None):
         """Get the total counts of catalog tasks meeting all criteria,
@@ -308,7 +308,11 @@ class CatalogTask(object):
         """
         request_kwargs = request_kwargs if request_kwargs else dict()
         _auth = auth.S3Auth(session.access_key, session.secret_key)
-        url = '{}//catalogd.archive.org/services/tasks.php'.format(session.protocol)
+        if session.host == 'archive.org':
+            host = 'catalogd.archive.org'
+        else:
+            host = session.host
+        url = '{}//{}/services/tasks.php'.format(session.protocol, host)
         params = dict(task_log=task_id)
         r = session.get(url, params=params, auth=_auth, **request_kwargs)
         r.raise_for_status()

@@ -22,7 +22,8 @@
 
 usage:
     ia [--help | --version]
-    ia [--config-file FILE] [--log | --debug] [--insecure] [--host HOST] <command> [<args>]...
+    ia [--config-file FILE] [--log | --debug]
+       [--insecure] [--host HOST] <command> [<args>]...
 
 options:
     -h, --help

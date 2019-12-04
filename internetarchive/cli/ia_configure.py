@@ -71,7 +71,8 @@ def main(argv, session):
         # Interactive input.
         else:
             print("Enter your Archive.org credentials below to configure 'ia'.\n")
-            config_file_path = configure(config_file=session.config_file, host=session.host)
+            config_file_path = configure(config_file=session.config_file,
+                                         host=session.host)
             print('\nConfig saved to: {0}'.format(config_file_path))
 
     except AuthenticationError as exc:

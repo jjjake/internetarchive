@@ -72,7 +72,8 @@ def main(argv, session, cmd='copy'):
             error='Destination not formatted correctly. See usage example.'),
             assert_src_file_exists, error=(
             'https://{}/download/{} does not exist. '
-            'Please check the identifier and filepath and retry.'.format(session.host, src_path)))),
+            'Please check the identifier and filepath and retry.'.format(session.host,
+                                                                         src_path)))),
         '<dest-identifier>/<dest-file>': And(str, lambda x: '/' in x,
             error='Destination not formatted correctly. See usage example.'),
         '--metadata': Or(None, And(Use(get_args_dict), dict),

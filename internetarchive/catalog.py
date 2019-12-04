@@ -91,7 +91,8 @@ class Catalog(object):
         self.session = archive_session
         self.auth = auth.S3Auth(self.session.access_key, self.session.secret_key)
         self.request_kwargs = request_kwargs if request_kwargs else dict()
-        self.url = '{}//{}/services/tasks.php'.format(self.session.protocol, self.session.host)
+        self.url = '{}//{}/services/tasks.php'.format(self.session.protocol,
+                                                      self.session.host)
 
     def get_summary(self, identifier=None, params=None):
         """Get the total counts of catalog tasks meeting all criteria,

@@ -154,7 +154,10 @@ def main():
     if args['--insecure']:
         config['general'] = dict(secure=False)
     if args['--host']:
-        config['general'].update(dict(host=args['--host']))
+        if config.get('general'):
+            config['general']['host'] = args['--host']
+        else:
+            config['general'] = dict(host=args['--host'])
 
     session = get_session(config_file=args['--config-file'],
                           config=config,

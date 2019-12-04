@@ -129,14 +129,14 @@ def main(argv, session):
             color = t.color if t.color else 'done'
             task_args = '\t'.join(['{}={}'.format(k, v) for k, v in t.args.items()])
             output = '\t'.join([str(x) for x in [
-                    t.identifier,
-                    t.task_id,
-                    t.server,
-                    t.submittime,
-                    t.cmd,
-                    color,
-                    t.submitter,
-                    task_args,
+                t.identifier,
+                t.task_id,
+                t.server,
+                t.submittime,
+                t.cmd,
+                color,
+                t.submitter,
+                task_args,
             ] if x])
             print(output)
             sys.stdout.flush()

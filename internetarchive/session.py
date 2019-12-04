@@ -111,8 +111,9 @@ class ArchiveSession(requests.sessions.Session):
             self.host += '.archive.org'
         self.protocol = 'https:' if self.secure else 'http:'
         user_email = self.config.get('cookies', dict()).get('logged-in-user')
-        user_email = user_email.split(';')[0]
-        user_email = unquote(user_email)
+        if user_email:
+            user_email = user_email.split(';')[0]
+            user_email = unquote(user_email)
         self.user_email = user_email
         self.access_key = self.config.get('s3', {}).get('access')
         self.secret_key = self.config.get('s3', {}).get('secret')

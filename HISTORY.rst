@@ -3,6 +3,21 @@
 Release History
 ---------------
 
+1.9.0 (?)
++++++++++
+
+**Features and Improvements**
+
+- Implemented new archive.org `Tasks API <https://archive.org/services/docs/api/tasks.html>`_.
+- Added support for darking and undarking items via the Tasks API.
+- Added support for submitting arbitrary tasks 
+  (only darking/undarking currently supported, see Tasks API documentation).
+
+**Bugfixes**
+
+- ``ia download`` now displays `download failed` instead of `success` when download fails.
+- Fixed bug where ``Item.get_file`` would not work on unicode names in Python 2.
+
 1.8.5 (2019-06-07)
 ++++++++++++++++++
 

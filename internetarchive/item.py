@@ -798,9 +798,8 @@ class Item(BaseItem):
                     expected_size = math.ceil(size / chunk_size)
                     chunks = chunk_generator(body, chunk_size)
                     progress_generator = tqdm(chunks,
-                                              desc=' {}'.format(key),
-                                              unit_scale=True,
-                                              unit_divisor=chunk_size,
+                                              desc=' uploading {}'.format(key),
+                                              dynamic_ncols=True,
                                               total=expected_size)
                     data = IterableToFileAdapter(progress_generator, size)
                 except:

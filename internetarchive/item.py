@@ -31,6 +31,7 @@ import sys
 from fnmatch import fnmatch
 from logging import getLogger
 from time import sleep
+import math
 
 try:
     from functools import total_ordering
@@ -42,7 +43,7 @@ from copy import deepcopy
 from six import string_types
 from six.moves import urllib
 from requests import Response
-from clint.textui import progress
+from tqdm import tqdm
 from requests.exceptions import HTTPError
 
 from internetarchive.utils import IdentifierListAsItems, get_md5, chunk_generator, \
@@ -794,12 +795,13 @@ class Item(BaseItem):
                         raise Exception
 
                     chunk_size = 1048576
-                    expected_size = size / chunk_size + 1
+                    expected_size = math.ceil(size / chunk_size)
                     chunks = chunk_generator(body, chunk_size)
-                    progress_generator = progress.bar(
-                        chunks,
-                        expected_size=expected_size,
-                        label=' uploading {f}: '.format(f=key))
+                    progress_generator = tqdm(chunks,
+                                              desc=' {}'.format(key),
+                                              unit_scale=True,
+                                              unit_divisor=chunk_size,
+                                              total=expected_size)
                     data = IterableToFileAdapter(progress_generator, size)
                 except:
                     print(' uploading {f}'.format(f=key))

@@ -40,7 +40,7 @@ setup(
         'requests>=2.9.1,<3.0.0',
         'jsonpatch>=0.4',
         'docopt>=0.6.0,<0.7.0',
-        'clint>=0.4.0,<0.6.0',
+        'tqdm>=4.0.0',
         'six>=1.0.0,<2.0.0',
         'schema>=0.4.0',
         'backports.csv < 1.07;python_version<"2.7"',

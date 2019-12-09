@@ -45,8 +45,6 @@ setup(
         'schema>=0.4.0',
         'backports.csv < 1.07;python_version<"2.7"',
         'backports.csv < 1.07;python_version<"3.4"',
-        'backports.csv;python_version>="2.7"',
-        'backports.csv;python_version>="3.4"',
         'total-ordering;python_version<"2.7"',
     ],
     classifiers=[

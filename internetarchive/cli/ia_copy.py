@@ -34,6 +34,7 @@ import sys
 
 from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
+from six.moves.urllib import parse
 
 import internetarchive as ia
 from internetarchive.cli.argparser import get_args_dict
@@ -91,7 +92,7 @@ def main(argv, session, cmd='copy'):
         print('{0}\n{1}'.format(str(exc), usage), file=sys.stderr)
         sys.exit(1)
 
-    args['--header']['x-amz-copy-source'] = '/{}'.format(src_path)
+    args['--header']['x-amz-copy-source'] = '/{}'.format(parse.quote(src_path))
     args['--header']['x-amz-metadata-directive'] = 'COPY'
     args['--header']
     # Add keep-old-version by default.

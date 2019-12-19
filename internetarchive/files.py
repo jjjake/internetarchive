@@ -351,7 +351,7 @@ class File(BaseFile):
 
         url = '{0}//s3.us.archive.org/{1}/{2}'.format(self.item.session.protocol,
                                                       self.identifier,
-                                                      self.name)
+                                                      urllib.parse.quote(self.name))
         self.item.session.mount_http_adapter(max_retries=max_retries,
                                              status_forcelist=[503],
                                              host='s3.us.archive.org')

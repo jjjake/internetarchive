@@ -99,7 +99,7 @@ def main(argv, session, cmd='copy'):
     if 'x-archive-keep-old-version' not in args['--header']:
         args['--header']['x-archive-keep-old-version'] = '1'
 
-    url = '{}//s3.us.archive.org/{}'.format(session.protocol, dest_path)
+    url = '{}//s3.us.archive.org/{}'.format(session.protocol, parse.quote(dest_path))
     req = ia.iarequest.S3Request(url=url,
                                  method='PUT',
                                  metadata=args['--metadata'],

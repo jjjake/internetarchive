@@ -10,6 +10,10 @@ Release History
 
 - Switched to ``tqdm`` for progress bar (``clint`` is no longer maintained).
 
+**Bugfixes**
+
+- Fixed bug in ``ia copy`` and ``ia move`` where filenames weren't being encoded/quoted correctly.
+
 1.9.0 (2019-12-05)
 ++++++++++++++++++
 

@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.9.1 (?)
++++++++++
+
+**Features and Improvements**
+
+- Switched to ``tqdm`` for progress bar (``clint`` is no longer maintained).
+
 1.9.0 (2019-12-05)
 ++++++++++++++++++
 

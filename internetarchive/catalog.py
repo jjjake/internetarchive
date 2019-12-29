@@ -114,14 +114,14 @@ class Catalog(object):
         if identifier:
             params['identifier'] = identifier
         params.update(dict(summary=1, history=0, catalog=0))
-        r = self.make_tasks_reqeust(params)
+        r = self.make_tasks_request(params)
         j = r.json()
         if j.get('success') is True:
             return j['value']['summary']
         else:
             return j
 
-    def make_tasks_reqeust(self, params):
+    def make_tasks_request(self, params):
         """Make a GET request to the
          `Tasks API <https://archive.org/services/docs/api/tasks.html>`_
 
@@ -158,7 +158,7 @@ class Catalog(object):
         :rtype: collections.Iterable[CatalogTask]
         """
         while True:
-            r = self.make_tasks_reqeust(params)
+            r = self.make_tasks_request(params)
             j = r.json()
             for row in j.get('value', dict()).get('catalog', list()):
                 yield CatalogTask(row, self)
@@ -191,7 +191,7 @@ class Catalog(object):
         params.update(dict(limit=0))
         if not params.get('summary'):
             params['summary'] = 0
-        r = self.make_tasks_reqeust(params)
+        r = self.make_tasks_request(params)
         line = ''
         tasks = list()
         for c in r.iter_content():

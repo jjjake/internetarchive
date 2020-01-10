@@ -253,6 +253,7 @@ class Item(BaseItem):
 
         :rtype: List[CatalogTask]
         """
+        params = dict() if not params else params
         params.update(dict(catalog=1, history=1))
         return self.session.get_tasks(self.identifier, params, request_kwargs)
 

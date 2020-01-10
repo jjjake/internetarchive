@@ -462,6 +462,26 @@ class ArchiveSession(requests.sessions.Session):
         c = Catalog(self, request_kwargs)
         return c.get_tasks(identifier=identifier, params=params)
 
+    def get_my_catalog(self, params=None, request_kwargs=None):
+        """Get all queued or running tasks.
+
+        :type params: dict
+        :param params: (optional) Query parameters, refer to
+                       `Tasks API
+                       <https://archive.org/services/docs/api/tasks.html>`_
+                       for available parameters.
+
+        :type request_kwargs: dict
+        :param request_kwargs: (optional) Keyword arguments to be used in
+                               :meth:`requests.sessions.Session.get` request.
+
+        :rtype: List[CatalogTask]
+        """
+        params = dict() if not params else params
+        _params = dict(submitter=self.user_email, catalog=1, history=0, summary=0)
+        params.update(_params)
+        return self.get_tasks(params=params, request_kwargs=request_kwargs)
+
     def get_task_log(self, task_id, request_kwargs=None):
         """Get a task log.
 

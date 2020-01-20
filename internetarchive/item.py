@@ -826,10 +826,10 @@ class Item(BaseItem):
             return prepared_request
         else:
             try:
-                error_msg = ('s3 is overloaded, sleeping for '
-                             '{0} seconds and retrying. '
-                             '{1} retries left.'.format(retries_sleep, retries))
                 while True:
+                    error_msg = ('s3 is overloaded, sleeping for '
+                                 '{0} seconds and retrying. '
+                                 '{1} retries left.'.format(retries_sleep, retries))
                     if retries > 0:
                         if self.session.s3_is_overloaded(access_key):
                             sleep(retries_sleep)

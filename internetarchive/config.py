@@ -103,11 +103,9 @@ def parse_config_file(config_file=None):
     config = configparser.RawConfigParser()
 
     if not config_file:
-        config_dir = os.path.expanduser('~/.config')
-        if not os.path.isdir(config_dir):
+        config_file = os.path.expanduser('~/.config/ia.ini')
+        if not os.path.isfile(config_file):
             config_file = os.path.expanduser('~/.ia')
-        else:
-            config_file = '{0}/ia.ini'.format(config_dir)
     config.read(config_file)
 
     if not config.has_section('s3'):

@@ -61,6 +61,7 @@ from schema import Schema, SchemaError, Or, And, Use
 import six
 
 from internetarchive.cli.argparser import get_args_dict, get_args_dict_many_write
+from internetarchive.exceptions import ItemLocateError
 
 # Only import backports.csv for Python2 (in support of FreeBSD port).
 PY2 = sys.version_info[0] == 2
@@ -73,8 +74,12 @@ else:
 def modify_metadata(item, metadata, args):
     append = True if args['--append'] else False
     append_list = True if args['--append-list'] else False
-    r = item.modify_metadata(metadata, target=args['--target'], append=append,
-                             priority=args['--priority'], append_list=append_list)
+    try:
+        r = item.modify_metadata(metadata, target=args['--target'], append=append,
+                                 priority=args['--priority'], append_list=append_list)
+    except ItemLocateError as exc:
+        print('{} - error: {}'.format(item.identifier, str(exc)), file=sys.stderr)
+        sys.exit(1)
     if not r.json()['success']:
         error_msg = r.json()['error']
         if 'no changes' in r.content.decode('utf-8'):

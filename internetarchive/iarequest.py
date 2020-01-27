@@ -42,6 +42,7 @@ import six
 
 from internetarchive import auth, __version__
 from internetarchive.utils import needs_quote, delete_items_from_dict
+from internetarchive.exceptions import ItemLocateError
 
 
 logger = logging.getLogger(__name__)
@@ -252,10 +253,13 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                 metadata = {target: metadata}
             for key in metadata:
                 if key == 'metadata':
-                    patch = prepare_patch(metadata[key],
-                                          source_metadata['metadata'],
-                                          append,
-                                          append_list)
+                    try:
+                        patch = prepare_patch(metadata[key],
+                                              source_metadata['metadata'],
+                                              append,
+                                              append_list)
+                    except KeyError:
+                        raise ItemLocateError
                 elif key.startswith('files'):
                     patch = prepare_files_patch(metadata[key],
                                                 source_metadata['files'],
@@ -276,8 +280,11 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         else:
             if not target or 'metadata' in target:
                 target = 'metadata'
-                patch = prepare_patch(metadata, source_metadata['metadata'], append,
-                                      append_list)
+                try:
+                    patch = prepare_patch(metadata, source_metadata['metadata'], append,
+                                          append_list)
+                except KeyError:
+                    raise ItemLocateError
             elif 'files' in target:
                 patch = prepare_files_patch(metadata, source_metadata['files'], append,
                                             target, append_list)

@@ -722,7 +722,7 @@ class Item(BaseItem):
         secret_key = self.session.secret_key if secret_key is None else secret_key
         queue_derive = True if queue_derive is None else queue_derive
         verbose = False if verbose is None else verbose
-        verify = True if verify is None else verify
+        verify = False if not verify else verify
         delete = False if delete is None else delete
         # Set checksum after delete.
         checksum = True if delete else checksum

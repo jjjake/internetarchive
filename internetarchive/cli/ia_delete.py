@@ -97,7 +97,7 @@ def main(argv, session):
 
     if args['--all']:
         files = [f for f in item.get_files()]
-        args['--cacade'] = True
+        args['--cascade'] = True
     elif args['--glob']:
         files = item.get_files(glob_pattern=args['--glob'])
     elif args['--format']:

@@ -31,7 +31,6 @@ EXPECTED_S3_HEADERS = {
     'x-archive-queue-derive': '1',
     'x-archive-meta00-scanner': 'uri(Internet%20Archive%20Python%20library',
     'x-archive-size-hint': '7557',
-    'content-md5': '6f1834f5c70c0eabf93dea675ccf90c4',
     'x-archive-auto-make-bucket': '1',
     'authorization': 'LOW a:b',
     'accept': '*/*',
@@ -495,6 +494,7 @@ def test_upload_checksum(tmpdir, nasa_item):
 
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         del _expected_headers['x-archive-meta00-scanner']
+        _expected_headers['content-md5'] = '6f1834f5c70c0eabf93dea675ccf90c4'
 
         test_file = os.path.join(str(tmpdir), 'checksum_test.txt')
         with open(test_file, 'wb') as fh:

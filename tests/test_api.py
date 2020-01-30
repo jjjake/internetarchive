@@ -198,7 +198,6 @@ def test_upload():
         'x-archive-queue-derive': '1',
         'x-archive-meta00-scanner': 'uri(Internet%20Archive%20Python%20library',
         'x-archive-size-hint': '7557',
-        'content-md5': '6f1834f5c70c0eabf93dea675ccf90c4',
         'x-archive-auto-make-bucket': '1',
         'authorization': 'LOW test_access:test_secret',
     }

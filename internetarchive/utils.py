@@ -236,14 +236,16 @@ def recursive_file_count(files, item=None, checksum=False):
         if is_dir:
             for x, _ in iter_directory(f):
                 if checksum is True:
-                    lmd5 = get_md5(open(x, 'rb'))
+                    with open(x, 'rb') as fh:
+                        lmd5 = get_md5(fh)
                     if lmd5 in md5s:
                         continue
                 total_files += 1
         else:
             if checksum is True:
                 try:
-                    lmd5 = get_md5(open(f, 'rb'))
+                    with open(f, 'rb') as fh:
+                        lmd5 = get_md5(fh)
                 except TypeError:
                     # Support file-like objects.
                     lmd5 = get_md5(f)

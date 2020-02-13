@@ -271,7 +271,10 @@ class ArchiveSession(requests.sessions.Session):
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12
         try:
-            s3_auth = auth.S3Auth(self.access_key, self.secret_key)
+            if self.access_key and self.secret_key:
+                s3_auth = auth.S3Auth(self.access_key, self.secret_key)
+            else:
+                s3_auth = None
             resp = self.get(url, auth=s3_auth, **request_kwargs)
             resp.raise_for_status()
         except Exception as exc:

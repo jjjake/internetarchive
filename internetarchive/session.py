@@ -46,7 +46,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3 import Retry
 from six.moves.urllib.parse import urlparse, unquote
 
-from internetarchive import __version__
+from internetarchive import __version__, auth
 from internetarchive.config import get_config
 from internetarchive.item import Item, Collection
 from internetarchive.search import Search
@@ -271,7 +271,8 @@ class ArchiveSession(requests.sessions.Session):
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12
         try:
-            resp = self.get(url, **request_kwargs)
+            s3_auth = auth.S3Auth(self.access_key, self.secret_key)
+            resp = self.get(url, auth=s3_auth, **request_kwargs)
             resp.raise_for_status()
         except Exception as exc:
             error_msg = 'Error retrieving metadata from {0}, {1}'.format(url, exc)

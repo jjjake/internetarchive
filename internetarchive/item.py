@@ -226,8 +226,8 @@ class Item(BaseItem):
         :return: `True` if identifier is available, or `False` if it is
                  not available.
         """
-        url = '{}//{}/services/check_identifier.php'.format(
-                self.session.protocol, self.session.host)
+        url = '{}//{}/services/check_identifier.php'.format(self.session.protocol,
+                                                            self.session.host)
         params = dict(identifier=self.identifier)
         r = self.session.get(url, params=params)
         p = parseString(r.text)

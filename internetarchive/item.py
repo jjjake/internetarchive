@@ -32,6 +32,7 @@ from fnmatch import fnmatch
 from logging import getLogger
 from time import sleep
 import math
+from xml.dom.minidom import parseString
 
 try:
     from functools import total_ordering
@@ -216,6 +217,26 @@ class Item(BaseItem):
         if not item_metadata:
             item_metadata = self.session.get_metadata(self.identifier, **kwargs)
         self.load(item_metadata)
+
+    def identifier_available(self):
+        """Check if the item identifier is available for creating a
+        new item.
+
+        :rtype: bool
+        :return: `True` if identifier is available, or `False` if it is
+                 not available.
+        """
+        url = '{}//{}/services/check_identifier.php'.format(
+                self.session.protocol, self.session.host)
+        params = dict(identifier=self.identifier)
+        r = self.session.get(url, params=params)
+        p = parseString(r.text)
+        result = p.getElementsByTagName('result')[0]
+        available = result.attributes['code'].value
+        if available == 'not_available':
+            return False
+        else:
+            return True
 
     def get_task_summary(self, params=None, request_kwargs=None):
         """Get a summary of the item's pending tasks.

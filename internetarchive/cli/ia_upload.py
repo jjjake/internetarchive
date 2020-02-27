@@ -50,6 +50,8 @@ options:
                                       [default: 30].
     --status-check                    Check if S3 is accepting requests to the given item.
     --no-collection-check             Skip collection exists check [default: False].
+    -o, --open-after-upload           Open the details page for an item after upload
+                                      [default: False].
 """
 from __future__ import absolute_import, unicode_literals, print_function
 
@@ -58,6 +60,7 @@ import os
 import sys
 from tempfile import TemporaryFile
 from copy import deepcopy
+import webbrowser
 
 import six
 from docopt import docopt, printable_usage
@@ -226,6 +229,10 @@ def main(argv, session):
                 break
             if (not _r.status_code) or (not _r.ok):
                 ERRORS = True
+            else:
+                if args['--open-after-upload']:
+                    webbrowser.open_new_tab('{}//{}/details/{}'.format(
+                        session.protocol, session.host, item.identifier))
 
     # Bulk upload using spreadsheet.
     else:
@@ -236,9 +243,15 @@ def main(argv, session):
             for row in spreadsheet:
                 upload_kwargs_copy = deepcopy(upload_kwargs)
                 local_file = row['file']
-                identifier = row['identifier']
+                identifier = row.get('item', row.get('identifier'))
+                if not identifier:
+                    print('error: no identifier column on spreadsheet!')
+                    sys.exit(1)
                 del row['file']
-                del row['identifier']
+                if 'identifier' in row:
+                    del row['identifier']
+                elif 'item' in row:
+                    del row['item']
                 if (not identifier) and (prev_identifier):
                     identifier = prev_identifier
                 item = session.get_item(identifier)
@@ -254,6 +267,10 @@ def main(argv, session):
                         break
                     if (not _r) or (not _r.ok):
                         ERRORS = True
+                    else:
+                        if args['--open-after-upload']:
+                            webbrowser.open_new_tab('{}//{}/details/{}'.format(
+                                session.protocol, session.host, identifier))
                 prev_identifier = identifier
 
     if ERRORS:

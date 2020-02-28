@@ -126,10 +126,11 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         prepared_metadata = prepare_metadata(metadata)
 
         headers['x-archive-auto-make-bucket'] = '1'
-        if queue_derive is False:
-            headers['x-archive-queue-derive'] = '0'
-        else:
-            headers['x-archive-queue-derive'] = '1'
+        if 'x-archive-queue-derive' not in headers:
+            if queue_derive is False:
+                headers['x-archive-queue-derive'] = '0'
+            else:
+                headers['x-archive-queue-derive'] = '1'
 
         for meta_key, meta_value in prepared_metadata.items():
             # Encode arrays into JSON strings because Archive.org does not

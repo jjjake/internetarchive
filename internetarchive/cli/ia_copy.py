@@ -94,7 +94,6 @@ def main(argv, session, cmd='copy'):
 
     args['--header']['x-amz-copy-source'] = '/{}'.format(parse.quote(src_path))
     args['--header']['x-amz-metadata-directive'] = 'COPY'
-    args['--header']
     # Add keep-old-version by default.
     if 'x-archive-keep-old-version' not in args['--header']:
         args['--header']['x-archive-keep-old-version'] = '1'

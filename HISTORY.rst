@@ -15,6 +15,8 @@ Release History
 - Added ``ArchiveSession.get_my_catalog()`` method for retrieving running/queued tasks.
 - Removed backports.csv requirement for newer Python releases.
 - Authorization header is now used for metadata reads, to support privileged access to /metadata.
+- ``ia download`` no longer downloads history dir by default.
+- Added ``ignore_history_dir`` to ``Item.download()``. The default is False. 
 
 **Bugfixes**
 

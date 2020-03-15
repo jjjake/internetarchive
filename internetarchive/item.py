@@ -429,6 +429,7 @@ class Item(BaseItem):
                  on_the_fly=None,
                  return_responses=None,
                  no_change_timestamp=None,
+                 ignore_history_dir=None,
                  params=None):
         """Download files from an item.
 
@@ -495,6 +496,10 @@ class Item(BaseItem):
         :param params: (optional) URL parameters to send with
                        download request (e.g. `cnt=0`).
 
+        :type ignore_history_dir: bool
+        :param ignore_history_dir: (optional) Do not download any files from the history
+                                   dir. This param defaults to ``False``.
+
         :rtype: bool
         :returns: True if if all files have been downloaded successfully.
         """
@@ -507,6 +512,7 @@ class Item(BaseItem):
         no_directory = False if no_directory is None else no_directory
         return_responses = False if not return_responses else True
         no_change_timestamp = False if not no_change_timestamp else no_change_timestamp
+        ignore_history_dir = False if ignore_history_dir is None else ignore_history_dir
         params = None if not params else params
 
         if not dry_run:
@@ -559,6 +565,9 @@ class Item(BaseItem):
         responses = list()
 
         for f in files:
+            if ignore_history_dir is True:
+                if f.name.startswith('history/'):
+                    continue
             if no_directory:
                 path = f.name
             else:

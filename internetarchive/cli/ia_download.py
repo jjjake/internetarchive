@@ -33,7 +33,7 @@ options:
     -d, --dry-run                            Print URLs to stdout and exit.
     -i, --ignore-existing                    Clobber files already downloaded.
     -C, --checksum                           Skip files based on checksum [default: False].
-    -R, --retries=<retries>                  Set number of retries to <retries> [default: 5]
+    -R, --retries=<retries>                  Set number of retries to <retries> [default: 5].
     -I, --itemlist=<file>                    Download items from a specified file. Itemlists should
                                              be a plain text file with one identifier per line.
     -S, --search=<query>                     Download items returned from a specified search query.
@@ -58,6 +58,7 @@ options:
     --no-change-timestamp                    Don't change the timestamp of downloaded files to reflect
                                              the source material.
     -p, --parameters=<key:value>...          Parameters to send with your query (e.g. `cnt=0`).
+    -a, --download-history                   Do not download any files from the history dir.
 """
 from __future__ import print_function, absolute_import
 import os
@@ -98,6 +99,7 @@ def main(argv, session):
         '--search-parameters': Use(lambda x: get_args_dict(x, query_string=True)),
         '--on-the-fly': Use(bool),
         '--no-change-timestamp': Use(bool),
+        '--download-history': Use(bool),
         '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
     })
 
@@ -193,6 +195,7 @@ def main(argv, session):
                 continue
 
         # Otherwise, download the entire item.
+        ignore_history_dir = True if not args['--download-history'] else False
         _errors = item.download(
             files=files,
             formats=args['--format'],
@@ -209,7 +212,8 @@ def main(argv, session):
             ignore_errors=True,
             on_the_fly=args['--on-the-fly'],
             no_change_timestamp=args['--no-change-timestamp'],
-            params=args['--parameters']
+            params=args['--parameters'],
+            ignore_history_dir=ignore_history_dir,
         )
         if _errors:
             errors.append(_errors)

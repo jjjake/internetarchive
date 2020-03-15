@@ -52,6 +52,9 @@ options:
     --no-collection-check             Skip collection exists check [default: False].
     -o, --open-after-upload           Open the details page for an item after upload
                                       [default: False].
+
+examples:
+    ia upload <id> <file> -H x-archive-keep-old-version:0  # Turn off backups
 """
 from __future__ import absolute_import, unicode_literals, print_function
 

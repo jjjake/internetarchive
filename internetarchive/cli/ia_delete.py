@@ -39,6 +39,9 @@ options:
     -f, --format=<format>...     Only only delete files matching the specified format(s).
     -R, --retries=<i>            Number of times to retry if S3 returns a 503 SlowDown
                                  error [default: 2].
+
+examples:
+    ia delete <id> <file> -H x-archive-keep-old-version:0  # Turn off backups
 """
 from __future__ import absolute_import, print_function, unicode_literals
 

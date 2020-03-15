@@ -3,16 +3,27 @@
 Release History
 ---------------
 
-1.9.1 (?)
-+++++++++
+1.9.1 (2020-03-15)
+++++++++++++++++++
 
 **Features and Improvements**
 
 - Switched to ``tqdm`` for progress bar (``clint`` is no longer maintained).
+- Added ``Item.identifier_available()`` method for calling check_identifier.php.
+- Added support for opening details page in default browser after upload.
+- Added support for using ``item`` or ``identifier`` as column header in spreadsheet mode.
+- Added ``ArchiveSession.get_my_catalog()`` method for retrieving running/queued tasks.
+- Removed backports.csv requirement for newer Python releases.
+- Authorization header is now used for metadata reads, to support privileged access to /metadata.
 
 **Bugfixes**
 
 - Fixed bug in ``ia copy`` and ``ia move`` where filenames weren't being encoded/quoted correctly.
+- Fixed bug in ``Item.get_all_item_tasks()`` where all calls would fail unless a dict was provided to ``params``.
+- Read from ~/.config/ia.ini with fallback to ~/.ia regardless of the existence of ~/.config
+- Fixed S3 overload message always mentioning the total maximum number of retries, not the remaining ones.
+- Fixed bug where a KeyError exception would be raised on most calls to dark items.
+- Fixed bug where md5 was being calculated for every upload.
 
 1.9.0 (2019-12-05)
 ++++++++++++++++++

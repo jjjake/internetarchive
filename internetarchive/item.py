@@ -831,7 +831,8 @@ class Item(BaseItem):
                     progress_generator = tqdm(chunks,
                                               desc=' uploading {}'.format(key),
                                               dynamic_ncols=True,
-                                              total=expected_size)
+                                              total=expected_size,
+                                              unit='MiB')
                     data = IterableToFileAdapter(progress_generator, size)
                 except:
                     print(' uploading {f}'.format(f=key))

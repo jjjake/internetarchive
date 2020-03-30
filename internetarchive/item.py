@@ -677,6 +677,23 @@ class Item(BaseItem):
         self.refresh()
         return resp
 
+    def remove_from_simplelist(self, parent, list):
+        """Remove item from a simplelist.
+
+        :returns: A :class:`requests.Response` object.
+        """
+        patch = dict(
+                op='delete',
+                parent=parent,
+                list=list,
+        )
+        data = {
+            '-patch': json.dumps(patch),
+            '-target': 'simplelists',
+        }
+        r = self.session.post(self.urls.metadata, data=data)
+        return r
+
     def upload_file(self, body,
                     key=None,
                     metadata=None,

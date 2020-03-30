@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.9.3 (?)
++++++++++
+
+**Features and Improvements**
+
+- Added support for remvoing items from simplelists as if they were collections.
+
 1.9.2 (2020-03-15)
 ++++++++++++++++++
 

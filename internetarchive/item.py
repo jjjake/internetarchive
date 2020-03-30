@@ -692,9 +692,9 @@ class Item(BaseItem):
         :rtype: :class:`requests.Response`
         """
         patch = dict(
-                op='delete',
-                parent=parent,
-                list=list,
+            op='delete',
+            parent=parent,
+            list=list,
         )
         data = {
             '-patch': json.dumps(patch),

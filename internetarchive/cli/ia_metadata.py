@@ -105,12 +105,12 @@ def remove_metadata(item, metadata, args):
             r = item.remove_from_simplelist(metadata[key], 'holdings')
             j = r.json()
             if j.get('success'):
-                print('{} - success: {} no longer in {}'.format(item.identifier,
-                    item.identifier, metadata[key]))
+                print('{} - success: {} no longer in {}'.format(
+                      item.identifier, item.identifier, metadata[key]))
                 sys.exit(0)
             elif j.get('error', '').startswith('no row to delete for'):
-                print('{} - success: {} no longer in {}'.format(item.identifier,
-                    item.identifier, metadata[key]))
+                print('{} - success: {} no longer in {}'.format(
+                      item.identifier, item.identifier, metadata[key]))
                 sys.exit(0)
             else:
                 print('{} - error: {}'.format(item.identifier, j.get('error')))

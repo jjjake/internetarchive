@@ -28,7 +28,7 @@ usage:
     ia tasks [--task=<task_id>...] [--get-task-log=<task_id>]
              [--parameter=<k:v>...] [--tab-output]
     ia tasks <identifier> [--parameter=<k:v>...] [--tab-output]
-    ia tasks <identifier> --cmd=<command> --comment=<comment>
+    ia tasks <identifier> --cmd=<command> [--comment=<comment>]
                           [--data=<k:v>...] [--tab-output]
     ia tasks --help
 

@@ -310,6 +310,15 @@ class Item(BaseItem):
             catalog.append(t)
         return catalog
 
+    def derive(self):
+        """Derive an item.
+
+        :rtype: :class:`requests.Response`
+        """
+        r = self.session.submit_task(self.identifier, 'derive.php')
+        r.raise_for_status()
+        return r
+
     def undark(self, comment, priority=None, data=None, request_kwargs=None):
         """Undark the item.
 
@@ -680,7 +689,7 @@ class Item(BaseItem):
     def remove_from_simplelist(self, parent, list):
         """Remove item from a simplelist.
 
-        :returns: A :class:`requests.Response` object.
+        :rtype: :class:`requests.Response`
         """
         patch = dict(
                 op='delete',

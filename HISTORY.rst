@@ -9,6 +9,11 @@ Release History
 **Features and Improvements**
 
 - Added support for remvoing items from simplelists as if they were collections.
+- Added ``Item.derive()`` method for deriving items.
+
+**Bugfixes**
+
+- Minor bug fix in ``ia tasks`` to fix support for tasks that do not require a ``--comment`` option.
 
 1.9.2 (2020-03-15)
 ++++++++++++++++++

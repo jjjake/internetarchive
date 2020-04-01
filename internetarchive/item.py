@@ -310,12 +310,49 @@ class Item(BaseItem):
             catalog.append(t)
         return catalog
 
-    def derive(self):
+    def derive(self, priority=None, request_kwargs=None):
         """Derive an item.
 
         :rtype: :class:`requests.Response`
         """
-        r = self.session.submit_task(self.identifier, 'derive.php')
+        r = self.session.submit_task(self.identifier,
+                                     'derive.php',
+                                     priority=priority,
+                                     request_kwargs=request_kwargs)
+        r.raise_for_status()
+        return r
+
+    def fixer(self, ops=None, priority=None, data=None, request_kwargs=None):
+        """Submit a fixer task on an item.
+
+        :type ops: str or list
+        :param ops: (optional) The fixer operation(s) to run on the item
+                    [default: noop].
+
+        :type priority: str or int
+        :param priority: (optional) The task priority.
+
+        :type data: dict
+        :param data: (optional) Additional parameters to submit with
+                     the task.
+
+        :rtype: :class:`requests.Response`
+        """
+        data = dict() if not data else data
+        if not ops:
+            ops = ['noop']
+        if not isinstance(ops, (list, tuple, set)):
+            ops = [ops]
+        if not data.get('args'):
+            data['args'] = dict()
+        for op in ops:
+            data['args'][op] = '1'
+
+        r = self.session.submit_task(self.identifier,
+                                     'fixer.php',
+                                     priority=priority,
+                                     data=data,
+                                     request_kwargs=request_kwargs)
         r.raise_for_status()
         return r
 

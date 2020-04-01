@@ -29,7 +29,8 @@ usage:
              [--parameter=<k:v>...] [--tab-output]
     ia tasks <identifier> [--parameter=<k:v>...] [--tab-output]
     ia tasks <identifier> --cmd=<command> [--comment=<comment>]
-                          [--data=<k:v>...] [--tab-output]
+                          [--task-args=<k:v>...] [--data=<k:v>...]
+                          [--tab-output]
     ia tasks --help
 
 options:
@@ -41,6 +42,7 @@ options:
     -C, --comment=<command>       A reasonable explantion for why a
                                   task is being submitted.
     -T, --tab-output              Output task info in tab-delimited columns.
+    -a, --task-args=<k:v>...      Args to submit to the Tasks API.
     -d, --data=<k:v>...           Additional data to send when submitting
                                   a task.
 
@@ -70,6 +72,8 @@ def main(argv, session):
     # Tasks write API.
     if args['--cmd']:
         data = get_args_dict(args['--data'], query_string=True)
+        task_args = get_args_dict(args['--task-args'], query_string=True)
+        data['args'] = task_args
         r = session.submit_task(args['<identifier>'],
                                 args['--cmd'],
                                 comment=args['--comment'],

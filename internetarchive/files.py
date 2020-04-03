@@ -31,6 +31,7 @@ import sys
 import logging
 import socket
 
+from tqdm import tqdm
 import six.moves.urllib as urllib
 import six
 from requests.exceptions import HTTPError, RetryError, ConnectTimeout, \
@@ -257,6 +258,11 @@ class File(BaseFile):
                 and return_responses is not True:
             os.makedirs(parent_dir)
 
+        pbar = tqdm(total=self.size, 
+                    unit='B', 
+                    unit_scale=True, 
+                    desc=self.url.split('/')[-1],
+                    disable=silent)
         try:
             response = self.item.session.get(self.url,
                                              stream=True,
@@ -276,6 +282,7 @@ class File(BaseFile):
                     if chunk:
                         fileobj.write(chunk)
                         fileobj.flush()
+                        pbar.update(len(chunk))
         except (RetryError, HTTPError, ConnectTimeout,
                 ConnectionError, socket.error, ReadTimeout) as exc:
             msg = ('error downloading file {0}, '
@@ -292,6 +299,8 @@ class File(BaseFile):
                 return False
             else:
                 raise exc
+        finally:
+            pbar.close()
 
         # Set mtime with mtime from files.xml.
         if not no_change_timestamp:

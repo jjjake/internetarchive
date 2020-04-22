@@ -1,4 +1,3 @@
-sudo: false
 language: python
 install: pip install tox-travis
 python:

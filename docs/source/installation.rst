@@ -32,17 +32,7 @@ More details on this issue can be found here: https://github.com/pypa/pip/issues
 Installing Pip
 ~~~~~~~~~~~~~~
 
-The easiest way to install ``pip`` is probably using your operating systems package manager.
-
-Mac OS, with `homebrew <https://brew.sh/>`_::
-
-    $ brew install pip
-
-Ubuntu, with `apt-get <https://help.ubuntu.com/community/AptGet/Howto>`_::
-
-    $ sudo apt-get install python-pip
-
-If your OS doesn't have a package manager, you can also `install pip with get-pip.py <https://pip.pypa.io/en/stable/installing/>`_::
+Pip can be `installed with the get-pip.py script <https://pip.pypa.io/en/stable/installing/>`_::
 
     $ curl -LOs https://bootstrap.pypa.io/get-pip.py
     $ python get-pip.py

@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.9.4 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug in ``internetarchive.get_tasks`` where no tasks were returned unless ``catalog`` or ``history`` params were provided.
+
 1.9.3 (2020-04-07)
 ++++++++++++++++++
 

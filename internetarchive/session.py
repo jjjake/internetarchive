@@ -463,7 +463,12 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: List[CatalogTask]
         """
+        params = dict() if not params else params
         c = Catalog(self, request_kwargs)
+        if not 'history' in params:
+            params['history'] = 1
+        if not 'catalog' in params:
+            params['catalog'] = 1
         return c.get_tasks(identifier=identifier, params=params)
 
     def get_my_catalog(self, params=None, request_kwargs=None):

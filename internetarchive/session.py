@@ -465,9 +465,9 @@ class ArchiveSession(requests.sessions.Session):
         """
         params = dict() if not params else params
         c = Catalog(self, request_kwargs)
-        if not 'history' in params:
+        if 'history' not in params:
             params['history'] = 1
-        if not 'catalog' in params:
+        if 'catalog' not in params:
             params['catalog'] = 1
         return c.get_tasks(identifier=identifier, params=params)
 

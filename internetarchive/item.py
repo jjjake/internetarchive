@@ -827,6 +827,8 @@ class Item(BaseItem):
             request_kwargs['timeout'] = 120
         md5_sum = None
 
+        _headers = headers.copy()
+
         if not hasattr(body, 'read'):
             filename = body
             body = open(body, 'rb')
@@ -840,10 +842,10 @@ class Item(BaseItem):
 
         # Support for uploading empty files.
         if size == 0:
-            headers['Content-Length'] = '0'
+            _headers['Content-Length'] = '0'
 
-        if not headers.get('x-archive-size-hint'):
-            headers['x-archive-size-hint'] = str(size)
+        if not _headers.get('x-archive-size-hint'):
+            _headers['x-archive-size-hint'] = str(size)
 
         # Build IA-S3 URL.
         key = norm_filepath(filename).split('/')[-1] if key is None else key
@@ -877,7 +879,7 @@ class Item(BaseItem):
         if verify or delete:
             if not md5_sum:
                 md5_sum = get_md5(body)
-            headers['Content-MD5'] = md5_sum
+            _headers['Content-MD5'] = md5_sum
 
         def _build_request():
             body.seek(0, os.SEEK_SET)
@@ -903,10 +905,10 @@ class Item(BaseItem):
             else:
                 data = body
 
-            headers.update(self.session.headers)
+            _headers.update(self.session.headers)
             request = S3Request(method='PUT',
                                 url=url,
-                                headers=headers,
+                                headers=_headers,
                                 data=data,
                                 metadata=metadata,
                                 access_key=access_key,

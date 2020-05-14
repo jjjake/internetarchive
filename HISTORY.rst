@@ -9,6 +9,8 @@ Release History
 **Bugfixes**
 
 - Fixed bug in ``internetarchive.get_tasks`` where no tasks were returned unless ``catalog`` or ``history`` params were provided.
+- Fixed bug in upload where headers were being reused in certain cases.
+  This lead to issues such as queue-derive being turned off in some cases.
 
 1.9.3 (2020-04-07)
 ++++++++++++++++++

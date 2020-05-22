@@ -1044,10 +1044,11 @@ class Item(BaseItem):
 
         responses = []
         file_index = 0
-        if checksum:
-            total_files = recursive_file_count(files, item=self, checksum=True)
-        else:
-            total_files = recursive_file_count(files, item=self, checksum=False)
+        if queue_derive:
+            if checksum:
+                total_files = recursive_file_count(files, item=self, checksum=True)
+            else:
+                total_files = recursive_file_count(files, item=self, checksum=False)
         for f in files:
             if (isinstance(f, string_types) and is_dir(f)) \
                     or (isinstance(f, tuple) and is_dir(f[-1])):

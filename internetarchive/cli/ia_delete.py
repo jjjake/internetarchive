@@ -96,7 +96,7 @@ def main(argv, session):
         args['--header']['x-archive-keep-old-version'] = '1'
 
     if verbose:
-        sys.stdout.write('Deleting files from {0}\n'.format(item.identifier))
+        print('Deleting files from {0}'.format(item.identifier))
 
     if args['--all']:
         files = [f for f in item.get_files()]
@@ -118,7 +118,7 @@ def main(argv, session):
         files = list(item.get_files(fnames))
 
     if not files:
-        sys.stderr.write(' warning: no files found, nothing deleted.\n')
+        print(' warning: no files found, nothing deleted.', file=sys.stderr)
         sys.exit(1)
 
     errors = False
@@ -126,13 +126,12 @@ def main(argv, session):
     for f in files:
         if not f:
             if verbose:
-                sys.stderr.write(' error: "{0}" does not exist\n'.format(f.name))
+                print(' error: "{0}" does not exist'.format(f.name), file=sys.stderr)
             errors = True
         if any(f.name.endswith(s) for s in no_delete):
             continue
         if args['--dry-run']:
-            sys.stdout.write(' will delete: {0}/{1}\n'.format(item.identifier,
-                                                              f.name.encode('utf-8')))
+            print(' will delete: {0}/{1}'.format(item.identifier, f.name))
             continue
         try:
             resp = f.delete(verbose=verbose,

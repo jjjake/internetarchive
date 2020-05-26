@@ -114,8 +114,8 @@ def main(argv, session):
                 raise(SchemaError(None, '--glob and --format cannot be used together.'))
 
     except SchemaError as exc:
-        sys.stderr.write('{0}\n{1}\n'.format(
-            str(exc), printable_usage(__doc__)))
+        print('{0}\n{1}'.format(
+            str(exc), printable_usage(__doc__)), file=sys.stderr)
         sys.exit(1)
 
     retries = int(args['--retries'])
@@ -130,8 +130,8 @@ def main(argv, session):
                                            params=args['--search-parameters'])
             total_ids = _search.num_found
             if total_ids == 0:
-                print('error: the query "{0}" '
-                      'returned no results'.format(args['--search']), file=sys.stderr)
+                print('error: the query "{0}" returned no results'.format(
+                    args['--search']), file=sys.stderr)
                 sys.exit(1)
             ids = _search
         except ValueError as e:
@@ -163,8 +163,8 @@ def main(argv, session):
             try:
                 assert len(f) == 1
             except AssertionError:
-                sys.stderr.write('error: {0}/{1} does not exist!\n'.format(
-                    identifier, args['<file>'][0]))
+                print('error: {0}/{1} does not exist!'.format(
+                    identifier, args['<file>'][0]), file=sys.stderr)
                 sys.exit(1)
             if six.PY2:
                 stdout_buf = sys.stdout

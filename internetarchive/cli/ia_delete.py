@@ -39,9 +39,10 @@ options:
     -f, --format=<format>...     Only only delete files matching the specified format(s).
     -R, --retries=<i>            Number of times to retry if S3 returns a 503 SlowDown
                                  error [default: 2].
+    -n, --no-backup              Don't move deleted files to the history subdirectory.
 
 examples:
-    ia delete <id> <file> -H x-archive-keep-old-version:0  # Turn off backups
+    ia delete <id> <file> --no-backup  # Turn off backups
 """
 from __future__ import absolute_import, print_function, unicode_literals
 
@@ -93,7 +94,10 @@ def main(argv, session):
 
     # Add keep-old-version by default.
     if 'x-archive-keep-old-version' not in args['--header']:
-        args['--header']['x-archive-keep-old-version'] = '1'
+        if args['--no-backup']:
+            args['--header']['x-archive-keep-old-version'] = '0'
+        else:
+            args['--header']['x-archive-keep-old-version'] = '1'
 
     if verbose:
         sys.stdout.write('Deleting files from {0}\n'.format(item.identifier))

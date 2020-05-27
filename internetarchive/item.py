@@ -1054,9 +1054,8 @@ class Item(BaseItem):
                 files = list(files.items())
         if not isinstance(files, (list, tuple)):
             files = [files]
-        if all(f.get('name') for f in files):
+        if all(isinstance(f, dict) and f.get('name') for f in files):
             total_files = len(files)
-
 
         responses = []
         file_index = 0

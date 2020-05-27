@@ -33,8 +33,8 @@ options:
     -q, --quiet                          Turn off ia's output [default: False].
     -d, --debug                          Print S3 request parameters to stdout and exit
                                          without sending request.
-    -r, --remote-name=<name>             When uploading data from stdin, this option sets the
-                                         remote filename.
+    -r, --remote-name=<name>             When uploading data from stdin, this option sets
+                                         the remote filename.
     -S, --spreadsheet=<metadata.csv>     Bulk uploading.
     -f, --file-metadata=<file_md.jsonl>  Upload files with file-level metadata via a
                                          file_md.jsonl file.
@@ -51,7 +51,8 @@ options:
                                          503 SlowDown error.
     -s, --sleep=<i>                      The amount of time to sleep between retries
                                          [default: 30].
-    --status-check                       Check if S3 is accepting requests to the given item.
+    --status-check                       Check if S3 is accepting requests to the given
+                                         item.
     --no-collection-check                Skip collection exists check [default: False].
     -o, --open-after-upload              Open the details page for an item after upload
                                          [default: False].

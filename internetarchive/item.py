@@ -743,6 +743,7 @@ class Item(BaseItem):
     def upload_file(self, body,
                     key=None,
                     metadata=None,
+                    file_metadata=None,
                     headers=None,
                     access_key=None,
                     secret_key=None,
@@ -766,6 +767,11 @@ class Item(BaseItem):
 
         :type metadata: dict
         :param metadata: (optional) Metadata used to create a new item.
+
+        :type file_metadata: dict
+        :param file_metadata: (optional) File-level metadata to add to
+                              the files.xml entry for the file being
+                              uploaded.
 
         :type headers: dict
         :param headers: (optional) Add additional IA-S3 headers to request.
@@ -811,6 +817,7 @@ class Item(BaseItem):
         # Set defaults.
         headers = {} if headers is None else headers
         metadata = {} if metadata is None else metadata
+        file_metadata = {} if file_metadata is None else file_metadata
         access_key = self.session.access_key if access_key is None else access_key
         secret_key = self.session.secret_key if secret_key is None else secret_key
         queue_derive = True if queue_derive is None else queue_derive
@@ -911,6 +918,7 @@ class Item(BaseItem):
                                 headers=_headers,
                                 data=data,
                                 metadata=metadata,
+                                file_metadata=file_metadata,
                                 access_key=access_key,
                                 secret_key=secret_key,
                                 queue_derive=queue_derive)

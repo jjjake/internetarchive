@@ -6,6 +6,10 @@ Release History
 1.9.4 (?)
 +++++++++
 
+**Features and Improvements**
+
+- Added support for adding file-level metadata at time of upload.
+
 **Bugfixes**
 
 - Fixed bug in ``internetarchive.get_tasks`` where no tasks were returned unless ``catalog`` or ``history`` params were provided.

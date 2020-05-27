@@ -51,6 +51,7 @@ logger = logging.getLogger(__name__)
 class S3Request(requests.models.Request):
     def __init__(self,
                  metadata=None,
+                 file_metadata=None,
                  queue_derive=True,
                  access_key=None,
                  secret_key=None,
@@ -65,6 +66,7 @@ class S3Request(requests.models.Request):
         metadata = {} if metadata is None else metadata
 
         self.metadata = metadata
+        self.file_metadata = file_metadata
         self.queue_derive = queue_derive
 
     def prepare(self):
@@ -82,6 +84,7 @@ class S3Request(requests.models.Request):
 
             # S3Request kwargs.
             metadata=self.metadata,
+            file_metadata=self.file_metadata,
             queue_derive=self.queue_derive,
         )
         return p
@@ -95,10 +98,12 @@ class S3PreparedRequest(requests.models.PreparedRequest):
 
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, queue_derive=None,
-                metadata={}):
+                metadata=None, file_metadata=None):
         self.prepare_method(method)
         self.prepare_url(url, params)
-        self.prepare_headers(headers, metadata, queue_derive)
+        self.prepare_headers(headers, metadata,
+                             file_metadata=file_metadata,
+                             queue_derive=queue_derive)
         self.prepare_cookies(cookies)
         self.prepare_body(data, files)
         self.prepare_auth(auth, url)
@@ -108,7 +113,7 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         # This MUST go after prepare_auth. Authenticators could add a hook
         self.prepare_hooks(hooks)
 
-    def prepare_headers(self, headers, metadata, queue_derive=True):
+    def prepare_headers(self, headers, metadata, file_metadata=None, queue_derive=True):
         """Convert a dictionary of metadata into S3 compatible HTTP
         headers, and append headers to ``headers``.
 
@@ -120,10 +125,14 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         :param headers: (optional) S3 compatible HTTP headers.
 
         """
+        metadata = dict() if metadata is None else metadata
+        file_metadata = dict() if file_metadata is None else file_metadata
+
         if not metadata.get('scanner'):
             scanner = 'Internet Archive Python library {0}'.format(__version__)
             metadata['scanner'] = scanner
         prepared_metadata = prepare_metadata(metadata)
+        prepared_file_metadata = prepare_metadata(file_metadata)
 
         headers['x-archive-auto-make-bucket'] = '1'
         if 'x-archive-queue-derive' not in headers:
@@ -132,31 +141,38 @@ class S3PreparedRequest(requests.models.PreparedRequest):
             else:
                 headers['x-archive-queue-derive'] = '1'
 
-        for meta_key, meta_value in prepared_metadata.items():
-            # Encode arrays into JSON strings because Archive.org does not
-            # yet support complex metadata structures in
-            # <identifier>_meta.xml.
-            if isinstance(meta_value, dict):
-                meta_value = json.dumps(meta_value)
-            # Convert the metadata value into a list if it is not already
-            # iterable.
-            if (isinstance(meta_value, six.string_types) or
-                    not hasattr(meta_value, '__iter__')):
-                meta_value = [meta_value]
-            # Convert metadata items into HTTP headers and add to
-            # ``headers`` dict.
-            for i, value in enumerate(meta_value):
-                if not value:
-                    continue
-                header_key = 'x-archive-meta{0:02d}-{1}'.format(i, meta_key)
-                if (isinstance(value, six.string_types) and needs_quote(value)):
-                    if six.PY2 and isinstance(value, six.text_type):
-                        value = value.encode('utf-8')
-                    value = 'uri({0})'.format(urllib.parse.quote(value))
-                # because rfc822 http headers disallow _ in names, IA-S3 will
-                # translate two hyphens in a row (--) into an underscore (_).
-                header_key = header_key.replace('_', '--')
-                headers[header_key] = value
+        def _prepare_metadata_headers(prepared_metadata, meta_type='meta'):
+            for meta_key, meta_value in prepared_metadata.items():
+                # Encode arrays into JSON strings because Archive.org does not
+                # yet support complex metadata structures in
+                # <identifier>_meta.xml.
+                if isinstance(meta_value, dict):
+                    meta_value = json.dumps(meta_value)
+                # Convert the metadata value into a list if it is not already
+                # iterable.
+                if (isinstance(meta_value, six.string_types) or
+                        not hasattr(meta_value, '__iter__')):
+                    meta_value = [meta_value]
+                # Convert metadata items into HTTP headers and add to
+                # ``headers`` dict.
+                for i, value in enumerate(meta_value):
+                    if not value:
+                        continue
+                    header_key = 'x-archive-{0}{1:02d}-{2}'.format(meta_type, i, meta_key)
+                    if (isinstance(value, six.string_types) and needs_quote(value)):
+                        if six.PY2 and isinstance(value, six.text_type):
+                            value = value.encode('utf-8')
+                        value = 'uri({0})'.format(urllib.parse.quote(value))
+                    # because rfc822 http headers disallow _ in names, IA-S3 will
+                    # translate two hyphens in a row (--) into an underscore (_).
+                    header_key = header_key.replace('_', '--')
+                    headers[header_key] = value
+
+        # Parse the prepared metadata into HTTP headers,
+        # and add them to the ``headers`` dict.
+        _prepare_metadata_headers(prepared_metadata)
+        _prepare_metadata_headers(prepared_file_metadata, meta_type='filemeta')
+
         super(S3PreparedRequest, self).prepare_headers(headers)
 
 

@@ -974,11 +974,9 @@ class Item(BaseItem):
                         'local copy'.format(i=self.identifier, f=key))
                     body.close()
                     os.remove(filename)
-                body.close()
                 response.close()
                 return response
             except HTTPError as exc:
-                body.close()
                 msg = get_s3_xml_text(exc.response.content)
                 error_msg = (' error uploading {0} to {1}, '
                              '{2}'.format(key, self.identifier, msg))
@@ -987,6 +985,8 @@ class Item(BaseItem):
                     print(' error uploading {0}: {1}'.format(key, msg), file=sys.stderr)
                 # Raise HTTPError with error message.
                 raise type(exc)(error_msg, response=exc.response, request=exc.request)
+            finally:
+                body.close()
 
     def upload(self, files,
                metadata=None,
@@ -1052,10 +1052,11 @@ class Item(BaseItem):
 
         responses = []
         file_index = 0
-        if checksum:
-            total_files = recursive_file_count(files, item=self, checksum=True)
-        else:
-            total_files = recursive_file_count(files, item=self, checksum=False)
+        if queue_derive:
+            if checksum:
+                total_files = recursive_file_count(files, item=self, checksum=True)
+            else:
+                total_files = recursive_file_count(files, item=self, checksum=False)
         for f in files:
             if (isinstance(f, string_types) and is_dir(f)) \
                     or (isinstance(f, tuple) and is_dir(f[-1])):

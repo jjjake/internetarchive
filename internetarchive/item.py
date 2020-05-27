@@ -1045,19 +1045,33 @@ class Item(BaseItem):
         """
         queue_derive = True if queue_derive is None else queue_derive
         remote_dir_name = None
+        total_files = None
         if isinstance(files, dict):
-            files = list(files.items())
+            if files.get('name'):
+                files = [files]
+                total_files = 1
+            else:
+                files = list(files.items())
         if not isinstance(files, (list, tuple)):
             files = [files]
+        if all(f.get('name') for f in files):
+            total_files = len(files)
+
 
         responses = []
         file_index = 0
-        if queue_derive:
+        if queue_derive and total_files is None:
             if checksum:
                 total_files = recursive_file_count(files, item=self, checksum=True)
             else:
                 total_files = recursive_file_count(files, item=self, checksum=False)
+        file_metadata = None
         for f in files:
+            if isinstance(f, dict):
+                if f.get('name'):
+                    file_metadata = f.copy()
+                    del file_metadata['name']
+                    f = f['name']
             if (isinstance(f, string_types) and is_dir(f)) \
                     or (isinstance(f, tuple) and is_dir(f[-1])):
                 if isinstance(f, tuple):
@@ -1082,6 +1096,7 @@ class Item(BaseItem):
                     resp = self.upload_file(filepath,
                                             key=key,
                                             metadata=metadata,
+                                            file_metadata=file_metadata,
                                             headers=headers,
                                             access_key=access_key,
                                             secret_key=secret_key,
@@ -1114,6 +1129,7 @@ class Item(BaseItem):
                 resp = self.upload_file(body,
                                         key=key,
                                         metadata=metadata,
+                                        file_metadata=file_metadata,
                                         headers=headers,
                                         access_key=access_key,
                                         secret_key=secret_key,

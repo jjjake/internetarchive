@@ -24,34 +24,37 @@ usage:
     ia upload <identifier> - --remote-name=<name> [options]...
     ia upload <identifier> <file> --remote-name=<name> [options]...
     ia upload --spreadsheet=<metadata.csv> [options]...
+    ia upload <identifier> --file-metadata=<file_md.jsonl> [options]...
     ia upload <identifier> --status-check
     ia upload --help
 
 options:
     -h, --help
-    -q, --quiet                       Turn off ia's output [default: False].
-    -d, --debug                       Print S3 request parameters to stdout and exit
-                                      without sending request.
-    -r, --remote-name=<name>          When uploading data from stdin, this option sets the
-                                      remote filename.
-    -S, --spreadsheet=<metadata.csv>  bulk uploading.
-    -m, --metadata=<key:value>...     Metadata to add to your item.
-    -H, --header=<key:value>...       S3 HTTP headers to send with your request.
-    -c, --checksum                    Skip based on checksum. [default: False]
-    -v, --verify                      Verify that data was not corrupted traversing the
-                                      network. [default: False]
-    -n, --no-derive                   Do not derive uploaded files.
-    --size-hint=<size>                Specify a size-hint for your item.
-    --delete                          Delete files after verifying checksums
-                                      [default: False].
-    -R, --retries=<i>                 Number of times to retry request if S3 returns a
-                                      503 SlowDown error.
-    -s, --sleep=<i>                   The amount of time to sleep between retries
-                                      [default: 30].
-    --status-check                    Check if S3 is accepting requests to the given item.
-    --no-collection-check             Skip collection exists check [default: False].
-    -o, --open-after-upload           Open the details page for an item after upload
-                                      [default: False].
+    -q, --quiet                          Turn off ia's output [default: False].
+    -d, --debug                          Print S3 request parameters to stdout and exit
+                                         without sending request.
+    -r, --remote-name=<name>             When uploading data from stdin, this option sets the
+                                         remote filename.
+    -S, --spreadsheet=<metadata.csv>     Bulk uploading.
+    -f, --file-metadata=<file_md.jsonl>  Upload files with file-level metadata via a
+                                         file_md.jsonl file.
+    -m, --metadata=<key:value>...        Metadata to add to your item.
+    -H, --header=<key:value>...          S3 HTTP headers to send with your request.
+    -c, --checksum                       Skip based on checksum. [default: False]
+    -v, --verify                         Verify that data was not corrupted traversing the
+                                         network. [default: False]
+    -n, --no-derive                      Do not derive uploaded files.
+    --size-hint=<size>                   Specify a size-hint for your item.
+    --delete                             Delete files after verifying checksums
+                                         [default: False].
+    -R, --retries=<i>                    Number of times to retry request if S3 returns a
+                                         503 SlowDown error.
+    -s, --sleep=<i>                      The amount of time to sleep between retries
+                                         [default: 30].
+    --status-check                       Check if S3 is accepting requests to the given item.
+    --no-collection-check                Skip collection exists check [default: False].
+    -o, --open-after-upload              Open the details page for an item after upload
+                                         [default: False].
 
 examples:
     ia upload <id> <file> -H x-archive-keep-old-version:0  # Turn off backups
@@ -64,6 +67,7 @@ import sys
 from tempfile import TemporaryFile
 from copy import deepcopy
 import webbrowser
+import json
 
 import six
 from docopt import docopt, printable_usage
@@ -145,6 +149,8 @@ def main(argv, session):
             Use(lambda x: x.decode(sys.getfilesystemencoding()) if six.PY2 else x)),
         '--spreadsheet': Or(None, os.path.isfile,
                             error='--spreadsheet should be a readable file.'),
+        '--file-metadata': Or(None, os.path.isfile,
+                              error='--file-metadata should be a readable file.'),
         '--metadata': Or(None, And(Use(get_args_dict), dict),
                          error='--metadata must be formatted as --metadata="key:value"'),
         '--header': Or(None, And(Use(get_args_dict), dict),
@@ -198,6 +204,14 @@ def main(argv, session):
     queue_derive = True if args['--no-derive'] is False else False
     verbose = True if args['--quiet'] is False else False
 
+    if args['--file-metadata']:
+        try:
+            args['<file>'] = json.load(open(args['--file-metadata']))
+        except json.decoder.JSONDecodeError:
+            args['<file>'] = list()
+            for line in open(args['--file-metadata']):
+                j = json.loads(line.strip())
+                args['<file>'].append(j)
     upload_kwargs = dict(
         metadata=args['--metadata'],
         headers=args['--header'],

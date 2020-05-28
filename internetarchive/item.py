@@ -33,6 +33,7 @@ from logging import getLogger
 from time import sleep
 import math
 from xml.dom.minidom import parseString
+from xml.parsers.expat import ExpatError
 
 try:
     from functools import total_ordering
@@ -991,7 +992,14 @@ class Item(BaseItem):
                 response.close()
                 return response
             except HTTPError as exc:
-                msg = get_s3_xml_text(exc.response.content)
+                try:
+                    msg = get_s3_xml_text(exc.response.content)
+                except ExpatError:  # probably HTTP 500 error and response is invalid XML
+                    msg = ("IA S3 returned invalid XML (HTTP status code {0}). "
+                           "This is a server side error which is either temporary, "
+                           "or requires the intervention of IA admins."
+                           "".format(exc.response.status_code))
+
                 error_msg = (' error uploading {0} to {1}, '
                              '{2}'.format(key, self.identifier, msg))
                 log.error(error_msg)

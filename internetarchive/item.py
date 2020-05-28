@@ -49,8 +49,7 @@ from requests.exceptions import HTTPError
 
 from internetarchive.utils import (IdentifierListAsItems, get_md5,
                                    chunk_generator, IterableToFileAdapter,
-                                   iter_directory, recursive_file_count,
-                                   norm_filepath)
+                                   iter_directory, norm_filepath)
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
 from internetarchive.auth import S3Auth
@@ -1156,45 +1155,32 @@ class Item(BaseItem):
         """
         queue_derive = True if queue_derive is None else queue_derive
         remote_dir_name = None
-        total_files = None
+
         if isinstance(files, dict):
             if files.get('name'):
                 files = [files]
-                total_files = 1
             else:
                 files = list(files.items())
         if not isinstance(files, (list, tuple)):
             files = [files]
-        if all(isinstance(f, dict) and f.get('name') for f in files):
-            total_files = len(files)
 
         responses = []
         file_index = 0
-        if queue_derive and total_files is None:
-            if checksum:
-                total_files = recursive_file_count(files, item=self, checksum=True)
-            else:
-                total_files = recursive_file_count(files, item=self, checksum=False)
         file_metadata = None
         for f in files:
+
             if isinstance(f, dict):
                 if f.get('name'):
                     file_metadata = f.copy()
                     del file_metadata['name']
                     f = f['name']
+
             if ((isinstance(f, string_types) and is_dir(f))
                     or (isinstance(f, tuple) and is_dir(f[-1]))):
                 if isinstance(f, tuple):
                     remote_dir_name = f[0].strip('/')
                     f = f[-1]
                 for filepath, key in iter_directory(f):
-                    file_index += 1
-                    # Set derive header if queue_derive is True,
-                    # and this is the last request being made.
-                    if queue_derive is True and file_index >= total_files:
-                        _queue_derive = True
-                    else:
-                        _queue_derive = False
                     if not f.endswith('/'):
                         if remote_dir_name:
                             key = '{0}{1}/{2}'.format(remote_dir_name, f, key)
@@ -1210,7 +1196,7 @@ class Item(BaseItem):
                                             headers=headers,
                                             access_key=access_key,
                                             secret_key=secret_key,
-                                            queue_derive=_queue_derive,
+                                            queue_derive=False,
                                             verbose=verbose,
                                             verify=verify,
                                             checksum=checksum,
@@ -1222,15 +1208,6 @@ class Item(BaseItem):
                                             request_kwargs=request_kwargs)
                     responses.append(resp)
             else:
-                file_index += 1
-                # Set derive header if queue_derive is True,
-                # and this is the last request being made.
-                # if queue_derive is True and file_index >= len(files):
-                if queue_derive is True and file_index >= total_files:
-                    _queue_derive = True
-                else:
-                    _queue_derive = False
-
                 if not isinstance(f, (list, tuple)):
                     key, body = (None, f)
                 else:
@@ -1244,7 +1221,7 @@ class Item(BaseItem):
                                         headers=headers,
                                         access_key=access_key,
                                         secret_key=secret_key,
-                                        queue_derive=_queue_derive,
+                                        queue_derive=False,
                                         verbose=verbose,
                                         verify=verify,
                                         checksum=checksum,
@@ -1255,6 +1232,12 @@ class Item(BaseItem):
                                         validate_identifier=validate_identifier,
                                         request_kwargs=request_kwargs)
                 responses.append(resp)
+
+        if queue_derive:
+            # Came this far without any exceptions raised, so all uploads
+            # probably completed successfully. Derive now.
+            self.derive()
+
         return responses
 
 

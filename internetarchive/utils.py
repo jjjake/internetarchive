@@ -221,54 +221,6 @@ def iter_directory(directory):
             yield (filepath, key)
 
 
-def recursive_file_count(files, item=None, checksum=False):
-    """Given a filepath or list of filepaths, return the total number of files."""
-    if not isinstance(files, (list, set)):
-        files = [files]
-    total_files = 0
-    if checksum is True:
-        md5s = [f.get('md5') for f in item.files]
-    else:
-        md5s = list()
-    if isinstance(files, dict):
-        # make sure to use local filenames.
-        _files = files.values()
-    else:
-        if isinstance(files[0], tuple):
-            _files = dict(files).values()
-        else:
-            _files = files
-    for f in _files:
-        try:
-            is_dir = os.path.isdir(f)
-        except TypeError:
-            try:
-                f = f[0]
-                is_dir = os.path.isdir(f)
-            except (AttributeError, TypeError):
-                is_dir = False
-        if is_dir:
-            for x, _ in iter_directory(f):
-                if checksum is True:
-                    with open(x, 'rb') as fh:
-                        lmd5 = get_md5(fh)
-                    if lmd5 in md5s:
-                        continue
-                total_files += 1
-        else:
-            if checksum is True:
-                try:
-                    with open(f, 'rb') as fh:
-                        lmd5 = get_md5(fh)
-                except TypeError:
-                    # Support file-like objects.
-                    lmd5 = get_md5(f)
-                if lmd5 in md5s:
-                    continue
-            total_files += 1
-    return total_files
-
-
 def is_dir(obj):
     """Special is_dir function to handle file-like object cases that
     cannot be stat'd"""

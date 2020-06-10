@@ -317,4 +317,4 @@ class CatalogTask(object):
         params = dict(task_log=task_id)
         r = session.get(url, params=params, auth=_auth, **request_kwargs)
         r.raise_for_status()
-        return r.content.decode('utf-8')
+        return r.content.decode('utf-8', errors = 'surrogateescape')

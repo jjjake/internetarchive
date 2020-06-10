@@ -100,7 +100,8 @@ def main(argv, session):
         if six.PY2:
             print(log.encode('utf-8', errors='surrogateescape'))
         else:
-            print(log.encode('utf-8', errors='surrogateescape').decode('utf-8', errors='replace'))
+            print(log.encode('utf-8', errors='surrogateescape')
+                     .decode('utf-8', errors='replace'))
         sys.exit(0)
 
     queryable_params = [

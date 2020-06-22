@@ -55,6 +55,16 @@ To upload only the contents of the directory, but not the directory itself, simp
 
 This will upload all of the contents of ``my_dir`` to ``https://archive.org/download/my_item/``. :func:`upload <internetarchive.upload>` accepts relative or absolute paths.
 
+Setting File-Level Metadata on Upload
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can set file-level metadata at time of upload via a Python dict or list of dicts.
+The only requirement is that there is a dict for each file with the local path to the file stored under the ``name`` key.
+For example::
+
+    >>> r = upload('my_item', {'name': 'foo.txt', 'title': 'My File'})
+    >>> r = upload('my_item', [{'name': 'foo.txt', 'title': 'My File'}, {'name': 'bar.txt', 'title': 'My Other File'}])
+
 **Note**: metadata can only be added to an item using the :func:`upload <internetarchive.upload>` function on item creation. If an item already exists and you would like to modify it's metadata, you must use :func:`modify_metadata <internetarchive.modify_metadata>`.
 
 

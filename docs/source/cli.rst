@@ -180,6 +180,24 @@ Once you are ready to start your upload, simply run:
 
 See ``ia help upload`` for more details.
 
+Setting File-Level Metadata on Upload 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can set file-level metadata at time of upload via a JSON/JSONL file.
+The JSON or JSONL must have a dict for each file, with the local path to the file stored under the key, ``name``.
+For example, you could upload two files named ``foo.txt`` and ``bar.txt`` with a file-level ``title`` with the following JSONL file (named ``file_md.jsonl``):
+
+.. code:: json
+
+    {"name": "foo.txt", "title": "my foo file"}
+    {"name": "bar.txt", "title": "my foo file"}
+
+And the following command:
+
+.. code:: bash
+
+    $ ia upload <id> --file-metadata file_md.jsonl
+
 
 Download
 --------

@@ -9,12 +9,15 @@ Release History
 **Features and Improvements**
 
 - Added support for adding file-level metadata at time of upload.
+- Added ``--no-backup`` to ``ia upload`` to turn off backups.
 
 **Bugfixes**
 
 - Fixed bug in ``internetarchive.get_tasks`` where no tasks were returned unless ``catalog`` or ``history`` params were provided.
 - Fixed bug in upload where headers were being reused in certain cases.
   This lead to issues such as queue-derive being turned off in some cases.
+- Fix crash in ``ia tasks`` when a task log contains invalid UTF-8 character.
+- Fixed bug in upload where requests were not being closed.
 
 1.9.3 (2020-04-07)
 ++++++++++++++++++

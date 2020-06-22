@@ -98,9 +98,10 @@ def main(argv, session):
     elif args['--get-task-log']:
         log = session.get_task_log(args['--get-task-log'], params)
         if six.PY2:
-            print(log.encode('utf-8'))
+            print(log.encode('utf-8', errors='surrogateescape'))
         else:
-            print(log)
+            print(log.encode('utf-8', errors='surrogateescape')
+                     .decode('utf-8', errors='replace'))
         sys.exit(0)
 
     queryable_params = [

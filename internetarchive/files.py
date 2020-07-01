@@ -139,7 +139,7 @@ class File(BaseFile):
     def download(self, file_path=None, verbose=None, silent=None, ignore_existing=None,
                  checksum=None, destdir=None, retries=None, ignore_errors=None,
                  fileobj=None, return_responses=None, no_change_timestamp=None,
-                 params=None):
+                 params=None, chunk_size=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -267,7 +267,8 @@ class File(BaseFile):
             if return_responses:
                 return response
 
-            chunk_size = 2048
+            if not chunk_size:
+                chunk_size = 1000000
             if not fileobj:
                 fileobj = open(file_path.encode('utf-8'), 'wb')
 
@@ -275,7 +276,6 @@ class File(BaseFile):
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:
                         fileobj.write(chunk)
-                        fileobj.flush()
         except (RetryError, HTTPError, ConnectTimeout,
                 ConnectionError, socket.error, ReadTimeout) as exc:
             msg = ('error downloading file {0}, '

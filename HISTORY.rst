@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.9.5 (?)
++++++++++
+
+**Features and Improvements**
+
+- Increased chunk size in download and added other download optimizations.
+
 1.9.4 (2020-06-24)
 ++++++++++++++++++
 

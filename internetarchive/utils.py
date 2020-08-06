@@ -30,12 +30,12 @@ import hashlib
 import os
 import re
 import sys
-from collections import Mapping
 from itertools import starmap
 from xml.dom.minidom import parseString
 
 import six
 from six.moves import zip_longest
+from six.moves.collections_abc import Mapping
 
 
 def deep_update(d, u):

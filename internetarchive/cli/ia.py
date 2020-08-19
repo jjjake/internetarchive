@@ -47,6 +47,7 @@ commands:
     list      List files in a given item.
     copy      Copy files in archive.org items.
     move      Move/rename files in archive.org items.
+    reviews   Submit/modify reviews for archive.org items.
 
 Documentation for 'ia' is available at:
 
@@ -83,6 +84,7 @@ cmd_aliases = dict(
     ls='list',
     cp='copy',
     mv='move',
+    re='reviews',
 )
 
 

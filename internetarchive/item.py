@@ -51,6 +51,7 @@ from internetarchive.utils import IdentifierListAsItems, get_md5, chunk_generato
     IterableToFileAdapter, iter_directory, recursive_file_count, norm_filepath
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
+from internetarchive.auth import S3Auth
 from internetarchive.utils import get_s3_xml_text, get_file_size, is_dir
 
 log = getLogger(__name__)
@@ -403,6 +404,19 @@ class Item(BaseItem):
                                      priority=priority,
                                      data=data,
                                      request_kwargs=request_kwargs)
+        r.raise_for_status()
+        return r
+
+    def review(self, title, body, stars=None):
+        u = '{protocol}//{host}/services/reviews.php'.format(
+                protocol=self.session.protocol,
+                host=self.session.host)
+        p = dict(identifier=self.identifier)
+        d = dict(title=title, body=body)
+        if stars:
+            d['stars'] = stars
+        a = S3Auth(self.session.access_key, self.session.secret_key)
+        r = self.session.post(u, params=p, data=json.dumps(d), auth=a) 
         r.raise_for_status()
         return r
 

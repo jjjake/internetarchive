@@ -410,14 +410,14 @@ class Item(BaseItem):
 
     def review(self, title, body, stars=None):
         u = '{protocol}//{host}/services/reviews.php'.format(
-                protocol=self.session.protocol,
-                host=self.session.host)
+            protocol=self.session.protocol,
+            host=self.session.host)
         p = dict(identifier=self.identifier)
         d = dict(title=title, body=body)
         if stars:
             d['stars'] = stars
         a = S3Auth(self.session.access_key, self.session.secret_key)
-        r = self.session.post(u, params=p, data=json.dumps(d), auth=a) 
+        r = self.session.post(u, params=p, data=json.dumps(d), auth=a)
         r.raise_for_status()
         return r
 

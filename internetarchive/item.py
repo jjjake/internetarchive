@@ -417,7 +417,7 @@ class Item(BaseItem):
         if stars:
             d['stars'] = stars
         a = S3Auth(self.session.access_key, self.session.secret_key)
-        r = self.session.post(u, params=p, data=json.dumps(d), auth=a) 
+        r = self.session.post(u, params=p, data=json.dumps(d), auth=a)
         r.raise_for_status()
         return r
 

@@ -410,8 +410,8 @@ class Item(BaseItem):
 
     def review(self, title, body, stars=None):
         u = '{protocol}//{host}/services/reviews.php'.format(
-                protocol=self.session.protocol,
-                host=self.session.host)
+            protocol=self.session.protocol,
+            host=self.session.host)
         p = dict(identifier=self.identifier)
         d = dict(title=title, body=body)
         if stars:

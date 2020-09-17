@@ -58,3 +58,10 @@ You can now retry any commands that failed by using the ``--retry-failed`` optio
 If there were no failed commands, nothing will be rerun.
 You can rerun this command until it exits with ``0``.
 You can check the exit code by running ``echo $?`` directly after the ``parallel`` command finishes.
+
+Resources
+_________
+
+- Intro videos: `https://www.youtube.com/playlist?list=PL284C9FF2488BC6D1 <https://www.youtube.com/playlist?list=PL284C9FF2488BC6D1>`_
+- Cheat sheet: `https://www.gnu.org/software/parallel/parallel_cheat.pdf <https://www.gnu.org/software/parallel/parallel_cheat.pdf>`_
+- Examples from the man page: `https://www.gnu.org/software/parallel/man.html#EXAMPLE:-Working-as-xargs--n1.-Argument-appending <https://www.gnu.org/software/parallel/man.html#EXAMPLE:-Working-as-xargs--n1.-Argument-appending>`_

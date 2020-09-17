@@ -313,6 +313,7 @@ def download(identifier,
              ignore_errors=None,
              on_the_fly=None,
              return_responses=None,
+             no_change_timestamp=None,
              **get_item_kwargs):
     """Download files from an item.
 
@@ -390,7 +391,8 @@ def download(identifier,
                       item_index=item_index,
                       ignore_errors=ignore_errors,
                       on_the_fly=on_the_fly,
-                      return_responses=return_responses)
+                      return_responses=return_responses,
+                      no_change_timestamp=no_change_timestamp)
     return r
 
 

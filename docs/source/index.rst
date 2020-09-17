@@ -30,6 +30,7 @@ User's Guide
     cli
     api
     updates
+    parallel
     troubleshooting
     contributing
     authors

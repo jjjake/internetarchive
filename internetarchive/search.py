@@ -73,11 +73,14 @@ class Search(object):
             self.session.protocol, self.session.host)
         self.search_url = '{0}//{1}/advancedsearch.php'.format(
             self.session.protocol, self.session.host)
-        self.auth = S3Auth(self.session.access_key, self.session.secret_key)
+        if self.session.access_key and self.session.secret_key:
+            self.auth = S3Auth(self.session.access_key, self.session.secret_key)
+        else:
+            self.auth = None
         self.max_retries = max_retries if max_retries is not None else 5
 
         # Initialize params.
-        default_params = dict(q=query, REQUIRE_AUTH='true')
+        default_params = dict(q=query)
         if 'page' not in params:
             default_params['count'] = 10000
         else:

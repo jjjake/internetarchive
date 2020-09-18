@@ -9,6 +9,9 @@ Release History
 **Features and Improvements**
 
 - Increased chunk size in download and added other download optimizations.
+- Added support for submitting reviews via ``Item.review()`` and ``ia review``.
+- Improved exception/error messages in cases where s3.us.archive.org returns invalid XML during uploads.
+- Minor updates and improvements to continuous integration.
 
 1.9.4 (2020-06-24)
 ++++++++++++++++++

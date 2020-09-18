@@ -240,9 +240,9 @@ def test_download(tmpdir):
 
 def test_search_items(session):
     results_url = ('{0}//archive.org/services/search/v1/scrape'
-                   '?q=identifier%3Anasa&count=10000&REQUIRE_AUTH=true'.format(PROTOCOL))
+                   '?q=identifier%3Anasa&count=10000'.format(PROTOCOL))
     count_url = ('{0}//archive.org/services/search/v1/scrape'
-                 '?q=identifier%3Anasa&total_only=true&REQUIRE_AUTH=true'
+                 '?q=identifier%3Anasa&total_only=true'
                  '&count=10000'.format(PROTOCOL))
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.POST, results_url,
@@ -269,10 +269,10 @@ def test_search_items_with_fields(session):
     ]
     search_response_str = json.dumps(_j)
     results_url = ('{0}//archive.org/services/search/v1/scrape'
-                   '?q=identifier%3Anasa&count=10000&REQUIRE_AUTH=true'
+                   '?q=identifier%3Anasa&count=10000'
                    '&fields=identifier%2Ctitle'.format(PROTOCOL))
     count_url = ('{0}//archive.org/services/search/v1/scrape'
-                 '?q=identifier%3Anasa&total_only=true&REQUIRE_AUTH=true'
+                 '?q=identifier%3Anasa&total_only=true'
                  '&count=10000'.format(PROTOCOL))
     with IaRequestsMock() as rsps:
         rsps.add(responses.POST, results_url,

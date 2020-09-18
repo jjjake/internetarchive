@@ -1,7 +1,7 @@
 A Python and Command-Line Interface to Archive.org
 ==================================================
 
-|travis| |snapcraft|
+|travis|
 
 .. |travis| image:: https://travis-ci.org/jjjake/internetarchive.svg
     :target: https://travis-ci.org/jjjake/internetarchive

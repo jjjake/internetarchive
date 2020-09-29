@@ -1,6 +1,10 @@
 A Python and Command-Line Interface to Archive.org
 ==================================================
 
+.. image:: https://badges.gitter.im/internetarchive/ia.svg
+   :alt: Join the chat at https://gitter.im/internetarchive/ia
+   :target: https://gitter.im/internetarchive/ia?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
 |travis|
 
 .. |travis| image:: https://travis-ci.org/jjjake/internetarchive.svg

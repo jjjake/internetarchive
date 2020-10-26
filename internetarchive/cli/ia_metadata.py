@@ -20,19 +20,22 @@
 """Retrieve and modify Archive.org metadata.
 
 usage:
-    ia metadata <identifier>... [--exists | --formats]
+    ia metadata <identifier>... [--exists | --formats] [--header=<key:value>...]
     ia metadata <identifier>... --modify=<key:value>... [--target=<target>]
-                                [--priority=<priority>]
+                                [--priority=<priority>] [--header=<key:value>...]
     ia metadata <identifier>... --remove=<key:value>... [--priority=<priority>]
+                                [--header=<key:value>...]
     ia metadata <identifier>... [--append=<key:value>... | --append-list=<key:value>...]
                                 [--priority=<priority>] [--target=<target>]
+                                [--header=<key:value>...]
     ia metadata --spreadsheet=<metadata.csv> [--priority=<priority>]
-                [--modify=<key:value>...]
+                [--modify=<key:value>...] [--header=<key:value>...]
     ia metadata --help
 
 options:
     -h, --help
     -m, --modify=<key:value>            Modify the metadata of an item.
+    -H, --header=<key:value>...         S3 HTTP headers to send with your request.
     -t, --target=<target>               The metadata target to modify.
     -a, --append=<key:value>...         Append a string to a metadata element.
     -A, --append-list=<key:value>...    Append a field to a metadata element.
@@ -60,7 +63,8 @@ from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Or, And, Use
 import six
 
-from internetarchive.cli.argparser import get_args_dict, get_args_dict_many_write
+from internetarchive.cli.argparser import get_args_dict, get_args_dict_many_write,\
+                                          get_args_header_dict
 from internetarchive.exceptions import ItemLocateError
 
 # Only import backports.csv for Python2 (in support of FreeBSD port).
@@ -76,7 +80,8 @@ def modify_metadata(item, metadata, args):
     append_list = True if args['--append-list'] else False
     try:
         r = item.modify_metadata(metadata, target=args['--target'], append=append,
-                                 priority=args['--priority'], append_list=append_list)
+                                 priority=args['--priority'], append_list=append_list,
+                                 headers=args['--header'])
     except ItemLocateError as exc:
         print('{} - error: {}'.format(item.identifier, str(exc)), file=sys.stderr)
         sys.exit(1)
@@ -160,6 +165,8 @@ def main(argv, session):
         six.text_type: bool,
         '<identifier>': list,
         '--modify': list,
+        '--header': Or(None, And(Use(get_args_header_dict), dict),
+               error='--header must be formatted as --header="key:value"'),
         '--append': list,
         '--append-list': list,
         '--remove': list,

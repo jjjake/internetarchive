@@ -30,7 +30,7 @@ import sys
 from six.moves.urllib.parse import parse_qsl
 
 
-def get_args_dict(args, query_string=False):
+def get_args_dict(args, query_string=False, header=False):
     args = [] if not args else args
     metadata = defaultdict(list)
     for md in args:
@@ -52,6 +52,11 @@ def get_args_dict(args, query_string=False):
             metadata[key] = metadata[key][0]
 
     return metadata
+
+
+def get_args_header_dict(args):
+    h = get_args_dict(args)
+    return dict((k, v.strip()) for k, v in h.items())
 
 
 def get_args_dict_many_write(metadata):

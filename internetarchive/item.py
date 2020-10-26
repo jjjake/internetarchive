@@ -668,6 +668,7 @@ class Item(BaseItem):
                         access_key=None,
                         secret_key=None,
                         debug=None,
+                        headers=None,
                         request_kwargs=None):
         """Modify the metadata of an existing item on Archive.org.
 
@@ -707,7 +708,11 @@ class Item(BaseItem):
         access_key = self.session.access_key if not access_key else access_key
         secret_key = self.session.secret_key if not secret_key else secret_key
         debug = False if debug is None else debug
+        headers = dict() if headers is None else headers
         request_kwargs = {} if not request_kwargs else request_kwargs
+
+        _headers = self.session.headers.copy()
+        _headers.update(headers)
 
         url = '{protocol}//{host}/metadata/{identifier}'.format(
             protocol=self.session.protocol,
@@ -720,7 +725,7 @@ class Item(BaseItem):
             method='POST',
             url=url,
             metadata=metadata,
-            headers=self.session.headers,
+            headers=_headers,
             source_metadata=source_metadata,
             target=target,
             priority=priority,

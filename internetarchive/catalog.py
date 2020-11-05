@@ -211,7 +211,11 @@ class Catalog(object):
         all_tasks = sorted(tasks, key=sort_by_date, reverse=True)
         return all_tasks
 
-    def submit_task(self, identifier, cmd, comment=None, priority=None, data=None):
+    def submit_task(self, identifier, cmd,
+                    comment=None,
+                    priority=None,
+                    data=None,
+                    headers=None):
         """Submit an archive.org task.
 
         :type identifier: str
@@ -235,6 +239,9 @@ class Catalog(object):
                      the request. Refer to `Tasks API Request Entity
                      <https://archive.org/services/docs/api/tasks.html#request-entity>`_.
 
+        :type headers: dict
+        :param headers: (optional) Add additional headers to request.
+
         :rtype: :class:`requests.Response`
         """
         data = dict() if not data else data
@@ -246,7 +253,11 @@ class Catalog(object):
                 data['args'] = dict(comment=comment)
         if priority:
             data['priority'] = priority
-        r = self.session.post(self.url, json=data, auth=self.auth, **self.request_kwargs)
+        r = self.session.post(self.url,
+                              json=data,
+                              auth=self.auth,
+                              headers=headers,
+                              **self.request_kwargs)
         return r
 
 

@@ -338,7 +338,7 @@ class ArchiveSession(requests.sessions.Session):
             return True
 
     def submit_task(self, identifier, cmd, comment=None, priority=None, data=None,
-                    request_kwargs=None):
+                    headers=None, reduced_priority=None, request_kwargs=None):
         """Submit an archive.org task.
 
         :type identifier: str
@@ -362,14 +362,34 @@ class ArchiveSession(requests.sessions.Session):
                      the request. Refer to `Tasks API Request Entity
                      <https://archive.org/services/docs/api/tasks.html#request-entity>`_.
 
+        :type headers: dict
+        :param headers: (optional) Add additional headers to request.
+
+        :type reduced_priority: bool
+        :param reduced_priority: (optional) Submit your derive at a lower priority.
+                                 This option is helpful to get around rate-limiting.
+                                 Your task will more likey be accepted, but it might
+                                 not run for a long time. Note that you still may be
+                                 subject to rate-limiting. This is different than
+                                 ``priority`` in that it will allow you to possibly
+                                 avoid rate-limiting.
+
         :type request_kwargs: dict
         :param request_kwargs: (optional) Keyword arguments to be used in
                                :meth:`requests.sessions.Session.post` request.
 
         :rtype: :class:`requests.Response`
         """
+        headers = dict() if not headers else headers
+        if reduced_priority is not None:
+            headers.update({'X-Accept-Reduced-Priority': '1'})
+
         c = Catalog(self, request_kwargs)
-        r = c.submit_task(identifier, cmd, comment=comment, priority=priority, data=data)
+        r = c.submit_task(identifier, cmd,
+                          comment=comment,
+                          priority=priority,
+                          data=data,
+                          headers=headers)
         return r
 
     def iter_history(self, identifier, params=None, request_kwargs=None):

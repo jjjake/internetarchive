@@ -312,19 +312,63 @@ class Item(BaseItem):
             catalog.append(t)
         return catalog
 
-    def derive(self, priority=None, request_kwargs=None):
+    def derive(self,
+               priority=None,
+               remove_derived=None,
+               reduced_priority=None,
+               data=None,
+               headers=None,
+               request_kwargs=None):
         """Derive an item.
+
+        :type priority: int
+        :param priority: (optional) Task priority from 10 to -10 [default: 0]
+
+        :type remove_derived: str
+        :param remove_derived: (optional) You can use wildcards ("globs")
+                               to only remove *some* prior derivaties.
+                               For example, "*" (typed without the
+                               quotation marks) specifies that all
+                               derivatives (in the item's top directory)
+                               are to be rebuilt. "*.mp4" specifies that
+                               all "*.mp4" deriviatives are to be rebuilt.
+                               "{*.gif,*thumbs/*.jpg}" specifies that all
+                               GIF and thumbs are to be rebuilt.
+
+        :type reduced_priority: bool
+        :param reduced_priority: (optional) Submit your derive at a lower priority.
+                                 This option is helpful to get around rate-limiting.
+                                 Your task will more likey be accepted, but it might
+                                 not run for a long time. Note that you still may be
+                                 subject to rate-limiting.
 
         :rtype: :class:`requests.Response`
         """
+        data = dict() if not data else data
+
+        if remove_derived is not None:
+            if not data.get('args'):
+                data['args'] = {'remove_derived': remove_derived}
+            else:
+                data['args'].update({'remove_derived': remove_derived})
+
         r = self.session.submit_task(self.identifier,
                                      'derive.php',
                                      priority=priority,
+                                     data=data,
+                                     headers=headers,
+                                     reduced_priority=reduced_priority,
                                      request_kwargs=request_kwargs)
         r.raise_for_status()
         return r
 
-    def fixer(self, ops=None, priority=None, data=None, request_kwargs=None):
+    def fixer(self,
+              ops=None,
+              priority=None,
+              reduced_priority=None,
+              data=None,
+              headers=None,
+              request_kwargs=None):
         """Submit a fixer task on an item.
 
         :type ops: str or list
@@ -334,6 +378,15 @@ class Item(BaseItem):
         :type priority: str or int
         :param priority: (optional) The task priority.
 
+        :type reduced_priority: bool
+        :param reduced_priority: (optional) Submit your derive at a lower priority.
+                                 This option is helpful to get around rate-limiting.
+                                 Your task will more likey be accepted, but it might
+                                 not run for a long time. Note that you still may be
+                                 subject to rate-limiting. This is different than
+                                 ``priority`` in that it will allow you to possibly
+                                 avoid rate-limiting.
+
         :type data: dict
         :param data: (optional) Additional parameters to submit with
                      the task.
@@ -341,6 +394,7 @@ class Item(BaseItem):
         :rtype: :class:`requests.Response`
         """
         data = dict() if not data else data
+
         if not ops:
             ops = ['noop']
         if not isinstance(ops, (list, tuple, set)):
@@ -354,11 +408,17 @@ class Item(BaseItem):
                                      'fixer.php',
                                      priority=priority,
                                      data=data,
+                                     headers=headers,
+                                     reduced_priority=reduced_priority,
                                      request_kwargs=request_kwargs)
         r.raise_for_status()
         return r
 
-    def undark(self, comment, priority=None, data=None, request_kwargs=None):
+    def undark(self, comment,
+               priority=None,
+               reduced_priority=None,
+               data=None,
+               request_kwargs=None):
         """Undark the item.
 
         :type comment: str
@@ -367,6 +427,15 @@ class Item(BaseItem):
 
         :type priority: str or int
         :param priority: (optional) The task priority.
+
+        :type reduced_priority: bool
+        :param reduced_priority: (optional) Submit your derive at a lower priority.
+                                 This option is helpful to get around rate-limiting.
+                                 Your task will more likey be accepted, but it might
+                                 not run for a long time. Note that you still may be
+                                 subject to rate-limiting. This is different than
+                                 ``priority`` in that it will allow you to possibly
+                                 avoid rate-limiting.
 
         :type data: dict
         :param data: (optional) Additional parameters to submit with
@@ -379,11 +448,16 @@ class Item(BaseItem):
                                      comment=comment,
                                      priority=priority,
                                      data=data,
+                                     reduced_priority=reduced_priority,
                                      request_kwargs=request_kwargs)
         r.raise_for_status()
         return r
 
-    def dark(self, comment, priority=None, data=None, request_kwargs=None):
+    def dark(self, comment,
+             priority=None,
+             data=None,
+             reduced_priority=None,
+             request_kwargs=None):
         """Dark the item.
 
         :type comment: str
@@ -392,6 +466,15 @@ class Item(BaseItem):
 
         :type priority: str or int
         :param priority: (optional) The task priority.
+
+        :type reduced_priority: bool
+        :param reduced_priority: (optional) Submit your derive at a lower priority.
+                                 This option is helpful to get around rate-limiting.
+                                 Your task will more likey be accepted, but it might
+                                 not run for a long time. Note that you still may be
+                                 subject to rate-limiting. This is different than
+                                 ``priority`` in that it will allow you to possibly
+                                 avoid rate-limiting.
 
         :type data: dict
         :param data: (optional) Additional parameters to submit with
@@ -404,6 +487,7 @@ class Item(BaseItem):
                                      comment=comment,
                                      priority=priority,
                                      data=data,
+                                     reduced_priority=reduced_priority,
                                      request_kwargs=request_kwargs)
         r.raise_for_status()
         return r

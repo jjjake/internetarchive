@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.9.6 (?)
++++++++++
+
+**Features and Improvements**
+
+- Added ability to submit tasks with a reduced priority.
+
 1.9.5 (2020-09-18)
 ++++++++++++++++++
 

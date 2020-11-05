@@ -30,7 +30,7 @@ usage:
     ia tasks <identifier> [--parameter=<k:v>...] [--tab-output]
     ia tasks <identifier> --cmd=<command> [--comment=<comment>]
                           [--task-args=<k:v>...] [--data=<k:v>...]
-                          [--tab-output]
+                          [--tab-output] [--reduced-priority]
     ia tasks --help
 
 options:
@@ -43,6 +43,10 @@ options:
                                   task is being submitted.
     -T, --tab-output              Output task info in tab-delimited columns.
     -a, --task-args=<k:v>...      Args to submit to the Tasks API.
+    -r, --reduced-priority        Submit task at a reduced priority.
+                                  Note that it may take a very long time for
+                                  your task to run after queued when this setting
+                                  is used [default: False]. 
     -d, --data=<k:v>...           Additional data to send when submitting
                                   a task.
 
@@ -80,6 +84,7 @@ def main(argv, session):
                                 args['--cmd'],
                                 comment=args['--comment'],
                                 priority=data.get('priority'),
+                                reduced_priority=args['--reduced-priority'],
                                 data=data)
         j = r.json()
         if j.get('success'):

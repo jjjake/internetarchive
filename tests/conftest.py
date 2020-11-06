@@ -33,11 +33,13 @@ TEST_CONFIG = os.path.join(ROOT_DIR, 'tests/ia.ini')
 NASA_METADATA_PATH = os.path.join(ROOT_DIR, 'tests/data/metadata/nasa.json')
 NASA_EXPECTED_FILES = set([
     'globe_west_540.jpg',
+    'globe_west_540_thumb.jpg',
     'nasa_archive.torrent',
+    'nasa_meta.sqlite',
     'nasa_files.xml',
     'nasa_meta.xml',
     'nasa_reviews.xml',
-    'NASAarchiveLogo.jpg',
+    'nasa_itemimage.jpg',
     'globe_west_540_thumb.jpg',
     '__ia_thumb.jpg',
 ])

@@ -33,8 +33,8 @@ def test_dry_run():
 def test_glob(tmpdir_ch):
     expected_files = set([
         'globe_west_540.jpg',
-        'NASAarchiveLogo.jpg',
         'globe_west_540_thumb.jpg',
+        'nasa_itemimage.jpg',
         '__ia_thumb.jpg',
     ])
 

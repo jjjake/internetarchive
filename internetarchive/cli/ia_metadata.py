@@ -64,7 +64,7 @@ from schema import Schema, SchemaError, Or, And, Use
 import six
 
 from internetarchive.cli.argparser import get_args_dict, get_args_dict_many_write,\
-                                          get_args_header_dict
+    get_args_header_dict
 from internetarchive.exceptions import ItemLocateError
 
 # Only import backports.csv for Python2 (in support of FreeBSD port).

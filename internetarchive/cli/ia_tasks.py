@@ -46,7 +46,7 @@ options:
     -r, --reduced-priority        Submit task at a reduced priority.
                                   Note that it may take a very long time for
                                   your task to run after queued when this setting
-                                  is used [default: False]. 
+                                  is used [default: False].
     -d, --data=<k:v>...           Additional data to send when submitting
                                   a task.
 

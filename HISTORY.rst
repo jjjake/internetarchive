@@ -3,12 +3,18 @@
 Release History
 ---------------
 
-1.9.6 (?)
-+++++++++
+1.9.6 (2020-11-10)
+++++++++++++++++++
 
 **Features and Improvements**
 
 - Added ability to submit tasks with a reduced priority.
+- Added ability to add headers to modify_metadata requests.
+
+**Bugfixes**
+
+- Bumped version requirements for ``six``.
+  This addresses the "No module named collections_abc" error.
 
 1.9.5 (2020-09-18)
 ++++++++++++++++++

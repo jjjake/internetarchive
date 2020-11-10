@@ -7,8 +7,8 @@ A Python and Command-Line Interface to Archive.org
 
 |travis|
 
-.. |travis| image:: https://travis-ci.org/jjjake/internetarchive.svg
-    :target: https://travis-ci.org/jjjake/internetarchive
+.. |travis| image:: https://travis-ci.com/jjjake/internetarchive.svg
+    :target: https://travis-ci.com/jjjake/internetarchive
 
 This package installs a command-line tool named ``ia`` for using Archive.org from the command-line.
 It also installs the ``internetarchive`` Python module for programatic access to archive.org.

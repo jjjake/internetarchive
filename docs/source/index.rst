@@ -8,8 +8,8 @@ The Internet Archive Python Library
 
 Release v\ |version|. (:ref:`Installation <install>`)
 
-.. image:: https://travis-ci.org/jjjake/internetarchive.svg
-    :target: https://travis-ci.org/jjjake/internetarchive
+.. image:: https://travis-ci.com/jjjake/internetarchive.svg
+    :target: https://travis-ci.com/jjjake/internetarchive
 
 
 Welcome to the documentation for the ``internetarchive`` Python library.

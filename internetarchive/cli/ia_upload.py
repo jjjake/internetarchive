@@ -265,6 +265,15 @@ def main(argv, session):
                 if not identifier:
                     print('error: no identifier column on spreadsheet!')
                     sys.exit(1)
+                try:
+                    validate_ia_identifier(identifier)
+                except:
+                    print('error: identifier "{}" is invalid. '.format(identifier) +
+                        '<identifier> should be between 3 and 80 characters in length, and '
+                        'can only contain alphanumeric characters, periods ".", '
+                        'underscores "_", or dashes "-". However, <identifier> cannot begin '
+                        'with periods, underscores, or dashes.')
+                    sys.exit(1)
                 del row['file']
                 if 'identifier' in row:
                     del row['identifier']

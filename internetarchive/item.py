@@ -1059,6 +1059,9 @@ class Item(BaseItem):
                                                  stream=True,
                                                  **request_kwargs)
                     if (response.status_code == 503) and (retries > 0):
+                        if b'appears to be spam' in response.content:
+                            log.info('detected as spam, upload failed')
+                            break
                         log.info(error_msg)
                         if verbose:
                             print(' warning: {0}'.format(error_msg), file=sys.stderr)

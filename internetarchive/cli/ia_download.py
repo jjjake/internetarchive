@@ -40,7 +40,9 @@ options:
     -P, --search-parameters=<key:value>...   Download items returned from a specified search query.
     -g, --glob=<pattern>                     Only download files whose filename matches the
                                              given glob pattern.
-    -f, --format=<format>...                 Only download files of the specified format(s).
+    -f, --format=<format>...                 Only download files of the specified format.
+                                             Use this option multiple times to download multiple
+                                             formats.
                                              You can use the following command to retrieve
                                              a list of file formats contained within a given
                                              item:

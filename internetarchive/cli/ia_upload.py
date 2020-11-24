@@ -267,7 +267,7 @@ def main(argv, session):
                     sys.exit(1)
                 try:
                     validate_ia_identifier(identifier)
-                except:
+                except AssertionError:
                     print('error: identifier "{}" is invalid. '.format(identifier) +
                         '<identifier> should be between 3 and 80 characters in length, and '
                         'can only contain alphanumeric characters, periods ".", '

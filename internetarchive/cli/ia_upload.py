@@ -125,6 +125,21 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
     return responses
 
 
+def _validate_identifier(identifier):
+    if not identifier:
+        print('error: no identifier column on spreadsheet!')
+        sys.exit(1)
+    try:
+        validate_ia_identifier(identifier)
+    except AssertionError:
+        print('error: identifier "{}" is invalid. '.format(identifier) +
+            '<identifier> should be between 3 and 80 characters in length, and '
+            'can only contain alphanumeric characters, periods ".", '
+            'underscores "_", or dashes "-". However, <identifier> cannot begin '
+            'with periods, underscores, or dashes.')
+        sys.exit(1)
+
+
 def main(argv, session):
     if six.PY2:
         args = docopt(__doc__.encode('utf-8'), argv=argv)
@@ -262,18 +277,7 @@ def main(argv, session):
                 upload_kwargs_copy = deepcopy(upload_kwargs)
                 local_file = row['file']
                 identifier = row.get('item', row.get('identifier'))
-                if not identifier:
-                    print('error: no identifier column on spreadsheet!')
-                    sys.exit(1)
-                try:
-                    validate_ia_identifier(identifier)
-                except AssertionError:
-                    print('error: identifier "{}" is invalid. '.format(identifier) +
-                        '<identifier> should be between 3 and 80 characters in length, and '
-                        'can only contain alphanumeric characters, periods ".", '
-                        'underscores "_", or dashes "-". However, <identifier> cannot begin '
-                        'with periods, underscores, or dashes.')
-                    sys.exit(1)
+                _validate_identifier(identifier)
                 del row['file']
                 if 'identifier' in row:
                     del row['identifier']

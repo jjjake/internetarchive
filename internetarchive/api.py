@@ -278,7 +278,7 @@ def upload(identifier, files,
                   sending the upload request.
 
     :type validate_identifier: bool
-    :param validate_identifier: (optional) Set to True to validate the identifier before 
+    :param validate_identifier: (optional) Set to True to validate the identifier before
                                 uploading the file.
 
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.

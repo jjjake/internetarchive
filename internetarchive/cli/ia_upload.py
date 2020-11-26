@@ -54,6 +54,8 @@ options:
     --status-check                       Check if S3 is accepting requests to the given
                                          item.
     --no-collection-check                Skip collection exists check [default: False].
+    --validate-identifier                Validate the identifier before uploading the files 
+                                         [default: False].
     -o, --open-after-upload              Open the details page for an item after upload
                                          [default: False].
 
@@ -77,7 +79,7 @@ from schema import Schema, Use, Or, And, SchemaError
 
 from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
 from internetarchive.session import ArchiveSession
-from internetarchive.utils import validate_ia_identifier, get_s3_xml_text
+from internetarchive.utils import validate_s3_identifier, get_s3_xml_text, InvalidIdentifierException
 
 # Only import backports.csv for Python2 (in support of FreeBSD port).
 PY2 = sys.version_info[0] == 2
@@ -98,6 +100,9 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
         responses += response
     except HTTPError as exc:
         responses += [exc.response]
+    except InvalidIdentifierException as exc:
+        print(str(exc))
+        sys.exit(1)
     finally:
         # Debug mode.
         if upload_kwargs['debug']:
@@ -125,21 +130,6 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
     return responses
 
 
-def _validate_identifier(identifier):
-    if not identifier:
-        print('error: no identifier column on spreadsheet!')
-        sys.exit(1)
-    try:
-        validate_ia_identifier(identifier)
-    except AssertionError:
-        print('error: identifier "{}" is invalid. '.format(identifier) +
-            '<identifier> should be between 3 and 80 characters in length, and '
-            'can only contain alphanumeric characters, periods ".", '
-            'underscores "_", or dashes "-". However, <identifier> cannot begin '
-            'with periods, underscores, or dashes.')
-        sys.exit(1)
-
-
 def main(argv, session):
     if six.PY2:
         args = docopt(__doc__.encode('utf-8'), argv=argv)
@@ -150,7 +140,8 @@ def main(argv, session):
     # Validate args.
     s = Schema({
         str: Use(bool),
-        '<identifier>': Or(None, And(str, validate_ia_identifier,
+        '<identifier>': Or(None, And(str, 
+            lambda id: not args['--validate-identifier'] or validate_s3_identifier(id),
             error=('<identifier> should be between 3 and 80 characters in length, and '
                    'can only contain alphanumeric characters, periods ".", '
                    'underscores "_", or dashes "-". However, <identifier> cannot begin '
@@ -239,6 +230,7 @@ def main(argv, session):
         retries=args['--retries'],
         retries_sleep=args['--sleep'],
         delete=args['--delete'],
+        validate_identifier=args['--validate-identifier']
     )
 
     # Upload files.
@@ -277,7 +269,6 @@ def main(argv, session):
                 upload_kwargs_copy = deepcopy(upload_kwargs)
                 local_file = row['file']
                 identifier = row.get('item', row.get('identifier'))
-                _validate_identifier(identifier)
                 del row['file']
                 if 'identifier' in row:
                     del row['identifier']

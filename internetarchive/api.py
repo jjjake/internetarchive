@@ -224,6 +224,7 @@ def upload(identifier, files,
            retries=None,
            retries_sleep=None,
            debug=None,
+           validate_identifier=None,
            request_kwargs=None,
            **get_item_kwargs):
     """Upload files to an item. The item will be created if it does not exist.
@@ -276,6 +277,10 @@ def upload(identifier, files,
     :param debug: (optional) Set to True to print headers to stdout, and exit without
                   sending the upload request.
 
+    :type validate_identifier: bool
+    :param validate_identifier: (optional) Set to True to validate the identifier before 
+                                uploading the file.
+
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
 
     :returns: A list of :py:class:`requests.Response` objects.
@@ -294,6 +299,7 @@ def upload(identifier, files,
                        retries=retries,
                        retries_sleep=retries_sleep,
                        debug=debug,
+                       validate_identifier=validate_identifier,
                        request_kwargs=request_kwargs)
 
 

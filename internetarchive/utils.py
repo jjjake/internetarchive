@@ -56,6 +56,31 @@ def map2x(func, *iterables):
     return starmap(func, zipped)
 
 
+class InvalidIdentifierException(Exception):
+    pass
+
+
+def validate_s3_identifier(string):
+    legal_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-'
+    # periods, underscores, and dashes are legal, but may not be the first
+    # character!
+    if any(string.startswith(c) is True for c in ['.', '_', '-']):
+        raise InvalidIdentifierException('Identifier cannot begin with periods ".", underscores '
+                                        '"_", or dashes "-".')
+
+    if len(string) > 100 or len(string) < 3:
+        raise InvalidIdentifierException('Identifier should be between 3 and 80 characters in '
+                                        'length.')
+
+    if any(c not in legal_chars for c in string):
+        raise InvalidIdentifierException('Identifier can only contain alphanumeric characters, '
+                                        'periods ".", underscores "_", or dashes "-". However, '
+                                        'identifier cannot begin with periods, underscores, or '
+                                        'dashes.')
+
+    return True
+
+
 def validate_ia_identifier(string):
     legal_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-'
     # periods, underscores, and dashes are legal, but may not be the first

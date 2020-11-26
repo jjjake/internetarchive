@@ -303,7 +303,7 @@ def test_upload_validate_identifier(session):
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=EXPECTED_S3_HEADERS)
         try:
-            item.upload(NASA_METADATA_PATH, 
+            item.upload(NASA_METADATA_PATH,
                         access_key='a',
                         secret_key='b',
                         validate_identifier=True)

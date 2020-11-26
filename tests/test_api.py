@@ -229,7 +229,7 @@ def test_upload():
 
 def test_upload_validate_identifier():
     try:
-        upload('føø', NASA_METADATA_PATH, 
+        upload('føø', NASA_METADATA_PATH,
               access_key='test_access',
               secret_key='test_secret',
               validate_identifier=True)

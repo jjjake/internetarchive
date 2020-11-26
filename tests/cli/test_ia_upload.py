@@ -28,9 +28,9 @@ def test_ia_upload_validate_identifier(capsys, caplog):
     with open('test.txt', 'w') as fh:
         fh.write('foo')
 
-    ia_call(['ia', '--log', 'upload', 'føø', 'test.txt', '--validate-identifier'], 
+    ia_call(['ia', '--log', 'upload', 'føø', 'test.txt', '--validate-identifier'],
             expected_exit_code=1)
-            
+
     out, err = capsys.readouterr()
     assert ('<identifier> should be between 3 and 80 characters in length, and '
             'can only contain alphanumeric characters, periods ".", '

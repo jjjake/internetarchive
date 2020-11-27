@@ -269,6 +269,9 @@ def main(argv, session):
                 upload_kwargs_copy = deepcopy(upload_kwargs)
                 local_file = row['file']
                 identifier = row.get('item', row.get('identifier'))
+                if not identifier:
+                    print('error: no identifier column on spreadsheet!')
+                    sys.exit(1)
                 del row['file']
                 if 'identifier' in row:
                     del row['identifier']

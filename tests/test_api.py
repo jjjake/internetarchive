@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import json
@@ -10,6 +11,8 @@ from requests.packages import urllib3
 
 from internetarchive import get_session, get_item, get_files, modify_metadata, upload, \
     download, search_items
+
+from internetarchive.utils import InvalidIdentifierException
 from tests.conftest import NASA_METADATA_PATH, PROTOCOL, IaRequestsMock, \
     load_test_data_file, load_file
 
@@ -223,6 +226,37 @@ def test_upload():
             del headers['user-agent']
             assert headers == expected_s3_headers
             assert req.url == '{0}//s3.us.archive.org/nasa/nasa.json'.format(PROTOCOL)
+
+
+def test_upload_validate_identifier():
+    try:
+        upload('føø', NASA_METADATA_PATH,
+              access_key='test_access',
+              secret_key='test_secret',
+              validate_identifier=True)
+        assert False
+    except Exception as exc:
+        assert isinstance(exc, InvalidIdentifierException)
+
+    expected_s3_headers = {
+        'content-length': '7557',
+        'x-archive-queue-derive': '1',
+        'x-archive-meta00-scanner': 'uri(Internet%20Archive%20Python%20library',
+        'x-archive-size-hint': '7557',
+        'x-archive-auto-make-bucket': '1',
+        'authorization': 'LOW test_access:test_secret',
+    }
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.PUT, re.compile(r'.*s3.us.archive.org/.*'),
+                 adding_headers=expected_s3_headers)
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(PROTOCOL),
+                 body='{}')
+        upload('nasa', NASA_METADATA_PATH,
+              access_key='test_access',
+              secret_key='test_secret',
+              validate_identifier=True)
+        assert True
 
 
 def test_download(tmpdir):

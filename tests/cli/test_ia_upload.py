@@ -24,6 +24,20 @@ def test_ia_upload(tmpdir_ch, caplog):
             'test.txt'.format(PROTOCOL)) in caplog.text
 
 
+def test_ia_upload_invalid_identifier(capsys, caplog):
+    with open('test.txt', 'w') as fh:
+        fh.write('foo')
+
+    ia_call(['ia', '--log', 'upload', 'føø', 'test.txt'],
+            expected_exit_code=1)
+
+    out, err = capsys.readouterr()
+    assert ('<identifier> should be between 3 and 80 characters in length, and '
+            'can only contain alphanumeric characters, periods ".", '
+            'underscores "_", or dashes "-". However, <identifier> cannot begin '
+            'with periods, underscores, or dashes.') in err
+
+
 def test_ia_upload_status_check(capsys):
     with IaRequestsMock() as rsps:
         rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(PROTOCOL),

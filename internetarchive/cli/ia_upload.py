@@ -77,7 +77,7 @@ from schema import Schema, Use, Or, And, SchemaError
 
 from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
 from internetarchive.session import ArchiveSession
-from internetarchive.utils import validate_ia_identifier, get_s3_xml_text
+from internetarchive.utils import validate_s3_identifier, get_s3_xml_text, InvalidIdentifierException
 
 # Only import backports.csv for Python2 (in support of FreeBSD port).
 PY2 = sys.version_info[0] == 2
@@ -98,6 +98,9 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
         responses += response
     except HTTPError as exc:
         responses += [exc.response]
+    except InvalidIdentifierException as exc:
+        print(str(exc))
+        sys.exit(1)
     finally:
         # Debug mode.
         if upload_kwargs['debug']:
@@ -135,7 +138,7 @@ def main(argv, session):
     # Validate args.
     s = Schema({
         str: Use(bool),
-        '<identifier>': Or(None, And(str, validate_ia_identifier,
+        '<identifier>': Or(None, And(str, validate_s3_identifier,
             error=('<identifier> should be between 3 and 80 characters in length, and '
                    'can only contain alphanumeric characters, periods ".", '
                    'underscores "_", or dashes "-". However, <identifier> cannot begin '
@@ -224,6 +227,7 @@ def main(argv, session):
         retries=args['--retries'],
         retries_sleep=args['--sleep'],
         delete=args['--delete'],
+        validate_identifier=True
     )
 
     # Upload files.

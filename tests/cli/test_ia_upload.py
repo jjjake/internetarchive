@@ -24,11 +24,11 @@ def test_ia_upload(tmpdir_ch, caplog):
             'test.txt'.format(PROTOCOL)) in caplog.text
 
 
-def test_ia_upload_validate_identifier(capsys, caplog):
+def test_ia_upload_invalid_identifier(capsys, caplog):
     with open('test.txt', 'w') as fh:
         fh.write('foo')
 
-    ia_call(['ia', '--log', 'upload', 'føø', 'test.txt', '--validate-identifier'],
+    ia_call(['ia', '--log', 'upload', 'føø', 'test.txt'],
             expected_exit_code=1)
 
     out, err = capsys.readouterr()
@@ -36,17 +36,6 @@ def test_ia_upload_validate_identifier(capsys, caplog):
             'can only contain alphanumeric characters, periods ".", '
             'underscores "_", or dashes "-". However, <identifier> cannot begin '
             'with periods, underscores, or dashes.') in err
-
-    # Test --validate-identifier flag with valid identifier
-    with IaRequestsMock() as rsps:
-        rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, '{0}//s3.us.archive.org/nasa/test.txt'.format(PROTOCOL),
-                 body='',
-                 content_type='text/plain')
-        ia_call(['ia', '--log', 'upload', 'nasa', 'test.txt', '--validate-identifier'])
-
-    assert ('uploaded test.txt to {0}//s3.us.archive.org/nasa/'
-            'test.txt'.format(PROTOCOL)) in caplog.text
 
 
 def test_ia_upload_status_check(capsys):

@@ -54,8 +54,6 @@ options:
     --status-check                       Check if S3 is accepting requests to the given
                                          item.
     --no-collection-check                Skip collection exists check [default: False].
-    --validate-identifier                Validate the identifier before uploading the files
-                                         [default: False].
     -o, --open-after-upload              Open the details page for an item after upload
                                          [default: False].
 
@@ -140,8 +138,7 @@ def main(argv, session):
     # Validate args.
     s = Schema({
         str: Use(bool),
-        '<identifier>': Or(None, And(str,
-            lambda id: not args['--validate-identifier'] or validate_s3_identifier(id),
+        '<identifier>': Or(None, And(str, validate_s3_identifier,
             error=('<identifier> should be between 3 and 80 characters in length, and '
                    'can only contain alphanumeric characters, periods ".", '
                    'underscores "_", or dashes "-". However, <identifier> cannot begin '
@@ -230,7 +227,7 @@ def main(argv, session):
         retries=args['--retries'],
         retries_sleep=args['--sleep'],
         delete=args['--delete'],
-        validate_identifier=args['--validate-identifier']
+        validate_identifier=True
     )
 
     # Upload files.

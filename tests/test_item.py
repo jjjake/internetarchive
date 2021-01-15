@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from internetarchive.api import get_item
-from internetarchive.utils import norm_filepath
+from internetarchive.utils import norm_filepath, InvalidIdentifierException
 from tests.conftest import PROTOCOL, IaRequestsMock, load_file, \
     NASA_METADATA_PATH, load_test_data_file
 
@@ -295,6 +295,31 @@ def test_upload(nasa_item):
             del headers['user-agent']
             assert headers == EXPECTED_S3_HEADERS
             assert request.url == '{0}//s3.us.archive.org/nasa/nasa.json'.format(PROTOCOL)
+
+
+def test_upload_validate_identifier(session):
+    item = session.get_item('føø')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.PUT, S3_URL_RE,
+                 adding_headers=EXPECTED_S3_HEADERS)
+        try:
+            item.upload(NASA_METADATA_PATH,
+                        access_key='a',
+                        secret_key='b',
+                        validate_identifier=True)
+            assert False
+        except Exception as exc:
+            assert isinstance(exc, InvalidIdentifierException)
+
+    valid_item = session.get_item('foo')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.PUT, S3_URL_RE,
+                 adding_headers=EXPECTED_S3_HEADERS)
+        valid_item.upload(NASA_METADATA_PATH,
+                        access_key='a',
+                        secret_key='b',
+                        validate_identifier=True)
+        assert True
 
 
 def test_upload_secure_session():

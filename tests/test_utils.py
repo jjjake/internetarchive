@@ -23,13 +23,21 @@ def test_needs_quote():
     assert not internetarchive.utils.needs_quote(string.ascii_letters + string.digits)
 
 
-def test_validate_ia_identifier():
-    valid = internetarchive.utils.validate_ia_identifier('valid-Id-123-_foo')
+def test_validate_s3_identifier():
+    id1 = 'valid-Id-123-_foo'
+    id2 = '!invalid-Id-123-_foo'
+    id3 = 'invalid-Id-123-_foo+bar'
+    id4 = 'invalid-Id-123-_føø'
+    id5 = 'i'
+
+    valid = internetarchive.utils.validate_s3_identifier(id1)
     assert valid
-    try:
-        internetarchive.utils.validate_ia_identifier('!invalid-Id-123-_foo')
-    except Exception as exc:
-        assert isinstance(exc, AssertionError)
+
+    for invalid_id in [id2, id3, id4, id5]:
+        try:
+            internetarchive.utils.validate_s3_identifier(invalid_id)
+        except Exception as exc:
+            assert isinstance(exc, internetarchive.utils.InvalidIdentifierException)
 
 
 def test_get_md5():

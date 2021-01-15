@@ -33,6 +33,7 @@ options:
     -i, --itemlist                   Output identifiers only.
     -f, --field=<field>...           Metadata fields to return.
     -n, --num-found                  Print the number of results to stdout.
+    -F, --fts                        Query the full text search API.
     -t, --timeout=<seconds>          Set the timeout in seconds [default: 300].
 """
 from __future__ import absolute_import, print_function, unicode_literals
@@ -87,6 +88,7 @@ def main(argv, session=None):
                                   fields=fields,
                                   sorts=sorts,
                                   params=args['--parameters'],
+                                  full_text_search=args['--fts'],
                                   request_kwargs=r_kwargs)
 
     try:

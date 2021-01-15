@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+1.9.7 (?)
++++++++++
+
+**Features and Improvements**
+
+- Added support for FTS API.
+
 1.9.6 (2020-11-10)
 ++++++++++++++++++
 

@@ -287,6 +287,7 @@ class ArchiveSession(requests.sessions.Session):
                      fields=None,
                      sorts=None,
                      params=None,
+                     full_text_search=None,
                      request_kwargs=None,
                      max_retries=None):
         """Search for items on Archive.org.
@@ -310,6 +311,7 @@ class ArchiveSession(requests.sessions.Session):
                       fields=fields,
                       sorts=sorts,
                       params=params,
+                      full_text_search=full_text_search,
                       request_kwargs=request_kwargs,
                       max_retries=max_retries)
 

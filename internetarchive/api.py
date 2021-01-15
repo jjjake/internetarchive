@@ -478,6 +478,7 @@ def search_items(query,
                  fields=None,
                  sorts=None,
                  params=None,
+                 full_text_search=None,
                  archive_session=None,
                  config=None,
                  config_file=None,
@@ -497,6 +498,10 @@ def search_items(query,
     :type params: dict
     :param params: (optional) The URL parameters to send with each request sent to the
                    Archive.org Advancedsearch Api.
+
+    :type full_text_search: bool
+    :param full_text_search: (optional) Query the archive.org Full Text Search API
+                             [default: False].
 
     :type config: dict
     :param secure: (optional) Configuration options for session.
@@ -534,6 +539,7 @@ def search_items(query,
                                         fields=fields,
                                         sorts=sorts,
                                         params=params,
+                                        full_text_search=full_text_search,
                                         request_kwargs=request_kwargs,
                                         max_retries=max_retries)
 

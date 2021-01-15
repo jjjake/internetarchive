@@ -59,6 +59,7 @@ class Search(object):
                  fields=None,
                  sorts=None,
                  params=None,
+                 full_text_search=None,
                  request_kwargs=None,
                  max_retries=None):
         params = params or {}
@@ -69,6 +70,9 @@ class Search(object):
         self.sorts = sorts or list()
         self.request_kwargs = request_kwargs or dict()
         self._num_found = None
+        self.fts = False if not full_text_search else True
+        self.fts_url = '{0}//be-api.us.archive.org/fts/v1/search'.format(
+            self.session.protocol)
         self.scrape_url = '{0}//{1}/services/search/v1/scrape'.format(
             self.session.protocol, self.session.host)
         self.search_url = '{0}//{1}/advancedsearch.php'.format(
@@ -143,11 +147,35 @@ class Search(object):
             if 'cursor' not in j:
                 break
 
+    def _full_text_search(self):
+        r = self.session.get(self.fts_url,
+                             params=self.params,
+                             auth=self.auth,
+                             **self.request_kwargs)
+        j = r.json()
+        hits = j.get('hits', dict()).get('hits', list())
+        for h in hits:
+            yield h
+
     def _make_results_generator(self):
-        if 'page' in self.params:
+        if self.fts:
+            return self._full_text_search()
+        if 'user_aggs' in self.params:
+            return self._user_aggs()
+        elif 'page' in self.params:
             return self._advanced_search()
         else:
             return self._scrape()
+
+    def _user_aggs(self):
+        self.params['page'] = '1'
+        self.params['rows'] = '1'
+        self.params['output'] = 'json'
+        r = self.session.get(self.search_url, params=self.params, **self.request_kwargs)
+        j = r.json()
+        #yield j['response'].get('aggregations')
+        for agg in j.get('response', dict()).get('aggregations', dict()).items():
+            yield {agg[0]: agg[1]}
 
     @property
     def num_found(self):

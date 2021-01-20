@@ -22,6 +22,7 @@
 usage:
     ia configure
     ia configure --username=<username> --password=<password>
+    ia configure --print-cookies
     ia configure --netrc
     ia configure [--help]
 
@@ -32,6 +33,7 @@ options:
     -p, --password=<password>  Provide password as an option rather than
                                providing it interactively.
     -n, --netrc                Use netrc file for login.
+    -c, --print-cookies        Print archive.org logged-in-* cookies.
 """
 from __future__ import absolute_import, print_function, unicode_literals
 import sys
@@ -45,6 +47,22 @@ from internetarchive.exceptions import AuthenticationError
 
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
+    if args['--print-cookies']:
+        user = session.config.get('cookies', {}).get('logged-in-user')
+        sig = session.config.get('cookies', {}).get('logged-in-sig')
+        if not user or not sig:
+            if not user and not sig:
+                print('error: "logged-in-user" and "logged-in-sig" cookies '
+                      'not found in config file, try reconfiguring.', file=sys.stderr)
+            elif not user:
+                print('error: "logged-in-user" cookie not found in config file, '
+                      'try reconfiguring.', file=sys.stderr)
+            elif not sig:
+                print('error: "logged-in-sig" cookie not found in config file, '
+                      'try reconfiguring.', file=sys.stderr)
+            sys.exit(1)
+        print('logged-in-user={}; logged-in-sig={}'.format(user, sig))
+        sys.exit()
     try:
         # CLI params.
         if args['--username'] and args['--password']:

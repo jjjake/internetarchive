@@ -9,6 +9,9 @@ Release History
 **Features and Improvements**
 
 - Added support for FTS API.
+- Added ``ia configure --print-cookies``.
+  This is helpful for using your archive.org cookies in other programs like ``curl``.
+  e.g. ``curl -b $(ia configure --print-cookies) <url> ...``
 
 1.9.6 (2020-11-10)
 ++++++++++++++++++

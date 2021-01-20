@@ -3,12 +3,13 @@
 Release History
 ---------------
 
-1.9.7 (?)
-+++++++++
+1.9.7 (2021-01-20)
+++++++++++++++++++
 
 **Features and Improvements**
 
 - Added support for FTS API.
+- Validate identifiers in spreadsheet before uploading file with ``ia upload --spreadsheet``.
 - Added ``ia configure --print-cookies``.
   This is helpful for using your archive.org cookies in other programs like ``curl``.
   e.g. ``curl -b $(ia configure --print-cookies) <url> ...``

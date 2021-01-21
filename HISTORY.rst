@@ -3,7 +3,7 @@
 Release History
 ---------------
 
-1.9.7 (2021-01-20)
+1.9.8 (2021-01-20)
 ++++++++++++++++++
 
 **Features and Improvements**

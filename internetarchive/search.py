@@ -71,7 +71,7 @@ class Search(object):
         self.request_kwargs = request_kwargs or dict()
         self._num_found = None
         self.fts = False if not full_text_search else True
-        self.fts_url = '{0}//be-api.us.archive.org/fts/v1/search'.format(
+        self.fts_url = '{0}//be-api.us.archive.org/ia-pub-fts-api'.format(
             self.session.protocol)
         self.scrape_url = '{0}//{1}/services/search/v1/scrape'.format(
             self.session.protocol, self.session.host)

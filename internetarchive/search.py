@@ -168,6 +168,8 @@ class Search(object):
             return self._scrape()
 
     def _user_aggs(self):
+        """Experimental support for user aggregations.
+        """
         self.params['page'] = '1'
         self.params['rows'] = '1'
         self.params['output'] = 'json'

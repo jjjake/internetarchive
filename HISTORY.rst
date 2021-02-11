@@ -3,6 +3,16 @@
 Release History
 ---------------
 
+2.0.0 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug in ``ia metadata --remove ...`` where multiple collections would be removed
+  if the specified collection was a substring of any of the existing collections.
+- Fixed bug in ``ia metadata --remove ...`` where removing multiple collections was sometimes
+  not supported.
+
 1.9.9 (2021-01-27)
 ++++++++++++++++++
 

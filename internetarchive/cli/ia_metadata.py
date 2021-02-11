@@ -106,21 +106,31 @@ def remove_metadata(item, metadata, args):
             print('{0}/metadata/{1} does not exist, skipping.'.format(
                 item.identifier, key), file=sys.stderr)
             continue
-        elif key == 'collection' and metadata[key] not in src_md:
-            r = item.remove_from_simplelist(metadata[key], 'holdings')
-            j = r.json()
-            if j.get('success'):
-                print('{} - success: {} no longer in {}'.format(
-                      item.identifier, item.identifier, metadata[key]))
-                sys.exit(0)
-            elif j.get('error', '').startswith('no row to delete for'):
-                print('{} - success: {} no longer in {}'.format(
-                      item.identifier, item.identifier, metadata[key]))
-                sys.exit(0)
-            else:
-                print('{} - error: {}'.format(item.identifier, j.get('error')))
-            sys.exit()
-        elif not isinstance(src_md, list):
+
+        if key == 'collection':
+            _col = copy(metadata[key])
+            _src_md = copy(src_md)
+            if not isinstance(_col, list):
+                _col = [_col]
+            if not isinstance(_src_md, list):
+                _src_md = [_src_md]
+            for c in _col:
+                if c not in _src_md:
+                    r = item.remove_from_simplelist(c, 'holdings')
+                    j = r.json()
+                    if j.get('success'):
+                        print('{} - success: {} no longer in {}'.format(
+                              item.identifier, item.identifier, c))
+                        sys.exit(0)
+                    elif j.get('error', '').startswith('no row to delete for'):
+                        print('{} - success: {} no longer in {}'.format(
+                              item.identifier, item.identifier, c))
+                        sys.exit(0)
+                    else:
+                        print('{} - error: {}'.format(item.identifier, j.get('error')))
+                        sys.exit(1)
+
+        if not isinstance(src_md, list):
             if key == 'subject':
                 src_md = src_md.split(';')
             elif key == 'collection':
@@ -133,8 +143,12 @@ def remove_metadata(item, metadata, args):
                 continue
 
         for x in src_md:
-            if x not in metadata[key]:
-                md[key].append(x)
+            if isinstance(metadata[key], list):
+                if x not in metadata[key]:
+                    md[key].append(x)
+            else:
+                if x != metadata[key]:
+                    md[key].append(x)
 
         if len(md[key]) == len(src_md):
             del md[key]

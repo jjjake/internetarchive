@@ -990,9 +990,12 @@ class Item(BaseItem):
                     body.close()
                     os.remove(filename)
                 # Return an empty response object if checksums match.
+                # status_code must be set. See issue #393
                 # TODO: Is there a better way to handle this?
                 body.close()
-                return Response()
+                r = Response()
+                r.status_code = 200
+                return r
 
         # require the Content-MD5 header when delete is True.
         if verify or delete:

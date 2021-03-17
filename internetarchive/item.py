@@ -518,9 +518,9 @@ class Item(BaseItem):
         return File(self, file_name, file_metadata)
 
     def get_files(self, files=None, formats=None, glob_pattern=None, on_the_fly=None):
-        files = [] if not files else files
-        formats = [] if not formats else formats
-        on_the_fly = False if not on_the_fly else True
+        files = files or []
+        formats = formats or []
+        on_the_fly = bool(not on_the_fly)
 
         if not isinstance(files, (list, tuple, set)):
             files = [files]
@@ -648,17 +648,17 @@ class Item(BaseItem):
         :rtype: bool
         :returns: True if if all files have been downloaded successfully.
         """
-        dry_run = False if dry_run is None else dry_run
-        verbose = False if verbose is None else verbose
-        silent = False if silent is None else silent
-        ignore_existing = False if ignore_existing is None else ignore_existing
-        ignore_errors = False if not ignore_errors else ignore_errors
-        checksum = False if checksum is None else checksum
-        no_directory = False if no_directory is None else no_directory
-        return_responses = False if not return_responses else True
-        no_change_timestamp = False if not no_change_timestamp else no_change_timestamp
-        ignore_history_dir = False if ignore_history_dir is None else ignore_history_dir
-        params = None if not params else params
+        dry_run = bool(dry_run)
+        verbose = bool(verbose)
+        silent = bool(silent)
+        ignore_existing = bool(ignore_existing)
+        ignore_errors = bool(ignore_errors)
+        checksum = bool(checksum)
+        no_directory = bool(no_directory)
+        return_responses = bool(return_responses)
+        no_change_timestamp = bool(no_change_timestamp)
+        ignore_history_dir = bool(ignore_history_dir)
+        params = bool(params)
 
         if not dry_run:
             if item_index and verbose is True:
@@ -739,10 +739,7 @@ class Item(BaseItem):
             else:
                 print(' - success')
 
-        if return_responses:
-            return responses
-        else:
-            return errors
+        return responses if return_responses else errors
 
     def modify_metadata(self, metadata,
                         target=None,
@@ -788,12 +785,12 @@ class Item(BaseItem):
         :returns: A dictionary containing the status_code and response
                   returned from the Metadata API.
         """
-        append = False if append is None else append
-        access_key = self.session.access_key if not access_key else access_key
-        secret_key = self.session.secret_key if not secret_key else secret_key
-        debug = False if debug is None else debug
-        headers = dict() if headers is None else headers
-        request_kwargs = {} if not request_kwargs else request_kwargs
+        append = bool(append)
+        access_key = access_key or self.session.access_key
+        secret_key = secret_key or self.session.secret_key
+        debug = bool(debug)
+        headers = headers or {}
+        request_kwargs = request_kwargs or {}
 
         _headers = self.session.headers.copy()
         _headers.update(headers)
@@ -924,22 +921,22 @@ class Item(BaseItem):
             True
         """
         # Set defaults.
-        headers = {} if headers is None else headers
-        metadata = {} if metadata is None else metadata
-        file_metadata = {} if file_metadata is None else file_metadata
-        access_key = self.session.access_key if access_key is None else access_key
-        secret_key = self.session.secret_key if secret_key is None else secret_key
-        queue_derive = True if queue_derive is None else queue_derive
-        verbose = False if verbose is None else verbose
-        verify = False if not verify else verify
-        delete = False if delete is None else delete
+        headers = headers or {}
+        metadata = metadata or {}
+        file_metadata = file_metadata or {}
+        access_key = access_key or self.session.access_key
+        secret_key = secret_key or self.session.secret_key
+        queue_derive = bool(queue_derive)
+        verbose = bool(verbose)
+        verify = bool(verify)
+        delete = bool(delete)
         # Set checksum after delete.
-        checksum = True if delete else checksum
-        retries = 0 if retries is None else retries
-        retries_sleep = 30 if retries_sleep is None else retries_sleep
-        debug = False if debug is None else debug
-        validate_identifier = False if validate_identifier is None else validate_identifier
-        request_kwargs = {} if request_kwargs is None else request_kwargs
+        checksum = delete or checksum
+        retries = retries or 0
+        retries_sleep = retries_sleep or 30
+        debug = bool(debug)
+        validate_identifier = bool(validate_identifier)
+        request_kwargs = request_kwargs or {}
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 120
         md5_sum = None
@@ -950,10 +947,7 @@ class Item(BaseItem):
             filename = body
             body = open(body, 'rb')
         else:
-            if key:
-                filename = key
-            else:
-                filename = body.name
+            filename = key or body.name
 
         size = get_file_size(body)
 

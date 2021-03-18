@@ -520,7 +520,7 @@ class Item(BaseItem):
     def get_files(self, files=None, formats=None, glob_pattern=None, on_the_fly=None):
         files = files or []
         formats = formats or []
-        on_the_fly = bool(not on_the_fly)
+        on_the_fly = bool(on_the_fly)
 
         if not isinstance(files, (list, tuple, set)):
             files = [files]

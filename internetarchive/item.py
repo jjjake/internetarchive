@@ -658,7 +658,7 @@ class Item(BaseItem):
         return_responses = bool(return_responses)
         no_change_timestamp = bool(no_change_timestamp)
         ignore_history_dir = bool(ignore_history_dir)
-        params = bool(params)
+        params = params or None
 
         if not dry_run:
             if item_index and verbose is True:

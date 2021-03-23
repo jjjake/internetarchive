@@ -334,7 +334,7 @@ def test_search_items_as_items(session):
 
 
 def test_search_items_fts(session):
-    with IaRequestsMock() as rsps:
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.POST,
                  '{0}//be-api.us.archive.org/ia-pub-fts-api'.format(PROTOCOL),
                  body=TEST_SCRAPE_RESPONSE)
@@ -343,6 +343,7 @@ def test_search_items_fts(session):
         r = search_items('nina simone',
                          full_text_search=True,
                          archive_session=session)
+        print(r.search_url)
         assert r.fts == True
         assert r.dsl_fts == False
         assert r.query == '!L nina simone'

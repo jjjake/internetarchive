@@ -35,6 +35,7 @@ options:
     -n, --num-found                  Print the number of results to stdout.
     -F, --fts                        Beta support for querying the archive.org
                                      full text search API.
+    -D, --dsl-fts                    Sumbit --fts query in dsl [default: False].
     -t, --timeout=<seconds>          Set the timeout in seconds [default: 300].
 """
 from __future__ import absolute_import, print_function, unicode_literals
@@ -90,6 +91,7 @@ def main(argv, session=None):
                                   sorts=sorts,
                                   params=args['--parameters'],
                                   full_text_search=args['--fts'],
+                                  dsl_fts=args['--dsl-fts'],
                                   request_kwargs=r_kwargs)
 
     try:

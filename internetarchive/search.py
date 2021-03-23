@@ -60,17 +60,24 @@ class Search(object):
                  sorts=None,
                  params=None,
                  full_text_search=None,
+                 dsl_fts=None,
                  request_kwargs=None,
                  max_retries=None):
         params = params or {}
 
         self.session = archive_session
+        self.dsl_fts = False if not dsl_fts else True
+        if self.dsl_fts or full_text_search:
+            self.fts = True
+        else:
+            self.fts = False
         self.query = query
+        if self.fts and not self.dsl_fts:
+            self.query = '!L {}'.format(self.query)
         self.fields = fields or list()
         self.sorts = sorts or list()
         self.request_kwargs = request_kwargs or dict()
         self._num_found = None
-        self.fts = False if not full_text_search else True
         self.fts_url = '{0}//be-api.us.archive.org/ia-pub-fts-api'.format(
             self.session.protocol)
         self.scrape_url = '{0}//{1}/services/search/v1/scrape'.format(
@@ -84,7 +91,7 @@ class Search(object):
         self.max_retries = max_retries if max_retries is not None else 5
 
         # Initialize params.
-        default_params = dict(q=query)
+        default_params = dict(q=self.query)
         if 'page' not in params:
             default_params['count'] = 10000
         else:
@@ -148,14 +155,31 @@ class Search(object):
                 break
 
     def _full_text_search(self):
-        r = self.session.get(self.fts_url,
-                             params=self.params,
-                             auth=self.auth,
-                             **self.request_kwargs)
-        j = r.json()
-        hits = j.get('hits', dict()).get('hits', list())
-        for h in hits:
-            yield h
+        d = {
+            'q': self.query,
+            'size': '10000',
+            'from': '0',
+            'scroll': 'true',
+        }
+
+        if 'size' in self.params:
+            d['scroll'] = False
+            d['size'] = self.params['size']
+
+        while True:
+            r = self.session.post(self.fts_url,
+                                  params=self.params,
+                                  json=d,
+                                  auth=self.auth,
+                                  **self.request_kwargs)
+            j = r.json()
+            scroll_id = j.get('_scroll_id')
+            hits = j.get('hits', dict()).get('hits')
+            for hit in hits:
+                yield hit
+            if not hits or d['scroll'] is False:
+                break
+            d['scroll_id'] = scroll_id
 
     def _make_results_generator(self):
         if self.fts:
@@ -181,15 +205,24 @@ class Search(object):
     @property
     def num_found(self):
         if not self._num_found:
-            p = self.params.copy()
-            p['total_only'] = 'true'
-            r = self.session.post(self.scrape_url,
-                                  params=p,
-                                  auth=self.auth,
-                                  **self.request_kwargs)
-            j = r.json()
-            self._handle_scrape_error(j)
-            self._num_found = j.get('total')
+            if not self.fts:
+                p = self.params.copy()
+                p['total_only'] = 'true'
+                r = self.session.post(self.scrape_url,
+                                      params=p,
+                                      auth=self.auth,
+                                      **self.request_kwargs)
+                j = r.json()
+                self._handle_scrape_error(j)
+                self._num_found = j.get('total')
+            else:
+                self.params['q'] = self.query
+                r = self.session.get(self.fts_url,
+                                     params=self.params,
+                                     auth=self.auth,
+                                     **self.request_kwargs)
+                j = r.json()
+                self._num_found = j.get('hits', dict()).get('total')
         return self._num_found
 
     def _handle_scrape_error(self, j):

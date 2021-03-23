@@ -485,6 +485,7 @@ def search_items(query,
                  sorts=None,
                  params=None,
                  full_text_search=None,
+                 dsl_fts=None,
                  archive_session=None,
                  config=None,
                  config_file=None,
@@ -506,8 +507,13 @@ def search_items(query,
                    Archive.org Advancedsearch Api.
 
     :type full_text_search: bool
-    :param full_text_search: (optional) Query the archive.org Full Text Search API
-                             [default: False].
+    :param full_text_search: (optional) Beta support for querying the archive.org
+                             Full Text Search API [default: False].
+
+    :type dsl_fts: bool
+    :param dsl_fts: (optional) Beta support for querying the archive.org Full Text
+                    Search API in dsl (i.e. do not prepend ``!L `` to the
+                    ``full_text_search`` query [default: False].
 
     :type config: dict
     :param secure: (optional) Configuration options for session.
@@ -546,6 +552,7 @@ def search_items(query,
                                         sorts=sorts,
                                         params=params,
                                         full_text_search=full_text_search,
+                                        dsl_fts=dsl_fts,
                                         request_kwargs=request_kwargs,
                                         max_retries=max_retries)
 

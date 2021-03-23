@@ -6,6 +6,11 @@ Release History
 2.0.0 (?)
 +++++++++
 
+**Features and Improvements**
+
+- Automatic paging scrolling added to ``ia search --fts``.
+- Default support for lucene queries in ``ia search --fts``.
+
 **Bugfixes**
 
 - Fixed bug in ``ia metadata --remove ...`` where multiple collections would be removed

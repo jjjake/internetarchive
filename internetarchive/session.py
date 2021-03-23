@@ -288,6 +288,7 @@ class ArchiveSession(requests.sessions.Session):
                      sorts=None,
                      params=None,
                      full_text_search=None,
+                     dsl_fts=None,
                      request_kwargs=None,
                      max_retries=None):
         """Search for items on Archive.org.
@@ -304,6 +305,15 @@ class ArchiveSession(requests.sessions.Session):
         :param params: (optional) The URL parameters to send with each request sent to the
                        Archive.org Advancedsearch Api.
 
+		:type full_text_search: bool
+		:param full_text_search: (optional) Beta support for querying the archive.org
+								 Full Text Search API [default: False].
+
+		:type dsl_fts: bool
+		:param dsl_fts: (optional) Beta support for querying the archive.org Full Text
+						Search API in dsl (i.e. do not prepend ``!L `` to the
+						``full_text_search`` query [default: False].
+
         :returns: A :class:`Search` object, yielding search results.
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
@@ -312,6 +322,7 @@ class ArchiveSession(requests.sessions.Session):
                       sorts=sorts,
                       params=params,
                       full_text_search=full_text_search,
+                      dsl_fts=dsl_fts,
                       request_kwargs=request_kwargs,
                       max_retries=max_retries)
 

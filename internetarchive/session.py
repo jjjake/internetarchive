@@ -305,14 +305,14 @@ class ArchiveSession(requests.sessions.Session):
         :param params: (optional) The URL parameters to send with each request sent to the
                        Archive.org Advancedsearch Api.
 
-		:type full_text_search: bool
-		:param full_text_search: (optional) Beta support for querying the archive.org
-								 Full Text Search API [default: False].
+        :type full_text_search: bool
+        :param full_text_search: (optional) Beta support for querying the archive.org
+                                 Full Text Search API [default: False].
 
-		:type dsl_fts: bool
-		:param dsl_fts: (optional) Beta support for querying the archive.org Full Text
-						Search API in dsl (i.e. do not prepend ``!L `` to the
-						``full_text_search`` query [default: False].
+        :type dsl_fts: bool
+        :param dsl_fts: (optional) Beta support for querying the archive.org Full Text
+                        Search API in dsl (i.e. do not prepend ``!L `` to the
+                        ``full_text_search`` query [default: False].
 
         :returns: A :class:`Search` object, yielding search results.
         """

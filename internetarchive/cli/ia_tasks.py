@@ -31,6 +31,7 @@ usage:
     ia tasks <identifier> --cmd=<command> [--comment=<comment>]
                           [--task-args=<k:v>...] [--data=<k:v>...]
                           [--tab-output] [--reduced-priority]
+    ia tasks --get-rate-limit --cmd=<cmd>
     ia tasks --help
 
 options:
@@ -47,6 +48,7 @@ options:
                                   Note that it may take a very long time for
                                   your task to run after queued when this setting
                                   is used [default: False].
+    -l, --get-rate-limit          Get rate limit info.
     -d, --data=<k:v>...           Additional data to send when submitting
                                   a task.
 
@@ -60,11 +62,12 @@ examples:
     ia tasks <id> --cmd make_undark.php --comment '<comment>'  # undark item
     ia tasks <id> --cmd make_dark.php --comment '<comment>'  # dark item
     ia tasks <id> --cmd fixer.php --task-args noop:1  # submit a noop fixer.php task
-    ia tasks <id> --cmd fixer.php --task-args 'noop:1;asr:1  # submit multiple fixer ops
+    ia tasks <id> --cmd fixer.php --task-args 'noop:1;asr:1'  # submit multiple fixer ops
 """
 from __future__ import absolute_import, print_function
 import sys
 import warnings
+import json
 
 from docopt import docopt
 import six
@@ -77,6 +80,10 @@ def main(argv, session):
 
     # Tasks write API.
     if args['--cmd']:
+        if args['--get-rate-limit']:
+            r = session.get_tasks_api_rate_limit(args['--cmd'])
+            print(json.dumps(r))
+            sys.exit(0)
         data = get_args_dict(args['--data'], query_string=True)
         task_args = get_args_dict(args['--task-args'], query_string=True)
         data['args'] = task_args

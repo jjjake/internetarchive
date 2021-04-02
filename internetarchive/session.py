@@ -350,6 +350,11 @@ class ArchiveSession(requests.sessions.Session):
         else:
             return True
 
+    def get_tasks_api_rate_limit(self, cmd='derive.php', request_kwargs=None):
+        c = Catalog(self, request_kwargs)
+        r = c.get_rate_limit(cmd=cmd)
+        return r
+
     def submit_task(self, identifier, cmd, comment=None, priority=None, data=None,
                     headers=None, reduced_priority=None, request_kwargs=None):
         """Submit an archive.org task.

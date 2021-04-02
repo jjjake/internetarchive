@@ -168,6 +168,23 @@ class Catalog(object):
                 break
             params['cursor'] = j['value']['cursor']
 
+    def get_rate_limit(self, cmd='derive.php'):
+        params = dict(rate_limits=1, cmd=cmd)
+        r = self.make_tasks_request(params)
+        line = ''
+        tasks = list()
+        for c in r.iter_content():
+            if six.PY3:
+                c = c.decode('utf-8')
+            if c == '\n':
+                j = json.loads(line)
+                task = CatalogTask(j, self)
+                tasks.append(task)
+                line = ''
+            line += c
+        j = json.loads(line)
+        return j
+
     def get_tasks(self, identifier=None, params=None):
         """Get a list of all tasks meeting all criteria.
         The list is ordered by submission time.

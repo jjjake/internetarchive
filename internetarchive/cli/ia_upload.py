@@ -264,7 +264,10 @@ def main(argv, session):
             prev_identifier = None
             for row in spreadsheet:
                 upload_kwargs_copy = deepcopy(upload_kwargs)
-                local_file = row['file']
+                if row.get('REMOTE_NAME'):
+                    local_file = {row['REMOTE_NAME']: row['file']}
+                else:
+                    local_file = row['file']
                 identifier = row.get('item', row.get('identifier'))
                 if not identifier:
                     print('error: no identifier column on spreadsheet!')

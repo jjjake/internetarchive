@@ -11,6 +11,7 @@ Release History
 - Automatic paging scrolling added to ``ia search --fts``.
 - Default support for lucene queries in ``ia search --fts``.
 - Added support for getting rate-limit information from the Tasks API (i.e. ``ia tasks --get-rate-limit --cmd derive.php``).
+- Added ability to set a remote-filename in a spreadsheet when uploading via ``ia upload --spreadsheet ...``.
 
 **Bugfixes**
 

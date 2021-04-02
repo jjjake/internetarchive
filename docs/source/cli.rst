@@ -177,6 +177,10 @@ Once you are ready to start your upload, simply run:
 
     $ ia upload --spreadsheet=uploading.csv
 
+Bulk Uploading Special Columns
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can set a remote filename that differs from your local filename by specifying a remote filename in a column named ``REMOTE_NAME`` (Added to ``ia`` in ``v2.0.0``).
 
 See ``ia help upload`` for more details.
 

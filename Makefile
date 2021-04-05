@@ -30,10 +30,7 @@ docs:
 	@echo "\033[95m\n\nBuild successful! View the docs homepage at docs/build/html/index.html.\n\033[0m"
 
 binary:
-	# This requires using https://github.com/jjjake/pex which has been hacked for multi-platform support.
-	pex . --python python3.7 --python python2 --python-shebang='/usr/bin/env python' --platform=linux-x86_64 --platform=macosx_10_11 -e internetarchive.cli.ia:main -o ia-$(VERSION)-py2.py3-none-any.pex -r pex-requirements.txt # make with py2???
-	# Use pex==1.4.0
-	#pex . --python python3 --python /usr/bin/python --python-shebang='/usr/bin/env python' --platform=linux-x86_64 --platform=macosx_10_11 -e internetarchive.cli.ia:main -o ia-$(VERSION)-py2.py3-none-any.pex -f wheelhouse/ --no-pypi
+	pex . --python-shebang='/usr/bin/env python' --python python3 --python python2 -e internetarchive.cli.ia:main -o ia-$(VERSION)-py2.py3-none-any.pex -r pex-requirements.txt
 
 publish-binary:
 	./ia-$(VERSION)-py2.py3-none-any.pex upload ia-pex ia-$(VERSION)-py2.py3-none-any.pex --no-derive

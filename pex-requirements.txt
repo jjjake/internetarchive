@@ -5,3 +5,4 @@ tqdm>=4.0.0
 six>=1.13.0,<2.0.0
 schema>=0.4.0
 backports.csv
+setuptools

@@ -63,6 +63,7 @@ examples:
     ia tasks <id> --cmd make_dark.php --comment '<comment>'  # dark item
     ia tasks <id> --cmd fixer.php --task-args noop:1  # submit a noop fixer.php task
     ia tasks <id> --cmd fixer.php --task-args 'noop:1;asr:1'  # submit multiple fixer ops
+    ia tasks --get-rate-limit --cmd derive.php  # Get rate-limit information for a specific command
 """
 from __future__ import absolute_import, print_function
 import sys

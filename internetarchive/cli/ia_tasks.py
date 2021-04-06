@@ -98,6 +98,9 @@ def main(argv, session):
         if j.get('success'):
             print('success: {}'.format(j.get('value', dict()).get('log')))
             sys.exit(0)
+        elif 'already queued/running' in j.get('error', ''):
+            print('success: {} task already queued/running'.format(args['--cmd']))
+            sys.exit(0)
         else:
             print('error: {}'.format(j.get('error')))
             sys.exit(1)

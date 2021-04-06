@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+2.0.1 (2021-04-06)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Exit with 0 in ``ia tasks --cmd ...`` if a task is already queued or running.
+
 2.0.0 (2021-04-05)
 ++++++++++++++++++
 

@@ -235,10 +235,7 @@ class Item(BaseItem):
         p = parseString(r.text)
         result = p.getElementsByTagName('result')[0]
         available = result.attributes['code'].value
-        if available == 'not_available':
-            return False
-        else:
-            return True
+        return available == 'available'
 
     def get_task_summary(self, params=None, request_kwargs=None):
         """Get a summary of the item's pending tasks.

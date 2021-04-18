@@ -32,7 +32,6 @@ from fnmatch import fnmatch
 from logging import getLogger
 from time import sleep
 import math
-from xml.dom.minidom import parseString
 from xml.parsers.expat import ExpatError
 
 try:
@@ -230,11 +229,9 @@ class Item(BaseItem):
         """
         url = '{}//{}/services/check_identifier.php'.format(self.session.protocol,
                                                             self.session.host)
-        params = dict(identifier=self.identifier)
-        r = self.session.get(url, params=params)
-        p = parseString(r.text)
-        result = p.getElementsByTagName('result')[0]
-        availability = result.attributes['code'].value
+        params = dict(output='json', identifier=self.identifier)
+        response = self.session.get(url, params=params)
+        availability = response.json()['code']
         return availability == 'available'
 
     def get_task_summary(self, params=None, request_kwargs=None):

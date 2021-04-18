@@ -234,8 +234,8 @@ class Item(BaseItem):
         r = self.session.get(url, params=params)
         p = parseString(r.text)
         result = p.getElementsByTagName('result')[0]
-        available = result.attributes['code'].value
-        return available == 'available'
+        availability = result.attributes['code'].value
+        return availability == 'available'
 
     def get_task_summary(self, params=None, request_kwargs=None):
         """Get a summary of the item's pending tasks.

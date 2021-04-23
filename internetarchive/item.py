@@ -781,7 +781,7 @@ class Item(BaseItem):
             >>> md = dict(new_key='new_value', foo=['bar', 'bar2'])
             >>> item.modify_metadata(md)
 
-        :rtype: dict
+        :rtype: Response
         :returns: A dictionary containing the status_code and response
                   returned from the Metadata API.
         """

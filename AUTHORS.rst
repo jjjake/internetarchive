@@ -12,6 +12,7 @@ Contributors
 ------------
 
 - Bryce Drennan <internetarchive@brycedrennan.com>
+- Max Zettlmeißl <max@zettlmeissl.de>
 
 Patches and Suggestions
 -----------------------

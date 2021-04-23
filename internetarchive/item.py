@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2019 Internet Archive
+# Copyright (C) 2012-2021 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -21,7 +21,7 @@
 internetarchive.item
 ~~~~~~~~~~~~~~~~~~~~
 
-:copyright: (C) 2012-2019 by Internet Archive.
+:copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 from __future__ import absolute_import, unicode_literals, print_function
@@ -32,7 +32,6 @@ from fnmatch import fnmatch
 from logging import getLogger
 from time import sleep
 import math
-from xml.dom.minidom import parseString
 from xml.parsers.expat import ExpatError
 
 try:
@@ -230,15 +229,10 @@ class Item(BaseItem):
         """
         url = '{}//{}/services/check_identifier.php'.format(self.session.protocol,
                                                             self.session.host)
-        params = dict(identifier=self.identifier)
-        r = self.session.get(url, params=params)
-        p = parseString(r.text)
-        result = p.getElementsByTagName('result')[0]
-        available = result.attributes['code'].value
-        if available == 'not_available':
-            return False
-        else:
-            return True
+        params = dict(output='json', identifier=self.identifier)
+        response = self.session.get(url, params=params)
+        availability = response.json()['code']
+        return availability == 'available'
 
     def get_task_summary(self, params=None, request_kwargs=None):
         """Get a summary of the item's pending tasks.

@@ -47,12 +47,15 @@ from requests import Response
 from tqdm import tqdm
 from requests.exceptions import HTTPError
 
-from internetarchive.utils import IdentifierListAsItems, get_md5, chunk_generator, \
-    IterableToFileAdapter, iter_directory, recursive_file_count, norm_filepath
+from internetarchive.utils import (IdentifierListAsItems, get_md5,
+                                   chunk_generator, IterableToFileAdapter,
+                                   iter_directory, recursive_file_count,
+                                   norm_filepath)
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
 from internetarchive.auth import S3Auth
-from internetarchive.utils import get_s3_xml_text, get_file_size, is_dir, validate_s3_identifier
+from internetarchive.utils import (get_s3_xml_text, get_file_size, is_dir,
+                                   validate_s3_identifier)
 
 log = getLogger(__name__)
 
@@ -106,11 +109,11 @@ class BaseItem(object):
         self.collection = IdentifierListAsItems(mc, self.session)
 
     def __eq__(self, other):
-        return self.item_metadata == other.item_metadata or \
-            (self.item_metadata.keys() == other.item_metadata.keys() and
-             all(self.item_metadata[x] == other.item_metadata[x]
-                 for x in self.item_metadata
-                 if x not in self.EXCLUDED_ITEM_METADATA_KEYS))
+        return (self.item_metadata == other.item_metadata
+                or (self.item_metadata.keys() == other.item_metadata.keys()
+                    and all(self.item_metadata[x] == other.item_metadata[x]
+                            for x in self.item_metadata
+                            if x not in self.EXCLUDED_ITEM_METADATA_KEYS)))
 
     def __le__(self, other):
         return self.identifier <= other.identifier
@@ -181,8 +184,8 @@ class Item(BaseItem):
 
         if self.metadata.get('title'):
             # A copyable link to the item, in MediaWiki format
-            self.wikilink = '* [{0.urls.details} {0.identifier}] ' \
-                            '-- {0.metadata[title]}'.format(self)
+            self.wikilink = ('* [{0.urls.details} {0.identifier}] '
+                             '-- {0.metadata[title]}').format(self)
 
     class URLs:
         def __init__(self, itm_obj):
@@ -211,8 +214,8 @@ class Item(BaseItem):
             self._paths.append(path)
 
         def __str__(self):
-            return "URLs ({1}) for {0.identifier}" \
-                   .format(self._itm_obj, ', '.join(self._paths))
+            return ("URLs ({1}) for {0.identifier}"
+                    .format(self._itm_obj, ', '.join(self._paths)))
 
     def refresh(self, item_metadata=None, **kwargs):
         if not item_metadata:
@@ -1179,8 +1182,8 @@ class Item(BaseItem):
                     file_metadata = f.copy()
                     del file_metadata['name']
                     f = f['name']
-            if (isinstance(f, string_types) and is_dir(f)) \
-                    or (isinstance(f, tuple) and is_dir(f[-1])):
+            if ((isinstance(f, string_types) and is_dir(f))
+                or (isinstance(f, tuple) and is_dir(f[-1]))):
                 if isinstance(f, tuple):
                     remote_dir_name = f[0].strip('/')
                     f = f[-1]

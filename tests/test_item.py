@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 
 from internetarchive.api import get_item
 from internetarchive.utils import norm_filepath, InvalidIdentifierException
-from tests.conftest import PROTOCOL, IaRequestsMock, load_file, \
-    NASA_METADATA_PATH, load_test_data_file
+from tests.conftest import (PROTOCOL, IaRequestsMock, load_file,
+                            NASA_METADATA_PATH, load_test_data_file)
 
 try:
     import ujson as json

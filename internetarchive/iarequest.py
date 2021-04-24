@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2019 Internet Archive
+# Copyright (C) 2012-2021 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -21,7 +21,7 @@
 internetarchive.iarequest
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:copyright: (C) 2012-2019 by Internet Archive.
+:copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 from __future__ import absolute_import
@@ -257,11 +257,11 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             source_metadata = r.json()
 
         # Write to many targets
-        if isinstance(metadata, list) \
-                or any('/' in k for k in metadata) \
-                or all(isinstance(k, dict) for k in metadata.values()):
-            changes = list()
+        if (isinstance(metadata, list)
+            or any('/' in k for k in metadata)
+            or all(isinstance(k, dict) for k in metadata.values())):
 
+            changes = list()
             if any(not k for k in metadata):
                 raise ValueError('Invalid metadata provided, '
                                  'check your input and try again')

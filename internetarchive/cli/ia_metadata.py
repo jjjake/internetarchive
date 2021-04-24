@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2019 Internet Archive
+# Copyright (C) 2012-2021 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -216,8 +216,8 @@ def main(argv, session):
                     sys.exit(1)
 
         # Modify metadata.
-        elif args['--modify'] or args['--append'] or args['--append-list'] \
-                or args['--remove']:
+        elif (args['--modify'] or args['--append'] or args['--append-list']
+              or args['--remove']):
             if args['--modify']:
                 metadata_args = args['--modify']
             elif args['--append']:

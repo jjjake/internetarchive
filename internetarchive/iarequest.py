@@ -150,8 +150,8 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                     meta_value = json.dumps(meta_value)
                 # Convert the metadata value into a list if it is not already
                 # iterable.
-                if (isinstance(meta_value, six.string_types) or
-                        not hasattr(meta_value, '__iter__')):
+                if (isinstance(meta_value, six.string_types)
+                        or not hasattr(meta_value, '__iter__')):
                     meta_value = [meta_value]
                 # Convert metadata items into HTTP headers and add to
                 # ``headers`` dict.
@@ -258,10 +258,10 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
 
         # Write to many targets
         if (isinstance(metadata, list)
-            or any('/' in k for k in metadata)
-            or all(isinstance(k, dict) for k in metadata.values())):
-
+                or any('/' in k for k in metadata)
+                or all(isinstance(k, dict) for k in metadata.values())):
             changes = list()
+
             if any(not k for k in metadata):
                 raise ValueError('Invalid metadata provided, '
                                  'check your input and try again')

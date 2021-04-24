@@ -1183,7 +1183,7 @@ class Item(BaseItem):
                     del file_metadata['name']
                     f = f['name']
             if ((isinstance(f, string_types) and is_dir(f))
-                or (isinstance(f, tuple) and is_dir(f[-1]))):
+                    or (isinstance(f, tuple) and is_dir(f[-1]))):
                 if isinstance(f, tuple):
                     remote_dir_name = f[0].strip('/')
                     f = f[-1]

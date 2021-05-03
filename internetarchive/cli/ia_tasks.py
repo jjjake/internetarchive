@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2019 Internet Archive
+# Copyright (C) 2012-2021 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -132,8 +132,8 @@ def main(argv, session):
         'submittime',
     ]
 
-    if not args['<identifier>'] \
-            and not params.get('task_id'):
+    if not (args['<identifier>']
+            or params.get('task_id')):
         _params = dict(catalog=1, history=0)
         _params.update(params)
         params = _params

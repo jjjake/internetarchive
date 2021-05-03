@@ -9,12 +9,12 @@ import responses
 import six
 from requests.packages import urllib3
 
-from internetarchive import get_session, get_item, get_files, modify_metadata, upload, \
-    download, search_items
+from internetarchive import (get_session, get_item, get_files, modify_metadata,
+                             upload, download, search_items)
 
 from internetarchive.utils import InvalidIdentifierException
-from tests.conftest import NASA_METADATA_PATH, PROTOCOL, IaRequestsMock, \
-    load_test_data_file, load_file
+from tests.conftest import (NASA_METADATA_PATH, PROTOCOL, IaRequestsMock,
+                            load_test_data_file, load_file)
 
 PY3 = six.PY3
 

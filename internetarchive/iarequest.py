@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2019 Internet Archive
+# Copyright (C) 2012-2021 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -21,7 +21,7 @@
 internetarchive.iarequest
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:copyright: (C) 2012-2019 by Internet Archive.
+:copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 from __future__ import absolute_import
@@ -150,8 +150,8 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                     meta_value = json.dumps(meta_value)
                 # Convert the metadata value into a list if it is not already
                 # iterable.
-                if (isinstance(meta_value, six.string_types) or
-                        not hasattr(meta_value, '__iter__')):
+                if (isinstance(meta_value, six.string_types)
+                        or not hasattr(meta_value, '__iter__')):
                     meta_value = [meta_value]
                 # Convert metadata items into HTTP headers and add to
                 # ``headers`` dict.
@@ -257,9 +257,9 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             source_metadata = r.json()
 
         # Write to many targets
-        if isinstance(metadata, list) \
-                or any('/' in k for k in metadata) \
-                or all(isinstance(k, dict) for k in metadata.values()):
+        if (isinstance(metadata, list)
+                or any('/' in k for k in metadata)
+                or all(isinstance(k, dict) for k in metadata.values())):
             changes = list()
 
             if any(not k for k in metadata):

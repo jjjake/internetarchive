@@ -3,12 +3,12 @@
 Release History
 ---------------
 
-2.0.3 (?)
+2.0.3 (2021-05-03)
 ++++++++++++++++++
 
 **Bugfixes**
 
-- Fixes regression in ``internetarchive/config.py`` where the default config path changed.
+- Fixed bug where some "falsey"/empty values were being dropped when modifying metadata.
 
 2.0.2 (2021-04-06)
 ++++++++++++++++++

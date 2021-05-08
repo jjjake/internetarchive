@@ -1,3 +1,4 @@
+import contextlib
 import os
 import six
 from six.moves import http_client as httplib
@@ -9,6 +10,7 @@ except ImportError:
 
 import responses
 import requests.adapters
+import tempfile
 
 import internetarchive.config
 import internetarchive.session
@@ -157,3 +159,141 @@ def test_get_config_config_and_config_file(tmpdir):
     assert config['cookies']['logged-in-user'] == 'test@archive.org'
     assert config['s3']['access'] == 'test-access'
     assert config['s3']['secret'] == 'custom-secret'
+
+
+@contextlib.contextmanager
+def _environ(**kwargs):
+    old_values = {k: os.environ.get(k) for k in kwargs}
+    try:
+        for k, v in kwargs.items():
+            if v is not None:
+                os.environ[k] = v
+            else:
+                del os.environ[k]
+        yield
+    finally:
+        for k, v in old_values.items():
+            if v is not None:
+                os.environ[k] = v
+            else:
+                del os.environ[k]
+
+
+def _test_parse_config_file(
+        expected_result,
+        config_file_contents='',
+        config_file_paths=None,
+        home=None,
+        xdg_config_home=None,
+        config_file_param=None):
+    # expected_result: (config_file_path, is_xdg); config isn't compared.
+    # config_file_contents: str
+    # config_file_paths: list of filenames to write config_file_contents to
+    # home: str, override HOME env var; default: path of the temporary dir
+    # xdg_config_home: str, set XDG_CONFIG_HOME
+    # config_file_param: str, filename to pass to parse_config_file
+    # All paths starting with '$TMPTESTDIR/' get evaluated relative to the temp dir.
+
+    if not config_file_paths:
+        config_file_paths = []
+
+    with tempfile.TemporaryDirectory() as tmp_test_dir:
+        def _replace_path(s):
+            if s and s.startswith('$TMPTESTDIR/'):
+                return os.path.join(tmp_test_dir, s.split('/', 1)[1])
+            return s
+
+        expected_result = (_replace_path(expected_result[0]), expected_result[1])
+        config_file_paths = [_replace_path(x) for x in config_file_paths]
+        home = _replace_path(home)
+        xdg_config_home = _replace_path(xdg_config_home)
+        config_file_param = _replace_path(config_file_param)
+
+        for p in config_file_paths:
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            with open(p, 'w') as fp:
+                fp.write(config_file_contents)
+
+        if home is None:
+            home = tmp_test_dir
+        env = {'HOME': home}
+        if xdg_config_home is not None:
+            env['XDG_CONFIG_HOME'] = xdg_config_home
+        with _environ(**env):
+            config_file_path, is_xdg, config = internetarchive.config.parse_config_file(
+                config_file=config_file_param)
+
+    assert (config_file_path, is_xdg) == expected_result[0:2]
+
+
+def test_parse_config_file_blank():
+    _test_parse_config_file(
+        expected_result=('$TMPTESTDIR/.config/internetarchive/ia.ini', True)
+    )
+
+
+def test_parse_config_file_existing_config_ia():
+    _test_parse_config_file(
+        expected_result=('$TMPTESTDIR/.config/ia.ini', False),
+        config_file_paths=['$TMPTESTDIR/.config/ia.ini'],
+    )
+
+
+def test_parse_config_file_existing_dotia():
+    _test_parse_config_file(
+        expected_result=('$TMPTESTDIR/.ia', False),
+        config_file_paths=['$TMPTESTDIR/.ia'],
+    )
+
+
+def test_parse_config_file_existing_config_ia_and_dotia():
+    _test_parse_config_file(
+        expected_result=('$TMPTESTDIR/.config/ia.ini', False),
+        config_file_paths=['$TMPTESTDIR/.config/ia.ini', '$TMPTESTDIR/.ia'],
+    )
+
+
+def test_parse_config_file_existing_all():
+    _test_parse_config_file(
+        expected_result=('$TMPTESTDIR/.config/internetarchive/ia.ini', True),
+        config_file_paths=[
+            '$TMPTESTDIR/.config/internetarchive/ia.ini',
+            '$TMPTESTDIR/.config/ia.ini',
+            '$TMPTESTDIR/.ia'
+        ],
+    )
+
+
+def test_parse_config_file_custom_xdg():
+    _test_parse_config_file(
+        expected_result=('$TMPTESTDIR/.xdg/internetarchive/ia.ini', True),
+        xdg_config_home='$TMPTESTDIR/.xdg',
+    )
+
+
+def test_parse_config_file_empty_xdg():
+    # Empty XDG_CONFIG_HOME should be treated as if not set, i.e. default
+    _test_parse_config_file(
+        expected_result=('$TMPTESTDIR/.config/internetarchive/ia.ini', True),
+        xdg_config_home='',
+    )
+
+
+def test_parse_config_file_relative_xdg():
+    # Relative XDG_CONFIG_HOME is invalid and should be ignored, i.e. default ~/.config used instead
+    _test_parse_config_file(
+        expected_result=('$TMPTESTDIR/.config/internetarchive/ia.ini', True),
+        xdg_config_home='relative/.config',
+    )
+
+
+def test_parse_config_file_direct_path_overrides_existing_files():
+    _test_parse_config_file(
+        expected_result=('/path/to/ia.ini', False),
+        config_file_paths=[
+            '$TMPTESTDIR/.config/internetarchive/ia.ini',
+            '$TMPTESTDIR/.config/ia.ini',
+            '$TMPTESTDIR/.ia'
+        ],
+        config_file_param='/path/to/ia.ini',
+    )

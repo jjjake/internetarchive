@@ -68,6 +68,7 @@ def main(argv, session):
         if args['--username'] and args['--password']:
             config_file_path = configure(args['--username'],
                                          args['--password'],
+                                         config_file=session.config_file,
                                          host=session.host)
             print('Config saved to: {0}'.format(config_file_path))
 

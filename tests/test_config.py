@@ -225,7 +225,11 @@ def _test_parse_config_file(
         config_file_param = _replace_path(config_file_param)
 
         for p in config_file_paths:
-            os.makedirs(os.path.dirname(p), exist_ok=True)
+            try:
+                os.makedirs(os.path.dirname(p), exist_ok=True)
+            except TypeError:  # Python 2 doesn't have exist_ok
+                if not os.path.exists(os.path.dirname(p)):
+                    os.makedirs(os.path.dirname(p))
             with open(p, 'w') as fp:
                 fp.write(config_file_contents)
 

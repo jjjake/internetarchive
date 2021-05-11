@@ -179,6 +179,21 @@ def _environ(**kwargs):
                 del os.environ[k]
 
 
+try:
+    TemporaryDirectory = tempfile.TemporaryDirectory
+except AttributeError:
+    # Crutch for Python 2
+    import shutil
+
+    @contextlib.contextmanager
+    def TemporaryDirectory():
+        path = tempfile.mkdtemp()
+        try:
+            yield path
+        finally:
+            shutil.rmtree(path)
+
+
 def _test_parse_config_file(
         expected_result,
         config_file_contents='',
@@ -197,7 +212,7 @@ def _test_parse_config_file(
     if not config_file_paths:
         config_file_paths = []
 
-    with tempfile.TemporaryDirectory() as tmp_test_dir:
+    with TemporaryDirectory() as tmp_test_dir:
         def _replace_path(s):
             if s and s.startswith('$TMPTESTDIR/'):
                 return os.path.join(tmp_test_dir, s.split('/', 1)[1])

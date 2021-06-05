@@ -153,3 +153,7 @@ def get_config(config=None, config_file=None):
     deep_update(config_dict, _config)
 
     return dict((k, v) for k, v in config_dict.items() if v is not None)
+
+
+print(os.environ)
+print(os.environ['HOME'])

@@ -3,13 +3,5 @@ dist: xenial
 language: python
 install: pip install tox-travis
 python:
-    - "2.7"
-    - "3.6"
-    - "3.7"
-    - "3.8"
     - "3.9"
-    - "3.10-dev"
-jobs:
-  allow_failures:
-    - python: "3.10-dev"
 script: tox

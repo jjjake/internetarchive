@@ -26,6 +26,7 @@ internetarchive.config
 """
 from __future__ import absolute_import
 
+import errno
 import os
 from collections import defaultdict
 from six.moves import configparser
@@ -97,8 +98,15 @@ def write_config_file(auth_config, config_file=None):
         # The XDG Base Dir spec requires that the XDG_CONFIG_HOME directory be created with mode 700.
         # is_xdg will be True iff config_file is ${XDG_CONFIG_HOME}/internetarchive/ia.ini.
         # So create grandparent first if necessary then parent to ensure both have the right mode.
-        os.makedirs(os.path.dirname(config_directory), mode=0o700, exist_ok=True)
-        os.mkdir(config_directory, mode=0o700)
+        try:
+            os.makedirs(os.path.dirname(config_directory), mode=0o700, exist_ok=True)
+        except TypeError:  # Python 2 doesn't have exist_ok
+            try:
+                os.makedirs(os.path.dirname(config_directory), mode=0o700)
+            except OSError as e:
+                if e.errno != errno.EEXIST or not os.path.isdir(os.path.dirname(config_directory)):
+                    raise
+        os.mkdir(config_directory, 0o700)
 
     # Write config file.
     with open(config_file, 'w') as fh:

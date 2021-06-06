@@ -7,7 +7,7 @@ try:
     import mock
 except ImportError:
     from unittest import mock
-
+import pytest
 import responses
 import requests.adapters
 import tempfile
@@ -316,3 +316,132 @@ def test_parse_config_file_direct_path_overrides_existing_files():
         ],
         config_file_param='/path/to/ia.ini',
     )
+
+
+def _test_write_config_file(
+        expected_config_file,
+        expected_modes,
+        dirs=None,
+        create_expected_file=False,
+        config_file_param=None):
+    # expected_config_file: str
+    # expected_modes: list of (path, mode) tuples
+    # dirs: list of str, directories to create before running write_config_file
+    # create_expected_file: bool, create the expected_config_file if True
+    # config_file_param: str, filename to pass to write_config_file
+    # Both dirs and the config file are created with mode 777 (minus umask).
+    # All paths are evaluated relative to a temporary HOME.
+    # Mode comparison accounts for the umask; expected_modes does not need to care about it.
+
+    with TemporaryDirectory() as temp_home_dir:
+        expected_config_file = os.path.join(temp_home_dir, expected_config_file)
+        if dirs:
+            dirs = [os.path.join(temp_home_dir, d) for d in dirs]
+        expected_modes = [(os.path.join(temp_home_dir, p), m) for p, m in expected_modes]
+        if config_file_param:
+            config_file_param = os.path.join(temp_home_dir, config_file_param)
+        with _environ(HOME=temp_home_dir):
+            # Need to account for the umask in the expected_modes comparisons.
+            # The umask can't just be retrieved, so set and then restore previous value.
+            umask = os.umask(0)
+            os.umask(umask)
+            if dirs:
+                for d in dirs:
+                    os.mkdir(d)
+            if create_expected_file:
+                with open(expected_config_file, 'w') as fp:
+                    os.chmod(expected_config_file, 0o777)
+            config_file = internetarchive.config.write_config_file({}, config_file_param)
+            assert config_file == expected_config_file
+            assert os.path.isfile(config_file)
+            for path, mode in expected_modes:
+                actual_mode = os.stat(path).st_mode & 0o777
+                assert actual_mode == mode & ~umask
+
+
+def test_write_config_file_blank():
+    '''Test that a blank HOME is populated with expected dirs and modes.'''
+    _test_write_config_file(
+        expected_config_file='.config/internetarchive/ia.ini',
+        expected_modes=[
+            ('.config/internetarchive/ia.ini', 0o600),
+            ('.config/internetarchive', 0o700),
+            ('.config', 0o700),
+        ],
+    )
+
+
+def test_write_config_file_config_existing():
+    '''Test that .config's permissions remain but ia gets created correctly.'''
+    _test_write_config_file(
+        dirs=['.config'],
+        expected_config_file='.config/internetarchive/ia.ini',
+        expected_modes=[
+            ('.config/internetarchive/ia.ini', 0o600),
+            ('.config/internetarchive', 0o700),
+            ('.config', 0o777),
+        ],
+    )
+
+
+def test_write_config_file_config_internetarchive_existing():
+    '''Test that directory permissions are left as is'''
+    _test_write_config_file(
+        dirs=['.config', '.config/internetarchive'],
+        expected_config_file='.config/internetarchive/ia.ini',
+        expected_modes=[
+            ('.config/internetarchive/ia.ini', 0o600),
+            ('.config/internetarchive', 0o777),
+            ('.config', 0o777),
+        ],
+    )
+
+
+def test_write_config_file_existing_file():
+    '''Test that the permissions of the file are forced to 600'''
+    _test_write_config_file(
+        dirs=['.config', '.config/internetarchive'],
+        expected_config_file='.config/internetarchive/ia.ini',
+        create_expected_file=True,
+        expected_modes=[
+            ('.config/internetarchive/ia.ini', 0o600),
+            ('.config/internetarchive', 0o777),
+            ('.config', 0o777),
+        ],
+    )
+
+
+def test_write_config_file_existing_other_file():
+    '''Test that the permissions of the file are forced to 600 even outside XDG'''
+    _test_write_config_file(
+        dirs=['foo'],
+        expected_config_file='foo/ia.ini',
+        create_expected_file=True,
+        config_file_param='foo/ia.ini',
+        expected_modes=[
+            ('foo/ia.ini', 0o600),
+            ('foo', 0o777),
+        ],
+    )
+
+
+def test_write_config_file_custom_path_existing():
+    '''Test the creation of a config file at a custom location'''
+    _test_write_config_file(
+        dirs=['foo'],
+        expected_config_file='foo/ia.ini',
+        config_file_param='foo/ia.ini',
+        expected_modes=[
+            ('foo/ia.ini', 0o600),
+            ('foo', 0o777),
+        ],
+    )
+
+
+def test_write_config_file_custom_path_not_existing():
+    '''Ensure that an exception is thrown if the custom path dir doesn't exist'''
+    with TemporaryDirectory() as temp_home_dir:
+        with _environ(HOME=temp_home_dir):
+            config_file = os.path.join(temp_home_dir, 'foo/ia.ini')
+            with pytest.raises(IOError):
+                internetarchive.config.write_config_file({}, config_file)

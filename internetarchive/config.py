@@ -72,9 +72,8 @@ def get_auth_config(email, password, host=None):
     return auth_config
 
 
-def write_config_file(username, password, config_file=None, host=None):
+def write_config_file(auth_config, config_file=None):
     config_file, is_xdg, config = parse_config_file(config_file)
-    auth_config = get_auth_config(username, password, host)
 
     # S3 Keys.
     access = auth_config.get('s3', {}).get('access')
@@ -88,7 +87,7 @@ def write_config_file(username, password, config_file=None, host=None):
     config.set('cookies', 'logged-in-sig', cookies.get('logged-in-sig'))
 
     # General.
-    screenname = auth_config['general']['screenname']
+    screenname = auth_config.get('general', {}).get('screenname')
     config.set('general', 'screenname', screenname)
 
     # Create directory if needed.

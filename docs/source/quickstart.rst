@@ -119,7 +119,7 @@ To remove a metadata field from an item's metadata, set the value to ``'REMOVE_T
     >>> r = item.modify_metadata(dict(foo='new metadata field.'))
     >>> item.metadata['foo']
     'new metadata field.'
-    >>> r = item.modify_metadata(dict(title='REMOVE_TAG'))
+    >>> r = item.modify_metadata(dict(foo='REMOVE_TAG'))
     >>> print(item.metadata.get('foo'))
     None
 

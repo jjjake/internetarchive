@@ -572,8 +572,8 @@ def configure(username=None, password=None, config_file=None, host=None):
     """
     username = input('Email address: ') if not username else username
     password = getpass('Password: ') if not password else password
-    config_file_path = config_module.write_config_file(
-        username, password, config_file, host)
+    auth_config = config_module.get_auth_config(username, password, host)
+    config_file_path = config_module.write_config_file(auth_config, config_file)
     return config_file_path
 
 

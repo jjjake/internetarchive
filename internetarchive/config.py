@@ -26,6 +26,7 @@ internetarchive.config
 """
 from __future__ import absolute_import
 
+import errno
 import os
 from collections import defaultdict
 from six.moves import configparser
@@ -72,9 +73,8 @@ def get_auth_config(email, password, host=None):
     return auth_config
 
 
-def write_config_file(username, password, config_file=None, host=None):
-    config_file, config = parse_config_file(config_file)
-    auth_config = get_auth_config(username, password, host)
+def write_config_file(auth_config, config_file=None):
+    config_file, is_xdg, config = parse_config_file(config_file)
 
     # S3 Keys.
     access = auth_config.get('s3', {}).get('access')
@@ -88,8 +88,25 @@ def write_config_file(username, password, config_file=None, host=None):
     config.set('cookies', 'logged-in-sig', cookies.get('logged-in-sig'))
 
     # General.
-    screenname = auth_config['general']['screenname']
+    screenname = auth_config.get('general', {}).get('screenname')
     config.set('general', 'screenname', screenname)
+
+    # Create directory if needed.
+    config_directory = os.path.dirname(config_file)
+    if is_xdg and not os.path.exists(config_directory):
+        # os.makedirs does not apply the mode for intermediate directories since Python 3.7.
+        # The XDG Base Dir spec requires that the XDG_CONFIG_HOME directory be created with mode 700.
+        # is_xdg will be True iff config_file is ${XDG_CONFIG_HOME}/internetarchive/ia.ini.
+        # So create grandparent first if necessary then parent to ensure both have the right mode.
+        try:
+            os.makedirs(os.path.dirname(config_directory), mode=0o700, exist_ok=True)
+        except TypeError:  # Python 2 doesn't have exist_ok
+            try:
+                os.makedirs(os.path.dirname(config_directory), mode=0o700)
+            except OSError as e:
+                if e.errno != errno.EEXIST or not os.path.isdir(os.path.dirname(config_directory)):
+                    raise
+        os.mkdir(config_directory, 0o700)
 
     # Write config file.
     with open(config_file, 'w') as fh:
@@ -102,12 +119,26 @@ def write_config_file(username, password, config_file=None, host=None):
 def parse_config_file(config_file=None):
     config = configparser.RawConfigParser()
 
+    is_xdg = False
     if not config_file:
-        config_dir = os.path.expanduser('~/.config')
-        if not os.path.isdir(config_dir):
-            config_file = os.path.expanduser('~/.ia')
+        xdg_config_home = os.environ.get('XDG_CONFIG_HOME')
+        if not xdg_config_home or not os.path.isabs(xdg_config_home):
+            # Per the XDG Base Dir specification, this should be $HOME/.config. Unfortunately, $HOME
+            # does not exist on all systems. Therefore, we use ~/.config here. On a POSIX-compliant
+            # system, where $HOME must always be set, the XDG spec will be followed precisely.
+            xdg_config_home = os.path.join(os.path.expanduser('~'), '.config')
+        xdg_config_file = os.path.join(xdg_config_home, 'internetarchive', 'ia.ini')
+        for candidate in [xdg_config_file,
+                          os.path.join(os.path.expanduser('~'), '.config', 'ia.ini'),
+                          os.path.join(os.path.expanduser('~'), '.ia')]:
+            if os.path.isfile(candidate):
+                config_file = candidate
+                break
         else:
-            config_file = '{0}/ia.ini'.format(config_dir)
+            # None of the candidates exist, default to XDG
+            config_file = xdg_config_file
+        if config_file == xdg_config_file:
+            is_xdg = True
     config.read(config_file)
 
     if not config.has_section('s3'):
@@ -129,12 +160,12 @@ def parse_config_file(config_file=None):
         config.add_section('general')
         config.set('general', 'screenname', None)
 
-    return (config_file, config)
+    return (config_file, is_xdg, config)
 
 
 def get_config(config=None, config_file=None):
     _config = {} if not config else config
-    config_file, config = parse_config_file(config_file)
+    config_file, is_xdg, config = parse_config_file(config_file)
 
     if not os.path.isfile(config_file):
         return _config

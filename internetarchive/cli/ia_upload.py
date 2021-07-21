@@ -266,6 +266,7 @@ def main(argv, session):
                 upload_kwargs_copy = deepcopy(upload_kwargs)
                 if row.get('REMOTE_NAME'):
                     local_file = {row['REMOTE_NAME']: row['file']}
+                    del row['REMOTE_NAME']
                 else:
                     local_file = row['file']
                 identifier = row.get('item', row.get('identifier'))

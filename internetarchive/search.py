@@ -175,6 +175,8 @@ class Search(object):
             j = r.json()
             scroll_id = j.get('_scroll_id')
             hits = j.get('hits', dict()).get('hits')
+            if not hits:
+                return
             for hit in hits:
                 yield hit
             if not hits or d['scroll'] is False:

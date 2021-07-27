@@ -77,7 +77,8 @@ from schema import Schema, Use, Or, And, SchemaError
 
 from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
 from internetarchive.session import ArchiveSession
-from internetarchive.utils import validate_s3_identifier, get_s3_xml_text, InvalidIdentifierException
+from internetarchive.utils import (InvalidIdentifierException, get_s3_xml_text,
+                                   is_valid_metadata_key, validate_s3_identifier)
 
 # Only import backports.csv for Python2 (in support of FreeBSD port).
 PY2 = sys.version_info[0] == 2
@@ -263,6 +264,11 @@ def main(argv, session):
             spreadsheet = csv.DictReader(csvfp)
             prev_identifier = None
             for row in spreadsheet:
+                for metadata_key in row:
+                    if not is_valid_metadata_key(metadata_key):
+                        print('error: "%s" is not a valid metadata key.' % metadata_key,
+                              file=sys.stderr)
+                        sys.exit(1)
                 upload_kwargs_copy = deepcopy(upload_kwargs)
                 if row.get('REMOTE_NAME'):
                     local_file = {row['REMOTE_NAME']: row['file']}
@@ -271,7 +277,8 @@ def main(argv, session):
                     local_file = row['file']
                 identifier = row.get('item', row.get('identifier'))
                 if not identifier:
-                    print('error: no identifier column on spreadsheet!')
+                    print('error: no identifier column on spreadsheet.',
+                          file=sys.stderr)
                     sys.exit(1)
                 del row['file']
                 if 'identifier' in row:

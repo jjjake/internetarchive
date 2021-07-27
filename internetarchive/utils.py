@@ -358,3 +358,14 @@ def delete_items_from_dict(d, to_delete):
         for i in d:
             delete_items_from_dict(i, to_delete)
     return remove_none(d)
+
+
+def is_valid_metadata_key(name):
+    # According to the documentation a metadata key
+    # has to be a valid XML tag name.
+    #
+    # The actual allowed tag names (at least as tested with the metadata API),
+    # are way more restrictive and only allow ".-A-Za-z_", possibly followed
+    # by an index in square brackets e. g. [0].
+    # On the other hand the Archive allows tags starting with the string "xml".
+    return bool(re.fullmatch('[A-Za-z][.\-0-9A-Za-z_]+(?:\[[0-9]+\])?', name))

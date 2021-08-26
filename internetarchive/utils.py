@@ -369,3 +369,17 @@ def is_valid_metadata_key(name):
     # by an index in square brackets e. g. [0].
     # On the other hand the Archive allows tags starting with the string "xml".
     return bool(re.fullmatch('[A-Za-z][.\-0-9A-Za-z_]+(?:\[[0-9]+\])?', name))
+
+
+def merge_dictionaries(dict0, dict1, keys_to_drop=None):
+    """Merge the dictionaries `dict0` and `dict1`, while giving precedence
+       to the items existing in `dict1`.
+       Additionally `keys_to_drop` is an optional list with keys that will
+       be dropped from `dict0` before the dictionaries are merged."""
+    new_dict = dict0.copy()
+    if keys_to_drop is not None:
+        for key in keys_to_drop:
+            new_dict.pop(key, None)
+    # Items from dict1 take precedence over items from dict0.
+    new_dict.update(dict1)
+    return new_dict

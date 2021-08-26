@@ -27,6 +27,8 @@ options:
     -h, --help
     -m, --metadata=<key:value>...  Metadata to add to your new item, if you are moving
                                    the file to a new item.
+    --replace-metadata             Only use metadata specified as argument,
+                                   do not copy any from the source item.
     -H, --header=<key:value>...    S3 HTTP headers to send with your request.
 
 examples:
@@ -83,6 +85,7 @@ def main(argv, session, cmd='copy'):
             error='Destination not formatted correctly. See usage example.'),
         '--metadata': Or(None, And(Use(get_args_dict), dict),
                          error='--metadata must be formatted as --metadata="key:value"'),
+        '--replace-metadata': Use(bool),
         '--header': Or(None, And(Use(get_args_dict), dict),
                        error='--header must be formatted as --header="key:value"'),
     })
@@ -99,11 +102,13 @@ def main(argv, session, cmd='copy'):
     args['--header']['x-amz-copy-source'] = '/{}'.format(parse.quote(src_path))
     # Copy the old metadata verbatim if no additional metadata is supplied,
     # else combine the old and the new metadata in a sensible manner.
-    args['--header']['x-amz-metadata-directive'] = ('REPLACE' if args['--metadata']
+    args['--header']['x-amz-metadata-directive'] = ('REPLACE' if (args['--metadata']
+                                                                  or args['--replace-metadata'])
                                                     else 'COPY')
     # New metadata takes precedence over old metadata.
-    args['--metadata'] = merge_dictionaries(SRC_ITEM.metadata,
-                                            args['--metadata'])
+    if not args['--replace-metadata']:
+        args['--metadata'] = merge_dictionaries(SRC_ITEM.metadata,
+                                                args['--metadata'])
 
     # Add keep-old-version by default.
     if 'x-archive-keep-old-version' not in args['--header']:

@@ -42,7 +42,7 @@ from six.moves.urllib import parse
 
 import internetarchive as ia
 from internetarchive.cli.argparser import get_args_dict
-from internetarchive.utils import get_s3_xml_text
+from internetarchive.utils import get_s3_xml_text, merge_dictionaries
 
 
 def assert_src_file_exists(src_location):
@@ -97,7 +97,14 @@ def main(argv, session, cmd='copy'):
         sys.exit(1)
 
     args['--header']['x-amz-copy-source'] = '/{}'.format(parse.quote(src_path))
-    args['--header']['x-amz-metadata-directive'] = 'COPY'
+    # Copy the old metadata verbatim if no additional metadata is supplied,
+    # else combine the old and the new metadata in a sensible manner.
+    args['--header']['x-amz-metadata-directive'] = ('REPLACE' if args['--metadata']
+                                                    else 'COPY')
+    # New metadata takes precedence over old metadata.
+    args['--metadata'] = merge_dictionaries(SRC_ITEM.metadata,
+                                            args['--metadata'])
+
     # Add keep-old-version by default.
     if 'x-archive-keep-old-version' not in args['--header']:
         args['--header']['x-archive-keep-old-version'] = '1'

@@ -118,6 +118,7 @@ def main(argv, session, cmd='copy'):
     req = ia.iarequest.S3Request(url=url,
                                  method='PUT',
                                  metadata=args['--metadata'],
+                                 file_metadata=SRC_FILE.metadata,
                                  headers=args['--header'],
                                  access_key=session.access_key,
                                  secret_key=session.secret_key)

@@ -3,6 +3,20 @@
 Release History
 ---------------
 
+2.1.0 (2021-08-25)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Better error messages in ``ia upload --spreadsheet``.
+- Added support for REMOTE_NAME in ``ia upload --spreadsheet`` via a ``REMOTE_NAME`` column.
+- Implemented XDG Base Directory specification.
+
+**Bugfixes**
+
+- Fixed bug in FTS where searches would crash with a TypeError exception.
+- Improved Python 2 compatability.
+
 2.0.3 (2021-05-03)
 ++++++++++++++++++
 

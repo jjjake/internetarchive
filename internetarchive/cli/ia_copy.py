@@ -30,6 +30,7 @@ options:
     --replace-metadata             Only use metadata specified as argument,
                                    do not copy any from the source item.
     -H, --header=<key:value>...    S3 HTTP headers to send with your request.
+    --ignore-file-metadata         Do not copy file metadata.
 
 examples:
     # Turn off backups
@@ -88,6 +89,7 @@ def main(argv, session, cmd='copy'):
         '--replace-metadata': Use(bool),
         '--header': Or(None, And(Use(get_args_dict), dict),
                        error='--header must be formatted as --header="key:value"'),
+        '--ignore-file-metadata': Use(bool),
     })
 
     try:
@@ -118,7 +120,8 @@ def main(argv, session, cmd='copy'):
     req = ia.iarequest.S3Request(url=url,
                                  method='PUT',
                                  metadata=args['--metadata'],
-                                 file_metadata=SRC_FILE.metadata,
+                                 file_metadata=(None if args['--ignore-file-metadata']
+                                                else SRC_FILE.metadata),
                                  headers=args['--header'],
                                  access_key=session.access_key,
                                  secret_key=session.secret_key)

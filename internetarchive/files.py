@@ -68,6 +68,9 @@ class BaseFile(object):
 
         for key in file_metadata:
             setattr(self, key, file_metadata[key])
+        # An additional, more orderly way to access file metadata,
+        # which avoids filtering the attributes.
+        self.metadata = file_metadata
         self.mtime = float(self.mtime) if self.mtime else 0
         self.size = int(self.size) if self.size else 0
 

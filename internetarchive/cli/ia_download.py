@@ -60,7 +60,7 @@ options:
     --no-change-timestamp                    Don't change the timestamp of downloaded files to reflect
                                              the source material.
     -p, --parameters=<key:value>...          Parameters to send with your query (e.g. `cnt=0`).
-    -a, --download-history                   Do not download any files from the history dir.
+    -a, --download-history                   Also download files from the history directory.
 """
 from __future__ import print_function, absolute_import
 import os

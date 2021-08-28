@@ -64,6 +64,7 @@ options:
 """
 from __future__ import print_function, absolute_import
 import os
+from os.path import exists as dir_exists
 import sys
 
 import six
@@ -71,13 +72,6 @@ from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
 
 from internetarchive.cli.argparser import get_args_dict
-
-
-def dir_exists(dir):
-    if os.path.exists(dir):
-        return True
-    else:
-        return False
 
 
 def main(argv, session):

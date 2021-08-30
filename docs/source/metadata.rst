@@ -16,7 +16,7 @@ Please refer to the XML Naming Rules section `here <https://www.w3schools.com/xm
 Archive.org Identifiers
 -----------------------
 
-Each item at Internet Archive has an identifier. An identifier is composed of any unique combination of alphanumeric characters, underscore (``_``) and dash (``-``). While there are no official limits it is strongly suggested that identifiers be between 5 and 80 characters in length.
+Each item at Internet Archive has an identifier. An identifier is composed of any unique combination of alphanumeric characters, underscore (``_``) and dash (``-``). The maximum length of an identifier is 101 characters, but it is strongly suggested that identifiers be between 5 and 80 characters in length.
 
 Identifiers must be unique across the entirety of Internet Archive, not simply unique within a single collection.
 

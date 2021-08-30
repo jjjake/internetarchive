@@ -372,14 +372,29 @@ def is_valid_metadata_key(name):
 
 
 def merge_dictionaries(dict0, dict1, keys_to_drop=None):
-    """Merge the dictionaries `dict0` and `dict1`, while giving precedence
-       to the items existing in `dict1`.
-       Additionally `keys_to_drop` is an optional list with keys that will
-       be dropped from `dict0` before the dictionaries are merged."""
+    """Merge two dictionaries.
+
+       Items in `dict0` can optionally be dropped before the merge.
+
+       If equal keys exist in both dictionaries,
+       entries in`dict0` are overwritten.
+
+       :type dict0: dict
+       :param dict0: A base dictionary with the bulk of the items.
+
+       :type dict1: dict
+       :param dict1: Additional items which overwrite the items in `dict0`.
+
+       :type keys_to_drop: iterable
+       :param keys_to_drop: An iterable of keys to drop from `dict0` before the merge.
+
+       :rtype: dict
+       :returns: A merged dictionary.
+       """
     new_dict = dict0.copy()
     if keys_to_drop is not None:
         for key in keys_to_drop:
             new_dict.pop(key, None)
-    # Items from dict1 take precedence over items from dict0.
+    # Items from `dict1` take precedence over items from `dict0`.
     new_dict.update(dict1)
     return new_dict

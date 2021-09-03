@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2019 Internet Archive
+# Copyright (C) 2012-2021 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -21,7 +21,7 @@
 
 usage:
     ia download <identifier> [<file>]... [options]...
-    ia download <identifier> <file> --stdout [--retries=<retries>]
+    ia download <identifier> <file> --stdout [options]...
     ia download --itemlist=<file> [options]...
     ia download --search=<query> [options]...
     ia download --help
@@ -60,10 +60,11 @@ options:
     --no-change-timestamp                    Don't change the timestamp of downloaded files to reflect
                                              the source material.
     -p, --parameters=<key:value>...          Parameters to send with your query (e.g. `cnt=0`).
-    -a, --download-history                   Do not download any files from the history dir.
+    -a, --download-history                   Also download files from the history directory.
 """
 from __future__ import print_function, absolute_import
 import os
+from os.path import exists as dir_exists
 import sys
 
 import six
@@ -71,13 +72,6 @@ from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
 
 from internetarchive.cli.argparser import get_args_dict
-
-
-def dir_exists(dir):
-    if os.path.exists(dir):
-        return True
-    else:
-        return False
 
 
 def main(argv, session):

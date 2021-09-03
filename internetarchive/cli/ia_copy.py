@@ -114,6 +114,12 @@ def main(argv, session, cmd='copy'):
         args['--metadata'] = merge_dictionaries(SRC_ITEM.metadata,
                                                 args['--metadata'])
 
+    # File metadata is copied by default but can be dropped.
+    if args['--ignore-file-metadata']:
+        file_metadata = None
+    else:
+        file_metadata = SRC_FILE.metadata
+
     # Add keep-old-version by default.
     if 'x-archive-keep-old-version' not in args['--header']:
         args['--header']['x-archive-keep-old-version'] = '1'
@@ -122,8 +128,7 @@ def main(argv, session, cmd='copy'):
     req = ia.iarequest.S3Request(url=url,
                                  method='PUT',
                                  metadata=args['--metadata'],
-                                 file_metadata=(None if args['--ignore-file-metadata']
-                                                else SRC_FILE.metadata),
+                                 file_metadata=file_metadata,
                                  headers=args['--header'],
                                  access_key=session.access_key,
                                  secret_key=session.secret_key)

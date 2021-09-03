@@ -104,9 +104,11 @@ def main(argv, session, cmd='copy'):
     args['--header']['x-amz-copy-source'] = '/{}'.format(parse.quote(src_path))
     # Copy the old metadata verbatim if no additional metadata is supplied,
     # else combine the old and the new metadata in a sensible manner.
-    args['--header']['x-amz-metadata-directive'] = ('REPLACE' if (args['--metadata']
-                                                                  or args['--replace-metadata'])
-                                                    else 'COPY')
+    if args['--metadata'] or args['--replace-metadata']:
+        args['--header']['x-amz-metadata-directive'] = 'REPLACE'
+    else:
+        args['--header']['x-amz-metadata-directive'] = 'COPY'
+
     # New metadata takes precedence over old metadata.
     if not args['--replace-metadata']:
         args['--metadata'] = merge_dictionaries(SRC_ITEM.metadata,

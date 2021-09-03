@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2019 Internet Archive
+# Copyright (C) 2012-2021 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -27,7 +27,10 @@ options:
     -h, --help
     -m, --metadata=<key:value>...  Metadata to add to your new item, if you are moving
                                    the file to a new item.
+    --replace-metadata             Only use metadata specified as argument,
+                                   do not copy any from the source item.
     -H, --header=<key:value>...    S3 HTTP headers to send with your request.
+    --ignore-file-metadata         Do not copy file metadata.
 
 examples:
     # Turn off backups
@@ -42,7 +45,7 @@ from six.moves.urllib import parse
 
 import internetarchive as ia
 from internetarchive.cli.argparser import get_args_dict
-from internetarchive.utils import get_s3_xml_text
+from internetarchive.utils import get_s3_xml_text, merge_dictionaries
 
 
 def assert_src_file_exists(src_location):
@@ -83,8 +86,10 @@ def main(argv, session, cmd='copy'):
             error='Destination not formatted correctly. See usage example.'),
         '--metadata': Or(None, And(Use(get_args_dict), dict),
                          error='--metadata must be formatted as --metadata="key:value"'),
+        '--replace-metadata': Use(bool),
         '--header': Or(None, And(Use(get_args_dict), dict),
                        error='--header must be formatted as --header="key:value"'),
+        '--ignore-file-metadata': Use(bool),
     })
 
     try:
@@ -97,7 +102,24 @@ def main(argv, session, cmd='copy'):
         sys.exit(1)
 
     args['--header']['x-amz-copy-source'] = '/{}'.format(parse.quote(src_path))
-    args['--header']['x-amz-metadata-directive'] = 'COPY'
+    # Copy the old metadata verbatim if no additional metadata is supplied,
+    # else combine the old and the new metadata in a sensible manner.
+    if args['--metadata'] or args['--replace-metadata']:
+        args['--header']['x-amz-metadata-directive'] = 'REPLACE'
+    else:
+        args['--header']['x-amz-metadata-directive'] = 'COPY'
+
+    # New metadata takes precedence over old metadata.
+    if not args['--replace-metadata']:
+        args['--metadata'] = merge_dictionaries(SRC_ITEM.metadata,
+                                                args['--metadata'])
+
+    # File metadata is copied by default but can be dropped.
+    if args['--ignore-file-metadata']:
+        file_metadata = None
+    else:
+        file_metadata = SRC_FILE.metadata
+
     # Add keep-old-version by default.
     if 'x-archive-keep-old-version' not in args['--header']:
         args['--header']['x-archive-keep-old-version'] = '1'
@@ -106,6 +128,7 @@ def main(argv, session, cmd='copy'):
     req = ia.iarequest.S3Request(url=url,
                                  method='PUT',
                                  metadata=args['--metadata'],
+                                 file_metadata=file_metadata,
                                  headers=args['--header'],
                                  access_key=session.access_key,
                                  secret_key=session.secret_key)

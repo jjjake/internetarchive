@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2019 Internet Archive
+# Copyright (C) 2012-2021 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -68,6 +68,9 @@ class BaseFile(object):
 
         for key in file_metadata:
             setattr(self, key, file_metadata[key])
+        # An additional, more orderly way to access file metadata,
+        # which avoids filtering the attributes.
+        self.metadata = file_metadata
         self.mtime = float(self.mtime) if self.mtime else 0
         self.size = int(self.size) if self.size else 0
 

@@ -256,7 +256,7 @@ class Item(BaseItem):
         :rtype: bool
         :returns: `True` if no tasks are pending, otherwise `False`.
         """
-        return all(x == 0 for x in self.task_summary(params, request_kwargs).values())
+        return all(x == 0 for x in self.get_task_summary(params, request_kwargs).values())
 
     def get_all_item_tasks(self, params=None, request_kwargs=None):
         """Get a list of all tasks for the item, pending and complete.

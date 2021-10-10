@@ -323,7 +323,7 @@ class Item(BaseItem):
 
         :type remove_derived: str
         :param remove_derived: (optional) You can use wildcards ("globs")
-                               to only remove *some* prior derivaties.
+                               to only remove *some* prior derivatives.
                                For example, "*" (typed without the
                                quotation marks) specifies that all
                                derivatives (in the item's top directory)
@@ -510,7 +510,7 @@ class Item(BaseItem):
 
         :type file_metadata: dict
         :param file_metadata: (optional) a dict of metadata for the
-                              given fille.
+                              given file.
         """
         return File(self, file_name, file_metadata)
 

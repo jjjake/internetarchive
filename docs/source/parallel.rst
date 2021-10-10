@@ -42,7 +42,7 @@ Logging and retrying with Parallel
 
 Parallel also offers an easy way to log and retry failed commands.
 
-Here's an example of a job that is retrieving metadata for all of the items in the file named ``itemlist.txt``, and outputing the metadata to a file named ``output.jsonl``.
+Here's an example of a job that is retrieving metadata for all of the items in the file named ``itemlist.txt``, and outputting the metadata to a file named ``output.jsonl``.
 It uses the ``--joblog`` option to log all commands and their exit value to ``/tmp/my_ia_job.log``:
 
 .. code:: bash

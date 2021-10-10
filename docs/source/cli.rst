@@ -91,7 +91,7 @@ You can also create new targets if they don't exist:
 
     $ ia metadata <identifier> --target="extra_metadata" --modify="foo:bar"
 
-There is also an ``--append`` option which allows you to append a string to an existing metadata strings (Note: use ``--append-list`` for appending elments to a list).
+There is also an ``--append`` option which allows you to append a string to an existing metadata strings (Note: use ``--append-list`` for appending elements to a list).
 For example, if your item's title was ``Foo`` and you wanted it to be ``Foo Bar``, you could simply do:
 
 .. code:: bash

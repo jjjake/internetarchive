@@ -164,7 +164,7 @@ Let's take a look at ``metadata``:
     ]
 
 As you might notice, this is all of the item-level metadata (i.e. the JSON equivalent of an item's ``<identifier>_meta.xml`` file).
-We can decend deeper into the JSON document like so:
+We can descend deeper into the JSON document like so:
 
 .. code:: bash
 

@@ -40,7 +40,7 @@ options:
     -G, --get-task-log=<task_id>  Return the given tasks task log.
     -p, --parameter=<k:v>...      URL parameters passed to catalog.php.
     -c, --cmd=<command>           The task to submit (e.g. make_dark.php).
-    -C, --comment=<command>       A reasonable explantion for why a
+    -C, --comment=<command>       A reasonable explanation for why a
                                   task is being submitted.
     -T, --tab-output              Output task info in tab-delimited columns.
     -a, --task-args=<k:v>...      Args to submit to the Tasks API.

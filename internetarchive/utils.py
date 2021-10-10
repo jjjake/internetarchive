@@ -49,7 +49,7 @@ def deep_update(d, u):
 
 
 def map2x(func, *iterables):
-    """map() function for Python 2/3 compatability"""
+    """map() function for Python 2/3 compatibility"""
     zipped = zip_longest(*iterables)
     if func is None:
         return zipped
@@ -213,7 +213,7 @@ def get_file_size(file_obj):
 
 
 def iter_directory(directory):
-    """Given a directory, yield all files recursivley as a two-tuple (filepath, s3key)"""
+    """Given a directory, yield all files recursively as a two-tuple (filepath, s3key)"""
     for path, dir, files in os.walk(directory):
         for f in files:
             filepath = os.path.join(path, f)

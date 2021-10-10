@@ -424,7 +424,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
         # Increment the counter so we know how many values the final
         # value in prepared_metadata should have.
         indexed_keys[key] += len(source_metadata.get(key, []))
-        # Intialize the value in the prepared_metadata dict.
+        # Initialize the value in the prepared_metadata dict.
         prepared_metadata[key] = source_metadata.get(key, [])
         if not isinstance(prepared_metadata[key], list):
             prepared_metadata[key] = [prepared_metadata[key]]

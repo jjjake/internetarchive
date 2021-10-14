@@ -105,6 +105,8 @@ def main(argv, session=None):
             else:
                 j = json.dumps(result)
                 print(j)
+                if result.get('error'):
+                    sys.exit(1)
     except ValueError as e:
         print('error: {0}'.format(e), file=sys.stderr)
     except ConnectTimeout as exc:

@@ -201,6 +201,8 @@ class Search(object):
         self.params['output'] = 'json'
         r = self.session.get(self.search_url, params=self.params, **self.request_kwargs)
         j = r.json()
+        if j.get('error'):
+            yield j
         for agg in j.get('response', dict()).get('aggregations', dict()).items():
             yield {agg[0]: agg[1]}
 

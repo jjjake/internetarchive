@@ -183,7 +183,7 @@ class ArchiveSession(requests.sessions.Session):
                                 connect=max_retries,
                                 read=max_retries,
                                 redirect=False,
-                                method_whitelist=Retry.DEFAULT_METHOD_WHITELIST,
+                                allowed_methods=Retry.DEFAULT_ALLOWED_METHODS,
                                 status_forcelist=status_forcelist,
                                 backoff_factor=1)
         self.http_adapter_kwargs['max_retries'] = max_retries

@@ -39,10 +39,11 @@ setup(
         'backports.csv < 1.07;python_version<"3.4"',
         'docopt>=0.6.0,<0.7.0',
         'jsonpatch>=0.4',
-        'requests>=2.9.1,<3.0.0',
+        'requests>=2.25.0,<3.0.0',
         'schema>=0.4.0',
         'six>=1.13.0,<2.0.0',
         'tqdm>=4.0.0',
+        'urllib3>=1.26.0',
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',

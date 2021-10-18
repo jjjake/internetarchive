@@ -2,7 +2,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2019 Internet Archive
+# Copyright (C) 2012-2021 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -24,9 +24,10 @@ internetarchive.session
 This module provides an ArchiveSession object to manage and persist
 settings across the internetarchive package.
 
-:copyright: (C) 2012-2019 by Internet Archive.
+:copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+
 from __future__ import absolute_import, unicode_literals
 
 import os
@@ -183,7 +184,7 @@ class ArchiveSession(requests.sessions.Session):
                                 connect=max_retries,
                                 read=max_retries,
                                 redirect=False,
-                                method_whitelist=Retry.DEFAULT_METHOD_WHITELIST,
+                                allowed_methods=Retry.DEFAULT_ALLOWED_METHODS,
                                 status_forcelist=status_forcelist,
                                 backoff_factor=1)
         self.http_adapter_kwargs['max_retries'] = max_retries

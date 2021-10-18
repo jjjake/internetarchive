@@ -465,7 +465,7 @@ def test_upload_delete(tmpdir, nasa_item):
     body = ("<?xml version='1.0' encoding='UTF-8'?>"
             '<Error><Code>BadDigest</Code><Message>The Content-MD5 you specified did not '
             'match what we received.</Message><Resource>content-md5 submitted with PUT: '
-            'foo != recieved data md5: 70871f9fce8dd23853d6e42417356b05also not equal to '
+            'foo != received data md5: 70871f9fce8dd23853d6e42417356b05also not equal to '
             'base64 version: cIcfn86N0jhT1uQkFzVrBQ==</Resource><RequestId>ec03fe7c-e123-'
             '4133-a207-3141d4d74096</RequestId></Error>')
 

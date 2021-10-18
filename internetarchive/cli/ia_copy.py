@@ -62,7 +62,7 @@ def main(argv, session, cmd='copy'):
     src_path = args['<src-identifier>/<src-file>']
     dest_path = args['<dest-identifier>/<dest-file>']
 
-    # If src == dest, file get's deleted!
+    # If src == dest, file gets deleted!
     try:
         assert src_path != dest_path
     except AssertionError:

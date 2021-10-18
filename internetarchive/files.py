@@ -111,7 +111,7 @@ class File(BaseFile):
 
         :type file_metadata: dict
         :param file_metadata: (optional) a dict of metadata for the
-                              given fille.
+                              given file.
         """
         if six.PY2:
             try:

@@ -25,7 +25,7 @@ All pull requests and patches are welcome, but please consider the following:
 - Include tests.
 - Include documentation for new features.
 - If your patch is supposed to fix a bug, please describe in as much detail as possible the circumstances in which the bug happens.
-- Please follow `PEP8 <http://legacy.python.org/dev/peps/pep-0008/>`_, with the exception of what is ignored in `setup.cfg <https://github.com/jjjake/internetarchive/blob/master/setup.cfg>`_. PEP8 compliancy is checked when tests run. Tests will fail if your patch is not PEP8 compliant.
+- Please follow `PEP8 <http://legacy.python.org/dev/peps/pep-0008/>`_, with the exception of what is ignored in `setup.cfg <https://github.com/jjjake/internetarchive/blob/master/setup.cfg>`_. PEP8 compliance is checked when tests run. Tests will fail if your patch is not PEP8 compliant.
 - Add yourself to AUTHORS.rst.
 - Avoid introducing new dependencies.
 - Open an issue if a relevant one is not already open, so others have visibility into what you're working on and efforts aren't duplicated.

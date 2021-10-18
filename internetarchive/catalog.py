@@ -76,7 +76,7 @@ class Catalog(object):
 
     def __init__(self, archive_session, request_kwargs=None):
         """
-        Initialize :class:`Catalog <Catalog>` obect.
+        Initialize :class:`Catalog <Catalog>` object.
 
         :type archive_session: :class:`ArchiveSession <ArchiveSession>`
         :param archive_session: An :class:`ArchiveSession <ArchiveSession>`

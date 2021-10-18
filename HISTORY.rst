@@ -354,7 +354,7 @@ Release History
 - Added unicode support to ``ia upload --spreadsheet`` and ``ia metadata --spreadsheet`` using the ``backports.csv`` module.
 - Fixed bug in ``ia upload --spreadsheet`` where some metadata was accidentally being copied from previous rows
   (e.g. when multiple subjects were used).
-- Submitter wasn't being added to ``ia tasks --json`` ouptut, it now is.
+- Submitter wasn't being added to ``ia tasks --json`` output, it now is.
 - ``row_type`` in ``ia tasks --json`` was returning integer for row-type rather than name (e.g. 'red').
 
 1.5.0 (2017-02-17)
@@ -386,12 +386,12 @@ Release History
 **Features and Improvements**
 
 - Added ``ia copy`` and ``ia move`` for copying and moving files in archive.org items.
-- Added support for outputing JSON in ``ia tasks``.
+- Added support for outputting JSON in ``ia tasks``.
 - Added support to ``ia download`` to write to stdout instead of file.
 
 **Bugfixes**
 
-- Fixed bug in upload where AttributeError was rasied when trying to upload file-like objects without a name attribute.
+- Fixed bug in upload where AttributeError was raised when trying to upload file-like objects without a name attribute.
 - Removed identifier validation from ``ia delete``.
   If an identifier already exists, we don't need to validate it.
   This only makes things annoying if an identifier exists but fails ``internetarchive`` id validation.
@@ -399,7 +399,7 @@ Release History
   Ideally IA-S3 would always return XML, but that's not the case as of now.
   Try to dump the HTML in the S3 response if unable to parse XML.
 - Fixed bug where ArchiveSession headers weren't being sent in prepared requests.
-- Fixed bug in ``ia upload --size-hint`` where value was an integer, but requests requries it to be a string.
+- Fixed bug in ``ia upload --size-hint`` where value was an integer, but requests requires it to be a string.
 - Added support for downloading files to stdout in ``ia download`` and ``File.download``.
 
 1.1.0 (2016-11-18)
@@ -413,14 +413,14 @@ Release History
 **Bugfixes**
 
 - Fixed bug where the full filepath was being set as the remote filename in Windows.
-- Convert all metadata header values to strings for compatability with ``requests>=2.11.0``.
+- Convert all metadata header values to strings for compatibility with ``requests>=2.11.0``.
 
 1.0.10 (2016-09-20)
 +++++++++++++++++++
 
 **Bugfixes**
 
-- Convert x-archive-cascade-delete headers to strings for compatability with ``requests>=2.11.0``.
+- Convert x-archive-cascade-delete headers to strings for compatibility with ``requests>=2.11.0``.
 
 1.0.9 (2016-08-16)
 ++++++++++++++++++
@@ -487,7 +487,7 @@ Release History
 
 - Use scrape API for getting total number of results rather than the advanced search API.
 - Improved error messages for IA-S3 (upload) related errors.
-- Added retry suport to delete.
+- Added retry support to delete.
 - ``ia delete`` no longer exits if a single request fails when deleting multiple files, but continues onto the next file.
   If any file fails, the command will exit with a non-zero status code.
 - All search requests now require authentication via IA-S3 keys.
@@ -542,7 +542,7 @@ Release History
 
 - Renamed ``internetarchive.iacli`` to ``internetarchive.cli``.
 - Moved ``File`` object to ``internetarchive.files``.
-- Converted config fromat from YAML to INI to avoid PyYAML requirement.
+- Converted config format from YAML to INI to avoid PyYAML requirement.
 - Use HTTPS by default for Python versions > 2.7.9.
 - Added ``get_username`` function to API.
 - Improved Python 3 support. ``internetarchive`` is now being tested against Python versions 2.6, 2.7, 3.4, and 3.5.
@@ -611,7 +611,7 @@ Release History
 **Features and Improvements**
 
 - Added ability to download items from an itemlist or search query in `ia download`.
-- Made `ia configure` Python 3 compatabile.
+- Made `ia configure` Python 3 compatible.
 
 **Bugfixes**
 
@@ -743,7 +743,7 @@ Release History
 - Added support to `ia upload` for setting remote-name if only a single file is being
   uploaded.
 - Derive tasks are now only queued after the last file has been uploaded.
-- File URLs are now quoted in `File` objects, for downloading files with specail
+- File URLs are now quoted in `File` objects, for downloading files with special
   characters in their filenames
 
 0.7.0 (2014-07-23)

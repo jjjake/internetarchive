@@ -66,6 +66,7 @@ import six
 from internetarchive.cli.argparser import get_args_dict, get_args_dict_many_write,\
     get_args_header_dict
 from internetarchive.exceptions import ItemLocateError
+from internetarchive.utils import (is_json)
 
 # Only import backports.csv for Python2 (in support of FreeBSD port).
 PY2 = sys.version_info[0] == 2
@@ -270,8 +271,11 @@ def main(argv, session):
     if args['--spreadsheet']:
         if not args['--priority']:
             args['--priority'] = -5
-        with io.open(args['--spreadsheet'], 'rU', newline='', encoding='utf-8') as csvfp:
-            spreadsheet = csv.DictReader(csvfp)
+        with io.open(args['--spreadsheet'], 'rU', newline='', encoding='utf-8') as fp:
+            if is_json(args['--spreadsheet']):
+                spreadsheet = json.load(fp)
+            else:
+                spreadsheet = csv.DictReader(fp)
             responses = []
             for row in spreadsheet:
                 if not row['identifier']:

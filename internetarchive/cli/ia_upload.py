@@ -78,7 +78,7 @@ from schema import Schema, Use, Or, And, SchemaError
 from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
 from internetarchive.session import ArchiveSession
 from internetarchive.utils import (InvalidIdentifierException, get_s3_xml_text,
-                                   is_valid_metadata_key, validate_s3_identifier)
+                                   is_valid_metadata_key, validate_s3_identifier, is_json)
 
 # Only import backports.csv for Python2 (in support of FreeBSD port).
 PY2 = sys.version_info[0] == 2
@@ -260,8 +260,12 @@ def main(argv, session):
     # Bulk upload using spreadsheet.
     else:
         # Use the same session for each upload request.
-        with io.open(args['--spreadsheet'], 'rU', newline='', encoding='utf-8') as csvfp:
-            spreadsheet = csv.DictReader(csvfp)
+
+        with io.open(args['--spreadsheet'], 'rU', newline='', encoding='utf-8') as fp:
+            if is_json(args['--spreadsheet']):
+                spreadsheet = json.load(fp)
+            else:
+                spreadsheet = csv.DictReader(fp)
             prev_identifier = None
             for row in spreadsheet:
                 for metadata_key in row:

@@ -46,13 +46,14 @@ from requests.utils import default_headers
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3 import Retry
 from six.moves.urllib.parse import urlparse, unquote
+from requests.cookies import create_cookie
 
 from internetarchive import __version__, auth
 from internetarchive.config import get_config
 from internetarchive.item import Item, Collection
 from internetarchive.search import Search
 from internetarchive.catalog import Catalog, CatalogTask
-from internetarchive.utils import reraise_modify
+from internetarchive.utils import reraise_modify, parse_dict_cookies
 
 
 logger = logging.getLogger(__name__)
@@ -105,7 +106,14 @@ class ArchiveSession(requests.sessions.Session):
 
         self.config = get_config(config, config_file)
         self.config_file = config_file
-        self.cookies.update(self.config.get('cookies', {}))
+        for ck, cv in self.config.get('cookies', {}).items():
+            raw_cookie = '{}={}'.format(ck, cv)
+            cookie_dict = parse_dict_cookies(raw_cookie)
+            cookie = create_cookie(ck, cookie_dict[ck],
+                                   domain=cookie_dict.get('domain'),
+                                   path=cookie_dict.get('path'))
+            self.cookies.set_cookie(cookie)
+
         self.secure = self.config.get('general', {}).get('secure', True)
         self.host = self.config.get('general', {}).get('host', 'archive.org')
         if 'archive.org' not in self.host:

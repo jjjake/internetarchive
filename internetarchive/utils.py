@@ -398,3 +398,17 @@ def merge_dictionaries(dict0, dict1, keys_to_drop=None):
     # Items from `dict1` take precedence over items from `dict0`.
     new_dict.update(dict1)
     return new_dict
+
+
+def parse_dict_cookies(value):
+    result = {}
+    for item in value.split(';'):
+        item = item.strip()
+        if not item:
+            continue
+        if '=' not in item:
+            result[item] = None
+            continue
+        name, value = item.split('=', 1)
+        result[name] = value
+    return result

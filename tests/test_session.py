@@ -14,8 +14,8 @@ CONFIG = {
         'secret': 'test_secret',
     },
     'cookies': {
-        'logged-in-user': 'test%40example.com',
-        'logged-in-sig': 'testsig',
+        'logged-in-user': 'test%40example.com; path=/; domain=.archive.org',
+        'logged-in-sig': 'testsig; path=/; domain=.archive.org',
     },
     'logging': {
         'level': 'INFO',
@@ -31,7 +31,7 @@ def test_archive_session(tmpdir):
     assert os.path.isfile('test.log')
 
     assert CONFIG == s.config
-    assert s.cookies == CONFIG['cookies']
+    assert set(s.cookies.keys()) == set(CONFIG['cookies'].keys())
     assert s.secure is True
     assert s.protocol == PROTOCOL
     assert s.access_key == 'test_access'
@@ -119,3 +119,22 @@ def test_s3_is_overloaded():
         s = internetarchive.session.ArchiveSession(CONFIG)
         r = s.s3_is_overloaded('nasa')
         assert r is True
+
+def test_cookies():
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, '{0}//archive.org'.format(PROTOCOL))
+        s = internetarchive.session.ArchiveSession(CONFIG)
+        r = s.get('{}//archive.org'.format(PROTOCOL))
+        assert 'logged-in-sig' in r.request.headers['Cookie']
+        assert 'logged-in-user' in r.request.headers['Cookie']
+        for c in s.cookies:
+            if c.name.startswith('logged-in-'):
+                assert c.domain == '.archive.org'
+
+    with responses.RequestsMock() as rsps:
+        rsps.add(responses.GET, '{0}//test.com'.format(PROTOCOL))
+        s = internetarchive.session.ArchiveSession(CONFIG)
+        r = s.get('{}//test.com'.format(PROTOCOL))
+        assert 'logged-in-sig' not in r.request.headers.get('Cookie', str())
+        assert 'logged-in-user' not in r.request.headers.get('Cookie', str())
+        assert '.archive.org' not in r.request.headers.get('Cookie', str())

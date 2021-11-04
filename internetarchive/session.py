@@ -109,6 +109,8 @@ class ArchiveSession(requests.sessions.Session):
         for ck, cv in self.config.get('cookies', {}).items():
             raw_cookie = '{}={}'.format(ck, cv)
             cookie_dict = parse_dict_cookies(raw_cookie)
+            if not cookie_dict.get(ck):
+                continue
             cookie = create_cookie(ck, cookie_dict[ck],
                                    domain=cookie_dict.get('domain'),
                                    path=cookie_dict.get('path'))

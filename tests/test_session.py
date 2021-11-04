@@ -132,9 +132,9 @@ def test_cookies():
                 assert c.domain == '.archive.org'
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//test.com'.format(PROTOCOL))
+        rsps.add(responses.GET, '{0}//example.com'.format(PROTOCOL))
         s = internetarchive.session.ArchiveSession(CONFIG)
-        r = s.get('{}//test.com'.format(PROTOCOL))
+        r = s.get('{}//example.com'.format(PROTOCOL))
         assert 'logged-in-sig' not in r.request.headers.get('Cookie', str())
         assert 'logged-in-user' not in r.request.headers.get('Cookie', str())
         assert '.archive.org' not in r.request.headers.get('Cookie', str())

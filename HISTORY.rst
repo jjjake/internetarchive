@@ -6,6 +6,11 @@ Release History
 2.2.0 (?)
 +++++++++
 
+**Features and Improvements**
+
+- Added ``ia reviews <id> --delete``.
+- Added ability to fetch a users reviews from an item via ``ia reviews <id>``.
+
 **Bugfixes**
 
 - Fixed bug in ``ArchiveSession`` object where domains weren't getting set properly for cookies.

@@ -489,6 +489,26 @@ class Item(BaseItem):
         r.raise_for_status()
         return r
 
+    def get_review(self):
+        u = '{protocol}//{host}/services/reviews.php'.format(
+            protocol=self.session.protocol,
+            host=self.session.host)
+        p = dict(identifier=self.identifier)
+        a = S3Auth(self.session.access_key, self.session.secret_key)
+        r = self.session.get(u, params=p, auth=a)
+        r.raise_for_status()
+        return r
+
+    def delete_review(self):
+        u = '{protocol}//{host}/services/reviews.php'.format(
+            protocol=self.session.protocol,
+            host=self.session.host)
+        p = dict(identifier=self.identifier)
+        a = S3Auth(self.session.access_key, self.session.secret_key)
+        r = self.session.delete(u, params=p, auth=a)
+        r.raise_for_status()
+        return r
+
     def review(self, title, body, stars=None):
         u = '{protocol}//{host}/services/reviews.php'.format(
             protocol=self.session.protocol,

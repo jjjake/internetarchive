@@ -25,6 +25,8 @@ Reviews API documentation::
     https://archive.org/services/docs/api/reviews.html
 
 usage:
+    ia reviews <identifier>
+    ia reviews <identifier> --delete
     ia reviews <identifier> --title=<title> --body=<body> [--stars=<stars>]
     ia reviews --help
 
@@ -33,6 +35,7 @@ options:
     -t, --title=<title>    The title of your review.
     -b, --body=<body>      The body of your review.
     -s, --stars=<stars>    The number of stars for your review.
+    -d, --delete           Delete your review. [default: False]
 
 examples:
     ia reviews nasa
@@ -41,13 +44,27 @@ from __future__ import absolute_import, print_function
 import sys
 
 from docopt import docopt
+from requests.exceptions import HTTPError
 
 
 def main(argv, session):
     args = docopt(__doc__, argv=argv)
 
     item = session.get_item(args['<identifier>'])
-    r = item.review(args['--title'], args['--body'], args['--stars'])
+    if args['--delete']:
+        r = item.delete_review()
+    elif not args['--body']:
+        try:
+            r = item.get_review()
+            print(r.text)
+            sys.exit(0)
+        except HTTPError as exc:
+            if exc.response.status_code == 404:
+                sys.exit(0)
+            else:
+                raise exc
+    else:
+        r = item.review(args['--title'], args['--body'], args['--stars'])
     j = r.json()
     if j.get('success') or 'no change detected' in j.get('error', '').lower():
         task_id = j.get('value', dict()).get('task_id')

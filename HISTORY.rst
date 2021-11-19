@@ -15,6 +15,7 @@ Release History
 
 - Fixed bug in ``ArchiveSession`` object where domains weren't getting set properly for cookies.
   This caused archive.org cookies to be sent to other domains.
+- Fixed bug in URL param parser for CLI.
 
 2.1.0 (2021-08-25)
 ++++++++++++++++++

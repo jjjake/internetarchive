@@ -37,6 +37,7 @@ def get_args_dict(args, query_string=False, header=False):
         if query_string:
             if (':' in md) and ('=' not in md):
                 md = md.replace(':', '=')
+                md = md.replace(';', '&')
             for key, value in parse_qsl(md):
                 assert value
                 metadata[key] = value

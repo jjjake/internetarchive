@@ -120,6 +120,7 @@ def test_s3_is_overloaded():
         r = s.s3_is_overloaded('nasa')
         assert r is True
 
+
 def test_cookies():
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, '{0}//archive.org'.format(PROTOCOL))

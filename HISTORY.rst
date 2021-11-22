@@ -29,7 +29,7 @@ Release History
 **Bugfixes**
 
 - Fixed bug in FTS where searches would crash with a TypeError exception.
-- Improved Python 2 compatability.
+- Improved Python 2 compatibility.
 
 2.0.3 (2021-05-03)
 ++++++++++++++++++

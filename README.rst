@@ -5,10 +5,7 @@ A Python and Command-Line Interface to Archive.org
    :alt: Join the chat at https://gitter.im/internetarchive/ia
    :target: https://gitter.im/internetarchive/ia?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
-|travis|
-
-.. |travis| image:: https://travis-ci.com/jjjake/internetarchive.svg
-    :target: https://travis-ci.com/jjjake/internetarchive
+![example workflow](https://github.com/jjjake/internetarchive/actions/workflows/main.yml/badge.svg)
 
 This package installs a command-line tool named ``ia`` for using Archive.org from the command-line.
 It also installs the ``internetarchive`` Python module for programmatic access to archive.org.

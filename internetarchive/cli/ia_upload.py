@@ -264,13 +264,11 @@ def main(argv, session):
             spreadsheet = csv.DictReader(csvfp)
             prev_identifier = None
             for row in spreadsheet:
-                # TODO: Add PY2 support to ``is_valid_metadata_key``,
-                # then we can turn this back on.
-                # for metadata_key in row:
-                #     if not is_valid_metadata_key(metadata_key):
-                #         print('error: "%s" is not a valid metadata key.' % metadata_key,
-                #               file=sys.stderr)
-                #         sys.exit(1)
+                for metadata_key in row:
+                    if not is_valid_metadata_key(metadata_key):
+                        print('error: "%s" is not a valid metadata key.' % metadata_key,
+                              file=sys.stderr)
+                        sys.exit(1)
                 upload_kwargs_copy = deepcopy(upload_kwargs)
                 if row.get('REMOTE_NAME'):
                     local_file = {row['REMOTE_NAME']: row['file']}

@@ -90,3 +90,19 @@ def test_get_file_size():
     with open(NASA_METADATA_PATH) as fp:
         s = internetarchive.utils.get_file_size(fp)
     assert s == 7557
+
+
+def test_is_valid_metadata_key():
+    # Keys starting with "xml" should also be invalid
+    # due to the XML specification, but are supported
+    # by the Internet Archive.
+    valid = ("adaptive_ocr", "bookreader-defaults", "frames_per_second",
+             "identifier", "possible-copyright-status", "index[0]")
+    invalid = ("Analog Format", "Date of transfer (probably today's date)",
+               "_metadata_key", "58", "_", "<invalid>", "a")
+
+    for metadata_key in valid:
+        assert internetarchive.utils.is_valid_metadata_key(metadata_key)
+
+    for metadata_key in invalid:
+        assert not internetarchive.utils.is_valid_metadata_key(metadata_key)

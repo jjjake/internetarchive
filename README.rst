@@ -9,7 +9,7 @@ A Python and Command-Line Interface to Archive.org
 .. |tox| image:: https://github.com/jjjake/internetarchive/actions/workflows/tox.yml/badge.svg
     :target: https://github.com/jjjake/internetarchive/actions/workflows/tox.yml
 
-.. |verions| image:: https://img.shields.io/pypi/pyversions/internetarchive.svg
+.. |versions| image:: https://img.shields.io/pypi/pyversions/internetarchive.svg
     :target: https://pypi.org/project/internetarchive
 
 .. |downloads| image:: https://static.pepy.tech/badge/internetarchive/month

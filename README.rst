@@ -2,11 +2,15 @@ A Python and Command-Line Interface to Archive.org
 ==================================================
 
 |tox|
+|versions|
 |downloads|
 |contributors|
 
 .. |tox| image:: https://github.com/jjjake/internetarchive/actions/workflows/tox.yml/badge.svg
     :target: https://github.com/jjjake/internetarchive/actions/workflows/tox.yml
+
+.. |verions| image:: https://img.shields.io/pypi/pyversions/internetarchive.svg
+    :target: https://pypi.org/project/internetarchive
 
 .. |downloads| image:: https://static.pepy.tech/badge/internetarchive/month
     :target: https://pepy.tech/project/internetarchive

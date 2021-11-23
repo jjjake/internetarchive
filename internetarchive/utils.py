@@ -368,7 +368,7 @@ def is_valid_metadata_key(name):
     # are way more restrictive and only allow ".-A-Za-z_", possibly followed
     # by an index in square brackets e. g. [0].
     # On the other hand the Archive allows tags starting with the string "xml".
-    return bool(re.fullmatch('[A-Za-z][.\-0-9A-Za-z_]+(?:\[[0-9]+\])?', name))
+    return bool(re.match('^[A-Za-z][.\-0-9A-Za-z_]+(?:\[[0-9]+\])?$', name))
 
 
 def merge_dictionaries(dict0, dict1, keys_to_drop=None):

@@ -125,7 +125,6 @@ html_sidebars = {
 html_theme_options = {
     'github_user': 'jjjake',
     'github_repo': 'internetarchive',
-    'travis_button': True,
     'github_button': True,
     'show_powered_by': 'false',
     'sidebar_width': '200px',

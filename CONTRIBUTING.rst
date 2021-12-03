@@ -68,4 +68,4 @@ To test against all supported Python versions, first make sure you have all of t
     $ pip install tox
     $ tox
 
-Even easier is simply creating a pull request. `Travis <https://travis-ci.com/>`_ is used for continuous integration, and is set up to run the full testsuite whenever a pull request is submitted or updated.
+Even easier is simply creating a pull request. `GitHub Actions <https://docs.github.com/en/actions>`_ are used for continuous integration, and are set up to run the full testsuite whenever a pull request is submitted or updated.

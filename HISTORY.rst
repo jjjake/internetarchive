@@ -3,8 +3,8 @@
 Release History
 ---------------
 
-2.2.0 (?)
-+++++++++
+2.2.0 (2021-11-23)
+++++++++++++++++++
 
 **Features and Improvements**
 
@@ -16,6 +16,7 @@ Release History
 - Fixed bug in ``ArchiveSession`` object where domains weren't getting set properly for cookies.
   This caused archive.org cookies to be sent to other domains.
 - Fixed bug in URL param parser for CLI.
+- Fixed Python 2 bug in ``ia upload --spreadsheet``.
 
 2.1.0 (2021-08-25)
 ++++++++++++++++++

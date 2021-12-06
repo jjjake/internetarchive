@@ -182,7 +182,7 @@ def test_download_clobber(tmpdir, nasa_item):
         rsps.reset()
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='new test content')
         nasa_item.download(files='nasa_meta.xml')
-        load_file('nasa/nasa_meta.xml') == 'new test content'
+        assert load_file('nasa/nasa_meta.xml') == 'new test content'
 
 
 def test_download_checksum(tmpdir, caplog):

@@ -112,8 +112,9 @@ class ArchiveSession(requests.sessions.Session):
             if not cookie_dict.get(ck):
                 continue
             cookie = create_cookie(ck, cookie_dict[ck],
-                                   domain=cookie_dict.get('domain'),
-                                   path=cookie_dict.get('path'))
+                                   # .archive.org might be a better domain.
+                                   domain=cookie_dict.get('domain', ''),
+                                   path=cookie_dict.get('path', '/'))
             self.cookies.set_cookie(cookie)
 
         self.secure = self.config.get('general', {}).get('secure', True)

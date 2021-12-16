@@ -31,7 +31,7 @@ usage:
     ia tasks <identifier> --cmd=<command> [--comment=<comment>]
                           [--task-args=<k:v>...] [--data=<k:v>...]
                           [--tab-output] [--reduced-priority]
-    ia tasks --get-rate-limit --cmd=<cmd>
+    ia tasks --get-rate-limit --cmd=<command>
     ia tasks --help
 
 options:

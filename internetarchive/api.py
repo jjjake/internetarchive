@@ -122,7 +122,7 @@ def get_files(identifier,
               glob_pattern=None,
               on_the_fly=None,
               **get_item_kwargs):
-    """Get :class:`File` objects from an item.
+    r"""Get :class:`File` objects from an item.
 
     :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
@@ -162,7 +162,7 @@ def modify_metadata(identifier, metadata,
                     debug=None,
                     request_kwargs=None,
                     **get_item_kwargs):
-    """Modify the metadata of an existing item on Archive.org.
+    r"""Modify the metadata of an existing item on Archive.org.
 
     :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
@@ -227,7 +227,7 @@ def upload(identifier, files,
            validate_identifier=None,
            request_kwargs=None,
            **get_item_kwargs):
-    """Upload files to an item. The item will be created if it does not exist.
+    r"""Upload files to an item. The item will be created if it does not exist.
 
     :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
@@ -321,7 +321,7 @@ def download(identifier,
              return_responses=None,
              no_change_timestamp=None,
              **get_item_kwargs):
-    """Download files from an item.
+    r"""Download files from an item.
 
     :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.

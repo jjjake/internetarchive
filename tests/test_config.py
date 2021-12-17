@@ -318,6 +318,21 @@ def test_parse_config_file_direct_path_overrides_existing_files():
     )
 
 
+def test_parse_config_file_with_environment_variable():
+    with _environ(IA_CONFIG_FILE='/inexistent.ia.ini'):
+        _test_parse_config_file(
+            expected_result=('/inexistent.ia.ini', False),
+        )
+
+
+def test_parse_config_file_with_environment_variable_and_parameter():
+    with _environ(IA_CONFIG_FILE='/inexistent.ia.ini'):
+        _test_parse_config_file(
+            expected_result=('/inexistent.other.ia.ini', False),
+            config_file_param='/inexistent.other.ia.ini',
+        )
+
+
 def _test_write_config_file(
         expected_config_file,
         expected_modes,

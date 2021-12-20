@@ -411,4 +411,8 @@ def parse_dict_cookies(value):
             continue
         name, value = item.split('=', 1)
         result[name] = value
+    if 'domain' not in result:
+        result['domain'] = '.archive.org'
+    if 'path' not in result:
+        result['path'] = '/'
     return result

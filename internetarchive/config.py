@@ -121,6 +121,9 @@ def parse_config_file(config_file=None):
 
     is_xdg = False
     if not config_file:
+        candidates = []
+        if os.environ.get('IA_CONFIG_FILE'):
+            candidates.append(os.environ['IA_CONFIG_FILE'])
         xdg_config_home = os.environ.get('XDG_CONFIG_HOME')
         if not xdg_config_home or not os.path.isabs(xdg_config_home):
             # Per the XDG Base Dir specification, this should be $HOME/.config. Unfortunately, $HOME
@@ -128,15 +131,16 @@ def parse_config_file(config_file=None):
             # system, where $HOME must always be set, the XDG spec will be followed precisely.
             xdg_config_home = os.path.join(os.path.expanduser('~'), '.config')
         xdg_config_file = os.path.join(xdg_config_home, 'internetarchive', 'ia.ini')
-        for candidate in [xdg_config_file,
-                          os.path.join(os.path.expanduser('~'), '.config', 'ia.ini'),
-                          os.path.join(os.path.expanduser('~'), '.ia')]:
+        candidates.append(xdg_config_file)
+        candidates.append(os.path.join(os.path.expanduser('~'), '.config', 'ia.ini'))
+        candidates.append(os.path.join(os.path.expanduser('~'), '.ia'))
+        for candidate in candidates:
             if os.path.isfile(candidate):
                 config_file = candidate
                 break
         else:
-            # None of the candidates exist, default to XDG
-            config_file = xdg_config_file
+            # None of the candidates exist, default to IA_CONFIG_FILE if set else XDG
+            config_file = os.environ.get('IA_CONFIG_FILE', xdg_config_file)
         if config_file == xdg_config_file:
             is_xdg = True
     config.read(config_file)

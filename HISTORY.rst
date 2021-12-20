@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+Unreleased
+++++++++++
+
+**Features and Improvements**
+
+- Added support for ``IA_CONFIG_FILE`` environment variable to specify the configuration file path.
+
 2.2.0 (2021-11-23)
 ++++++++++++++++++
 

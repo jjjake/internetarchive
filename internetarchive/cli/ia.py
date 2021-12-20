@@ -28,7 +28,9 @@ usage:
 options:
     -h, --help
     -v, --version
-    -c, --config-file FILE  Use FILE as config file.
+    -c, --config-file FILE  Use FILE as config file. (Can also be set with the
+                            IA_CONFIG_FILE environment variable. The option takes
+                            precedence when both are used.)
     -l, --log               Turn on logging [default: False].
     -d, --debug             Turn on verbose logging [default: False].
     -i, --insecure          Use HTTP for all requests instead of HTTPS [default: false]

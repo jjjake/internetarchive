@@ -31,7 +31,7 @@ usage:
     ia tasks <identifier> --cmd=<command> [--comment=<comment>]
                           [--task-args=<k:v>...] [--data=<k:v>...]
                           [--tab-output] [--reduced-priority]
-    ia tasks --get-rate-limit --cmd=<cmd>
+    ia tasks --get-rate-limit --cmd=<command>
     ia tasks --help
 
 options:
@@ -40,7 +40,7 @@ options:
     -G, --get-task-log=<task_id>  Return the given tasks task log.
     -p, --parameter=<k:v>...      URL parameters passed to catalog.php.
     -c, --cmd=<command>           The task to submit (e.g. make_dark.php).
-    -C, --comment=<command>       A reasonable explanation for why a
+    -C, --comment=<comment>       A reasonable explanation for why a
                                   task is being submitted.
     -T, --tab-output              Output task info in tab-delimited columns.
     -a, --task-args=<k:v>...      Args to submit to the Tasks API.

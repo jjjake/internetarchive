@@ -31,7 +31,7 @@ def test_ia_search_itemlist(capsys):
         ia_call(['ia', 'search', 'collection:attentionkmartshoppers', '--itemlist'])
 
     out, err = capsys.readouterr()
-    assert len(out.split()) == 200
+    assert len(set(out.split())) == 100
 
 
 def test_ia_search_num_found(capsys):

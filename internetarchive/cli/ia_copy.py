@@ -32,10 +32,9 @@ options:
     -H, --header=<key:value>...    S3 HTTP headers to send with your request.
     --ignore-file-metadata         Do not copy file metadata.
     -n, --no-derive                Do not derive uploaded files.
-
-examples:
-    # Turn off backups
-    ia copy <src-identifier>/<src-file> <dest-identifier>/<dest-file> -H x-archive-keep-old-version:0
+    --no-backup                    Turn off archive.org backups. Clobbered files
+                                   will not be saved to history/files/$key.~N~
+                                   [default: True].
 """
 from __future__ import print_function, absolute_import
 import sys
@@ -122,7 +121,7 @@ def main(argv, session, cmd='copy'):
         file_metadata = SRC_FILE.metadata
 
     # Add keep-old-version by default.
-    if 'x-archive-keep-old-version' not in args['--header']:
+    if not args['--header'].get('x-archive-keep-old-version') and not args['--no-backup']:
         args['--header']['x-archive-keep-old-version'] = '1'
 
     url = '{}//s3.us.archive.org/{}'.format(session.protocol, parse.quote(dest_path))

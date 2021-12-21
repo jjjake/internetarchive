@@ -29,10 +29,9 @@ options:
                                    the file to a new item.
     -H, --header=<key:value>...    S3 HTTP headers to send with your request.
     -n, --no-derive                Do not derive uploaded files.
-
-examples:
-    # Turn off backups
-    ia move <src-identifier>/<src-file> <dest-identifier>/<dest-file> -H x-archive-keep-old-version:0
+    --no-backup                    Turn off archive.org backups. Clobbered files
+                                   will not be saved to history/files/$key.~N~
+                                   [default: True].
 """
 from __future__ import print_function, absolute_import
 import sys
@@ -67,7 +66,7 @@ def main(argv, session):
         sys.exit(1)
 
     # Add keep-old-version by default.
-    if 'x-archive-keep-old-version' not in args['--header']:
+    if not args['--header'].get('x-archive-keep-old-version') and not args['--no-backup']:
         args['--header']['x-archive-keep-old-version'] = '1'
 
     # First we use ia_copy, prep argv for ia_copy.

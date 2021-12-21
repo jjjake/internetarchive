@@ -56,9 +56,9 @@ options:
     --no-collection-check                Skip collection exists check [default: False].
     -o, --open-after-upload              Open the details page for an item after upload
                                          [default: False].
-
-examples:
-    ia upload <id> <file> -H x-archive-keep-old-version:0  # Turn off backups
+    --no-backup                          Turn off archive.org backups. Clobbered files
+                                         will not be saved to history/files/$key.~N~
+                                         [default: True].
 """
 from __future__ import absolute_import, unicode_literals, print_function
 
@@ -203,7 +203,7 @@ def main(argv, session):
     if args['--size-hint']:
         args['--header']['x-archive-size-hint'] = args['--size-hint']
     # Upload with backups turned on by default.
-    if not args['--header'].get('x-archive-keep-old-version'):
+    if not args['--header'].get('x-archive-keep-old-version') and not args['--no-backup']:
         args['--header']['x-archive-keep-old-version'] = '1'
 
     queue_derive = True if args['--no-derive'] is False else False

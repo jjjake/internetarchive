@@ -39,10 +39,9 @@ options:
     -f, --format=<format>...     Only only delete files matching the specified format(s).
     -R, --retries=<i>            Number of times to retry if S3 returns a 503 SlowDown
                                  error [default: 2].
-    -n, --no-backup              Don't move deleted files to the history subdirectory.
-
-examples:
-    ia delete <id> <file> --no-backup  # Turn off backups
+    --no-backup                  Turn off archive.org backups. Clobbered files
+                                 will not be saved to history/files/$key.~N~
+                                 [default: True].
 """
 from __future__ import absolute_import, print_function, unicode_literals
 
@@ -93,11 +92,8 @@ def main(argv, session):
     no_delete = ['_meta.xml', '_files.xml', '_meta.sqlite']
 
     # Add keep-old-version by default.
-    if 'x-archive-keep-old-version' not in args['--header']:
-        if args['--no-backup']:
-            args['--header']['x-archive-keep-old-version'] = '0'
-        else:
-            args['--header']['x-archive-keep-old-version'] = '1'
+    if not args['--header'].get('x-archive-keep-old-version') and not args['--no-backup']:
+        args['--header']['x-archive-keep-old-version'] = '1'
 
     if verbose:
         print('Deleting files from {0}'.format(item.identifier))

@@ -28,6 +28,7 @@ options:
     -m, --metadata=<key:value>...  Metadata to add to your new item, if you are moving
                                    the file to a new item.
     -H, --header=<key:value>...    S3 HTTP headers to send with your request.
+    -n, --no-derive                Do not derive uploaded files.
 
 examples:
     # Turn off backups

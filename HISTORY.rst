@@ -9,6 +9,7 @@ Unreleased
 **Features and Improvements**
 
 - Added support for ``IA_CONFIG_FILE`` environment variable to specify the configuration file path.
+- Added ``--no-derive`` option to ``ia copy`` and ``ia move``.
 
 2.2.0 (2021-11-23)
 ++++++++++++++++++

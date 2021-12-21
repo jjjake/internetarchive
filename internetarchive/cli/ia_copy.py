@@ -31,6 +31,7 @@ options:
                                    do not copy any from the source item.
     -H, --header=<key:value>...    S3 HTTP headers to send with your request.
     --ignore-file-metadata         Do not copy file metadata.
+    -n, --no-derive                Do not derive uploaded files.
 
 examples:
     # Turn off backups
@@ -125,11 +126,13 @@ def main(argv, session, cmd='copy'):
         args['--header']['x-archive-keep-old-version'] = '1'
 
     url = '{}//s3.us.archive.org/{}'.format(session.protocol, parse.quote(dest_path))
+    queue_derive = True if args['--no-derive'] is False else False
     req = ia.iarequest.S3Request(url=url,
                                  method='PUT',
                                  metadata=args['--metadata'],
                                  file_metadata=file_metadata,
                                  headers=args['--header'],
+                                 queue_derive=queue_derive,
                                  access_key=session.access_key,
                                  secret_key=session.secret_key)
     p = req.prepare()

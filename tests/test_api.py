@@ -23,6 +23,7 @@ TEST_SCRAPE_RESPONSE = load_test_data_file('scrape_response.json')
 _j = json.loads(TEST_SCRAPE_RESPONSE)
 del _j['cursor']
 _j['items'] = [{'identifier': 'nasa'}]
+_j['total'] = 1
 TEST_SCRAPE_RESPONSE = json.dumps(_j)
 
 

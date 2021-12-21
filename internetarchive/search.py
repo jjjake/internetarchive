@@ -33,6 +33,7 @@ import itertools
 from logging import getLogger
 
 import six
+from requests.exceptions import ReadTimeout
 
 from internetarchive.auth import S3Auth
 
@@ -146,12 +147,19 @@ class Search(object):
                                   auth=self.auth,
                                   **self.request_kwargs)
             j = r.json()
+            num_found = j['total']
             self._handle_scrape_error(j)
 
             self.params['cursor'] = j.get('cursor')
+            i = 0
             for item in j['items']:
+                i += 1
                 yield item
             if 'cursor' not in j:
+                if i != num_found:
+                    raise ReadTimeout('The server failed to return results in the'
+                                      ' allotted amount of time for'
+                                      ' {}'.format(r.request.url))
                 break
 
     def _full_text_search(self):

@@ -49,7 +49,7 @@ from itertools import chain
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Use, Or, And
 import six
-from requests.exceptions import ConnectTimeout
+from requests.exceptions import ConnectTimeout, ReadTimeout
 
 from internetarchive import search_items
 from internetarchive.cli.argparser import get_args_dict
@@ -112,6 +112,10 @@ def main(argv, session=None):
     except ConnectTimeout as exc:
         print('error: Request timed out. Increase the --timeout and try again.',
               file=sys.stderr)
+        sys.exit(1)
+    except ReadTimeout as exc:
+        print('error: The server timed out and failed to return all search results,'
+              ' please try again', file=sys.stderr)
         sys.exit(1)
     except AuthenticationError as exc:
         print('error: {}'.format(exc), file=sys.stderr)

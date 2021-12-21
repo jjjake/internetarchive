@@ -12,6 +12,15 @@ Unreleased
 - Added ``--no-derive`` option to ``ia copy`` and ``ia move``.
 - Added ``--no-backup`` option to ``ia copy``, ``ia move``, ``ia upload``, and ``ia delete``.
 
+**Bugfixes**
+
+- Fixed bug where queries to the Scrape API (e.g. most search requests made by ``internetarchive``)
+  would fail to return all docs without any error reporting, if the Scrape API times out.
+  All queries to the Scrape API are now tested to assert the number of docs returned matches the
+  hit count returned by the Scrape API.
+  If these numbers don't match, an exception is thrown in the Python API and the CLI exits with
+  a non-zero exit code and error message. 
+
 2.2.0 (2021-11-23)
 ++++++++++++++++++
 

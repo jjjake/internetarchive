@@ -8,9 +8,22 @@ The Internet Archive Python Library
 
 Release v\ |version|. (:ref:`Installation <install>`)
 
-.. image:: https://github.com/jjjake/internetarchive/actions/workflows/tox.yml/badge.svg
-    :target: https://github.com/jjjake/internetarchive/actions
+|tox|
+|versions|
+|downloads|
+|contributors|
 
+.. |tox| image:: https://github.com/jjjake/internetarchive/actions/workflows/tox.yml/badge.svg
+    :target: https://github.com/jjjake/internetarchive/actions/workflows/tox.yml
+
+.. |versions| image:: https://img.shields.io/pypi/pyversions/internetarchive.svg
+    :target: https://pypi.org/project/internetarchive
+
+.. |downloads| image:: https://static.pepy.tech/badge/internetarchive/month
+    :target: https://pepy.tech/project/internetarchive
+
+.. |contributors| image:: https://img.shields.io/github/contributors/jjjake/internetarchive.svg
+    :target: https://github.com/jjjake/internetarchive/graphs/contributors
 
 Welcome to the documentation for the ``internetarchive`` Python library.
 ``internetarchive`` is a command-line and Python interface to archive.org.

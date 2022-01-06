@@ -27,7 +27,8 @@ usage:
 options:
     -h, --help
     -q, --quiet                  Print status to stdout.
-    -c, --cascade                Delete all derivative files associated with the given
+    -c, --cascade                Delete all files associated with the specified file,
+                                 including upstream derivatives and the original.
                                  file.
     -H, --header=<key:value>...  S3 HTTP headers to send with your request.
     -a, --all                    Delete all files in the given item (Note: Some files,

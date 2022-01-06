@@ -274,7 +274,7 @@ You can use ``ia`` to delete files from archive.org items:
 
     $ ia delete <identifier> <file>
 
-Delete a file *and* all files derived from the specified file:
+Delete all files associated with the specified file, including upstream derivatives and the original:
 
 .. code:: bash
 

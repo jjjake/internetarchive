@@ -425,8 +425,8 @@ def delete(identifier,
     :param glob_pattern: (optional) Only return files matching the given glob pattern.
 
     :type cascade_delete: bool
-    :param cascade_delete: (optional) Also deletes files derived from the file, and files
-                           the filewas derived from.
+    :param cascade_delete: (optional) Delete all files associated with the specified file,
+                           including upstream derivatives and the original.
 
     :type access_key: str
     :param access_key: (optional) IA-S3 access_key to use when making the given request.

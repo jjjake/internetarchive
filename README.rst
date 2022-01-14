@@ -32,6 +32,13 @@ You can install this module via pip:
 
     $ pip install internetarchive
 
+To install latest version from github:
+
+.. code:: bash
+
+    $ pip install git+https://github.com/jjjake/internetarchive/@master -U
+
+
 Binaries of the command-line tool are also available:
 
 .. code:: bash

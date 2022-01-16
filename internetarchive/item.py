@@ -733,7 +733,10 @@ class Item(BaseItem):
             if no_directory:
                 path = f.name
             else:
-                path = os.path.join(self.identifier, f.name)
+                if os.name == 'nt' and self.identifier.endswith('.'):
+                    path = os.path.join(self.identifier.rstrip('.'), f.name)
+                else:
+                    path = os.path.join(self.identifier, f.name)
             if dry_run:
                 print(f.url)
                 continue

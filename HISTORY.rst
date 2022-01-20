@@ -3,8 +3,8 @@
 Release History
 ---------------
 
-Unreleased
-++++++++++
+2.3.0 (2022-01-20)
+++++++++++++++++++
 
 **Features and Improvements**
 
@@ -20,6 +20,8 @@ Unreleased
   hit count returned by the Scrape API.
   If these numbers don't match, an exception is thrown in the Python API and the CLI exits with
   a non-zero exit code and error message. 
+- Use .archive.org as the default cookie domain. This fixes a bug where an AttributeError exception
+  would be raised if a cookie wasn't set in a config file.
 
 2.2.0 (2021-11-23)
 ++++++++++++++++++

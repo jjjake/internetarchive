@@ -36,12 +36,11 @@ options:
                                    will not be saved to history/files/$key.~N~
                                    [default: True].
 """
-from __future__ import print_function, absolute_import
 import sys
+import urllib.parse
 
 from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
-from six.moves.urllib import parse
 
 import internetarchive as ia
 from internetarchive.cli.argparser import get_args_dict
@@ -101,7 +100,7 @@ def main(argv, session, cmd='copy'):
         print('{0}\n{1}'.format(str(exc), usage), file=sys.stderr)
         sys.exit(1)
 
-    args['--header']['x-amz-copy-source'] = '/{}'.format(parse.quote(src_path))
+    args['--header']['x-amz-copy-source'] = '/{}'.format(urllib.parse.quote(src_path))
     # Copy the old metadata verbatim if no additional metadata is supplied,
     # else combine the old and the new metadata in a sensible manner.
     if args['--metadata'] or args['--replace-metadata']:
@@ -124,7 +123,7 @@ def main(argv, session, cmd='copy'):
     if not args['--header'].get('x-archive-keep-old-version') and not args['--no-backup']:
         args['--header']['x-archive-keep-old-version'] = '1'
 
-    url = '{}//s3.us.archive.org/{}'.format(session.protocol, parse.quote(dest_path))
+    url = '{}//s3.us.archive.org/{}'.format(session.protocol, urllib.parse.quote(dest_path))
     queue_derive = True if args['--no-derive'] is False else False
     req = ia.iarequest.S3Request(url=url,
                                  method='PUT',

@@ -26,9 +26,6 @@ This module implements the Internetarchive API.
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import
-
-from six.moves import input
 from getpass import getpass
 import requests
 

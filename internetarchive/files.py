@@ -24,15 +24,11 @@ internetarchive.files
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import, unicode_literals, print_function
-
 import os
 import sys
 import logging
 import socket
-
-import six.moves.urllib as urllib
-import six
+import urllib.parse
 from requests.exceptions import HTTPError, RetryError, ConnectTimeout, \
     ConnectionError, ReadTimeout
 
@@ -42,7 +38,7 @@ from internetarchive import iarequest, utils, auth
 log = logging.getLogger(__name__)
 
 
-class BaseFile(object):
+class BaseFile:
 
     def __init__(self, item_metadata, name, file_metadata=None):
         if file_metadata is None:
@@ -113,12 +109,7 @@ class File(BaseFile):
         :param file_metadata: (optional) a dict of metadata for the
                               given file.
         """
-        if six.PY2:
-            try:
-                name = name.decode('utf-8')
-            except UnicodeEncodeError:
-                pass
-        super(File, self).__init__(item.item_metadata, name, file_metadata)
+        super().__init__(item.item_metadata, name, file_metadata)
         self.item = item
         url_parts = dict(
             protocol=item.session.protocol,
@@ -405,4 +396,4 @@ class OnTheFlyFile(File):
         :param name: The filename of the file.
 
         """
-        super(OnTheFlyFile, self).__init__(item.item_metadata, name)
+        super().__init__(item.item_metadata, name)

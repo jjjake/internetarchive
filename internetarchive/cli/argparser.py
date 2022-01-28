@@ -26,8 +26,7 @@ internetarchive.cli.argparser
 """
 from collections import defaultdict
 import sys
-
-from six.moves.urllib.parse import parse_qsl
+from urllib.parse import parse_qsl
 
 
 def get_args_dict(args, query_string=False, header=False):

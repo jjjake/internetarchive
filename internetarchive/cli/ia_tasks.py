@@ -65,13 +65,11 @@ examples:
     ia tasks <id> --cmd fixer.php --task-args 'noop:1;asr:1'  # submit multiple fixer ops
     ia tasks --get-rate-limit --cmd derive.php  # Get rate-limit information for a specific command
 """
-from __future__ import absolute_import, print_function
 import sys
 import warnings
 import json
 
 from docopt import docopt
-import six
 
 from internetarchive.cli.argparser import get_args_dict
 
@@ -113,11 +111,8 @@ def main(argv, session):
         params = _params
     elif args['--get-task-log']:
         log = session.get_task_log(args['--get-task-log'], params)
-        if six.PY2:
-            print(log.encode('utf-8', errors='surrogateescape'))
-        else:
-            print(log.encode('utf-8', errors='surrogateescape')
-                     .decode('utf-8', errors='replace'))
+        print(log.encode('utf-8', errors='surrogateescape')
+                 .decode('utf-8', errors='replace'))
         sys.exit(0)
 
     queryable_params = [

@@ -60,8 +60,6 @@ options:
                                          will not be saved to history/files/$key.~N~
                                          [default: True].
 """
-from __future__ import absolute_import, unicode_literals, print_function
-
 import io
 import os
 import sys
@@ -69,8 +67,8 @@ from tempfile import TemporaryFile
 from copy import deepcopy
 import webbrowser
 import json
+import csv
 
-import six
 from docopt import docopt, printable_usage
 from requests.exceptions import HTTPError
 from schema import Schema, Use, Or, And, SchemaError
@@ -79,13 +77,6 @@ from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_uni
 from internetarchive.session import ArchiveSession
 from internetarchive.utils import (InvalidIdentifierException, get_s3_xml_text,
                                    is_valid_metadata_key, validate_s3_identifier)
-
-# Only import backports.csv for Python2 (in support of FreeBSD port).
-PY2 = sys.version_info[0] == 2
-if PY2:
-    from backports import csv
-else:
-    import csv
 
 
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
@@ -130,10 +121,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
 
 
 def main(argv, session):
-    if six.PY2:
-        args = docopt(__doc__.encode('utf-8'), argv=argv)
-    else:
-        args = docopt(__doc__, argv=argv)
+    args = docopt(__doc__, argv=argv)
     ERRORS = False
 
     # Validate args.
@@ -145,13 +133,11 @@ def main(argv, session):
                    'underscores "_", or dashes "-". However, <identifier> cannot begin '
                    'with periods, underscores, or dashes.'))),
         '<file>': And(
-            Use(lambda l: l if not six.PY2 else convert_str_list_to_unicode(l)),
             And(lambda f: all(os.path.exists(x) for x in f if x != '-'),
                 error='<file> should be a readable file or directory.'),
             And(lambda f: False if f == ['-'] and not args['--remote-name'] else True,
                 error='--remote-name must be provided when uploading from stdin.')),
-        '--remote-name': Or(None,
-            Use(lambda x: x.decode(sys.getfilesystemencoding()) if six.PY2 else x)),
+        '--remote-name': Or(None, str),
         '--spreadsheet': Or(None, os.path.isfile,
                             error='--spreadsheet should be a readable file.'),
         '--file-metadata': Or(None, os.path.isfile,

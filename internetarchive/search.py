@@ -27,12 +27,8 @@ search engine.
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import, unicode_literals
-
 import itertools
 from logging import getLogger
-
-import six
 from requests.exceptions import ReadTimeout
 
 from internetarchive.auth import S3Auth
@@ -41,7 +37,7 @@ from internetarchive.auth import S3Auth
 log = getLogger(__name__)
 
 
-class Search(object):
+class Search:
     """This class represents an archive.org item search. You can use
     this class to search for Archive.org items using the advanced search
     engine.
@@ -133,8 +129,7 @@ class Search(object):
 
         r = self.session.get(self.search_url, params=self.params, **self.request_kwargs)
         j = r.json()
-        for item in j.get('response', {}).get('docs', []):
-            yield item
+        yield from j.get('response', {}).get('docs', [])
 
     def _scrape(self):
         if self.fields:
@@ -185,8 +180,7 @@ class Search(object):
             hits = j.get('hits', dict()).get('hits')
             if not hits:
                 return
-            for hit in hits:
-                yield hit
+            yield from hits
             if not hits or d['scroll'] is False:
                 break
             d['scroll_id'] = scroll_id
@@ -253,18 +247,14 @@ class Search(object):
         return SearchIterator(self, self._make_results_generator())
 
     def iter_as_items(self):
-        if six.PY2:
-            _map = itertools.imap(self._get_item_from_search_result,
-                                  self._make_results_generator())
-        else:
-            _map = map(self._get_item_from_search_result, self._make_results_generator())
+        _map = map(self._get_item_from_search_result, self._make_results_generator())
         return SearchIterator(self, _map)
 
     def __len__(self):
         return self.num_found
 
 
-class SearchIterator(object):
+class SearchIterator:
     """This class is an iterator wrapper for search results.
 
     It provides access to the underlying Search, and supports

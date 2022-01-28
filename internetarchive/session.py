@@ -27,9 +27,6 @@ settings across the internetarchive package.
 :copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-
-from __future__ import absolute_import, unicode_literals
-
 import os
 import locale
 import sys
@@ -45,8 +42,8 @@ import requests.sessions
 from requests.utils import default_headers
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3 import Retry
-from six.moves.urllib.parse import urlparse, unquote
 from requests.cookies import create_cookie
+from urllib.parse import urlparse, unquote
 
 from internetarchive import __version__, auth
 from internetarchive.config import get_config
@@ -100,7 +97,7 @@ class ArchiveSession(requests.sessions.Session):
 
         :returns: :class:`ArchiveSession` object.
         """
-        super(ArchiveSession, self).__init__()
+        super().__init__()
         http_adapter_kwargs = {} if not http_adapter_kwargs else http_adapter_kwargs
         debug = False if not debug else True
 
@@ -162,7 +159,7 @@ class ArchiveSession(requests.sessions.Session):
         u = urlparse(prepared_request.url)
         if u.netloc.endswith('archive.org'):
             return
-        super(ArchiveSession, self).rebuild_auth(prepared_request, response)
+        super().rebuild_auth(prepared_request, response)
 
     def mount_http_adapter(self, protocol=None, max_retries=None,
                            status_forcelist=None, host=None):
@@ -442,8 +439,7 @@ class ArchiveSession(requests.sessions.Session):
         params = dict() if not params else params
         params.update(dict(identifier=identifier, catalog=0, summary=0, history=1))
         c = Catalog(self, request_kwargs)
-        for j in c.iter_tasks(params):
-            yield j
+        yield from c.iter_tasks(params)
 
     def iter_catalog(self, identifier=None, params=None, request_kwargs=None):
         """A generator that returns queued or running tasks.
@@ -466,8 +462,7 @@ class ArchiveSession(requests.sessions.Session):
         params = dict() if not params else params
         params.update(dict(identifier=identifier, catalog=1, summary=0, history=0))
         c = Catalog(self, request_kwargs)
-        for j in c.iter_tasks(params):
-            yield j
+        yield from c.iter_tasks(params)
 
     def get_tasks_summary(self, identifier=None, params=None, request_kwargs=None):
         """Get the total counts of catalog tasks meeting all criteria,
@@ -561,7 +556,7 @@ class ArchiveSession(requests.sessions.Session):
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always')
             try:
-                r = super(ArchiveSession, self).send(request, **kwargs)
+                r = super().send(request, **kwargs)
             except Exception as e:
                 try:
                     reraise_modify(e, e.request.url, prepend=False)

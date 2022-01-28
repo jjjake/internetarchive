@@ -92,7 +92,7 @@ By default logging is turned off.
 Other Configuration
 ~~~~~~~~~~~~~~~~~~~
 
-By default all requests are HTTPS in Python versions 2.7.10 or newer.
+By default all requests are HTTPS.
 You can change this setting in your config file in the ``general`` section::
 
     [general]

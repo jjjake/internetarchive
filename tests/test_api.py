@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import json
 import os
 import re
 
 import responses
-import six
 from requests.packages import urllib3
 
 from internetarchive import (get_session, get_item, get_files, modify_metadata,
@@ -15,8 +12,6 @@ from internetarchive import (get_session, get_item, get_files, modify_metadata,
 from internetarchive.utils import InvalidIdentifierException
 from tests.conftest import (NASA_METADATA_PATH, PROTOCOL, IaRequestsMock,
                             load_test_data_file, load_file)
-
-PY3 = six.PY3
 
 TEST_SEARCH_RESPONSE = load_test_data_file('advanced_search_response.json')
 TEST_SCRAPE_RESPONSE = load_test_data_file('scrape_response.json')

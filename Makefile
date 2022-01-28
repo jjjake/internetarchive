@@ -30,8 +30,8 @@ docs:
 	@echo "\033[95m\n\nBuild successful! View the docs homepage at docs/build/html/index.html.\n\033[0m"
 
 binary:
-	pex . --python-shebang='/usr/bin/env python' --python python3 --python python2 -e internetarchive.cli.ia:main -o ia-$(VERSION)-py2.py3-none-any.pex -r pex-requirements.txt
+	pex . --python-shebang='/usr/bin/env python' --python python3 -e internetarchive.cli.ia:main -o ia-$(VERSION)-py3-none-any.pex -r pex-requirements.txt
 
 publish-binary:
-	./ia-$(VERSION)-py2.py3-none-any.pex upload ia-pex ia-$(VERSION)-py2.py3-none-any.pex --no-derive
-	./ia-$(VERSION)-py2.py3-none-any.pex upload ia-pex ia-$(VERSION)-py2.py3-none-any.pex --remote-name=ia --no-derive
+	./ia-$(VERSION)-py3-none-any.pex upload ia-pex ia-$(VERSION)-py3-none-any.pex --no-derive
+	./ia-$(VERSION)-py3-none-any.pex upload ia-pex ia-$(VERSION)-py3-none-any.pex --remote-name=ia --no-derive

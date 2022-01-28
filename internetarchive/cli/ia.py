@@ -57,8 +57,6 @@ Documentation for 'ia' is available at:
 
 See 'ia help <command>' for help on a specific command.
 """
-from __future__ import absolute_import, unicode_literals, print_function
-
 import sys
 import os
 import difflib
@@ -67,7 +65,6 @@ from pkg_resources import iter_entry_points, DistributionNotFound
 
 from docopt import docopt, printable_usage
 from schema import Schema, Or, SchemaError
-import six
 
 from internetarchive import __version__
 from internetarchive.api import get_session
@@ -117,9 +114,9 @@ def main():
 
     # Validate args.
     s = Schema({
-        six.text_type: bool,
-        '--config-file': Or(None, *six.string_types),
-        '--host': Or(None, *six.string_types),
+        str: bool,
+        '--config-file': Or(None, str),
+        '--host': Or(None, str),
         '<args>': list,
         '<command>': Or(str, lambda _: 'help'),
     })

@@ -48,7 +48,6 @@ options:
                                         Works on both single and multi-field metadata
                                         elements.
 """
-from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import os
 try:
@@ -58,21 +57,14 @@ except ImportError:
 import io
 from collections import defaultdict
 from copy import copy
+import csv
 
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Or, And, Use
-import six
 
 from internetarchive.cli.argparser import get_args_dict, get_args_dict_many_write,\
     get_args_header_dict
 from internetarchive.exceptions import ItemLocateError
-
-# Only import backports.csv for Python2 (in support of FreeBSD port).
-PY2 = sys.version_info[0] == 2
-if sys.version_info[0] == 2:
-    from backports import csv
-else:
-    import csv
 
 
 def modify_metadata(item, metadata, args):
@@ -176,7 +168,7 @@ def main(argv, session):
 
     # Validate args.
     s = Schema({
-        six.text_type: bool,
+        str: bool,
         '<identifier>': list,
         '--modify': list,
         '--header': Or(None, And(Use(get_args_header_dict), dict),

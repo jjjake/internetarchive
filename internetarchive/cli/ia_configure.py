@@ -35,7 +35,6 @@ options:
     -n, --netrc                Use netrc file for login.
     -c, --print-cookies        Print archive.org logged-in-* cookies.
 """
-from __future__ import absolute_import, print_function, unicode_literals
 import sys
 import netrc
 

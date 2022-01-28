@@ -26,8 +26,6 @@ This module contains objects for interacting with the Archive.org catalog.
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import
-
 try:
     import ujson as json
 except ImportError:
@@ -35,7 +33,6 @@ except ImportError:
 from logging import getLogger
 from datetime import datetime
 
-import six
 from requests.exceptions import HTTPError
 import collections
 
@@ -54,7 +51,7 @@ def sort_by_date(task_dict):
         return datetime.strptime(task_dict['submittime'], '%Y-%m-%d %H:%M:%S')
 
 
-class Catalog(object):
+class Catalog:
     """This class represents the Archive.org catalog.
     You can use this class to access and submit tasks from the catalog.
 
@@ -174,8 +171,7 @@ class Catalog(object):
         line = ''
         tasks = list()
         for c in r.iter_content():
-            if six.PY3:
-                c = c.decode('utf-8')
+            c = c.decode('utf-8')
             if c == '\n':
                 j = json.loads(line)
                 task = CatalogTask(j, self)
@@ -212,8 +208,7 @@ class Catalog(object):
         line = ''
         tasks = list()
         for c in r.iter_content():
-            if six.PY3:
-                c = c.decode('utf-8')
+            c = c.decode('utf-8')
             if c == '\n':
                 j = json.loads(line)
                 task = CatalogTask(j, self)
@@ -278,7 +273,7 @@ class Catalog(object):
         return r
 
 
-class CatalogTask(object):
+class CatalogTask:
     """This class represents an Archive.org catalog task. It is primarily used by
     :class:`Catalog`, and should not be used directly.
     """

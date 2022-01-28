@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from internetarchive.api import get_item
 from internetarchive.utils import norm_filepath, InvalidIdentifierException
 from tests.conftest import (PROTOCOL, IaRequestsMock, load_file,
@@ -355,8 +353,8 @@ def test_upload_metadata(nasa_item):
             foo='bar',
             subject=['first', 'second'],
             baz='Почему бы и нет...',
-            baz2=(u'\u041f\u043e\u0447\u0435\u043c\u0443 \u0431\u044b \u0438 '
-                  u'\u043d\u0435\u0442...'),
+            baz2=('\u041f\u043e\u0447\u0435\u043c\u0443 \u0431\u044b \u0438 '
+                  '\u043d\u0435\u0442...'),
         )
         _responses = nasa_item.upload(NASA_METADATA_PATH,
                                       metadata=md,

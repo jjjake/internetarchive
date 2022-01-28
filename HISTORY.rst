@@ -3,6 +3,17 @@
 Release History
 ---------------
 
+Unreleased
+++++++++++
+
+**Breaking changes**
+
+- Removed Python 2.7 and 3.5 support
+
+**Bugfixes**
+
+- Fixed treatment of list-like file metadata in ``ia list`` under Python 3
+
 2.3.0 (2022-01-20)
 ++++++++++++++++++
 

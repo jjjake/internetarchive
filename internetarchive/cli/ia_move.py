@@ -33,7 +33,6 @@ options:
                                    will not be saved to history/files/$key.~N~
                                    [default: True].
 """
-from __future__ import print_function, absolute_import
 import sys
 
 from docopt import docopt, printable_usage

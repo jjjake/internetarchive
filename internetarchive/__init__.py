@@ -34,8 +34,6 @@ Usage::
 :license: AGPL 3, see LICENSE for more details.
 """
 
-from __future__ import absolute_import
-
 __title__ = 'internetarchive'
 __version__ = '2.3.0'
 __author__ = 'Jacob M. Johnson'
@@ -79,13 +77,6 @@ __all__ = [
 
 # Set default logging handler to avoid "No handler found" warnings.
 import logging
-try:  # Python 2.7+
-    from logging import NullHandler
-except ImportError:
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
-
 
 log = logging.getLogger(__name__)
-log.addHandler(NullHandler())
+log.addHandler(logging.NullHandler())

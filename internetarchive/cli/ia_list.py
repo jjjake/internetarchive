@@ -36,7 +36,6 @@ import sys
 import csv
 from itertools import chain
 from fnmatch import fnmatch
-import six
 
 from docopt import docopt
 
@@ -69,10 +68,8 @@ def main(argv, session):
         file_dict = {}
         for key, val in f.items():
             if key in columns:
-                if six.PY2:
-                    if isinstance(val, (list, tuple, set)):
-                        val = ';'.join(val)
-                    val = val.encode('utf-8')
+                if isinstance(val, (list, tuple, set)):
+                    val = ';'.join(val)
                 if key == 'name' and args.get('--location'):
                     file_dict[key] = ('https://{host}/download/'
                                       '{id}/{f}'.format(host=session.host,

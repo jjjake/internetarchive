@@ -41,7 +41,7 @@ You can set remote filename using a dictionary::
 
 You can upload file-like objects::
 
-    >>> r = upload('iacli-test-item301', {'foo.txt': StringIO(u'bar baz boo')})
+    >>> r = upload('iacli-test-item301', {'foo.txt': StringIO('bar baz boo')})
 
 If the item already has a file with the same filename, the existing file within the item will be overwritten.
 

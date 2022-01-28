@@ -11,12 +11,8 @@ def test_no_args(tmpdir_ch):
 
 
 def test_https(tmpdir_ch):
-    if sys.version_info < (2, 7, 9):
-        stdout, stderr = call_cmd('ia download nasa', expected_exit_code=1)
-        assert 'You are attempting to make an HTTPS' in stderr
-    else:
-        call_cmd('ia download nasa')
-        assert files_downloaded(path='nasa') == NASA_EXPECTED_FILES
+    call_cmd('ia download nasa')
+    assert files_downloaded(path='nasa') == NASA_EXPECTED_FILES
 
 
 def test_dry_run():

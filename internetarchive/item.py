@@ -24,8 +24,6 @@ internetarchive.item
 :copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import, unicode_literals, print_function
-
 import os
 import sys
 from fnmatch import fnmatch
@@ -34,15 +32,11 @@ from time import sleep
 import math
 from xml.parsers.expat import ExpatError
 
-try:
-    from functools import total_ordering
-except ImportError:
-    from total_ordering import total_ordering
+from functools import total_ordering
 import json
 from copy import deepcopy
 
-from six import string_types
-from six.moves import urllib
+import urllib.parse
 from requests import Response
 from tqdm import tqdm
 from requests.exceptions import HTTPError
@@ -61,8 +55,8 @@ log = getLogger(__name__)
 
 
 @total_ordering
-class BaseItem(object):
-    EXCLUDED_ITEM_METADATA_KEYS = (u'workable_servers', u'server')
+class BaseItem:
+    EXCLUDED_ITEM_METADATA_KEYS = ('workable_servers', 'server')
 
     def __init__(self, identifier=None, item_metadata=None):
         # Default attributes.
@@ -178,7 +172,7 @@ class Item(BaseItem):
                               retrieved from Archive.org using the provided identifier.
         """
         self.session = archive_session
-        super(Item, self).__init__(identifier, item_metadata)
+        super().__init__(identifier, item_metadata)
 
         self.urls = Item.URLs(self)
 
@@ -1089,7 +1083,7 @@ class Item(BaseItem):
                             log.info('maximum retries exceeded, upload failed.')
                         break
                 response.raise_for_status()
-                log.info(u'uploaded {f} to {u}'.format(f=key, u=url))
+                log.info('uploaded {f} to {u}'.format(f=key, u=url))
                 if delete and response.status_code == 200:
                     log.info(
                         '{f} successfully uploaded to '
@@ -1202,7 +1196,7 @@ class Item(BaseItem):
                     file_metadata = f.copy()
                     del file_metadata['name']
                     f = f['name']
-            if ((isinstance(f, string_types) and is_dir(f))
+            if ((isinstance(f, str) and is_dir(f))
                     or (isinstance(f, tuple) and is_dir(f[-1]))):
                 if isinstance(f, tuple):
                     remote_dir_name = f[0].strip('/')
@@ -1255,7 +1249,7 @@ class Item(BaseItem):
                     key, body = (None, f)
                 else:
                     key, body = f
-                if key and not isinstance(key, string_types):
+                if key and not isinstance(key, str):
                     key = str(key)
                 resp = self.upload_file(body,
                                         key=key,
@@ -1286,19 +1280,19 @@ class Collection(Item):
         if isinstance(args[0], Item):
             orig = args[0]
             args = (orig.session, orig.identifier, orig.item_metadata)
-        super(Collection, self).__init__(*args, **kwargs)
-        if self.metadata.get(u'mediatype', u'collection') != 'collection':
+        super().__init__(*args, **kwargs)
+        if self.metadata.get('mediatype', 'collection') != 'collection':
             raise ValueError('mediatype is not "collection"!')
 
         deflt_srh = "collection:{0.identifier}".format(self)
         self._make_search('contents',
-                          self.metadata.get(u'search_collection', deflt_srh))
+                          self.metadata.get('search_collection', deflt_srh))
         self._make_search('subcollections',
                           deflt_srh + " AND mediatype:collection")
 
     def _do_search(self, name, query):
         rtn = self.searches.setdefault(
-            name, self.session.search_items(query, fields=[u'identifier']))
+            name, self.session.search_items(query, fields=['identifier']))
         if not hasattr(self, name + "_count"):
             setattr(self, name + "_count", self.searches[name].num_found)
         return rtn.iter_as_items()

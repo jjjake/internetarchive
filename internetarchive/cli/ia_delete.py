@@ -44,11 +44,7 @@ options:
                                  will not be saved to history/files/$key.~N~
                                  [default: True].
 """
-from __future__ import absolute_import, print_function, unicode_literals
-
 import sys
-import six
-
 import requests.exceptions
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Use, Or, And
@@ -67,9 +63,8 @@ def main(argv, session):
 
     # Validate args.
     s = Schema({
-        six.text_type: Use(lambda x: bool(x)),
-        '<file>': And(list, Use(
-            lambda x: convert_str_list_to_unicode(x) if six.PY2 else x)),
+        str: Use(bool),
+        '<file>': list,
         '--format': list,
         '--header': Or(None, And(Use(get_args_dict), dict),
                        error='--header must be formatted as --header="key:value"'),
@@ -109,10 +104,7 @@ def main(argv, session):
     else:
         fnames = []
         if args['<file>'] == ['-']:
-            if six.PY2:
-                fnames = convert_str_list_to_unicode([f.strip() for f in sys.stdin])
-            else:
-                fnames = [f.strip() for f in sys.stdin]
+            fnames = [f.strip() for f in sys.stdin]
         else:
             fnames = [f.strip() for f in args['<file>']]
 

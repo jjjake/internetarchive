@@ -62,12 +62,10 @@ options:
     -p, --parameters=<key:value>...          Parameters to send with your query (e.g. `cnt=0`).
     -a, --download-history                   Also download files from the history directory.
 """
-from __future__ import print_function, absolute_import
 import os
 from os.path import exists as dir_exists
 import sys
 
-import six
 from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
 
@@ -98,10 +96,6 @@ def main(argv, session):
         '--download-history': Use(bool),
         '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
     })
-
-    # Filenames should be unicode literals. Support PY2 and PY3.
-    if six.PY2:
-        args['<file>'] = [f.decode('utf-8') for f in args['<file>']]
 
     try:
         args = s.validate(args)
@@ -162,10 +156,7 @@ def main(argv, session):
                 print('error: {0}/{1} does not exist!'.format(
                     identifier, args['<file>'][0]), file=sys.stderr)
                 sys.exit(1)
-            if six.PY2:
-                stdout_buf = sys.stdout
-            else:
-                stdout_buf = sys.stdout.buffer
+            stdout_buf = sys.stdout.buffer
             f[0].download(retries=args['--retries'],
                           fileobj=stdout_buf,
                           params=args['--parameters'])

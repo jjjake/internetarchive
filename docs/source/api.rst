@@ -161,7 +161,7 @@ The default target to write to is ``metadata``.
 If you would like to write to another target, such as ``files``, you can specify so using the ``target`` parameter.
 For example, if we had an item whose identifier was ``my_identifier`` and you wanted to add a metadata field to a file within the item called foo.txt::
 
-    >>> r = modify_metadata('my_identifier', metadata=dict(title='My File'), target='files/foo.txt')
+    >>> r = modify_metadata('my_identifier', metadata={'title': 'My File'}, target='files/foo.txt')
     >>> from internetarchive import get_files
     >>> f = list(get_files('iacli-test-item301', 'foo.txt'))[0]
     >>> f.title
@@ -169,7 +169,7 @@ For example, if we had an item whose identifier was ``my_identifier`` and you wa
 
 You can also create new targets if they don’t exist::
 
-    >>> r = modify_metadata('my_identifier', metadata=dict(foo='bar'), target='extra_metadata')
+    >>> r = modify_metadata('my_identifier', metadata={'foo': 'bar'}, target='extra_metadata')
     >>> from internetarchive import get_item
     >>> item = get_item('my_identifier')
     >>> item.item_metadata['extra_metadata']

@@ -30,7 +30,7 @@ Uploading
 Creating a new `item on archive.org <//archive.org/services/docs/api/items.html>`_ and uploading files to it is as easy as::
 
     >>> from internetarchive import upload
-    >>> md = dict(collection='test_collection', title='My New Item', mediatype='movies')
+    >>> md = {'collection': 'test_collection', 'title': 'My New Item', 'mediatype': 'movies'}
     >>> r = upload('<identifier>', files=['foo.txt', 'bar.mov'], metadata=md)
     >>> r[0].status_code
     200
@@ -104,28 +104,28 @@ Writing Metadata
 Adding new metadata to an item can be done using the :func:`modify_metadata <internetarchive.modify_metadata>` function::
 
     >>> from internetarchive import modify_metadata
-    >>> r = modify_metadata('<identifier>', metadata=dict(title='My Stuff'))
+    >>> r = modify_metadata('<identifier>', metadata={'title': 'My Stuff'})
     >>> r.status_code
     200
 
 Modifying metadata can also be done via the :class:`Item <internetarchive.Item>` object. For example, changing the title we set in the example above can be done like so::
     
-    >>> r = item.modify_metadata(dict(title='My New Title'))
+    >>> r = item.modify_metadata({'title': 'My New Title'})
     >>> item.metadata['title']
     'My New Title'
 
 To remove a metadata field from an item's metadata, set the value to ``'REMOVE_TAG'``::
 
-    >>> r = item.modify_metadata(dict(foo='new metadata field.'))
+    >>> r = item.modify_metadata({'foo': 'new metadata field.'})
     >>> item.metadata['foo']
     'new metadata field.'
-    >>> r = item.modify_metadata(dict(foo='REMOVE_TAG'))
+    >>> r = item.modify_metadata({'foo': 'REMOVE_TAG'})
     >>> print(item.metadata.get('foo'))
     None
 
 The default behaviour of :func:`modify_metadata <internetarchive.modify_metadata>` is to modify item-level metadata (i.e. title, description, etc.). If we want to modify different kinds of metadata, say the metadata of a specific file, we have to change the metadata ``target`` in the call to :func:`modify_metadata <internetarchive.modify_metadata>`::
 
-    >>> r = item.modify_metadata(dict(title='My File Title'), target='files/foo.txt')
+    >>> r = item.modify_metadata({'title': 'My File Title'}, target='files/foo.txt')
     >>> f = item.get_file('foo.txt')
     >>> f.title
     'My File Title'

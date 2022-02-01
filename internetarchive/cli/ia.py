@@ -72,19 +72,19 @@ from internetarchive.utils import suppress_keyboard_interrupt_message
 suppress_keyboard_interrupt_message()
 
 
-cmd_aliases = dict(
-    co='configure',
-    md='metadata',
-    up='upload',
-    do='download',
-    rm='delete',
-    se='search',
-    ta='tasks',
-    ls='list',
-    cp='copy',
-    mv='move',
-    re='reviews',
-)
+cmd_aliases = {
+    'co': 'configure',
+    'md': 'metadata',
+    'up': 'upload',
+    'do': 'download',
+    'rm': 'delete',
+    'se': 'search',
+    'ta': 'tasks',
+    'ls': 'list',
+    'cp': 'copy',
+    'mv': 'move',
+    're': 'reviews',
+}
 
 
 def load_ia_module(cmd):
@@ -146,19 +146,19 @@ def main():
 
     argv = [cmd] + args['<args>']
 
-    config = dict()
+    config = {}
     if args['--log']:
         config['logging'] = {'level': 'INFO'}
     elif args['--debug']:
         config['logging'] = {'level': 'DEBUG'}
 
     if args['--insecure']:
-        config['general'] = dict(secure=False)
+        config['general'] = {'secure': False}
     if args['--host']:
         if config.get('general'):
             config['general']['host'] = args['--host']
         else:
-            config['general'] = dict(host=args['--host'])
+            config['general'] = {'host': args['--host']}
 
     session = get_session(config_file=args['--config-file'],
                           config=config,

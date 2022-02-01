@@ -66,7 +66,7 @@ def main(argv, session):
         r = item.review(args['--title'], args['--body'], args['--stars'])
     j = r.json()
     if j.get('success') or 'no change detected' in j.get('error', '').lower():
-        task_id = j.get('value', dict()).get('task_id')
+        task_id = j.get('value', {}).get('task_id')
         if task_id:
             print(f'{item.identifier} - success: https://catalogd.archive.org/log/{task_id}')
         else:

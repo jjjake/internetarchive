@@ -217,7 +217,7 @@ def recursive_file_count(files, item=None, checksum=False):
     if checksum is True:
         md5s = [f.get('md5') for f in item.files]
     else:
-        md5s = list()
+        md5s = []
     if isinstance(files, dict):
         # make sure to use local filenames.
         _files = files.values()

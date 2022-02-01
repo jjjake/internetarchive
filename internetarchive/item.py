@@ -113,9 +113,9 @@ class BaseItem:
         return self.identifier <= other.identifier
 
     def __hash__(self):
-        without_excluded_keys = dict(
-            (k, v) for (k, v) in self.item_metadata.items()
-            if k not in self.EXCLUDED_ITEM_METADATA_KEYS)
+        without_excluded_keys = {
+            k: v for k, v in self.item_metadata.items()
+            if k not in self.EXCLUDED_ITEM_METADATA_KEYS}
         return hash(json.dumps(without_excluded_keys,
                                sort_keys=True, check_circular=False))
 
@@ -131,7 +131,7 @@ class Item(BaseItem):
 
     Or to modify the metadata for an item::
 
-        >>> metadata = dict(title='The Stairs')
+        >>> metadata = {'title': 'The Stairs'}
         >>> item.modify_metadata(metadata)
         >>> print(item.metadata['title'])
         'The Stairs'
@@ -223,7 +223,7 @@ class Item(BaseItem):
                  not available.
         """
         url = f'{self.session.protocol}//{self.session.host}/services/check_identifier.php'
-        params = dict(output='json', identifier=self.identifier)
+        params = {'output': 'json', 'identifier': self.identifier}
         response = self.session.get(url, params=params)
         availability = response.json()['code']
         return availability == 'available'
@@ -264,8 +264,8 @@ class Item(BaseItem):
 
         :rtype: List[CatalogTask]
         """
-        params = dict() if not params else params
-        params.update(dict(catalog=1, history=1))
+        params = {} if not params else params
+        params.update({'catalog': 1, 'history': 1})
         return self.session.get_tasks(self.identifier, params, request_kwargs)
 
     def get_history(self, params=None, request_kwargs=None):
@@ -279,7 +279,7 @@ class Item(BaseItem):
 
         :rtype: List[CatalogTask]
         """
-        history = list()
+        history = []
         for t in self.session.iter_history(self.identifier, params, request_kwargs):
             history.append(t)
         return history
@@ -295,7 +295,7 @@ class Item(BaseItem):
 
         :rtype: List[CatalogTask]
         """
-        catalog = list()
+        catalog = []
         for t in self.session.iter_catalog(self.identifier, params, request_kwargs):
             catalog.append(t)
         return catalog
@@ -332,7 +332,7 @@ class Item(BaseItem):
 
         :rtype: :class:`requests.Response`
         """
-        data = dict() if not data else data
+        data = {} if not data else data
 
         if remove_derived is not None:
             if not data.get('args'):
@@ -381,14 +381,14 @@ class Item(BaseItem):
 
         :rtype: :class:`requests.Response`
         """
-        data = dict() if not data else data
+        data = {} if not data else data
 
         if not ops:
             ops = ['noop']
         if not isinstance(ops, (list, tuple, set)):
             ops = [ops]
         if not data.get('args'):
-            data['args'] = dict()
+            data['args'] = {}
         for op in ops:
             data['args'][op] = '1'
 
@@ -482,7 +482,7 @@ class Item(BaseItem):
 
     def get_review(self):
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
-        p = dict(identifier=self.identifier)
+        p = {'identifier': self.identifier}
         a = S3Auth(self.session.access_key, self.session.secret_key)
         r = self.session.get(u, params=p, auth=a)
         r.raise_for_status()
@@ -490,7 +490,7 @@ class Item(BaseItem):
 
     def delete_review(self):
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
-        p = dict(identifier=self.identifier)
+        p = {'identifier': self.identifier}
         a = S3Auth(self.session.access_key, self.session.secret_key)
         r = self.session.delete(u, params=p, auth=a)
         r.raise_for_status()
@@ -498,8 +498,8 @@ class Item(BaseItem):
 
     def review(self, title, body, stars=None):
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
-        p = dict(identifier=self.identifier)
-        d = dict(title=title, body=body)
+        p = {'identifier': self.identifier}
+        d = {'title': title, 'body': body}
         if stars:
             d['stars'] = stars
         a = S3Auth(self.session.access_key, self.session.secret_key)
@@ -539,7 +539,7 @@ class Item(BaseItem):
                 f'{self.identifier}_archive_marc.xml',
             ]
             for f in otf_files:
-                item_files.append(dict(name=f, otf=True))
+                item_files.append({'name': f, 'otf': True})
 
         if not any(k for k in [files, formats, glob_pattern]):
             for f in item_files:
@@ -707,9 +707,9 @@ class Item(BaseItem):
             elif silent is False:
                 print(msg, end='')
 
-        errors = list()
+        errors = []
         downloaded = 0
-        responses = list()
+        responses = []
 
         for f in files:
             if ignore_history_dir is True:
@@ -780,7 +780,7 @@ class Item(BaseItem):
 
             >>> import internetarchive
             >>> item = internetarchive.Item('mapi_test_item1')
-            >>> md = dict(new_key='new_value', foo=['bar', 'bar2'])
+            >>> md = {'new_key': 'new_value', 'foo': ['bar', 'bar2']}
             >>> item.modify_metadata(md)
 
         :rtype: Response
@@ -828,11 +828,11 @@ class Item(BaseItem):
 
         :rtype: :class:`requests.Response`
         """
-        patch = dict(
-            op='delete',
-            parent=parent,
-            list=list,
-        )
+        patch = {
+            'op': 'delete',
+            'parent': parent,
+            'list': list,
+        }
         data = {
             '-patch': json.dumps(patch),
             '-target': 'simplelists',
@@ -1123,7 +1123,7 @@ class Item(BaseItem):
 
             >>> import internetarchive
             >>> item = internetarchive.Item('identifier')
-            >>> md = dict(mediatype='image', creator='Jake Johnson')
+            >>> md = {'mediatype': 'image', 'creator': 'Jake Johnson'}
             >>> item.upload('/path/to/image.jpg', metadata=md, queue_derive=False)
             [<Response [200]>]
 

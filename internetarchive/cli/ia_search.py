@@ -79,10 +79,10 @@ def main(argv, session=None):
     fields = list(chain.from_iterable([x.split(',') for x in args['--field']]))
     sorts = list(chain.from_iterable([x.split(',') for x in args['--sort']]))
 
-    r_kwargs = dict(
-        headers=args['--header'],
-        timeout=args['--timeout'],
-    )
+    r_kwargs = {
+        'headers': args['--header'],
+        'timeout': args['--timeout'],
+    }
 
     search = session.search_items(args['<query>'],
                                   fields=fields,

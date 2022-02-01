@@ -79,15 +79,15 @@ def test_get_files():
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
         files = get_files('nasa')
-        expected_files = set([
+        expected_files = {
             'NASAarchiveLogo.jpg',
             'globe_west_540.jpg',
             'nasa_reviews.xml',
             'nasa_meta.xml',
             'nasa_archive.torrent',
             'nasa_files.xml',
-        ])
-        assert set([f.name for f in files]) == expected_files
+        }
+        assert {f.name for f in files} == expected_files
 
 
 def test_get_files_with_get_item_kwargs(tmpdir):
@@ -151,11 +151,11 @@ def test_get_files_formats():
         assert files[0].name == 'globe_west_540.jpg'
 
         files = get_files('nasa', formats=['JPEG', 'Collection Header'])
-        expected_files = set([
+        expected_files = {
             'globe_west_540.jpg',
             'NASAarchiveLogo.jpg',
-        ])
-        assert set([f.name for f in files]) == expected_files
+        }
+        assert {f.name for f in files} == expected_files
 
 
 def test_get_files_glob_pattern():
@@ -167,12 +167,12 @@ def test_get_files_glob_pattern():
         assert files[0].name == 'nasa_archive.torrent'
 
         files = get_files('nasa', glob_pattern='*torrent|*jpg')
-        expected_files = set([
+        expected_files = {
             'globe_west_540.jpg',
             'NASAarchiveLogo.jpg',
             'nasa_archive.torrent',
-        ])
-        assert set([f.name for f in files]) == expected_files
+        }
+        assert {f.name for f in files} == expected_files
 
 
 def test_modify_metadata():
@@ -182,7 +182,7 @@ def test_modify_metadata():
         rsps.add(responses.POST, f'{PROTOCOL}//archive.org/metadata/nasa',
                  body=('{"success":true,"task_id":423444944,'
                        '"log":"https://catalogd.archive.org/log/423444944"}'))
-        r = modify_metadata('nasa', dict(foo=1))
+        r = modify_metadata('nasa', {'foo': 1})
         assert r.status_code == 200
         assert r.json() == {
             'task_id': 423444944,
@@ -211,7 +211,7 @@ def test_upload():
                             secret_key='test_secret')
         for response in _responses:
             req = response.request
-            headers = dict((k.lower(), str(v)) for k, v in req.headers.items())
+            headers = {k.lower(): str(v) for k, v in req.headers.items()}
             scanner_header = '%20'.join(
                 response.headers['x-archive-meta00-scanner'].split('%20')[:4])
             headers['x-archive-meta00-scanner'] = scanner_header

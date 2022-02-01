@@ -29,7 +29,7 @@ METADATA_URL = f'{BASE_URL}metadata/'
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEST_CONFIG = os.path.join(ROOT_DIR, 'tests/ia.ini')
 NASA_METADATA_PATH = os.path.join(ROOT_DIR, 'tests/data/metadata/nasa.json')
-NASA_EXPECTED_FILES = set([
+NASA_EXPECTED_FILES = {
     'globe_west_540.jpg',
     'globe_west_540_thumb.jpg',
     'nasa_archive.torrent',
@@ -40,7 +40,7 @@ NASA_EXPECTED_FILES = set([
     'nasa_itemimage.jpg',
     'globe_west_540_thumb.jpg',
     '__ia_thumb.jpg',
-])
+}
 
 
 def ia_call(argv, expected_exit_code=0):
@@ -56,7 +56,7 @@ def ia_call(argv, expected_exit_code=0):
 
 
 def files_downloaded(path):
-    found_files = set([])
+    found_files = set()
     try:
         found_files = set(os.listdir(path))
     except (FileNotFoundError, WindowsError, OSError):
@@ -122,7 +122,7 @@ def nasa_item():
 
 @pytest.fixture
 def session():
-    return get_session(config=dict(s3=dict(access='access', secret='secret')))
+    return get_session(config={'s3': {'access': 'access', 'secret': 'secret'}})
 
 
 @pytest.fixture

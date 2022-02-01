@@ -71,9 +71,9 @@ class Search:
         self.query = query
         if self.fts and not self.dsl_fts:
             self.query = f'!L {self.query}'
-        self.fields = fields or list()
-        self.sorts = sorts or list()
-        self.request_kwargs = request_kwargs or dict()
+        self.fields = fields or []
+        self.sorts = sorts or []
+        self.request_kwargs = request_kwargs or {}
         self._num_found = None
         self.fts_url = f'{self.session.protocol}//be-api.us.archive.org/ia-pub-fts-api'
         self.scrape_url = f'{self.session.protocol}//{self.session.host}/services/search/v1/scrape'
@@ -85,7 +85,7 @@ class Search:
         self.max_retries = max_retries if max_retries is not None else 5
 
         # Initialize params.
-        default_params = dict(q=self.query)
+        default_params = {'q': self.query}
         if 'page' not in params:
             default_params['count'] = 10000
         else:
@@ -172,7 +172,7 @@ class Search:
                                   **self.request_kwargs)
             j = r.json()
             scroll_id = j.get('_scroll_id')
-            hits = j.get('hits', dict()).get('hits')
+            hits = j.get('hits', {}).get('hits')
             if not hits:
                 return
             yield from hits
@@ -200,7 +200,7 @@ class Search:
         j = r.json()
         if j.get('error'):
             yield j
-        for agg in j.get('response', dict()).get('aggregations', dict()).items():
+        for agg in j.get('response', {}).get('aggregations', {}).items():
             yield {agg[0]: agg[1]}
 
     @property
@@ -223,7 +223,7 @@ class Search:
                                      auth=self.auth,
                                      **self.request_kwargs)
                 j = r.json()
-                self._num_found = j.get('hits', dict()).get('total')
+                self._num_found = j.get('hits', {}).get('total')
         return self._num_found
 
     def _handle_scrape_error(self, j):

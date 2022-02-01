@@ -118,7 +118,7 @@ class ArchiveSession(requests.sessions.Session):
         if 'archive.org' not in self.host:
             self.host += '.archive.org'
         self.protocol = 'https:' if self.secure else 'http:'
-        user_email = self.config.get('cookies', dict()).get('logged-in-user')
+        user_email = self.config.get('cookies', {}).get('logged-in-user')
         if user_email:
             user_email = user_email.split(';')[0]
             user_email = unquote(user_email)
@@ -340,11 +340,11 @@ class ArchiveSession(requests.sessions.Session):
             request_kwargs['timeout'] = 12
 
         u = f'{self.protocol}//s3.us.archive.org'
-        p = dict(
-            check_limit=1,
-            accesskey=access_key,
-            bucket=identifier,
-        )
+        p = {
+            'check_limit': 1,
+            'accesskey': access_key,
+            'bucket': identifier,
+        }
         try:
             r = self.get(u, params=p, **request_kwargs)
         except:
@@ -406,7 +406,7 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: :class:`requests.Response`
         """
-        headers = dict() if not headers else headers
+        headers = {} if not headers else headers
         if reduced_priority is not None:
             headers.update({'X-Accept-Reduced-Priority': '1'})
 
@@ -436,8 +436,8 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: collections.Iterable[CatalogTask]
         """
-        params = dict() if not params else params
-        params.update(dict(identifier=identifier, catalog=0, summary=0, history=1))
+        params = {} if not params else params
+        params.update({'identifier': identifier, 'catalog': 0, 'summary': 0, 'history': 1})
         c = Catalog(self, request_kwargs)
         yield from c.iter_tasks(params)
 
@@ -459,8 +459,8 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: collections.Iterable[CatalogTask]
         """
-        params = dict() if not params else params
-        params.update(dict(identifier=identifier, catalog=1, summary=0, history=0))
+        params = {} if not params else params
+        params.update({'identifier': identifier, 'catalog': 1, 'summary': 0, 'history': 0})
         c = Catalog(self, request_kwargs)
         yield from c.iter_tasks(params)
 
@@ -507,7 +507,7 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: List[CatalogTask]
         """
-        params = dict() if not params else params
+        params = {} if not params else params
         c = Catalog(self, request_kwargs)
         if 'history' not in params:
             params['history'] = 1
@@ -530,8 +530,8 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: List[CatalogTask]
         """
-        params = dict() if not params else params
-        _params = dict(submitter=self.user_email, catalog=1, history=0, summary=0)
+        params = {} if not params else params
+        _params = {'submitter': self.user_email, 'catalog': 1, 'history': 0, 'summary': 0}
         params.update(_params)
         return self.get_tasks(params=params, request_kwargs=request_kwargs)
 

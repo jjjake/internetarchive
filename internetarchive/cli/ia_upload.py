@@ -198,23 +198,23 @@ def main(argv, session):
         try:
             args['<file>'] = json.load(open(args['--file-metadata']))
         except json.decoder.JSONDecodeError:
-            args['<file>'] = list()
+            args['<file>'] = []
             for line in open(args['--file-metadata']):
                 j = json.loads(line.strip())
                 args['<file>'].append(j)
-    upload_kwargs = dict(
-        metadata=args['--metadata'],
-        headers=args['--header'],
-        debug=args['--debug'],
-        queue_derive=queue_derive,
-        verbose=verbose,
-        verify=args['--verify'],
-        checksum=args['--checksum'],
-        retries=args['--retries'],
-        retries_sleep=args['--sleep'],
-        delete=args['--delete'],
-        validate_identifier=True
-    )
+    upload_kwargs = {
+        'metadata': args['--metadata'],
+        'headers': args['--header'],
+        'debug': args['--debug'],
+        'queue_derive': queue_derive,
+        'verbose': verbose,
+        'verify': args['--verify'],
+        'checksum': args['--checksum'],
+        'retries': args['--retries'],
+        'retries_sleep': args['--sleep'],
+        'delete': args['--delete'],
+        'validate_identifier': True,
+    }
 
     # Upload files.
     if not args['--spreadsheet']:

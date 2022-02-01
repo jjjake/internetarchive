@@ -116,8 +116,8 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         :param headers: (optional) S3 compatible HTTP headers.
 
         """
-        metadata = dict() if metadata is None else metadata
-        file_metadata = dict() if file_metadata is None else file_metadata
+        metadata = {} if metadata is None else metadata
+        file_metadata = {} if file_metadata is None else file_metadata
 
         if not metadata.get('scanner'):
             scanner = f'Internet Archive Python library {__version__}'
@@ -243,7 +243,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         if (isinstance(metadata, list)
                 or any('/' in k for k in metadata)
                 or all(isinstance(k, dict) for k in metadata.values())):
-            changes = list()
+            changes = []
 
             if any(not k for k in metadata):
                 raise ValueError('Invalid metadata provided, '
@@ -306,7 +306,7 @@ def prepare_patch(metadata, source_metadata, append, append_list=None):
     if isinstance(metadata, list):
         prepared_metadata = metadata
         if not destination_metadata:
-            destination_metadata = list()
+            destination_metadata = []
     else:
         prepared_metadata = prepare_metadata(metadata, source_metadata, append,
                                              append_list)
@@ -342,9 +342,9 @@ def prepare_target_patch(metadata, source_metadata, append, target, append_list,
         metadata = dictify(_k.split('/')[1:], _k.split('/')[-1], metadata[_k])
     for i, _k in enumerate(key.split('/')):
         if i == 0:
-            source_metadata = source_metadata.get(_k, dict())
+            source_metadata = source_metadata.get(_k, {})
         else:
-            source_metadata[_k] = source_metadata.get(_k, dict()).get(_k, dict())
+            source_metadata[_k] = source_metadata.get(_k, {}).get(_k, {})
     patch = prepare_patch(metadata, source_metadata, append, append_list)
     return patch
 

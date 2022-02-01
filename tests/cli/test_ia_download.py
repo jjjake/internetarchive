@@ -17,22 +17,22 @@ def test_https(tmpdir_ch):
 
 def test_dry_run():
     nasa_url = 'http://archive.org/download/nasa/'
-    expected_urls = set([nasa_url + f for f in NASA_EXPECTED_FILES])
+    expected_urls = {nasa_url + f for f in NASA_EXPECTED_FILES}
 
     stdout, stderr = call_cmd('ia --insecure download --dry-run nasa')
     output_lines = stdout.split('\n')
-    dry_run_urls = set([x.strip() for x in output_lines if x and 'nasa:' not in x])
+    dry_run_urls = {x.strip() for x in output_lines if x and 'nasa:' not in x}
 
     assert expected_urls == dry_run_urls
 
 
 def test_glob(tmpdir_ch):
-    expected_files = set([
+    expected_files = {
         'globe_west_540.jpg',
         'globe_west_540_thumb.jpg',
         'nasa_itemimage.jpg',
         '__ia_thumb.jpg',
-    ])
+    }
 
     call_cmd('ia --insecure download --glob="*jpg" nasa')
     assert files_downloaded(path='nasa') == expected_files
@@ -40,32 +40,32 @@ def test_glob(tmpdir_ch):
 
 def test_format(tmpdir_ch):
     call_cmd('ia --insecure download --format="Archive BitTorrent" nasa')
-    assert files_downloaded(path='nasa') == set(['nasa_archive.torrent'])
+    assert files_downloaded(path='nasa') == {'nasa_archive.torrent'}
 
 
 def test_clobber(tmpdir_ch):
     cmd = 'ia --insecure download nasa nasa_meta.xml'
     call_cmd(cmd)
-    assert files_downloaded('nasa') == set(['nasa_meta.xml'])
+    assert files_downloaded('nasa') == {'nasa_meta.xml'}
 
     stdout, stderr = call_cmd(cmd)
-    assert files_downloaded('nasa') == set(['nasa_meta.xml'])
+    assert files_downloaded('nasa') == {'nasa_meta.xml'}
     assert 'nasa: . - success' == stdout
 
 
 def test_checksum(tmpdir_ch):
     call_cmd('ia --insecure download nasa nasa_meta.xml')
-    assert files_downloaded('nasa') == set(['nasa_meta.xml'])
+    assert files_downloaded('nasa') == {'nasa_meta.xml'}
 
     stdout, stderr = call_cmd('ia --insecure download --checksum nasa nasa_meta.xml')
-    assert files_downloaded('nasa') == set(['nasa_meta.xml'])
+    assert files_downloaded('nasa') == {'nasa_meta.xml'}
 
     assert 'nasa: . - success' == stdout
 
 
 def test_no_directories(tmpdir_ch):
     call_cmd('ia --insecure download --no-directories nasa nasa_meta.xml')
-    assert files_downloaded('.') == set(['nasa_meta.xml'])
+    assert files_downloaded('.') == {'nasa_meta.xml'}
 
 
 def test_destdir(tmpdir_ch):
@@ -76,13 +76,13 @@ def test_destdir(tmpdir_ch):
 
     tmpdir_ch.mkdir('thisdirdoesnotexist/')
     call_cmd(cmd)
-    assert files_downloaded('thisdirdoesnotexist/nasa') == set(['nasa_meta.xml'])
+    assert files_downloaded('thisdirdoesnotexist/nasa') == {'nasa_meta.xml'}
 
     tmpdir_ch.mkdir('dir2/')
     cmd = ('ia --insecure download --no-directories --destdir=dir2/ '
            'nasa nasa_meta.xml')
     call_cmd(cmd)
-    assert files_downloaded('dir2') == set(['nasa_meta.xml'])
+    assert files_downloaded('dir2') == {'nasa_meta.xml'}
 
 
 def test_no_change_timestamp(tmpdir_ch):

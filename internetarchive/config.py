@@ -39,8 +39,8 @@ from internetarchive import auth
 def get_auth_config(email, password, host=None):
     host = host if host else 'archive.org'
     u = f'https://{host}/services/xauthn/'
-    p = dict(op='login')
-    d = dict(email=email, password=password)
+    p = {'op': 'login'}
+    d = {'email': email, 'password': password}
     r = requests.post(u, params=p, data=d)
     j = r.json()
     if not j.get('success'):
@@ -178,4 +178,4 @@ def get_config(config=None, config_file=None):
     # Recursive/deep update.
     deep_update(config_dict, _config)
 
-    return dict((k, v) for k, v in config_dict.items() if v is not None)
+    return {k: v for k, v in config_dict.items() if v is not None}

@@ -67,58 +67,54 @@ def test_get_files(nasa_item):
     files = nasa_item.get_files()
     assert isinstance(files, types.GeneratorType)
 
-    expected_files = set(['NASAarchiveLogo.jpg',
-                          'globe_west_540.jpg',
-                          'nasa_reviews.xml',
-                          'nasa_meta.xml',
-                          'nasa_archive.torrent',
-                          'nasa_files.xml', ])
-    files = set(x.name for x in files)
+    expected_files = {'NASAarchiveLogo.jpg',
+                      'globe_west_540.jpg',
+                      'nasa_reviews.xml',
+                      'nasa_meta.xml',
+                      'nasa_archive.torrent',
+                      'nasa_files.xml'}
+    files = {x.name for x in files}
     assert files == expected_files
 
 
 def test_get_files_by_name(nasa_item):
     files = nasa_item.get_files('globe_west_540.jpg')
-    assert set(f.name for f in files) == set(['globe_west_540.jpg'])
+    assert {f.name for f in files} == {'globe_west_540.jpg'}
 
     files = nasa_item.get_files(['globe_west_540.jpg', 'nasa_meta.xml'])
-    assert set(f.name
-               for f in files) == set(['globe_west_540.jpg', 'nasa_meta.xml'])
+    assert {f.name for f in files} == {'globe_west_540.jpg', 'nasa_meta.xml'}
 
 
 def test_get_files_by_formats(nasa_item):
-    files = set(f.name for f in nasa_item.get_files(formats='Archive BitTorrent'))
-    expected_files = set(['nasa_archive.torrent'])
+    files = {f.name for f in nasa_item.get_files(formats='Archive BitTorrent')}
+    expected_files = {'nasa_archive.torrent'}
     assert files == expected_files
 
-    files = set(
-        f.name for f in nasa_item.get_files(formats=['Archive BitTorrent', 'JPEG']))
-    expected_files = set(['nasa_archive.torrent', 'globe_west_540.jpg', ])
+    files = {f.name for f in nasa_item.get_files(formats=['Archive BitTorrent', 'JPEG'])}
+    expected_files = {'nasa_archive.torrent', 'globe_west_540.jpg'}
     assert files == expected_files
 
 
 def test_get_files_by_glob(nasa_item):
-    files = set(f.name for f in nasa_item.get_files(glob_pattern='*jpg|*torrent'))
-    expected_files = set(['NASAarchiveLogo.jpg',
-                          'globe_west_540.jpg',
-                          'nasa_archive.torrent', ])
+    files = {f.name for f in nasa_item.get_files(glob_pattern='*jpg|*torrent')}
+    expected_files = {'NASAarchiveLogo.jpg',
+                      'globe_west_540.jpg',
+                      'nasa_archive.torrent'}
     assert files == expected_files
 
-    files = set(f.name
-                for f in nasa_item.get_files(glob_pattern=['*jpg', '*torrent']))
-    expected_files = set(['NASAarchiveLogo.jpg',
-                          'globe_west_540.jpg',
-                          'nasa_archive.torrent', ])
+    files = {f.name for f in nasa_item.get_files(glob_pattern=['*jpg', '*torrent'])}
+    expected_files = {'NASAarchiveLogo.jpg',
+                      'globe_west_540.jpg',
+                      'nasa_archive.torrent'}
     assert files == expected_files
 
 
 def test_get_files_with_multiple_filters(nasa_item):
-    files = set(f.name for f in nasa_item.get_files(formats='JPEG',
-                                                    glob_pattern='*xml'))
-    expected_files = set(['globe_west_540.jpg',
-                          'nasa_reviews.xml',
-                          'nasa_meta.xml',
-                          'nasa_files.xml', ])
+    files = {f.name for f in nasa_item.get_files(formats='JPEG', glob_pattern='*xml')}
+    expected_files = {'globe_west_540.jpg',
+                      'nasa_reviews.xml',
+                      'nasa_meta.xml',
+                      'nasa_files.xml'}
     assert files == expected_files
 
 
@@ -238,10 +234,10 @@ def test_download_dry_run(tmpdir, capsys, nasa_item):
                  adding_headers={'content-length': '100'})
         nasa_item.download(formats='Metadata', dry_run=True)
 
-    expected = set(['nasa_reviews.xml', 'nasa_meta.xml', 'nasa_files.xml'])
+    expected = {'nasa_reviews.xml', 'nasa_meta.xml', 'nasa_files.xml'}
     out, err = capsys.readouterr()
 
-    assert set([x.split('/')[-1] for x in out.split('\n') if x]) == expected
+    assert {x.split('/')[-1] for x in out.split('\n') if x} == expected
 
 
 def test_download_verbose(tmpdir, capsys, nasa_item):
@@ -285,7 +281,7 @@ def test_upload(nasa_item):
                                       secret_key='b')
         for resp in _responses:
             request = resp.request
-            headers = dict((k.lower(), str(v)) for k, v in request.headers.items())
+            headers = {k.lower(): str(v) for k, v in request.headers.items()}
             scanner_header = '%20'.join(
                 resp.headers['x-archive-meta00-scanner'].split('%20')[:4])
             headers['x-archive-meta00-scanner'] = scanner_header
@@ -349,13 +345,13 @@ def test_upload_metadata(nasa_item):
             'D0%BD%D0%B5%D1%82...)')
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=_expected_headers)
-        md = dict(
-            foo='bar',
-            subject=['first', 'second'],
-            baz='Почему бы и нет...',
-            baz2=('\u041f\u043e\u0447\u0435\u043c\u0443 \u0431\u044b \u0438 '
-                  '\u043d\u0435\u0442...'),
-        )
+        md = {
+            'foo': 'bar',
+            'subject': ['first', 'second'],
+            'baz': 'Почему бы и нет...',
+            'baz2': ('\u041f\u043e\u0447\u0435\u043c\u0443 \u0431\u044b \u0438 '
+                     '\u043d\u0435\u0442...'),
+        }
         _responses = nasa_item.upload(NASA_METADATA_PATH,
                                       metadata=md,
                                       access_key='a',
@@ -363,7 +359,7 @@ def test_upload_metadata(nasa_item):
         for resp in _responses:
             request = resp.request
             del request.headers['x-archive-meta00-scanner']
-            headers = dict((k.lower(), str(v)) for k, v in request.headers.items())
+            headers = {k.lower(): str(v) for k, v in request.headers.items()}
             assert 'user-agent' in headers
             del headers['user-agent']
             assert headers == _expected_headers
@@ -452,7 +448,7 @@ def test_upload_queue_derive(nasa_item):
         rsps.add(responses.PUT, S3_URL_RE, adding_headers=_expected_headers)
         _responses = nasa_item.upload(NASA_METADATA_PATH, access_key='a', secret_key='b')
         for resp in _responses:
-            headers = dict((k.lower(), str(v)) for k, v in resp.request.headers.items())
+            headers = {k.lower(): str(v) for k, v in resp.request.headers.items()}
             del headers['x-archive-meta00-scanner']
             assert 'user-agent' in headers
             del headers['user-agent']
@@ -504,7 +500,7 @@ def test_upload_delete(tmpdir, nasa_item):
                                 delete=True,
                                 queue_derive=True)
         for r in resp:
-            headers = dict((k.lower(), str(v)) for k, v in r.headers.items())
+            headers = {k.lower(): str(v) for k, v in r.headers.items()}
             del headers['content-type']
             assert headers == _expected_headers
             assert len(tmpdir.listdir()) == 0
@@ -530,21 +526,20 @@ def test_upload_checksum(tmpdir, nasa_item):
                                 secret_key='b',
                                 checksum=True)
         for r in resp:
-            headers = dict((k.lower(), str(v)) for k, v in r.headers.items())
+            headers = {k.lower(): str(v) for k, v in r.headers.items()}
             del headers['content-type']
             assert headers == _expected_headers
             assert r.status_code == 200
 
         # Skip.
         nasa_item.item_metadata['files'].append(
-            dict(name='checksum_test.txt',
-                 md5='33213e7683c1e6d15b2a658f3c567717'))
+            {'name': 'checksum_test.txt', 'md5': '33213e7683c1e6d15b2a658f3c567717'})
         resp = nasa_item.upload(test_file,
                                 access_key='a',
                                 secret_key='b',
                                 checksum=True)
         for r in resp:
-            headers = dict((k.lower(), str(v)) for k, v in r.headers.items())
+            headers = {k.lower(): str(v) for k, v in r.headers.items()}
             assert r.status_code is None
 
 

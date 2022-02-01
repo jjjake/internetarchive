@@ -143,7 +143,7 @@ def main(argv, session):
     else:
         files = None
 
-    errors = list()
+    errors = []
     for i, identifier in enumerate(ids):
         if args['--stdout']:
             item = session.get_item(identifier)

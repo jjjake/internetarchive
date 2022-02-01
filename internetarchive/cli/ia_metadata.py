@@ -266,7 +266,7 @@ def main(argv, session):
                 item = session.get_item(row['identifier'])
                 if row.get('file'):
                     del row['file']
-                metadata = dict((k.lower(), v) for (k, v) in row.items() if v)
+                metadata = {k.lower(): v for k, v in row.items() if v}
                 responses.append(modify_metadata(item, metadata, args))
 
             if all(r.status_code == 200 for r in responses):

@@ -233,7 +233,7 @@ Or, in Python:
 .. code:: python
 
     >>> from internetarchive import modify_metadata
-    >>> md = dict(subject=['foo', 'bar'])
+    >>> md = {'subject': ['foo', 'bar']}
     >>> r = modify_metadata('<identifier>', md)
 
 It is helpful but **not** necessary for you to use `Library of Congress Subject Headings <http://id.loc.gov/authorities/subjects.html>`_ for the value of this metadata header.

@@ -23,8 +23,8 @@ def test_ia_metadata_exists(capsys):
 def test_ia_metadata_formats(capsys, nasa_mocker):
     ia_call(['ia', 'metadata', '--formats', 'nasa'])
     out, err = capsys.readouterr()
-    expected_formats = set(['Collection Header', 'Archive BitTorrent', 'JPEG',
-                            'Metadata', ''])
+    expected_formats = {'Collection Header', 'Archive BitTorrent', 'JPEG',
+                        'Metadata', ''}
     assert set(out.split('\n')) == expected_formats
 
 

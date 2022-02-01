@@ -42,7 +42,7 @@ class BaseFile:
 
     def __init__(self, item_metadata, name, file_metadata=None):
         if file_metadata is None:
-            file_metadata = dict()
+            file_metadata = {}
         name = name.strip('/')
         if not file_metadata:
             for f in item_metadata.get('files', []):
@@ -111,12 +111,12 @@ class File(BaseFile):
         """
         super().__init__(item.item_metadata, name, file_metadata)
         self.item = item
-        url_parts = dict(
-            protocol=item.session.protocol,
-            id=self.identifier,
-            name=quote(name.encode('utf-8')),
-            host=item.session.host,
-        )
+        url_parts = {
+            'protocol': item.session.protocol,
+            'id': self.identifier,
+            'name': quote(name.encode('utf-8')),
+            'host': item.session.host,
+        }
         self.url = '{protocol}//{host}/download/{id}/{name}'.format(**url_parts)
         if self.item.session.access_key and self.item.session.secret_key:
             self.auth = auth.S3Auth(self.item.session.access_key,
@@ -333,7 +333,7 @@ class File(BaseFile):
         debug = False if not debug else debug
         verbose = False if not verbose else verbose
         max_retries = 2 if retries is None else retries
-        headers = dict() if headers is None else headers
+        headers = {} if headers is None else headers
 
         if 'x-archive-cascade-delete' not in headers:
             headers['x-archive-cascade-delete'] = cascade_delete

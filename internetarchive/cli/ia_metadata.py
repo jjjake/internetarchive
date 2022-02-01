@@ -75,7 +75,7 @@ def modify_metadata(item, metadata, args):
                                  priority=args['--priority'], append_list=append_list,
                                  headers=args['--header'])
     except ItemLocateError as exc:
-        print(f'{item.identifier} - error: {exc!s}', file=sys.stderr)
+        print(f'{item.identifier} - error: {exc}', file=sys.stderr)
         sys.exit(1)
     if not r.json()['success']:
         error_msg = r.json()['error']
@@ -179,7 +179,7 @@ def main(argv, session):
     try:
         args = s.validate(args)
     except SchemaError as exc:
-        print(f'{exc!s}\n{printable_usage(__doc__)}', file=sys.stderr)
+        print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
         sys.exit(1)
 
     formats = set()

@@ -123,7 +123,7 @@ def main():
     try:
         args = s.validate(args)
     except SchemaError as exc:
-        print(f'{exc!s}\n{printable_usage(__doc__)}', file=sys.stderr)
+        print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
         sys.exit(1)
 
     # Get subcommand.

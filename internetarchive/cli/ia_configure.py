@@ -94,5 +94,5 @@ def main(argv, session):
             print(f'\nConfig saved to: {config_file_path}')
 
     except AuthenticationError as exc:
-        print(f'\nerror: {exc!s}')
+        print(f'\nerror: {exc}')
         sys.exit(1)

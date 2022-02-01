@@ -94,7 +94,8 @@ def main(argv, session):
                                 data=data)
         j = r.json()
         if j.get('success'):
-            print(f'success: {j.get("value", {}).get("log")}')
+            task_log_url = j.get('value', {}).get('log')
+            print(f'success: {task_log_url}')
             sys.exit(0)
         elif 'already queued/running' in j.get('error', ''):
             print(f'success: {args["--cmd"]} task already queued/running')

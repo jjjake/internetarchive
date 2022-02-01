@@ -49,7 +49,7 @@ class S3Auth(AuthBase):
                 raise AuthenticationError('No access_key or secret_key set!'
                                           ' Have you run `ia configure`?')
 
-        auth_str = 'LOW {a}:{s}'.format(a=self.access_key, s=self.secret_key)
+        auth_str = f'LOW {self.access_key}:{self.secret_key}'
         r.headers['Authorization'] = auth_str
         return r
 
@@ -61,7 +61,7 @@ class S3PostAuth(AuthBase):
         self.secret_key = secret_key
 
     def __call__(self, r):
-        auth_str = '&access={a}&secret={s}'.format(a=self.access_key, s=self.secret_key)
+        auth_str = f'&access={self.access_key}&secret={self.secret_key}'
         if not r.body:
             r.body = ''
         r.body += auth_str

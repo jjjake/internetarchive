@@ -79,8 +79,8 @@ def needs_quote(s):
 
 def norm_filepath(fp):
     fp = fp.replace(os.path.sep, '/')
-    if not fp[0] == '/':
-        fp = '/' + fp
+    if not fp.startswith('/'):
+        fp = f'/{fp}'
     if isinstance(fp, bytes):
         fp = fp.decode('utf-8')
     return fp
@@ -160,7 +160,7 @@ class IdentifierListAsItems:
             raise AttributeError
 
     def __repr__(self):
-        return '{0.__class__.__name__}({0.ids!r})'.format(self)
+        return f'{self.__class__.__name__}({self.ids!r})'
 
 
 def get_s3_xml_text(xml_str):
@@ -180,7 +180,7 @@ def get_s3_xml_text(xml_str):
         _resource = _get_tag_text('Resource', p)
         # Avoid weird Resource text that contains PUT method.
         if _resource and "'PUT" not in _resource:
-            return '{0} - {1}'.format(_msg, _resource.strip())
+            return f'{_msg} - {_resource.strip()}'
         else:
             return _msg
     except:

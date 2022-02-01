@@ -84,8 +84,8 @@ class BaseItem:
         self.load()
 
     def __repr__(self):
-        return ('{0.__class__.__name__}(identifier={0.identifier!r}{notloaded})'.format(
-            self, notloaded=', item_metadata={}' if not self.exists else ''))
+        notloaded = ', item_metadata={}' if not self.exists else ''
+        return f'{self.__class__.__name__}(identifier={self.identifier!r}{notloaded})'
 
     def load(self, item_metadata=None):
         if item_metadata:
@@ -178,8 +178,7 @@ class Item(BaseItem):
 
         if self.metadata.get('title'):
             # A copyable link to the item, in MediaWiki format
-            self.wikilink = ('* [{0.urls.details} {0.identifier}] '
-                             '-- {0.metadata[title]}').format(self)
+            self.wikilink = f'* [{self.urls.details} {self.identifier}] -- {self.metadata["title"]}'
 
     class URLs:
         def __init__(self, itm_obj):
@@ -198,7 +197,7 @@ class Item(BaseItem):
 
         def _make_tab_URL(self, tab):
             """Make URLs for the separate tabs of Collections details page."""
-            self._make_URL(tab, self.details + "&tab={tab}".format(tab=tab))
+            self._make_URL(tab, self.details + f'&tab={tab}')
 
         DEFAULT_URL_FORMAT = ('{0.session.protocol}//{0.session.host}'
                               '/{path}/{0.identifier}')
@@ -208,8 +207,7 @@ class Item(BaseItem):
             self._paths.append(path)
 
         def __str__(self):
-            return ("URLs ({1}) for {0.identifier}"
-                    .format(self._itm_obj, ', '.join(self._paths)))
+            return f'URLs ({", ".join(self._paths)}) for {self._itm_obj.identifier}'
 
     def refresh(self, item_metadata=None, **kwargs):
         if not item_metadata:
@@ -224,8 +222,7 @@ class Item(BaseItem):
         :return: `True` if identifier is available, or `False` if it is
                  not available.
         """
-        url = '{}//{}/services/check_identifier.php'.format(self.session.protocol,
-                                                            self.session.host)
+        url = f'{self.session.protocol}//{self.session.host}/services/check_identifier.php'
         params = dict(output='json', identifier=self.identifier)
         response = self.session.get(url, params=params)
         availability = response.json()['code']
@@ -484,9 +481,7 @@ class Item(BaseItem):
         return r
 
     def get_review(self):
-        u = '{protocol}//{host}/services/reviews.php'.format(
-            protocol=self.session.protocol,
-            host=self.session.host)
+        u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = dict(identifier=self.identifier)
         a = S3Auth(self.session.access_key, self.session.secret_key)
         r = self.session.get(u, params=p, auth=a)
@@ -494,9 +489,7 @@ class Item(BaseItem):
         return r
 
     def delete_review(self):
-        u = '{protocol}//{host}/services/reviews.php'.format(
-            protocol=self.session.protocol,
-            host=self.session.host)
+        u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = dict(identifier=self.identifier)
         a = S3Auth(self.session.access_key, self.session.secret_key)
         r = self.session.delete(u, params=p, auth=a)
@@ -504,9 +497,7 @@ class Item(BaseItem):
         return r
 
     def review(self, title, body, stars=None):
-        u = '{protocol}//{host}/services/reviews.php'.format(
-            protocol=self.session.protocol,
-            host=self.session.host)
+        u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = dict(identifier=self.identifier)
         d = dict(title=title, body=body)
         if stars:
@@ -542,10 +533,10 @@ class Item(BaseItem):
         # Add support for on-the-fly files (e.g. EPUB).
         if on_the_fly:
             otf_files = [
-                '{0}.epub'.format(self.identifier),
-                '{0}.mobi'.format(self.identifier),
-                '{0}_daisy.zip'.format(self.identifier),
-                '{0}_archive_marc.xml'.format(self.identifier),
+                f'{self.identifier}.epub',
+                f'{self.identifier}.mobi',
+                f'{self.identifier}_daisy.zip',
+                f'{self.identifier}_archive_marc.xml',
             ]
             for f in otf_files:
                 item_files.append(dict(name=f, otf=True))
@@ -673,28 +664,28 @@ class Item(BaseItem):
 
         if not dry_run:
             if item_index and verbose is True:
-                print('{0} ({1}):'.format(self.identifier, item_index))
+                print(f'{self.identifier} ({item_index}):')
             elif item_index and silent is False:
-                print('{0} ({1}): '.format(self.identifier, item_index), end='')
+                print(f'{self.identifier} ({item_index}): ', end='')
             elif item_index is None and verbose is True:
-                print('{0}:'.format(self.identifier))
+                print(f'{self.identifier}:')
             elif item_index is None and silent is False:
                 print(self.identifier, end=': ')
             sys.stdout.flush()
 
         if self.is_dark is True:
-            msg = 'skipping {0}, item is dark'.format(self.identifier)
+            msg = f'skipping {self.identifier}, item is dark'
             log.warning(msg)
             if verbose:
-                print(' ' + msg)
+                print(f' {msg}')
             elif silent is False:
                 print(msg)
             return
         elif self.metadata == {}:
-            msg = 'skipping {0}, item does not exist.'.format(self.identifier)
+            msg = f'skipping {self.identifier}, item does not exist.'
             log.warning(msg)
             if verbose:
-                print(' ' + msg)
+                print(f' {msg}')
             elif silent is False:
                 print(msg)
             return
@@ -709,10 +700,10 @@ class Item(BaseItem):
             files = self.get_files(glob_pattern=glob_pattern, on_the_fly=on_the_fly)
 
         if not files:
-            msg = 'skipping {0}, no matching files found.'.format(self.identifier)
+            msg = f'skipping {self.identifier}, no matching files found.'
             log.info(msg)
             if verbose:
-                print(' ' + msg)
+                print(f' {msg}')
             elif silent is False:
                 print(msg, end='')
 
@@ -806,10 +797,7 @@ class Item(BaseItem):
         _headers = self.session.headers.copy()
         _headers.update(headers)
 
-        url = '{protocol}//{host}/metadata/{identifier}'.format(
-            protocol=self.session.protocol,
-            identifier=self.identifier,
-            host=self.session.host)
+        url = f'{self.session.protocol}//{self.session.host}/metadata/{self.identifier}'
         # TODO: currently files and metadata targets do not support dict's,
         # but they might someday?? refactor this check.
         source_metadata = self.item_metadata
@@ -973,25 +961,22 @@ class Item(BaseItem):
         if validate_identifier:
             validate_s3_identifier(self.identifier)
         key = norm_filepath(filename).split('/')[-1] if key is None else key
-        base_url = '{0.session.protocol}//s3.us.archive.org/{0.identifier}'.format(self)
-        url = '{0}/{1}'.format(
-            base_url, quote(norm_filepath(key).lstrip('/').encode('utf-8')))
+        base_url = f'{self.session.protocol}//s3.us.archive.org/{self.identifier}'
+        url = f'{base_url}/{quote(norm_filepath(key).lstrip("/").encode("utf-8"))}'
 
         # Skip based on checksum.
         if checksum:
             md5_sum = get_md5(body)
             ia_file = self.get_file(key)
             if (not self.tasks) and (ia_file) and (ia_file.md5 == md5_sum):
-                log.info('{f} already exists: {u}'.format(f=key, u=url))
+                log.info(f'{key} already exists: {url}')
                 if verbose:
-                    print(' {f} already exists, skipping.'.format(f=key))
+                    print(f' {key} already exists, skipping.')
                 if delete:
                     log.info(
-                        '{f} successfully uploaded to '
-                        'https://archive.org/download/{i}/{f} '
-                        'and verified, deleting '
-                        'local copy'.format(i=self.identifier,
-                                            f=key))
+                        f'{key} successfully uploaded to '
+                        f'https://archive.org/download/{self.identifier}/{key} '
+                        'and verified, deleting local copy')
                     body.close()
                     os.remove(filename)
                 # Return an empty response object if checksums match.
@@ -1018,13 +1003,13 @@ class Item(BaseItem):
                     expected_size = math.ceil(size / chunk_size)
                     chunks = chunk_generator(body, chunk_size)
                     progress_generator = tqdm(chunks,
-                                              desc=' uploading {}'.format(key),
+                                              desc=f' uploading {key}',
                                               dynamic_ncols=True,
                                               total=expected_size,
                                               unit='MiB')
                     data = IterableToFileAdapter(progress_generator, size)
                 except:
-                    print(' uploading {f}'.format(f=key))
+                    print(f' uploading {key}')
                     data = body
             else:
                 data = body
@@ -1049,14 +1034,14 @@ class Item(BaseItem):
             try:
                 while True:
                     error_msg = ('s3 is overloaded, sleeping for '
-                                 '{0} seconds and retrying. '
-                                 '{1} retries left.'.format(retries_sleep, retries))
+                                 f'{retries_sleep} seconds and retrying. '
+                                 f'{retries} retries left.')
                     if retries > 0:
                         if self.session.s3_is_overloaded(access_key):
                             sleep(retries_sleep)
                             log.info(error_msg)
                             if verbose:
-                                print(' warning: {0}'.format(error_msg), file=sys.stderr)
+                                print(f' warning: {error_msg}', file=sys.stderr)
                             retries -= 1
                             continue
                     request = _build_request()
@@ -1074,7 +1059,7 @@ class Item(BaseItem):
                     if (response.status_code == 503) and (retries > 0):
                         log.info(error_msg)
                         if verbose:
-                            print(' warning: {0}'.format(error_msg), file=sys.stderr)
+                            print(f' warning: {error_msg}', file=sys.stderr)
                         sleep(retries_sleep)
                         retries -= 1
                         continue
@@ -1083,12 +1068,12 @@ class Item(BaseItem):
                             log.info('maximum retries exceeded, upload failed.')
                         break
                 response.raise_for_status()
-                log.info('uploaded {f} to {u}'.format(f=key, u=url))
+                log.info(f'uploaded {key} to {url}')
                 if delete and response.status_code == 200:
                     log.info(
-                        '{f} successfully uploaded to '
-                        'https://archive.org/download/{i}/{f} and verified, deleting '
-                        'local copy'.format(i=self.identifier, f=key))
+                        f'{key} successfully uploaded to '
+                        f'https://archive.org/download/{self.identifier}/{key} and verified, '
+                        'deleting local copy')
                     body.close()
                     os.remove(filename)
                 response.close()
@@ -1097,16 +1082,15 @@ class Item(BaseItem):
                 try:
                     msg = get_s3_xml_text(exc.response.content)
                 except ExpatError:  # probably HTTP 500 error and response is invalid XML
-                    msg = ("IA S3 returned invalid XML (HTTP status code {0}). "
-                           "This is a server side error which is either temporary, "
-                           "or requires the intervention of IA admins."
-                           "".format(exc.response.status_code))
+                    msg = ('IA S3 returned invalid XML '
+                           f'(HTTP status code {exc.response.status_code}). '
+                           'This is a server side error which is either temporary, '
+                           'or requires the intervention of IA admins.')
 
-                error_msg = (' error uploading {0} to {1}, '
-                             '{2}'.format(key, self.identifier, msg))
+                error_msg = f' error uploading {key} to {self.identifier}, {msg}'
                 log.error(error_msg)
                 if verbose:
-                    print(' error uploading {0}: {1}'.format(key, msg), file=sys.stderr)
+                    print(f' error uploading {key}: {msg}', file=sys.stderr)
                 # Raise HTTPError with error message.
                 raise type(exc)(error_msg, response=exc.response, request=exc.request)
             finally:
@@ -1211,11 +1195,11 @@ class Item(BaseItem):
                         _queue_derive = False
                     if not f.endswith('/'):
                         if remote_dir_name:
-                            key = '{0}{1}/{2}'.format(remote_dir_name, f, key)
+                            key = f'{remote_dir_name}{f}/{key}'
                         else:
-                            key = '{0}/{1}'.format(f, key)
+                            key = f'{f}/{key}'
                     elif remote_dir_name:
-                        key = '{0}/{1}'.format(remote_dir_name, key)
+                        key = f'{remote_dir_name}/{key}'
                     key = norm_filepath(key)
                     resp = self.upload_file(filepath,
                                             key=key,
@@ -1284,17 +1268,17 @@ class Collection(Item):
         if self.metadata.get('mediatype', 'collection') != 'collection':
             raise ValueError('mediatype is not "collection"!')
 
-        deflt_srh = "collection:{0.identifier}".format(self)
+        deflt_srh = f'collection:{self.identifier}'
         self._make_search('contents',
                           self.metadata.get('search_collection', deflt_srh))
         self._make_search('subcollections',
-                          deflt_srh + " AND mediatype:collection")
+                          f'{deflt_srh} AND mediatype:collection')
 
     def _do_search(self, name, query):
         rtn = self.searches.setdefault(
             name, self.session.search_items(query, fields=['identifier']))
-        if not hasattr(self, name + "_count"):
-            setattr(self, name + "_count", self.searches[name].num_found)
+        if not hasattr(self, f'{name}_count'):
+            setattr(self, f'{name}_count', self.searches[name].num_found)
         return rtn.iter_as_items()
 
     def _make_search(self, name, query):

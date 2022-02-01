@@ -70,17 +70,14 @@ class Search:
             self.fts = False
         self.query = query
         if self.fts and not self.dsl_fts:
-            self.query = '!L {}'.format(self.query)
+            self.query = f'!L {self.query}'
         self.fields = fields or list()
         self.sorts = sorts or list()
         self.request_kwargs = request_kwargs or dict()
         self._num_found = None
-        self.fts_url = '{0}//be-api.us.archive.org/ia-pub-fts-api'.format(
-            self.session.protocol)
-        self.scrape_url = '{0}//{1}/services/search/v1/scrape'.format(
-            self.session.protocol, self.session.host)
-        self.search_url = '{0}//{1}/advancedsearch.php'.format(
-            self.session.protocol, self.session.host)
+        self.fts_url = f'{self.session.protocol}//be-api.us.archive.org/ia-pub-fts-api'
+        self.scrape_url = f'{self.session.protocol}//{self.session.host}/services/search/v1/scrape'
+        self.search_url = f'{self.session.protocol}//{self.session.host}/advancedsearch.php'
         if self.session.access_key and self.session.secret_key:
             self.auth = S3Auth(self.session.access_key, self.session.secret_key)
         else:
@@ -109,7 +106,7 @@ class Search:
         self.session.mount_http_adapter(max_retries=self.max_retries)
 
     def __repr__(self):
-        return 'Search(query={query!r})'.format(query=self.query)
+        return f'Search(query={self.query!r})'
 
     def __iter__(self):
         return self.iter_as_results()
@@ -119,11 +116,10 @@ class Search:
         if 'identifier' not in self.fields:
             self.fields.append('identifier')
         for k, v in enumerate(self.fields):
-            key = 'fl[{0}]'.format(k)
-            self.params[key] = v
+            self.params[f'fl[{k}]'] = v
 
         for i, field in enumerate(self.sorts):
-            self.params['sort[{0}]'.format(i)] = field
+            self.params[f'sort[{i}]'] = field
 
         self.params['output'] = 'json'
 
@@ -153,8 +149,7 @@ class Search:
             if 'cursor' not in j:
                 if i != num_found:
                     raise ReadTimeout('The server failed to return results in the'
-                                      ' allotted amount of time for'
-                                      ' {}'.format(r.request.url))
+                                      f' allotted amount of time for {r.request.url}')
                 break
 
     def _full_text_search(self):
@@ -236,8 +231,7 @@ class Search:
             if all(s in j['error'].lower() for s in ['invalid', 'secret']):
                 if not j['error'].endswith('.'):
                     j['error'] += '.'
-                raise ValueError("{0} Try running 'ia configure' "
-                                 "and retrying.".format(j['error']))
+                raise ValueError(f"{j['error']} Try running 'ia configure' and retrying.")
             raise ValueError(j.get('error'))
 
     def _get_item_from_search_result(self, search_result):
@@ -277,4 +271,4 @@ class SearchIterator:
         return self
 
     def __repr__(self):
-        return '{0.__class__.__name__}({0.search!r}, {0.iterator!r})'.format(self)
+        return f'{self.__class__.__name__}({self.search!r}, {self.iterator!r})'

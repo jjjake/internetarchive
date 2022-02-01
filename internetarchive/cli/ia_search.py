@@ -72,7 +72,7 @@ def main(argv, session=None):
     try:
         args = s.validate(args)
     except SchemaError as exc:
-        print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
+        print(f'{exc!s}\n{printable_usage(__doc__)}', file=sys.stderr)
         sys.exit(1)
 
     # Support comma separated values.
@@ -94,7 +94,7 @@ def main(argv, session=None):
 
     try:
         if args['--num-found']:
-            print('{0}'.format(search.num_found))
+            print(search.num_found)
             sys.exit(0)
 
         for result in search:
@@ -106,7 +106,7 @@ def main(argv, session=None):
                 if result.get('error'):
                     sys.exit(1)
     except ValueError as e:
-        print('error: {0}'.format(e), file=sys.stderr)
+        print(f'error: {e}', file=sys.stderr)
     except ConnectTimeout as exc:
         print('error: Request timed out. Increase the --timeout and try again.',
               file=sys.stderr)
@@ -116,5 +116,5 @@ def main(argv, session=None):
               ' please try again', file=sys.stderr)
         sys.exit(1)
     except AuthenticationError as exc:
-        print('error: {}'.format(exc), file=sys.stderr)
+        print(f'error: {exc}', file=sys.stderr)
         sys.exit(1)

@@ -68,11 +68,10 @@ def main(argv, session):
     if j.get('success') or 'no change detected' in j.get('error', '').lower():
         task_id = j.get('value', dict()).get('task_id')
         if task_id:
-            print('{} - success: https://catalogd.archive.org/log/{}'.format(
-                item.identifier, task_id))
+            print(f'{item.identifier} - success: https://catalogd.archive.org/log/{task_id}')
         else:
-            print('{} - warning: no changes detected!'.format(item.identifier))
+            print(f'{item.identifier} - warning: no changes detected!')
         sys.exit(0)
     else:
-        print('{} - error: {}'.format(item.identifier, j.get('error')))
+        print(f'{item.identifier} - error: {j.get("error")}')
         sys.exit(1)

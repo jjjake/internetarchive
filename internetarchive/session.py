@@ -104,7 +104,7 @@ class ArchiveSession(requests.sessions.Session):
         self.config = get_config(config, config_file)
         self.config_file = config_file
         for ck, cv in self.config.get('cookies', {}).items():
-            raw_cookie = '{}={}'.format(ck, cv)
+            raw_cookie = f'{ck}={cv}'
             cookie_dict = parse_dict_cookies(raw_cookie)
             if not cookie_dict.get(ck):
                 continue
@@ -150,8 +150,9 @@ class ArchiveSession(requests.sessions.Session):
         except:
             lang = ''
         py_version = '{0}.{1}.{2}'.format(*sys.version_info)
-        return 'internetarchive/{0} ({1} {2}; N; {3}; {4}) Python/{5}'.format(
-            __version__, uname[0], uname[-1], lang, self.access_key, py_version)
+        return (f'internetarchive/{__version__} '
+                f'({uname[0]} {uname[-1]}; N; {lang}; {self.access_key}) '
+                f'Python/{py_version}')
 
     def rebuild_auth(self, prepared_request, response):
         """Never rebuild auth for archive.org URLs.
@@ -198,7 +199,7 @@ class ArchiveSession(requests.sessions.Session):
         max_retries_adapter = HTTPAdapter(**self.http_adapter_kwargs)
         # Don't mount on s3.us.archive.org, only archive.org!
         # IA-S3 requires a more complicated retry workflow.
-        self.mount('{0}//{1}'.format(protocol, host), max_retries_adapter)
+        self.mount(f'{protocol}//{host}', max_retries_adapter)
 
     def set_file_logger(self, log_level, path, logger_name='internetarchive'):
         """Convenience function to quickly configure any level of
@@ -254,8 +255,7 @@ class ArchiveSession(requests.sessions.Session):
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
         if not item_metadata:
-            logger.debug('no metadata provided for "{0}", '
-                         'retrieving now.'.format(identifier))
+            logger.debug(f'no metadata provided for "{identifier}", retrieving now.')
             item_metadata = self.get_metadata(identifier, request_kwargs)
         mediatype = item_metadata.get('metadata', {}).get('mediatype')
         try:
@@ -275,7 +275,7 @@ class ArchiveSession(requests.sessions.Session):
         :returns: Metadat API response.
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
-        url = '{0}//{1}/metadata/{2}'.format(self.protocol, self.host, identifier)
+        url = f'{self.protocol}//{self.host}/metadata/{identifier}'
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12
         try:
@@ -286,7 +286,7 @@ class ArchiveSession(requests.sessions.Session):
             resp = self.get(url, auth=s3_auth, **request_kwargs)
             resp.raise_for_status()
         except Exception as exc:
-            error_msg = 'Error retrieving metadata from {0}, {1}'.format(url, exc)
+            error_msg = f'Error retrieving metadata from {url}, {exc}'
             logger.error(error_msg)
             raise type(exc)(error_msg)
         return resp.json()
@@ -339,7 +339,7 @@ class ArchiveSession(requests.sessions.Session):
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12
 
-        u = '{protocol}//s3.us.archive.org'.format(protocol=self.protocol)
+        u = f'{self.protocol}//s3.us.archive.org'
         p = dict(
             check_limit=1,
             accesskey=access_key,

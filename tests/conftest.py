@@ -25,7 +25,7 @@ except NameError:
 
 PROTOCOL = 'https:'
 BASE_URL = 'https://archive.org/'
-METADATA_URL = BASE_URL + 'metadata/'
+METADATA_URL = f'{BASE_URL}metadata/'
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEST_CONFIG = os.path.join(ROOT_DIR, 'tests/ia.ini')
 NASA_METADATA_PATH = os.path.join(ROOT_DIR, 'tests/data/metadata/nasa.json')
@@ -88,13 +88,13 @@ def call_cmd(cmd, expected_exit_code=0):
 class IaRequestsMock(RequestsMock):
     def add_metadata_mock(self, identifier, body=None, method=responses.GET,
                           protocol='https?'):
-        url = re.compile(r'%s://archive.org/metadata/%s' % (protocol, identifier))
+        url = re.compile(f'{protocol}://archive.org/metadata/{identifier}')
         if body is None:
-            body = load_test_data_file('metadata/' + identifier + '.json')
+            body = load_test_data_file(f'metadata/{identifier}.json')
         self.add(method, url, body=body, content_type='application/json')
 
     def mock_all_downloads(self, num_calls=1, body='test content', protocol='https?'):
-        url = re.compile(r'{0}://archive.org/download/.*'.format(protocol))
+        url = re.compile(f'{protocol}://archive.org/download/.*')
         for _ in range(6):
             self.add(responses.GET, url, body=body)
 

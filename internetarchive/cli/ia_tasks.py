@@ -94,13 +94,13 @@ def main(argv, session):
                                 data=data)
         j = r.json()
         if j.get('success'):
-            print('success: {}'.format(j.get('value', dict()).get('log')))
+            print(f'success: {j.get("value", {}).get("log")}')
             sys.exit(0)
         elif 'already queued/running' in j.get('error', ''):
-            print('success: {} task already queued/running'.format(args['--cmd']))
+            print(f'success: {args["--cmd"]} task already queued/running')
             sys.exit(0)
         else:
-            print('error: {}'.format(j.get('error')))
+            print(f'error: {j.get("error")}')
             sys.exit(1)
 
     # Tasks read API.
@@ -146,7 +146,7 @@ def main(argv, session):
         # Legacy support for tab-delimted output.
         if args['--tab-output']:
             color = t.color if t.color else 'done'
-            task_args = '\t'.join(['{}={}'.format(k, v) for k, v in t.args.items()])
+            task_args = '\t'.join([f'{k}={v}' for k, v in t.args.items()])
             output = '\t'.join([str(x) for x in [
                 t.identifier,
                 t.task_id,

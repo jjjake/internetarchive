@@ -36,7 +36,7 @@ def test_archive_session(tmpdir):
     assert s.protocol == PROTOCOL
     assert s.access_key == 'test_access'
     assert s.secret_key == 'test_secret'
-    assert s.headers['user-agent'].startswith('internetarchive/{0}'.format(__version__))
+    assert s.headers['user-agent'].startswith(f'internetarchive/{__version__}')
 
 
 def test_get_item(tmpdir):
@@ -46,7 +46,7 @@ def test_get_item(tmpdir):
         item_metadata = fh.read().strip()
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(PROTOCOL),
+        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa',
                  body=item_metadata,
                  content_type='application/json')
 
@@ -56,7 +56,7 @@ def test_get_item(tmpdir):
         assert item.identifier == 'nasa'
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(PROTOCOL),
+        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa',
                  body=item_metadata,
                  status=400,
                  content_type='application/json')
@@ -88,7 +88,7 @@ def test_s3_is_overloaded():
     }"""
 
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(PROTOCOL),
+        rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
                  body=test_body,
                  content_type='application/json')
         s = internetarchive.session.ArchiveSession(CONFIG)
@@ -113,7 +113,7 @@ def test_s3_is_overloaded():
     }"""
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(PROTOCOL),
+        rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
                  body=test_body,
                  content_type='application/json')
         s = internetarchive.session.ArchiveSession(CONFIG)
@@ -123,9 +123,9 @@ def test_s3_is_overloaded():
 
 def test_cookies():
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//archive.org'.format(PROTOCOL))
+        rsps.add(responses.GET, f'{PROTOCOL}//archive.org')
         s = internetarchive.session.ArchiveSession(CONFIG)
-        r = s.get('{}//archive.org'.format(PROTOCOL))
+        r = s.get(f'{PROTOCOL}//archive.org')
         assert 'logged-in-sig' in r.request.headers['Cookie']
         assert 'logged-in-user' in r.request.headers['Cookie']
         for c in s.cookies:
@@ -133,9 +133,9 @@ def test_cookies():
                 assert c.domain == '.archive.org'
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//example.com'.format(PROTOCOL))
+        rsps.add(responses.GET, f'{PROTOCOL}//example.com')
         s = internetarchive.session.ArchiveSession(CONFIG)
-        r = s.get('{}//example.com'.format(PROTOCOL))
+        r = s.get(f'{PROTOCOL}//example.com')
         assert 'logged-in-sig' not in r.request.headers.get('Cookie', str())
         assert 'logged-in-user' not in r.request.headers.get('Cookie', str())
         assert '.archive.org' not in r.request.headers.get('Cookie', str())

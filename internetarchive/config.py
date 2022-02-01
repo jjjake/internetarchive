@@ -38,7 +38,7 @@ from internetarchive import auth
 
 def get_auth_config(email, password, host=None):
     host = host if host else 'archive.org'
-    u = 'https://{}/services/xauthn/'.format(host)
+    u = f'https://{host}/services/xauthn/'
     p = dict(op='login')
     d = dict(email=email, password=password)
     r = requests.post(u, params=p, data=d)
@@ -53,7 +53,7 @@ def get_auth_config(email, password, host=None):
         elif msg == 'account_bad_password':
             msg = 'Incorrect password, try again.'
         else:
-            msg = 'Authentication failed: {}'.format(msg)
+            msg = f'Authentication failed: {msg}'
         raise AuthenticationError(msg)
     auth_config = {
         's3': {

@@ -83,7 +83,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
     """Helper function for calling :meth:`Item.upload`"""
     responses = []
     if (upload_kwargs['verbose']) and (prev_identifier != item.identifier):
-        print('{0}:'.format(item.identifier))
+        print(f'{item.identifier}:')
 
     try:
         response = item.upload(files, **upload_kwargs)
@@ -100,10 +100,10 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
                 if i != 0:
                     print('---')
                 headers = '\n'.join(
-                    [' {0}:{1}'.format(k, v) for (k, v) in r.headers.items()]
+                    [f' {k}:{v}' for (k, v) in r.headers.items()]
                 )
-                print('Endpoint:\n {0}\n'.format(r.url))
-                print('HTTP Headers:\n{0}'.format(headers))
+                print(f'Endpoint:\n {r.url}\n')
+                print(f'HTTP Headers:\n{headers}')
                 return responses
 
         # Format error message for any non 200 responses that
@@ -155,7 +155,7 @@ def main(argv, session):
     try:
         args = s.validate(args)
     except SchemaError as exc:
-        print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
+        print(f'{exc!s}\n{printable_usage(__doc__)}', file=sys.stderr)
         sys.exit(1)
 
     # Make sure the collection being uploaded to exists.
@@ -166,20 +166,19 @@ def main(argv, session):
         collection = session.get_item(collection_id)
         if not collection.exists:
             print('You must upload to a collection that exists. '
-                  '"{0}" does not exist.\n{1}'.format(collection_id,
-                                                      printable_usage(__doc__)),
+                  f'"{collection_id}" does not exist.\n{printable_usage(__doc__)}',
                   file=sys.stderr)
             sys.exit(1)
 
     # Status check.
     if args['--status-check']:
         if session.s3_is_overloaded():
-            print('warning: {0} is over limit, and not accepting requests. '
-                  'Expect 503 SlowDown errors.'.format(args['<identifier>']),
+            print(f'warning: {args["<identifier>"]} is over limit, and not accepting requests. '
+                  'Expect 503 SlowDown errors.',
                   file=sys.stderr)
             sys.exit(1)
         else:
-            print('success: {0} is accepting requests.'.format(args['<identifier>']))
+            print(f'success: {args["<identifier>"]} is accepting requests.')
             sys.exit()
 
     elif args['<identifier>']:
@@ -240,8 +239,8 @@ def main(argv, session):
                 ERRORS = True
             else:
                 if args['--open-after-upload']:
-                    webbrowser.open_new_tab('{}//{}/details/{}'.format(
-                        session.protocol, session.host, item.identifier))
+                    url = f'{session.protocol}//{session.host}/details/{item.identifier}'
+                    webbrowser.open_new_tab(url)
 
     # Bulk upload using spreadsheet.
     else:
@@ -252,7 +251,7 @@ def main(argv, session):
             for row in spreadsheet:
                 for metadata_key in row:
                     if not is_valid_metadata_key(metadata_key):
-                        print('error: "%s" is not a valid metadata key.' % metadata_key,
+                        print(f'error: "{metadata_key}" is not a valid metadata key.',
                               file=sys.stderr)
                         sys.exit(1)
                 upload_kwargs_copy = deepcopy(upload_kwargs)
@@ -276,7 +275,7 @@ def main(argv, session):
                 item = session.get_item(identifier)
                 # TODO: Clean up how indexed metadata items are coerced
                 # into metadata.
-                md_args = ['{0}:{1}'.format(k.lower(), v) for (k, v) in row.items() if v]
+                md_args = [f'{k.lower()}:{v}' for (k, v) in row.items() if v]
                 metadata = get_args_dict(md_args)
                 upload_kwargs_copy['metadata'].update(metadata)
                 r = _upload_files(item, local_file, upload_kwargs_copy, prev_identifier,
@@ -288,8 +287,8 @@ def main(argv, session):
                         ERRORS = True
                     else:
                         if args['--open-after-upload']:
-                            webbrowser.open_new_tab('{}//{}/details/{}'.format(
-                                session.protocol, session.host, identifier))
+                            url = f'{session.protocol}//{session.host}/details/{identifier}'
+                            webbrowser.open_new_tab(url)
                 prev_identifier = identifier
 
     if ERRORS:

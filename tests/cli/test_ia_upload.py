@@ -15,13 +15,12 @@ def test_ia_upload(tmpdir_ch, caplog):
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, '{0}//s3.us.archive.org/nasa/test.txt'.format(PROTOCOL),
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
                  body='',
                  content_type='text/plain')
         ia_call(['ia', '--log', 'upload', 'nasa', 'test.txt'])
 
-    assert ('uploaded test.txt to {0}//s3.us.archive.org/nasa/'
-            'test.txt'.format(PROTOCOL)) in caplog.text
+    assert f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
 
 
 def test_ia_upload_invalid_identifier(capsys, caplog):
@@ -40,7 +39,7 @@ def test_ia_upload_invalid_identifier(capsys, caplog):
 
 def test_ia_upload_status_check(capsys):
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(PROTOCOL),
+        rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
                  body=STATUS_CHECK_RESPONSE,
                  content_type='application/json')
 
@@ -51,7 +50,7 @@ def test_ia_upload_status_check(capsys):
         j = json.loads(STATUS_CHECK_RESPONSE)
         j['over_limit'] = 1
         rsps.reset()
-        rsps.add(responses.GET, '{0}//s3.us.archive.org'.format(PROTOCOL),
+        rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
                  body=json.dumps(j),
                  content_type='application/json')
 
@@ -90,7 +89,7 @@ def test_ia_upload_403(capsys):
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
         rsps.add(responses.PUT,
-                 '{0}//s3.us.archive.org/nasa/test_ia_upload.py'.format(PROTOCOL),
+                 f'{PROTOCOL}//s3.us.archive.org/nasa/test_ia_upload.py',
                  body=s3_error,
                  status=403,
                  content_type='text/plain')
@@ -130,15 +129,15 @@ def test_ia_upload_unicode(tmpdir_ch, caplog):
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
         rsps.add(responses.PUT,
-                 '{0}//s3.us.archive.org/nasa/{1}'.format(PROTOCOL, efname),
+                 f'{PROTOCOL}//s3.us.archive.org/nasa/{efname}',
                  body='',
                  content_type='text/plain')
         ia_call(['ia', '--log', 'upload', 'nasa', 'தமிழ் - baz ∆.txt',
                  '--metadata', 'foo:∆'])
 
-    assert ('uploaded தமிழ் - baz ∆.txt to {0}//s3.us.archive.org/nasa/'
+    assert (f'uploaded தமிழ் - baz ∆.txt to {PROTOCOL}//s3.us.archive.org/nasa/'
             '%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20'
-            'baz%20%E2%88%86.txt'.format(PROTOCOL)) in caplog.text
+            'baz%20%E2%88%86.txt') in caplog.text
 
 
 def test_ia_upload_remote_name(tmpdir_ch, caplog):
@@ -147,11 +146,10 @@ def test_ia_upload_remote_name(tmpdir_ch, caplog):
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, '{0}//s3.us.archive.org/nasa/hi.txt'.format(PROTOCOL),
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/hi.txt',
                  body='',
                  content_type='text/plain')
         ia_call(['ia', '--log', 'upload', 'nasa', 'test.txt', '--remote-name',
                  'hi.txt'])
 
-    assert ('uploaded hi.txt to {0}//s3.us.archive.org/nasa/'
-            'hi.txt'.format(PROTOCOL)) in caplog.text
+    assert f'uploaded hi.txt to {PROTOCOL}//s3.us.archive.org/nasa/hi.txt' in caplog.text

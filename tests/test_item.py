@@ -20,8 +20,8 @@ from requests.exceptions import HTTPError, ConnectionError
 from internetarchive import get_session
 import internetarchive.files
 
-S3_URL = r'{0}//s3.us.archive.org/'.format(PROTOCOL)
-DOWNLOAD_URL_RE = re.compile(r'{0}//archive.org/download/.*'.format(PROTOCOL))
+S3_URL = f'{PROTOCOL}//s3.us.archive.org/'
+DOWNLOAD_URL_RE = re.compile(f'{PROTOCOL}//archive.org/download/.*')
 S3_URL_RE = re.compile(r'.*s3.us.archive.org/.*')
 
 EXPECTED_S3_HEADERS = {
@@ -221,7 +221,7 @@ def test_download_destdir(tmpdir, nasa_item):
 
 
 def test_download_no_directory(tmpdir, nasa_item):
-    url_re = re.compile(r'{0}//archive.org/download/.*'.format(PROTOCOL))
+    url_re = re.compile(f'{PROTOCOL}//archive.org/download/.*')
     tmpdir.chdir()
     with IaRequestsMock() as rsps:
         rsps.add(responses.GET, url_re, body='no dest dir')
@@ -263,7 +263,7 @@ def test_download_dark_item(tmpdir, capsys, nasa_metadata, session):
         nasa_metadata['metadata']['identifier'] = 'dark-item'
         nasa_metadata['is_dark'] = True
         _item_metadata = json.dumps(nasa_metadata)
-        rsps.add(responses.GET, '{0}//archive.org/metadata/dark-item'.format(PROTOCOL),
+        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/dark-item',
                  body=_item_metadata,
                  content_type='application/json')
         _item = session.get_item('dark-item')
@@ -292,7 +292,7 @@ def test_upload(nasa_item):
             assert 'user-agent' in headers
             del headers['user-agent']
             assert headers == EXPECTED_S3_HEADERS
-            assert request.url == '{0}//s3.us.archive.org/nasa/nasa.json'.format(PROTOCOL)
+            assert request.url == f'{PROTOCOL}//s3.us.archive.org/nasa/nasa.json'
 
 
 def test_upload_validate_identifier(session):
@@ -402,8 +402,8 @@ def test_upload_file_keys(nasa_item):
         files = {'new_key.txt': NASA_METADATA_PATH, '222': NASA_METADATA_PATH}
         _responses = nasa_item.upload(files, access_key='a', secret_key='b')
         expected_urls = [
-            '{0}//s3.us.archive.org/nasa/new_key.txt'.format(PROTOCOL),
-            '{0}//s3.us.archive.org/nasa/222'.format(PROTOCOL)
+            f'{PROTOCOL}//s3.us.archive.org/nasa/new_key.txt',
+            f'{PROTOCOL}//s3.us.archive.org/nasa/222',
         ]
         for resp in _responses:
             assert resp.request.url in expected_urls
@@ -425,8 +425,8 @@ def test_upload_dir(tmpdir, nasa_item):
                                       access_key='a',
                                       secret_key='b')
         expected_eps = [
-            '{0}nasa/foo.txt'.format(S3_URL),
-            '{0}nasa/foo2.txt'.format(S3_URL),
+            f'{S3_URL}nasa/foo.txt',
+            f'{S3_URL}nasa/foo2.txt',
         ]
         for resp in _responses:
             assert resp.request.url in expected_eps
@@ -437,8 +437,8 @@ def test_upload_dir(tmpdir, nasa_item):
                                       secret_key='b')
         tmp_path = norm_filepath(str(tmpdir))
         expected_eps = [
-            '{0}nasa{1}/dir_test/{2}'.format(S3_URL, tmp_path, 'foo.txt'),
-            '{0}nasa{1}/dir_test/{2}'.format(S3_URL, tmp_path, 'foo2.txt'),
+            f'{S3_URL}nasa{tmp_path}/dir_test/foo.txt',
+            f'{S3_URL}nasa{tmp_path}/dir_test/foo2.txt',
         ]
         for resp in _responses:
             assert resp.request.url in expected_eps
@@ -550,7 +550,7 @@ def test_upload_checksum(tmpdir, nasa_item):
 
 def test_modify_metadata(nasa_item, nasa_metadata):
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.POST, '{0}//archive.org/metadata/nasa'.format(PROTOCOL))
+        rsps.add(responses.POST, f'{PROTOCOL}//archive.org/metadata/nasa')
 
         # Test simple add.
         md = {'foo': 'bar'}
@@ -633,8 +633,7 @@ def test_modify_metadata(nasa_item, nasa_metadata):
         md = {'title': 'new title'}
         nasa_metadata['metadata']['title'] = 'new title'
         _item_metadata = json.dumps(nasa_metadata)
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(PROTOCOL),
-                 body=_item_metadata)
+        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa', body=_item_metadata)
         nasa_item.modify_metadata(md,
                                   access_key='a',
                                   secret_key='b')

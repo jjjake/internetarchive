@@ -28,7 +28,7 @@ import os
 import sys
 import logging
 import socket
-import urllib.parse
+from urllib.parse import quote
 from requests.exceptions import HTTPError, RetryError, ConnectTimeout, \
     ConnectionError, ReadTimeout
 
@@ -114,7 +114,7 @@ class File(BaseFile):
         url_parts = dict(
             protocol=item.session.protocol,
             id=self.identifier,
-            name=urllib.parse.quote(name.encode('utf-8')),
+            name=quote(name.encode('utf-8')),
             host=item.session.host,
         )
         self.url = '{protocol}//{host}/download/{id}/{name}'.format(**url_parts)
@@ -345,7 +345,7 @@ class File(BaseFile):
 
         url = '{0}//s3.us.archive.org/{1}/{2}'.format(self.item.session.protocol,
                                                       self.identifier,
-                                                      urllib.parse.quote(self.name))
+                                                      quote(self.name))
         self.item.session.mount_http_adapter(max_retries=max_retries,
                                              status_forcelist=[503],
                                              host='s3.us.archive.org')

@@ -37,7 +37,7 @@ options:
                                    [default: True].
 """
 import sys
-import urllib.parse
+from urllib.parse import quote
 
 from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
@@ -100,7 +100,7 @@ def main(argv, session, cmd='copy'):
         print('{0}\n{1}'.format(str(exc), usage), file=sys.stderr)
         sys.exit(1)
 
-    args['--header']['x-amz-copy-source'] = '/{}'.format(urllib.parse.quote(src_path))
+    args['--header']['x-amz-copy-source'] = '/{}'.format(quote(src_path))
     # Copy the old metadata verbatim if no additional metadata is supplied,
     # else combine the old and the new metadata in a sensible manner.
     if args['--metadata'] or args['--replace-metadata']:
@@ -123,7 +123,7 @@ def main(argv, session, cmd='copy'):
     if not args['--header'].get('x-archive-keep-old-version') and not args['--no-backup']:
         args['--header']['x-archive-keep-old-version'] = '1'
 
-    url = '{}//s3.us.archive.org/{}'.format(session.protocol, urllib.parse.quote(dest_path))
+    url = '{}//s3.us.archive.org/{}'.format(session.protocol, quote(dest_path))
     queue_derive = True if args['--no-derive'] is False else False
     req = ia.iarequest.S3Request(url=url,
                                  method='PUT',

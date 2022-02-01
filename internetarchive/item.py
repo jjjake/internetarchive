@@ -36,7 +36,7 @@ from functools import total_ordering
 import json
 from copy import deepcopy
 
-import urllib.parse
+from urllib.parse import quote
 from requests import Response
 from tqdm import tqdm
 from requests.exceptions import HTTPError
@@ -975,7 +975,7 @@ class Item(BaseItem):
         key = norm_filepath(filename).split('/')[-1] if key is None else key
         base_url = '{0.session.protocol}//s3.us.archive.org/{0.identifier}'.format(self)
         url = '{0}/{1}'.format(
-            base_url, urllib.parse.quote(norm_filepath(key).lstrip('/').encode('utf-8')))
+            base_url, quote(norm_filepath(key).lstrip('/').encode('utf-8')))
 
         # Skip based on checksum.
         if checksum:

@@ -31,7 +31,7 @@ except ImportError:
 import re
 import copy
 import logging
-import urllib.parse
+from urllib.parse import quote
 import requests.models
 import requests
 from jsonpatch import make_patch
@@ -150,7 +150,7 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                         continue
                     header_key = 'x-archive-{0}{1:02d}-{2}'.format(meta_type, i, meta_key)
                     if (isinstance(value, str) and needs_quote(value)):
-                        value = 'uri({0})'.format(urllib.parse.quote(value))
+                        value = 'uri({0})'.format(quote(value))
                     # because rfc822 http headers disallow _ in names, IA-S3 will
                     # translate two hyphens in a row (--) into an underscore (_).
                     header_key = header_key.replace('_', '--')

@@ -50,10 +50,6 @@ options:
 """
 import sys
 import os
-try:
-    import ujson as json
-except ImportError:
-    import json
 import io
 from collections import defaultdict
 from copy import copy
@@ -65,6 +61,7 @@ from schema import Schema, SchemaError, Or, And, Use
 from internetarchive.cli.argparser import get_args_dict, get_args_dict_many_write,\
     get_args_header_dict
 from internetarchive.exceptions import ItemLocateError
+from internetarchive.utils import json
 
 
 def modify_metadata(item, metadata, args):

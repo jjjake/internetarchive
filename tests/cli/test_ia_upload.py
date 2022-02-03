@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import json
-
 import responses
 
+from internetarchive.utils import json
 from tests.conftest import IaRequestsMock, load_test_data_file, ia_call
 
 PROTOCOL = 'https:'

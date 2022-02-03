@@ -33,10 +33,6 @@ import sys
 import logging
 import platform
 import warnings
-try:
-    import ujson as json
-except ImportError:
-    import json
 
 import requests.sessions
 from requests.utils import default_headers

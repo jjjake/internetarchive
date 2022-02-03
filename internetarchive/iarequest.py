@@ -24,10 +24,6 @@ internetarchive.iarequest
 :copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-try:
-    import ujson as json
-except ImportError:
-    import json
 import re
 import copy
 import logging
@@ -37,7 +33,7 @@ import requests
 from jsonpatch import make_patch
 
 from internetarchive import auth, __version__
-from internetarchive.utils import needs_quote, delete_items_from_dict
+from internetarchive.utils import json, needs_quote, delete_items_from_dict
 from internetarchive.exceptions import ItemLocateError
 
 

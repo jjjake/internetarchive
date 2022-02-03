@@ -67,11 +67,11 @@ examples:
 """
 import sys
 import warnings
-import json
 
 from docopt import docopt
 
 from internetarchive.cli.argparser import get_args_dict
+from internetarchive.utils import json
 
 
 def main(argv, session):

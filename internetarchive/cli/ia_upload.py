@@ -66,7 +66,6 @@ import sys
 from tempfile import TemporaryFile
 from copy import deepcopy
 import webbrowser
-import json
 import csv
 
 from docopt import docopt, printable_usage
@@ -75,8 +74,8 @@ from schema import Schema, Use, Or, And, SchemaError
 
 from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
 from internetarchive.session import ArchiveSession
-from internetarchive.utils import (InvalidIdentifierException, get_s3_xml_text,
-                                   is_valid_metadata_key, validate_s3_identifier)
+from internetarchive.utils import (InvalidIdentifierException, JSONDecodeError, get_s3_xml_text,
+                                   is_valid_metadata_key, json, validate_s3_identifier)
 
 
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
@@ -197,7 +196,7 @@ def main(argv, session):
     if args['--file-metadata']:
         try:
             args['<file>'] = json.load(open(args['--file-metadata']))
-        except json.decoder.JSONDecodeError:
+        except JSONDecodeError:
             args['<file>'] = []
             for line in open(args['--file-metadata']):
                 j = json.loads(line.strip())

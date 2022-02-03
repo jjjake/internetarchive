@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import sys
@@ -11,6 +10,7 @@ from responses import RequestsMock
 from internetarchive import get_session
 from internetarchive.api import get_item
 from internetarchive.cli import ia
+from internetarchive.utils import json
 
 try:
     FileNotFoundError

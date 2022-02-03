@@ -126,8 +126,13 @@ class Search:
 
         self.params['output'] = 'json'
 
-        r = self.session.get(self.search_url, params=self.params, **self.request_kwargs)
+        r = self.session.get(self.search_url,
+                             params=self.params,
+                             auth=self.auth,
+                             **self.request_kwargs)
         j = r.json()
+        if j.get('error'):
+            yield j
         yield from j.get('response', {}).get('docs', [])
 
     def _scrape(self):
@@ -141,6 +146,8 @@ class Search:
                                   auth=self.auth,
                                   **self.request_kwargs)
             j = r.json()
+            if j.get('error'):
+                yield j
             num_found = j['total']
             self._handle_scrape_error(j)
 

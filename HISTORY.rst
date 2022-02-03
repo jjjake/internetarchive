@@ -13,6 +13,7 @@ Unreleased
 **Features and Improvements**
 
 - ``page`` parameter is no longer required if ``rows`` parameter is specified in search requests.
+- advancedsearch.php endpoint now supports IAS3 authorization.
 
 **Bugfixes**
 

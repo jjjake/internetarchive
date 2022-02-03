@@ -33,7 +33,6 @@ import math
 from xml.parsers.expat import ExpatError
 
 from functools import total_ordering
-import json
 from copy import deepcopy
 
 from urllib.parse import quote
@@ -44,7 +43,7 @@ from requests.exceptions import HTTPError
 from internetarchive.utils import (IdentifierListAsItems, get_md5,
                                    chunk_generator, IterableToFileAdapter,
                                    iter_directory, recursive_file_count,
-                                   norm_filepath)
+                                   norm_filepath, json)
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
 from internetarchive.auth import S3Auth

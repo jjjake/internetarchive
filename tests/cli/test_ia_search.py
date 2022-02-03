@@ -1,10 +1,7 @@
 from tests.conftest import PROTOCOL, load_test_data_file, IaRequestsMock, ia_call
 
-try:
-    import ujson as json
-except ImportError:
-    import json
 
+from internetarchive.utils import json
 import responses
 
 

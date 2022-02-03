@@ -26,10 +26,6 @@ This module contains objects for interacting with the Archive.org catalog.
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-try:
-    import ujson as json
-except ImportError:
-    import json
 from logging import getLogger
 from datetime import datetime
 
@@ -37,6 +33,7 @@ from requests.exceptions import HTTPError
 import collections
 
 from internetarchive import auth
+from internetarchive.utils import json
 
 
 log = getLogger(__name__)

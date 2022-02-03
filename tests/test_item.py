@@ -4,10 +4,6 @@ from internetarchive.utils import norm_filepath, InvalidIdentifierException
 from tests.conftest import (PROTOCOL, IaRequestsMock, load_file,
                             NASA_METADATA_PATH, load_test_data_file)
 
-try:
-    import ujson as json
-except ImportError:
-    import json
 import types
 import re
 import os
@@ -19,6 +15,7 @@ from requests.exceptions import HTTPError, ConnectionError
 
 from internetarchive import get_session
 import internetarchive.files
+from internetarchive.utils import json
 
 S3_URL = f'{PROTOCOL}//s3.us.archive.org/'
 DOWNLOAD_URL_RE = re.compile(f'{PROTOCOL}//archive.org/download/.*')
@@ -592,7 +589,8 @@ def test_modify_metadata(nasa_item, nasa_metadata):
         assert set(p.data.keys()) == set(expected_data.keys())
         assert p.data['priority'] == expected_data['priority']
         assert p.data['-target'] == expected_data['-target']
-        assert '["one", "two", "last"]' in str(p.data['-patch'])
+        assert '["one", "two", "last"]' in str(p.data['-patch']) \
+               or '["one","two","last"]' in str(p.data['-patch'])
 
         # Test indexed mod.
         nasa_item.item_metadata['metadata']['subject'] = ['first', 'middle', 'last']
@@ -607,7 +605,7 @@ def test_modify_metadata(nasa_item, nasa_metadata):
         # Avoid comparing the json strings, because they are not in a canonical form
         assert set(p.data.keys()) == set(expected_data.keys())
         assert all(p.data[k] == expected_data[k] for k in ['priority', '-target'])
-        assert '/subject/2' in p.data['-patch']
+        assert '/subject/2' in p.data['-patch'] or r'\/subject\/2' in p.data['-patch']
 
         # Test priority.
         md = {'title': 'NASA Images'}

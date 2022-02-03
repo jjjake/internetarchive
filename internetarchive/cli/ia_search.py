@@ -43,10 +43,6 @@ examples:
     ia search 'collection:nasa' --parameters rows:1
 """
 import sys
-try:
-    import ujson as json
-except ImportError:
-    import json
 from itertools import chain
 
 from docopt import docopt, printable_usage
@@ -56,6 +52,7 @@ from requests.exceptions import ConnectTimeout, ReadTimeout
 from internetarchive import search_items
 from internetarchive.cli.argparser import get_args_dict
 from internetarchive.exceptions import AuthenticationError
+from internetarchive.utils import json
 
 
 def main(argv, session=None):

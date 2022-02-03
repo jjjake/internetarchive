@@ -34,6 +34,16 @@ from xml.dom.minidom import parseString
 from collections.abc import Mapping
 
 
+# Make preferred JSON package available via `from internetarchive.utils import json`
+try:
+    import ujson as json
+    # ujson lacks a JSONDecodeError: https://github.com/ultrajson/ultrajson/issues/497
+    JSONDecodeError = ValueError
+except ImportError:
+    import json
+    JSONDecodeError = json.JSONDecodeError
+
+
 def deep_update(d, u):
     for k, v in u.items():
         if isinstance(v, Mapping):

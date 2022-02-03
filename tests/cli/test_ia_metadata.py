@@ -23,8 +23,8 @@ def test_ia_metadata_exists(capsys):
 def test_ia_metadata_formats(capsys, nasa_mocker):
     ia_call(['ia', 'metadata', '--formats', 'nasa'])
     out, err = capsys.readouterr()
-    expected_formats = set(['Collection Header', 'Archive BitTorrent', 'JPEG',
-                            'Metadata', ''])
+    expected_formats = {'Collection Header', 'Archive BitTorrent', 'JPEG',
+                        'Metadata', ''}
     assert set(out.split('\n')) == expected_formats
 
 
@@ -35,8 +35,7 @@ def test_ia_metadata_modify(capsys):
         rsps.add_metadata_mock('nasa')
         rsps.add_metadata_mock('nasa', body=md_rsp, method=responses.POST)
         rsps.add_metadata_mock('nasa')
-        valid_key = "foo-{k}".format(k=int(time()))
-        ia_call(['ia', 'metadata', '--modify', '{0}:test_value'.format(valid_key),
-                 'nasa'])
+        valid_key = f'foo-{int(time())}'
+        ia_call(['ia', 'metadata', '--modify', f'{valid_key}:test_value', 'nasa'])
         out, err = capsys.readouterr()
         assert out == 'nasa - success: https://catalogd.archive.org/log/447613301\n'

@@ -48,7 +48,6 @@ options:
                                         Works on both single and multi-field metadata
                                         elements.
 """
-from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import os
 try:
@@ -58,21 +57,14 @@ except ImportError:
 import io
 from collections import defaultdict
 from copy import copy
+import csv
 
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Or, And, Use
-import six
 
 from internetarchive.cli.argparser import get_args_dict, get_args_dict_many_write,\
     get_args_header_dict
 from internetarchive.exceptions import ItemLocateError
-
-# Only import backports.csv for Python2 (in support of FreeBSD port).
-PY2 = sys.version_info[0] == 2
-if sys.version_info[0] == 2:
-    from backports import csv
-else:
-    import csv
 
 
 def modify_metadata(item, metadata, args):
@@ -83,7 +75,7 @@ def modify_metadata(item, metadata, args):
                                  priority=args['--priority'], append_list=append_list,
                                  headers=args['--header'])
     except ItemLocateError as exc:
-        print('{} - error: {}'.format(item.identifier, str(exc)), file=sys.stderr)
+        print(f'{item.identifier} - error: {exc}', file=sys.stderr)
         sys.exit(1)
     if not r.json()['success']:
         error_msg = r.json()['error']
@@ -91,10 +83,9 @@ def modify_metadata(item, metadata, args):
             etype = 'warning'
         else:
             etype = 'error'
-        print('{0} - {1} ({2}): {3}'.format(
-            item.identifier, etype, r.status_code, error_msg), file=sys.stderr)
+        print(f'{item.identifier} - {etype} ({r.status_code}): {error_msg}', file=sys.stderr)
         return r
-    print('{0} - success: {1}'.format(item.identifier, r.json()['log']))
+    print(f'{item.identifier} - success: {r.json()["log"]}')
     return r
 
 
@@ -103,8 +94,7 @@ def remove_metadata(item, metadata, args):
     for key in metadata:
         src_md = copy(item.metadata.get(key))
         if not src_md:
-            print('{0}/metadata/{1} does not exist, skipping.'.format(
-                item.identifier, key), file=sys.stderr)
+            print(f'{item.identifier}/metadata/{key} does not exist, skipping.', file=sys.stderr)
             continue
 
         if key == 'collection':
@@ -119,23 +109,21 @@ def remove_metadata(item, metadata, args):
                     r = item.remove_from_simplelist(c, 'holdings')
                     j = r.json()
                     if j.get('success'):
-                        print('{} - success: {} no longer in {}'.format(
-                              item.identifier, item.identifier, c))
+                        print(f'{item.identifier} - success: {item.identifier} no longer in {c}')
                         sys.exit(0)
                     elif j.get('error', '').startswith('no row to delete for'):
-                        print('{} - success: {} no longer in {}'.format(
-                              item.identifier, item.identifier, c))
+                        print(f'{item.identifier} - success: {item.identifier} no longer in {c}')
                         sys.exit(0)
                     else:
-                        print('{} - error: {}'.format(item.identifier, j.get('error')))
+                        print(f'{item.identifier} - error: {j.get("error")}')
                         sys.exit(1)
 
         if not isinstance(src_md, list):
             if key == 'subject':
                 src_md = src_md.split(';')
             elif key == 'collection':
-                print('{} - error: all collections would be removed, '
-                      'not submitting task.'.format(item.identifier), file=sys.stderr)
+                print(f'{item.identifier} - error: all collections would be removed, '
+                      'not submitting task.', file=sys.stderr)
                 sys.exit(1)
 
             if src_md == metadata[key]:
@@ -159,12 +147,11 @@ def remove_metadata(item, metadata, args):
             md[key] = 'REMOVE_TAG'
 
     if md.get('collection') == []:
-        print('{} - error: all collections would be removed, not submitting task.'.format(
-            item.identifier), file=sys.stderr)
+        print(f'{item.identifier} - error: all collections would be removed, not submitting task.',
+              file=sys.stderr)
         sys.exit(1)
     elif not md:
-        print('{} - warning: nothing needed to be removed.'.format(
-            item.identifier), file=sys.stderr)
+        print(f'{item.identifier} - warning: nothing needed to be removed.', file=sys.stderr)
         sys.exit(0)
 
     r = modify_metadata(item, md, args)
@@ -176,7 +163,7 @@ def main(argv, session):
 
     # Validate args.
     s = Schema({
-        six.text_type: bool,
+        str: bool,
         '<identifier>': list,
         '--modify': list,
         '--header': Or(None, And(Use(get_args_header_dict), dict),
@@ -192,7 +179,7 @@ def main(argv, session):
     try:
         args = s.validate(args)
     except SchemaError as exc:
-        print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
+        print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
         sys.exit(1)
 
     formats = set()
@@ -205,10 +192,10 @@ def main(argv, session):
         if args['--exists']:
             if item.exists:
                 responses.append(True)
-                print('{0} exists'.format(identifier))
+                print(f'{identifier} exists')
             else:
                 responses.append(False)
-                print('{0} does not exist'.format(identifier), file=sys.stderr)
+                print(f'{identifier} does not exist', file=sys.stderr)
             if (i + 1) == len(args['<identifier>']):
                 if all(r is True for r in responses):
                     sys.exit(0)
@@ -279,7 +266,7 @@ def main(argv, session):
                 item = session.get_item(row['identifier'])
                 if row.get('file'):
                     del row['file']
-                metadata = dict((k.lower(), v) for (k, v) in row.items() if v)
+                metadata = {k.lower(): v for k, v in row.items() if v}
                 responses.append(modify_metadata(item, metadata, args))
 
             if all(r.status_code == 200 for r in responses):

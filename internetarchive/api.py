@@ -26,9 +26,6 @@ This module implements the Internetarchive API.
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import
-
-from six.moves import input
 from getpass import getpass
 import requests
 
@@ -58,7 +55,7 @@ def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=N
     Usage:
 
         >>> from internetarchive import get_session
-        >>> config = dict(s3=dict(access='foo', secret='bar'))
+        >>> config = {'s3': {'access': 'foo', 'secret': 'bar'}}
         >>> s = get_session(config)
         >>> s.access_key
         'foo'
@@ -600,7 +597,7 @@ def get_user_info(access_key, secret_key):
     :param secret_key: IA-S3 secret_key to use when making the given request.
     """
     u = 'https://s3.us.archive.org'
-    p = dict(check_auth=1)
+    p = {'check_auth': 1}
     r = requests.get(u, params=p, auth=auth.S3Auth(access_key, secret_key))
     r.raise_for_status()
     j = r.json()

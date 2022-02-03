@@ -35,7 +35,6 @@ options:
     -n, --netrc                Use netrc file for login.
     -c, --print-cookies        Print archive.org logged-in-* cookies.
 """
-from __future__ import absolute_import, print_function, unicode_literals
 import sys
 import netrc
 
@@ -61,7 +60,7 @@ def main(argv, session):
                 print('error: "logged-in-sig" cookie not found in config file, '
                       'try reconfiguring.', file=sys.stderr)
             sys.exit(1)
-        print('logged-in-user={}; logged-in-sig={}'.format(user, sig))
+        print(f'logged-in-user={user}; logged-in-sig={sig}')
         sys.exit()
     try:
         # CLI params.
@@ -70,7 +69,7 @@ def main(argv, session):
                                          args['--password'],
                                          config_file=session.config_file,
                                          host=session.host)
-            print('Config saved to: {0}'.format(config_file_path))
+            print(f'Config saved to: {config_file_path}')
 
         # Netrc
         elif args['--netrc']:
@@ -85,15 +84,15 @@ def main(argv, session):
                                          password,
                                          config_file=session.config_file,
                                          host=session.host)
-            print('Config saved to: {0}'.format(config_file_path))
+            print(f'Config saved to: {config_file_path}')
 
         # Interactive input.
         else:
             print("Enter your Archive.org credentials below to configure 'ia'.\n")
             config_file_path = configure(config_file=session.config_file,
                                          host=session.host)
-            print('\nConfig saved to: {0}'.format(config_file_path))
+            print(f'\nConfig saved to: {config_file_path}')
 
     except AuthenticationError as exc:
-        print('\nerror: {0}'.format(str(exc)))
+        print(f'\nerror: {exc}')
         sys.exit(1)

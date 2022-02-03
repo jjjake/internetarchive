@@ -38,7 +38,6 @@ options:
     -D, --dsl-fts                    Sumbit --fts query in dsl [default: False].
     -t, --timeout=<seconds>          Set the timeout in seconds [default: 300].
 """
-from __future__ import absolute_import, print_function, unicode_literals
 import sys
 try:
     import ujson as json
@@ -48,7 +47,6 @@ from itertools import chain
 
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Use, Or, And
-import six
 from requests.exceptions import ConnectTimeout, ReadTimeout
 
 from internetarchive import search_items
@@ -61,7 +59,7 @@ def main(argv, session=None):
 
     # Validate args.
     s = Schema({
-        six.text_type: Use(bool),
+        str: Use(bool),
         '<query>': Use(lambda x: ' '.join(x)),
         '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
         '--header': Or(None, And(Use(get_args_dict), dict),
@@ -74,17 +72,17 @@ def main(argv, session=None):
     try:
         args = s.validate(args)
     except SchemaError as exc:
-        print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
+        print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
         sys.exit(1)
 
     # Support comma separated values.
     fields = list(chain.from_iterable([x.split(',') for x in args['--field']]))
     sorts = list(chain.from_iterable([x.split(',') for x in args['--sort']]))
 
-    r_kwargs = dict(
-        headers=args['--header'],
-        timeout=args['--timeout'],
-    )
+    r_kwargs = {
+        'headers': args['--header'],
+        'timeout': args['--timeout'],
+    }
 
     search = session.search_items(args['<query>'],
                                   fields=fields,
@@ -96,7 +94,7 @@ def main(argv, session=None):
 
     try:
         if args['--num-found']:
-            print('{0}'.format(search.num_found))
+            print(search.num_found)
             sys.exit(0)
 
         for result in search:
@@ -108,7 +106,7 @@ def main(argv, session=None):
                 if result.get('error'):
                     sys.exit(1)
     except ValueError as e:
-        print('error: {0}'.format(e), file=sys.stderr)
+        print(f'error: {e}', file=sys.stderr)
     except ConnectTimeout as exc:
         print('error: Request timed out. Increase the --timeout and try again.',
               file=sys.stderr)
@@ -118,5 +116,5 @@ def main(argv, session=None):
               ' please try again', file=sys.stderr)
         sys.exit(1)
     except AuthenticationError as exc:
-        print('error: {}'.format(exc), file=sys.stderr)
+        print(f'error: {exc}', file=sys.stderr)
         sys.exit(1)

@@ -24,12 +24,10 @@ internetarchive.config
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import
-
 import errno
 import os
 from collections import defaultdict
-from six.moves import configparser
+import configparser
 
 import requests
 
@@ -40,9 +38,9 @@ from internetarchive import auth
 
 def get_auth_config(email, password, host=None):
     host = host if host else 'archive.org'
-    u = 'https://{}/services/xauthn/'.format(host)
-    p = dict(op='login')
-    d = dict(email=email, password=password)
+    u = f'https://{host}/services/xauthn/'
+    p = {'op': 'login'}
+    d = {'email': email, 'password': password}
     r = requests.post(u, params=p, data=d)
     j = r.json()
     if not j.get('success'):
@@ -55,7 +53,7 @@ def get_auth_config(email, password, host=None):
         elif msg == 'account_bad_password':
             msg = 'Incorrect password, try again.'
         else:
-            msg = 'Authentication failed: {}'.format(msg)
+            msg = f'Authentication failed: {msg}'
         raise AuthenticationError(msg)
     auth_config = {
         's3': {
@@ -98,14 +96,7 @@ def write_config_file(auth_config, config_file=None):
         # The XDG Base Dir spec requires that the XDG_CONFIG_HOME directory be created with mode 700.
         # is_xdg will be True iff config_file is ${XDG_CONFIG_HOME}/internetarchive/ia.ini.
         # So create grandparent first if necessary then parent to ensure both have the right mode.
-        try:
-            os.makedirs(os.path.dirname(config_directory), mode=0o700, exist_ok=True)
-        except TypeError:  # Python 2 doesn't have exist_ok
-            try:
-                os.makedirs(os.path.dirname(config_directory), mode=0o700)
-            except OSError as e:
-                if e.errno != errno.EEXIST or not os.path.isdir(os.path.dirname(config_directory)):
-                    raise
+        os.makedirs(os.path.dirname(config_directory), mode=0o700, exist_ok=True)
         os.mkdir(config_directory, 0o700)
 
     # Write config file.
@@ -187,4 +178,4 @@ def get_config(config=None, config_file=None):
     # Recursive/deep update.
     deep_update(config_dict, _config)
 
-    return dict((k, v) for k, v in config_dict.items() if v is not None)
+    return {k: v for k, v in config_dict.items() if v is not None}

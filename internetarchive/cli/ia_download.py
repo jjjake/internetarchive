@@ -62,12 +62,10 @@ options:
     -p, --parameters=<key:value>...          Parameters to send with your query (e.g. `cnt=0`).
     -a, --download-history                   Also download files from the history directory.
 """
-from __future__ import print_function, absolute_import
 import os
 from os.path import exists as dir_exists
 import sys
 
-import six
 from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
 
@@ -99,10 +97,6 @@ def main(argv, session):
         '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
     })
 
-    # Filenames should be unicode literals. Support PY2 and PY3.
-    if six.PY2:
-        args['<file>'] = [f.decode('utf-8') for f in args['<file>']]
-
     try:
         args = s.validate(args)
         if args['--glob']:
@@ -110,8 +104,7 @@ def main(argv, session):
                 raise(SchemaError(None, '--glob and --format cannot be used together.'))
 
     except SchemaError as exc:
-        print('{0}\n{1}'.format(
-            str(exc), printable_usage(__doc__)), file=sys.stderr)
+        print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
         sys.exit(1)
 
     retries = int(args['--retries'])
@@ -126,12 +119,11 @@ def main(argv, session):
                                            params=args['--search-parameters'])
             total_ids = _search.num_found
             if total_ids == 0:
-                print('error: the query "{0}" returned no results'.format(
-                    args['--search']), file=sys.stderr)
+                print(f'error: the query "{args["--search"]}" returned no results', file=sys.stderr)
                 sys.exit(1)
             ids = _search
         except ValueError as e:
-            print('error: {0}'.format(e), file=sys.stderr)
+            print(f'error: {e}', file=sys.stderr)
             sys.exit(1)
 
     # Download specific files.
@@ -151,7 +143,7 @@ def main(argv, session):
     else:
         files = None
 
-    errors = list()
+    errors = []
     for i, identifier in enumerate(ids):
         if args['--stdout']:
             item = session.get_item(identifier)
@@ -159,13 +151,9 @@ def main(argv, session):
             try:
                 assert len(f) == 1
             except AssertionError:
-                print('error: {0}/{1} does not exist!'.format(
-                    identifier, args['<file>'][0]), file=sys.stderr)
+                print(f'error: {identifier}/{args["<file>"][0]} does not exist!', file=sys.stderr)
                 sys.exit(1)
-            if six.PY2:
-                stdout_buf = sys.stdout
-            else:
-                stdout_buf = sys.stdout.buffer
+            stdout_buf = sys.stdout.buffer
             f[0].download(retries=args['--retries'],
                           fileobj=stdout_buf,
                           params=args['--parameters'])
@@ -175,17 +163,17 @@ def main(argv, session):
         except AttributeError:
             identifier = identifier.get('identifier')
         if total_ids > 1:
-            item_index = '{0}/{1}'.format((i + 1), total_ids)
+            item_index = f'{i + 1}/{total_ids}'
         else:
             item_index = None
 
         try:
             item = session.get_item(identifier)
         except Exception as exc:
-            print('{0}: failed to retrieve item metadata - errors'.format(identifier),
-                  file=sys.stderr)
+            print(f'{identifier}: failed to retrieve item metadata - errors', file=sys.stderr)
+            raise
             if 'You are attempting to make an HTTPS' in str(exc):
-                print('\n{0}'.format(exc), file=sys.stderr)
+                print(f'\n{exc}', file=sys.stderr)
                 sys.exit(1)
             else:
                 continue

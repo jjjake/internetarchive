@@ -30,7 +30,7 @@ If you are using a Python version earlier than 2.7.9, you might see ``InsecurePl
                .. code:: python
 
                  >>> from internetarchive import get_item
-                 >>> config = dict(general=dict(secure=False))
+                 >>> config = {'general': {'secure': False}}
                  >>> item = get_item('<identifier>', config=config)
 
            + In the command-line interface, use the ``--insecure`` option:

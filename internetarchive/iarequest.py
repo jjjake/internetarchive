@@ -24,8 +24,6 @@ internetarchive.iarequest
 :copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import
-
 try:
     import ujson as json
 except ImportError:
@@ -33,12 +31,10 @@ except ImportError:
 import re
 import copy
 import logging
-
-from six.moves import urllib
+from urllib.parse import quote
 import requests.models
 import requests
 from jsonpatch import make_patch
-import six
 
 from internetarchive import auth, __version__
 from internetarchive.utils import needs_quote, delete_items_from_dict
@@ -57,7 +53,7 @@ class S3Request(requests.models.Request):
                  secret_key=None,
                  **kwargs):
 
-        super(S3Request, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         if not self.auth:
             self.auth = auth.S3Auth(access_key, secret_key)
@@ -91,11 +87,6 @@ class S3Request(requests.models.Request):
 
 
 class S3PreparedRequest(requests.models.PreparedRequest):
-
-    # __init__()
-    def __init__(self):
-        super(S3PreparedRequest, self).__init__()
-
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, queue_derive=None,
                 metadata=None, file_metadata=None):
@@ -125,11 +116,11 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         :param headers: (optional) S3 compatible HTTP headers.
 
         """
-        metadata = dict() if metadata is None else metadata
-        file_metadata = dict() if file_metadata is None else file_metadata
+        metadata = {} if metadata is None else metadata
+        file_metadata = {} if file_metadata is None else file_metadata
 
         if not metadata.get('scanner'):
-            scanner = 'Internet Archive Python library {0}'.format(__version__)
+            scanner = f'Internet Archive Python library {__version__}'
             metadata['scanner'] = scanner
         prepared_metadata = prepare_metadata(metadata)
         prepared_file_metadata = prepare_metadata(file_metadata)
@@ -150,19 +141,16 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                     meta_value = json.dumps(meta_value)
                 # Convert the metadata value into a list if it is not already
                 # iterable.
-                if (isinstance(meta_value, six.string_types)
-                        or not hasattr(meta_value, '__iter__')):
+                if (isinstance(meta_value, str) or not hasattr(meta_value, '__iter__')):
                     meta_value = [meta_value]
                 # Convert metadata items into HTTP headers and add to
                 # ``headers`` dict.
                 for i, value in enumerate(meta_value):
                     if not value:
                         continue
-                    header_key = 'x-archive-{0}{1:02d}-{2}'.format(meta_type, i, meta_key)
-                    if (isinstance(value, six.string_types) and needs_quote(value)):
-                        if six.PY2 and isinstance(value, six.text_type):
-                            value = value.encode('utf-8')
-                        value = 'uri({0})'.format(urllib.parse.quote(value))
+                    header_key = f'x-archive-{meta_type}{i:02d}-{meta_key}'
+                    if (isinstance(value, str) and needs_quote(value)):
+                        value = f'uri({quote(value)})'
                     # because rfc822 http headers disallow _ in names, IA-S3 will
                     # translate two hyphens in a row (--) into an underscore (_).
                     header_key = header_key.replace('_', '--')
@@ -173,7 +161,7 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         _prepare_metadata_headers(prepared_metadata)
         _prepare_metadata_headers(prepared_file_metadata, meta_type='filemeta')
 
-        super(S3PreparedRequest, self).prepare_headers(headers)
+        super().prepare_headers(headers)
 
 
 class MetadataRequest(requests.models.Request):
@@ -188,7 +176,7 @@ class MetadataRequest(requests.models.Request):
                  append_list=None,
                  **kwargs):
 
-        super(MetadataRequest, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         if not self.auth:
             self.auth = auth.S3PostAuth(access_key, secret_key)
@@ -226,11 +214,6 @@ class MetadataRequest(requests.models.Request):
 
 
 class MetadataPreparedRequest(requests.models.PreparedRequest):
-
-    # __init__()
-    def __init__(self):
-        super(MetadataPreparedRequest, self).__init__()
-
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, metadata={},
                 source_metadata=None, target=None, priority=None, append=None,
@@ -260,7 +243,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         if (isinstance(metadata, list)
                 or any('/' in k for k in metadata)
                 or all(isinstance(k, dict) for k in metadata.values())):
-            changes = list()
+            changes = []
 
             if any(not k for k in metadata):
                 raise ValueError('Invalid metadata provided, '
@@ -292,7 +275,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                 '-changes': json.dumps(changes),
                 'priority': priority,
             }
-            logger.debug('submitting metadata request: {}'.format(self.data))
+            logger.debug(f'submitting metadata request: {self.data}')
         # Write to single target
         else:
             if not target or 'metadata' in target:
@@ -314,8 +297,8 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                 '-target': target,
                 'priority': priority,
             }
-            logger.debug('submitting metadata request: {}'.format(self.data))
-        super(MetadataPreparedRequest, self).prepare_body(self.data, None)
+            logger.debug(f'submitting metadata request: {self.data}')
+        super().prepare_body(self.data, None)
 
 
 def prepare_patch(metadata, source_metadata, append, append_list=None):
@@ -323,7 +306,7 @@ def prepare_patch(metadata, source_metadata, append, append_list=None):
     if isinstance(metadata, list):
         prepared_metadata = metadata
         if not destination_metadata:
-            destination_metadata = list()
+            destination_metadata = []
     else:
         prepared_metadata = prepare_metadata(metadata, source_metadata, append,
                                              append_list)
@@ -359,9 +342,9 @@ def prepare_target_patch(metadata, source_metadata, append, target, append_list,
         metadata = dictify(_k.split('/')[1:], _k.split('/')[-1], metadata[_k])
     for i, _k in enumerate(key.split('/')):
         if i == 0:
-            source_metadata = source_metadata.get(_k, dict())
+            source_metadata = source_metadata.get(_k, {})
         else:
-            source_metadata[_k] = source_metadata.get(_k, dict()).get(_k, dict())
+            source_metadata[_k] = source_metadata.get(_k, {}).get(_k, {})
     patch = prepare_patch(metadata, source_metadata, append, append_list)
     return patch
 
@@ -412,7 +395,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
     indexed_keys = {}
     for key in metadata:
         # Convert number values to strings!
-        if isinstance(metadata[key], (six.integer_types, float, complex)):
+        if isinstance(metadata[key], (int, float, complex)):
             metadata[key] = str(metadata[key])
         if get_index(key) is None:
             continue
@@ -458,8 +441,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
                     prepared_metadata[key] = source_metadata[key]
                 prepared_metadata[key].append(v)
         elif append and source_metadata.get(key):
-            prepared_metadata[key] = '{0} {1}'.format(
-                source_metadata[key], metadata[key])
+            prepared_metadata[key] = f'{source_metadata[key]} {metadata[key]}'
         else:
             prepared_metadata[key] = metadata[key]
 

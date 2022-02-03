@@ -30,12 +30,8 @@ import hashlib
 import os
 import re
 import sys
-from itertools import starmap
 from xml.dom.minidom import parseString
-
-import six
-from six.moves import zip_longest
-from six.moves.collections_abc import Mapping
+from collections.abc import Mapping
 
 
 def deep_update(d, u):
@@ -46,14 +42,6 @@ def deep_update(d, u):
         else:
             d[k] = u[k]
     return d
-
-
-def map2x(func, *iterables):
-    """map() function for Python 2/3 compatibility"""
-    zipped = zip_longest(*iterables)
-    if func is None:
-        return zipped
-    return starmap(func, zipped)
 
 
 class InvalidIdentifierException(Exception):
@@ -91,9 +79,9 @@ def needs_quote(s):
 
 def norm_filepath(fp):
     fp = fp.replace(os.path.sep, '/')
-    if not fp[0] == '/':
-        fp = '/' + fp
-    if isinstance(fp, six.binary_type):
+    if not fp.startswith('/'):
+        fp = f'/{fp}'
+    if isinstance(fp, bytes):
         fp = fp.decode('utf-8')
     return fp
 
@@ -133,7 +121,7 @@ def suppress_keyboard_interrupt_message():
     sys.excepthook = new_hook
 
 
-class IterableToFileAdapter(object):
+class IterableToFileAdapter:
     def __init__(self, iterable, size):
         self.iterator = iter(iterable)
         self.length = size
@@ -145,7 +133,7 @@ class IterableToFileAdapter(object):
         return self.length
 
 
-class IdentifierListAsItems(object):
+class IdentifierListAsItems:
     """This class is a lazily-loaded list of Items, accessible by index or identifier.
     """
 
@@ -172,7 +160,7 @@ class IdentifierListAsItems(object):
             raise AttributeError
 
     def __repr__(self):
-        return '{0.__class__.__name__}({0.ids!r})'.format(self)
+        return f'{self.__class__.__name__}({self.ids!r})'
 
 
 def get_s3_xml_text(xml_str):
@@ -192,7 +180,7 @@ def get_s3_xml_text(xml_str):
         _resource = _get_tag_text('Resource', p)
         # Avoid weird Resource text that contains PUT method.
         if _resource and "'PUT" not in _resource:
-            return '{0} - {1}'.format(_msg, _resource.strip())
+            return f'{_msg} - {_resource.strip()}'
         else:
             return _msg
     except:
@@ -229,7 +217,7 @@ def recursive_file_count(files, item=None, checksum=False):
     if checksum is True:
         md5s = [f.get('md5') for f in item.files]
     else:
-        md5s = list()
+        md5s = []
     if isinstance(files, dict):
         # make sure to use local filenames.
         _files = files.values()
@@ -284,8 +272,8 @@ def reraise_modify(caught_exc, append_msg, prepend=False):
     Preserves exception class, and exception traceback.
 
     Note:
-        This function needs to be called inside an except because
-        `sys.exc_info()` requires the exception context.
+        This function needs to be called inside an except because an exception
+        must be active in the current scope.
 
     Args:
         caught_exc(Exception): The caught exception object
@@ -299,9 +287,6 @@ def reraise_modify(caught_exc, append_msg, prepend=False):
         Re-raises the exception with the preserved data / trace but
         modified message
     """
-    ExceptClass = type(caught_exc)
-    # Keep old traceback
-    traceback = sys.exc_info()[2]
     if not caught_exc.args:
         # If no args, create our own tuple
         arg_list = [append_msg]
@@ -321,9 +306,7 @@ def reraise_modify(caught_exc, append_msg, prepend=False):
         else:
             arg_list += [last_arg, append_msg]
     caught_exc.args = tuple(arg_list)
-    six.reraise(ExceptClass,
-                caught_exc,
-                traceback)
+    raise
 
 
 def remove_none(obj):

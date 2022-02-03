@@ -26,8 +26,7 @@ internetarchive.cli.argparser
 """
 from collections import defaultdict
 import sys
-
-from six.moves.urllib.parse import parse_qsl
+from urllib.parse import parse_qsl
 
 
 def get_args_dict(args, query_string=False, header=False):
@@ -57,7 +56,7 @@ def get_args_dict(args, query_string=False, header=False):
 
 def get_args_header_dict(args):
     h = get_args_dict(args)
-    return dict((k, v.strip()) for k, v in h.items())
+    return {k: v.strip() for k, v in h.items()}
 
 
 def get_args_dict_many_write(metadata):
@@ -73,7 +72,7 @@ def get_args_dict_many_write(metadata):
 
 
 def convert_str_list_to_unicode(str_list):
-    unicode_list = list()
+    unicode_list = []
     for x in str_list:
         unicode_list.append(x.decode(sys.getfilesystemencoding()))
     return unicode_list

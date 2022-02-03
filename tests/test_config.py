@@ -1,12 +1,6 @@
 import contextlib
 import os
-import six
-from six.moves import http_client as httplib
-from six import StringIO
-try:
-    import mock
-except ImportError:
-    from unittest import mock
+from unittest import mock
 import pytest
 import responses
 import requests.adapters
@@ -179,21 +173,6 @@ def _environ(**kwargs):
                 del os.environ[k]
 
 
-try:
-    TemporaryDirectory = tempfile.TemporaryDirectory
-except AttributeError:
-    # Crutch for Python 2
-    import shutil
-
-    @contextlib.contextmanager
-    def TemporaryDirectory():
-        path = tempfile.mkdtemp()
-        try:
-            yield path
-        finally:
-            shutil.rmtree(path)
-
-
 def _test_parse_config_file(
         expected_result,
         config_file_contents='',
@@ -212,7 +191,7 @@ def _test_parse_config_file(
     if not config_file_paths:
         config_file_paths = []
 
-    with TemporaryDirectory() as tmp_test_dir:
+    with tempfile.TemporaryDirectory() as tmp_test_dir:
         def _replace_path(s):
             if s and s.startswith('$TMPTESTDIR/'):
                 return os.path.join(tmp_test_dir, s.split('/', 1)[1])
@@ -225,11 +204,7 @@ def _test_parse_config_file(
         config_file_param = _replace_path(config_file_param)
 
         for p in config_file_paths:
-            try:
-                os.makedirs(os.path.dirname(p), exist_ok=True)
-            except TypeError:  # Python 2 doesn't have exist_ok
-                if not os.path.exists(os.path.dirname(p)):
-                    os.makedirs(os.path.dirname(p))
+            os.makedirs(os.path.dirname(p), exist_ok=True)
             with open(p, 'w') as fp:
                 fp.write(config_file_contents)
 
@@ -348,7 +323,7 @@ def _test_write_config_file(
     # All paths are evaluated relative to a temporary HOME.
     # Mode comparison accounts for the umask; expected_modes does not need to care about it.
 
-    with TemporaryDirectory() as temp_home_dir:
+    with tempfile.TemporaryDirectory() as temp_home_dir:
         expected_config_file = os.path.join(temp_home_dir, expected_config_file)
         if dirs:
             dirs = [os.path.join(temp_home_dir, d) for d in dirs]
@@ -455,7 +430,7 @@ def test_write_config_file_custom_path_existing():
 
 def test_write_config_file_custom_path_not_existing():
     '''Ensure that an exception is thrown if the custom path dir doesn't exist'''
-    with TemporaryDirectory() as temp_home_dir:
+    with tempfile.TemporaryDirectory() as temp_home_dir:
         with _environ(HOME=temp_home_dir):
             config_file = os.path.join(temp_home_dir, 'foo/ia.ini')
             with pytest.raises(IOError):

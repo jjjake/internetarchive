@@ -24,15 +24,11 @@ internetarchive.files
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import, unicode_literals, print_function
-
 import os
 import sys
 import logging
 import socket
-
-import six.moves.urllib as urllib
-import six
+from urllib.parse import quote
 from requests.exceptions import HTTPError, RetryError, ConnectTimeout, \
     ConnectionError, ReadTimeout
 
@@ -42,11 +38,11 @@ from internetarchive import iarequest, utils, auth
 log = logging.getLogger(__name__)
 
 
-class BaseFile(object):
+class BaseFile:
 
     def __init__(self, item_metadata, name, file_metadata=None):
         if file_metadata is None:
-            file_metadata = dict()
+            file_metadata = {}
         name = name.strip('/')
         if not file_metadata:
             for f in item_metadata.get('files', []):
@@ -113,19 +109,14 @@ class File(BaseFile):
         :param file_metadata: (optional) a dict of metadata for the
                               given file.
         """
-        if six.PY2:
-            try:
-                name = name.decode('utf-8')
-            except UnicodeEncodeError:
-                pass
-        super(File, self).__init__(item.item_metadata, name, file_metadata)
+        super().__init__(item.item_metadata, name, file_metadata)
         self.item = item
-        url_parts = dict(
-            protocol=item.session.protocol,
-            id=self.identifier,
-            name=urllib.parse.quote(name.encode('utf-8')),
-            host=item.session.host,
-        )
+        url_parts = {
+            'protocol': item.session.protocol,
+            'id': self.identifier,
+            'name': quote(name.encode('utf-8')),
+            'host': item.session.host,
+        }
         self.url = '{protocol}//{host}/download/{id}/{name}'.format(**url_parts)
         if self.item.session.access_key and self.item.session.secret_key:
             self.auth = auth.S3Auth(self.item.session.access_key,
@@ -134,10 +125,10 @@ class File(BaseFile):
             self.auth = None
 
     def __repr__(self):
-        return ('File(identifier={identifier!r}, '
-                'filename={name!r}, '
-                'size={size!r}, '
-                'format={format!r})'.format(**self.__dict__))
+        return (f'File(identifier={self.identifier!r}, '
+                f'filename={self.name!r}, '
+                f'size={self.size!r}, '
+                f'format={self.format!r})')
 
     def download(self, file_path=None, verbose=None, silent=None, ignore_existing=None,
                  checksum=None, destdir=None, retries=None, ignore_errors=None,
@@ -213,15 +204,15 @@ class File(BaseFile):
             if not os.path.exists(destdir) and return_responses is not True:
                 os.mkdir(destdir)
             if os.path.isfile(destdir):
-                raise IOError('{} is not a directory!'.format(destdir))
+                raise IOError(f'{destdir} is not a directory!')
             file_path = os.path.join(destdir, file_path)
 
         if not return_responses and os.path.exists(file_path.encode('utf-8')):
             if ignore_existing:
-                msg = 'skipping {0}, file already exists.'.format(file_path)
+                msg = f'skipping {file_path}, file already exists.'
                 log.info(msg)
                 if verbose:
-                    print(' ' + msg)
+                    print(f' {msg}')
                 elif silent is False:
                     print('.', end='')
                     sys.stdout.flush()
@@ -231,11 +222,10 @@ class File(BaseFile):
                     md5_sum = utils.get_md5(fp)
 
                 if md5_sum == self.md5:
-                    msg = ('skipping {0}, '
-                           'file already exists based on checksum.'.format(file_path))
+                    msg = f'skipping {file_path}, file already exists based on checksum.'
                     log.info(msg)
                     if verbose:
-                        print(' ' + msg)
+                        print(f' {msg}')
                     elif silent is False:
                         print('.', end='')
                         sys.stdout.flush()
@@ -244,11 +234,10 @@ class File(BaseFile):
                 st = os.stat(file_path.encode('utf-8'))
                 if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
                         or self.name.endswith('_files.xml') and st.st_size != 0:
-                    msg = ('skipping {0}, file already exists '
-                           'based on length and date.'.format(file_path))
+                    msg = f'skipping {file_path}, file already exists based on length and date.'
                     log.info(msg)
                     if verbose:
-                        print(' ' + msg)
+                        print(f' {msg}')
                     elif silent is False:
                         print('.', end='')
                         sys.stdout.flush()
@@ -281,13 +270,12 @@ class File(BaseFile):
                         fileobj.write(chunk)
         except (RetryError, HTTPError, ConnectTimeout,
                 ConnectionError, socket.error, ReadTimeout) as exc:
-            msg = ('error downloading file {0}, '
-                   'exception raised: {1}'.format(file_path, exc))
+            msg = f'error downloading file {file_path}, exception raised: {exc}'
             log.error(msg)
             if os.path.exists(file_path):
                 os.remove(file_path)
             if verbose:
-                print(' ' + msg)
+                print(f' {msg}')
             elif silent is False:
                 print('e', end='')
                 sys.stdout.flush()
@@ -305,12 +293,10 @@ class File(BaseFile):
                 # Probably file-like object, e.g. sys.stdout.
                 pass
 
-        msg = 'downloaded {0}/{1} to {2}'.format(self.identifier,
-                                                 self.name,
-                                                 file_path)
+        msg = f'downloaded {self.identifier}/{self.name} to {file_path}'
         log.info(msg)
         if verbose:
-            print(' ' + msg)
+            print(f' {msg}')
         elif silent is False:
             print('d', end='')
             sys.stdout.flush()
@@ -347,14 +333,12 @@ class File(BaseFile):
         debug = False if not debug else debug
         verbose = False if not verbose else verbose
         max_retries = 2 if retries is None else retries
-        headers = dict() if headers is None else headers
+        headers = {} if headers is None else headers
 
         if 'x-archive-cascade-delete' not in headers:
             headers['x-archive-cascade-delete'] = cascade_delete
 
-        url = '{0}//s3.us.archive.org/{1}/{2}'.format(self.item.session.protocol,
-                                                      self.identifier,
-                                                      urllib.parse.quote(self.name))
+        url = f'{self.item.session.protocol}//s3.us.archive.org/{self.identifier}/{quote(self.name)}'
         self.item.session.mount_http_adapter(max_retries=max_retries,
                                              status_forcelist=[503],
                                              host='s3.us.archive.org')
@@ -369,7 +353,7 @@ class File(BaseFile):
             return request
         else:
             if verbose:
-                msg = ' deleting: {0}'.format(self.name)
+                msg = f' deleting: {self.name}'
                 if cascade_delete:
                     msg += ' and all derivative files.'
                 print(msg, file=sys.stderr)
@@ -380,7 +364,7 @@ class File(BaseFile):
                 resp.raise_for_status()
             except (RetryError, HTTPError, ConnectTimeout,
                     ConnectionError, socket.error, ReadTimeout) as exc:
-                error_msg = 'Error deleting {0}, {1}'.format(url, exc)
+                error_msg = f'Error deleting {url}, {exc}'
                 log.error(error_msg)
                 raise
             else:
@@ -391,7 +375,7 @@ class File(BaseFile):
                 # mounted if and when the session object is used for an
                 # upload. This is important because we use custom retry
                 # handling for IA-S3 uploads.
-                url_prefix = '{0}//s3.us.archive.org'.format(self.item.session.protocol)
+                url_prefix = f'{self.item.session.protocol}//s3.us.archive.org'
                 del self.item.session.adapters[url_prefix]
 
 
@@ -405,4 +389,4 @@ class OnTheFlyFile(File):
         :param name: The filename of the file.
 
         """
-        super(OnTheFlyFile, self).__init__(item.item_metadata, name)
+        super().__init__(item.item_metadata, name)

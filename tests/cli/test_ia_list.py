@@ -6,20 +6,20 @@ from tests.conftest import IaRequestsMock
 
 SESSION = get_session()
 
-NASA_FILES = set([
+NASA_FILES = {
     'NASAarchiveLogo.jpg',
     'globe_west_540.jpg',
     'nasa_reviews.xml',
     'nasa_meta.xml',
     'nasa_archive.torrent',
     'nasa_files.xml'
-])
+}
 
 
 def test_ia_list(capsys, nasa_mocker):
     ia_list.main(['list', 'nasa'], SESSION)
     out, err = capsys.readouterr()
-    assert set([l for l in out.split('\n') if l]) == NASA_FILES
+    assert {l for l in out.split('\n') if l} == NASA_FILES
 
 
 def test_ia_list_verbose(capsys, nasa_mocker):
@@ -28,7 +28,7 @@ def test_ia_list_verbose(capsys, nasa_mocker):
     out, err = capsys.readouterr()
     _nasa_files = deepcopy(NASA_FILES)
     _nasa_files.add('name')
-    assert set([l for l in out.split('\n') if l]) == _nasa_files
+    assert {l for l in out.split('\n') if l} == _nasa_files
 
 
 def test_ia_list_all(capsys, nasa_mocker):
@@ -74,12 +74,12 @@ def test_ia_list_format(capsys, nasa_mocker):
     ia_list.main(['list', '--format', 'Metadata', 'nasa'], SESSION)
 
     out, err = capsys.readouterr()
-    expected_output = set([
+    expected_output = {
         'nasa_reviews.xml',
         'nasa_files.xml',
         'nasa_meta.xml',
-    ])
-    assert set([f for f in out.split('\n') if f]) == expected_output
+    }
+    assert {f for f in out.split('\n') if f} == expected_output
 
 
 def test_ia_list_non_existing(capsys):

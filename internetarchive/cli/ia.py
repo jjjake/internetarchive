@@ -57,8 +57,6 @@ Documentation for 'ia' is available at:
 
 See 'ia help <command>' for help on a specific command.
 """
-from __future__ import absolute_import, unicode_literals, print_function
-
 import sys
 import os
 import difflib
@@ -67,7 +65,6 @@ from pkg_resources import iter_entry_points, DistributionNotFound
 
 from docopt import docopt, printable_usage
 from schema import Schema, Or, SchemaError
-import six
 
 from internetarchive import __version__
 from internetarchive.api import get_session
@@ -75,39 +72,39 @@ from internetarchive.utils import suppress_keyboard_interrupt_message
 suppress_keyboard_interrupt_message()
 
 
-cmd_aliases = dict(
-    co='configure',
-    md='metadata',
-    up='upload',
-    do='download',
-    rm='delete',
-    se='search',
-    ta='tasks',
-    ls='list',
-    cp='copy',
-    mv='move',
-    re='reviews',
-)
+cmd_aliases = {
+    'co': 'configure',
+    'md': 'metadata',
+    'up': 'upload',
+    'do': 'download',
+    'rm': 'delete',
+    'se': 'search',
+    'ta': 'tasks',
+    'ls': 'list',
+    'cp': 'copy',
+    'mv': 'move',
+    're': 'reviews',
+}
 
 
 def load_ia_module(cmd):
     """Dynamically import ia module."""
     try:
         if cmd in list(cmd_aliases.keys()) + list(cmd_aliases.values()):
-            _module = 'internetarchive.cli.ia_{0}'.format(cmd)
+            _module = f'internetarchive.cli.ia_{cmd}'
             return __import__(_module, fromlist=['internetarchive.cli'])
         else:
-            _module = 'ia_{0}'.format(cmd)
+            _module = f'ia_{cmd}'
             for ep in iter_entry_points('internetarchive.cli.plugins'):
                 if ep.name == _module:
                     return ep.load()
             raise ImportError
     except (ImportError, DistributionNotFound):
-        print("error: '{0}' is not an ia command! See 'ia help'".format(cmd),
+        print(f"error: '{cmd}' is not an ia command! See 'ia help'",
               file=sys.stderr)
         matches = '\t'.join(difflib.get_close_matches(cmd, cmd_aliases.values()))
         if matches:
-            print('\nDid you mean one of these?\n\t{0}'.format(matches))
+            print(f'\nDid you mean one of these?\n\t{matches}')
         sys.exit(127)
 
 
@@ -117,16 +114,16 @@ def main():
 
     # Validate args.
     s = Schema({
-        six.text_type: bool,
-        '--config-file': Or(None, *six.string_types),
-        '--host': Or(None, *six.string_types),
+        str: bool,
+        '--config-file': Or(None, str),
+        '--host': Or(None, str),
         '<args>': list,
         '<command>': Or(str, lambda _: 'help'),
     })
     try:
         args = s.validate(args)
     except SchemaError as exc:
-        print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
+        print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
         sys.exit(1)
 
     # Get subcommand.
@@ -143,25 +140,25 @@ def main():
 
     if cmd != 'configure' and args['--config-file']:
         if not os.path.isfile(args['--config-file']):
-            print('--config-file should be a readable file.\n{0}'.format(
-                printable_usage(__doc__)), file=sys.stderr)
+            print(f'--config-file should be a readable file.\n{printable_usage(__doc__)}',
+                  file=sys.stderr)
             sys.exit(1)
 
     argv = [cmd] + args['<args>']
 
-    config = dict()
+    config = {}
     if args['--log']:
         config['logging'] = {'level': 'INFO'}
     elif args['--debug']:
         config['logging'] = {'level': 'DEBUG'}
 
     if args['--insecure']:
-        config['general'] = dict(secure=False)
+        config['general'] = {'secure': False}
     if args['--host']:
         if config.get('general'):
             config['general']['host'] = args['--host']
         else:
-            config['general'] = dict(host=args['--host'])
+            config['general'] = {'host': args['--host']}
 
     session = get_session(config_file=args['--config-file'],
                           config=config,

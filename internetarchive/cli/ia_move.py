@@ -33,7 +33,6 @@ options:
                                    will not be saved to history/files/$key.~N~
                                    [default: True].
 """
-from __future__ import print_function, absolute_import
 import sys
 
 from docopt import docopt, printable_usage
@@ -62,7 +61,7 @@ def main(argv, session):
     try:
         args = s.validate(args)
     except SchemaError as exc:
-        print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
+        print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
         sys.exit(1)
 
     # Add keep-old-version by default.
@@ -77,6 +76,6 @@ def main(argv, session):
     r, src_file = ia_copy.main(argv, session, cmd='move')
     dr = src_file.delete(headers=args['--header'], cascade_delete=True)
     if dr.status_code == 204:
-        print('success: moved {} to {}'.format(src_path, dest_path))
+        print(f'success: moved {src_path} to {dest_path}')
         sys.exit(0)
-    print('error: {}'.format(dr.content))
+    print(f'error: {dr.content}')

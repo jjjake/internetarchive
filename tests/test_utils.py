@@ -4,7 +4,6 @@ import string
 
 from tests.conftest import IaRequestsMock, NASA_METADATA_PATH
 
-import six
 import internetarchive.utils
 
 
@@ -43,16 +42,7 @@ def test_validate_s3_identifier():
 def test_get_md5():
     with open(__file__, 'rb') as fp:
         md5 = internetarchive.utils.get_md5(fp)
-    assert isinstance(md5, six.string_types)
-
-
-def test_map2x():
-    keys = ('first', 'second')
-    columns = ('first', 'second')
-    for key, value in internetarchive.utils.map2x(None, keys, columns):
-        assert key == value
-    for key, value in internetarchive.utils.map2x(lambda k, v: [k, v], keys, columns):
-        assert key == value
+    assert isinstance(md5, str)
 
 
 def test_IdentifierListAsItems(session):

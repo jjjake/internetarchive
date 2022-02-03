@@ -36,12 +36,11 @@ options:
                                    will not be saved to history/files/$key.~N~
                                    [default: True].
 """
-from __future__ import print_function, absolute_import
 import sys
+from urllib.parse import quote
 
 from docopt import docopt, printable_usage
 from schema import Schema, Use, Or, And, SchemaError
-from six.moves.urllib import parse
 
 import internetarchive as ia
 from internetarchive.cli.argparser import get_args_dict
@@ -79,9 +78,8 @@ def main(argv, session, cmd='copy'):
         '<src-identifier>/<src-file>': And(str, And(And(str, lambda x: '/' in x,
             error='Destination not formatted correctly. See usage example.'),
             assert_src_file_exists, error=(
-            'https://{}/download/{} does not exist. '
-            'Please check the identifier and filepath and retry.'.format(session.host,
-                                                                         src_path)))),
+            f'https://{session.host}/download/{src_path} does not exist. '
+            'Please check the identifier and filepath and retry.'))),
         '<dest-identifier>/<dest-file>': And(str, lambda x: '/' in x,
             error='Destination not formatted correctly. See usage example.'),
         '--metadata': Or(None, And(Use(get_args_dict), dict),
@@ -97,11 +95,11 @@ def main(argv, session, cmd='copy'):
     except SchemaError as exc:
         # This module is sometimes called by other modules.
         # Replace references to 'ia copy' in ___doc__ to 'ia {cmd}' for clarity.
-        usage = printable_usage(__doc__.replace('ia copy', 'ia {}'.format(cmd)))
-        print('{0}\n{1}'.format(str(exc), usage), file=sys.stderr)
+        usage = printable_usage(__doc__.replace('ia copy', f'ia {cmd}'))
+        print(f'{exc}\n{usage}', file=sys.stderr)
         sys.exit(1)
 
-    args['--header']['x-amz-copy-source'] = '/{}'.format(parse.quote(src_path))
+    args['--header']['x-amz-copy-source'] = f'/{quote(src_path)}'
     # Copy the old metadata verbatim if no additional metadata is supplied,
     # else combine the old and the new metadata in a sensible manner.
     if args['--metadata'] or args['--replace-metadata']:
@@ -124,7 +122,7 @@ def main(argv, session, cmd='copy'):
     if not args['--header'].get('x-archive-keep-old-version') and not args['--no-backup']:
         args['--header']['x-archive-keep-old-version'] = '1'
 
-    url = '{}//s3.us.archive.org/{}'.format(session.protocol, parse.quote(dest_path))
+    url = f'{session.protocol}//s3.us.archive.org/{quote(dest_path)}'
     queue_derive = True if args['--no-derive'] is False else False
     req = ia.iarequest.S3Request(url=url,
                                  method='PUT',
@@ -141,10 +139,9 @@ def main(argv, session, cmd='copy'):
             msg = get_s3_xml_text(r.text)
         except Exception as e:
             msg = r.text
-        print('error: failed to {} "{}" to "{}" - {}'.format(
-            cmd, src_path, dest_path, msg))
+        print(f'error: failed to {cmd} "{src_path}" to "{dest_path}" - {msg}')
         sys.exit(1)
     elif cmd == 'copy':
-        print('success: copied "{}" to "{}".'.format(src_path, dest_path))
+        print(f'success: copied "{src_path}" to "{dest_path}".')
     else:
         return (r, SRC_FILE)

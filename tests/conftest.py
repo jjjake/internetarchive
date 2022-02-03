@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import json
 import os
 import re
@@ -27,11 +25,11 @@ except NameError:
 
 PROTOCOL = 'https:'
 BASE_URL = 'https://archive.org/'
-METADATA_URL = BASE_URL + 'metadata/'
+METADATA_URL = f'{BASE_URL}metadata/'
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEST_CONFIG = os.path.join(ROOT_DIR, 'tests/ia.ini')
 NASA_METADATA_PATH = os.path.join(ROOT_DIR, 'tests/data/metadata/nasa.json')
-NASA_EXPECTED_FILES = set([
+NASA_EXPECTED_FILES = {
     'globe_west_540.jpg',
     'globe_west_540_thumb.jpg',
     'nasa_archive.torrent',
@@ -42,7 +40,7 @@ NASA_EXPECTED_FILES = set([
     'nasa_itemimage.jpg',
     'globe_west_540_thumb.jpg',
     '__ia_thumb.jpg',
-])
+}
 
 
 def ia_call(argv, expected_exit_code=0):
@@ -58,7 +56,7 @@ def ia_call(argv, expected_exit_code=0):
 
 
 def files_downloaded(path):
-    found_files = set([])
+    found_files = set()
     try:
         found_files = set(os.listdir(path))
     except (FileNotFoundError, WindowsError, OSError):
@@ -90,13 +88,13 @@ def call_cmd(cmd, expected_exit_code=0):
 class IaRequestsMock(RequestsMock):
     def add_metadata_mock(self, identifier, body=None, method=responses.GET,
                           protocol='https?'):
-        url = re.compile(r'%s://archive.org/metadata/%s' % (protocol, identifier))
+        url = re.compile(f'{protocol}://archive.org/metadata/{identifier}')
         if body is None:
-            body = load_test_data_file('metadata/' + identifier + '.json')
+            body = load_test_data_file(f'metadata/{identifier}.json')
         self.add(method, url, body=body, content_type='application/json')
 
     def mock_all_downloads(self, num_calls=1, body='test content', protocol='https?'):
-        url = re.compile(r'{0}://archive.org/download/.*'.format(protocol))
+        url = re.compile(f'{protocol}://archive.org/download/.*')
         for _ in range(6):
             self.add(responses.GET, url, body=body)
 
@@ -124,7 +122,7 @@ def nasa_item():
 
 @pytest.fixture
 def session():
-    return get_session(config=dict(s3=dict(access='access', secret='secret')))
+    return get_session(config={'s3': {'access': 'access', 'secret': 'secret'}})
 
 
 @pytest.fixture

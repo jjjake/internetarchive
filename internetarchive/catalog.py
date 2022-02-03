@@ -26,8 +26,6 @@ This module contains objects for interacting with the Archive.org catalog.
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import
-
 try:
     import ujson as json
 except ImportError:
@@ -35,7 +33,6 @@ except ImportError:
 from logging import getLogger
 from datetime import datetime
 
-import six
 from requests.exceptions import HTTPError
 import collections
 
@@ -54,7 +51,7 @@ def sort_by_date(task_dict):
         return datetime.strptime(task_dict['submittime'], '%Y-%m-%d %H:%M:%S')
 
 
-class Catalog(object):
+class Catalog:
     """This class represents the Archive.org catalog.
     You can use this class to access and submit tasks from the catalog.
 
@@ -90,9 +87,8 @@ class Catalog(object):
         """
         self.session = archive_session
         self.auth = auth.S3Auth(self.session.access_key, self.session.secret_key)
-        self.request_kwargs = request_kwargs if request_kwargs else dict()
-        self.url = '{}//{}/services/tasks.php'.format(self.session.protocol,
-                                                      self.session.host)
+        self.request_kwargs = request_kwargs if request_kwargs else {}
+        self.url = f'{self.session.protocol}//{self.session.host}/services/tasks.php'
 
     def get_summary(self, identifier=None, params=None):
         """Get the total counts of catalog tasks meeting all criteria,
@@ -110,10 +106,10 @@ class Catalog(object):
 
         :rtype: dict
         """
-        params = params if params else dict()
+        params = params if params else {}
         if identifier:
             params['identifier'] = identifier
-        params.update(dict(summary=1, history=0, catalog=0))
+        params.update({'summary': 1, 'history': 0, 'catalog': 0})
         r = self.make_tasks_request(params)
         j = r.json()
         if j.get('success') is True:
@@ -160,22 +156,21 @@ class Catalog(object):
         while True:
             r = self.make_tasks_request(params)
             j = r.json()
-            for row in j.get('value', dict()).get('catalog', list()):
+            for row in j.get('value', {}).get('catalog', []):
                 yield CatalogTask(row, self)
-            for row in j.get('value', dict()).get('history', list()):
+            for row in j.get('value', {}).get('history', []):
                 yield CatalogTask(row, self)
-            if not j.get('value', dict()).get('cursor'):
+            if not j.get('value', {}).get('cursor'):
                 break
             params['cursor'] = j['value']['cursor']
 
     def get_rate_limit(self, cmd='derive.php'):
-        params = dict(rate_limits=1, cmd=cmd)
+        params = {'rate_limits': 1, 'cmd': cmd}
         r = self.make_tasks_request(params)
         line = ''
-        tasks = list()
+        tasks = []
         for c in r.iter_content():
-            if six.PY3:
-                c = c.decode('utf-8')
+            c = c.decode('utf-8')
             if c == '\n':
                 j = json.loads(line)
                 task = CatalogTask(j, self)
@@ -202,18 +197,17 @@ class Catalog(object):
 
         :rtype: List[CatalogTask]
         """
-        params = params if params else dict()
+        params = params if params else {}
         if identifier:
-            params.update(dict(identifier=identifier))
-        params.update(dict(limit=0))
+            params.update({'identifier': identifier})
+        params.update({'limit': 0})
         if not params.get('summary'):
             params['summary'] = 0
         r = self.make_tasks_request(params)
         line = ''
-        tasks = list()
+        tasks = []
         for c in r.iter_content():
-            if six.PY3:
-                c = c.decode('utf-8')
+            c = c.decode('utf-8')
             if c == '\n':
                 j = json.loads(line)
                 task = CatalogTask(j, self)
@@ -261,13 +255,13 @@ class Catalog(object):
 
         :rtype: :class:`requests.Response`
         """
-        data = dict() if not data else data
-        data.update(dict(cmd=cmd, identifier=identifier))
+        data = {} if not data else data
+        data.update({'cmd': cmd, 'identifier': identifier})
         if comment:
             if 'args' in data:
                 data['args']['comment'] = comment
             else:
-                data['args'] = dict(comment=comment)
+                data['args'] = {'comment': comment}
         if priority:
             data['priority'] = priority
         r = self.session.post(self.url,
@@ -278,7 +272,7 @@ class Catalog(object):
         return r
 
 
-class CatalogTask(object):
+class CatalogTask:
     """This class represents an Archive.org catalog task. It is primarily used by
     :class:`Catalog`, and should not be used directly.
     """
@@ -335,14 +329,14 @@ class CatalogTask(object):
         :rtype: str
         :returns: The task log as a string.
         """
-        request_kwargs = request_kwargs if request_kwargs else dict()
+        request_kwargs = request_kwargs if request_kwargs else {}
         _auth = auth.S3Auth(session.access_key, session.secret_key)
         if session.host == 'archive.org':
             host = 'catalogd.archive.org'
         else:
             host = session.host
-        url = '{}//{}/services/tasks.php'.format(session.protocol, host)
-        params = dict(task_log=task_id)
+        url = f'{session.protocol}//{host}/services/tasks.php'
+        params = {'task_log': task_id}
         r = session.get(url, params=params, auth=_auth, **request_kwargs)
         r.raise_for_status()
         return r.content.decode('utf-8', errors='surrogateescape')

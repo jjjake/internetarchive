@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from internetarchive.api import get_item
 from internetarchive.utils import norm_filepath, InvalidIdentifierException
 from tests.conftest import (PROTOCOL, IaRequestsMock, load_file,
@@ -22,8 +20,8 @@ from requests.exceptions import HTTPError, ConnectionError
 from internetarchive import get_session
 import internetarchive.files
 
-S3_URL = r'{0}//s3.us.archive.org/'.format(PROTOCOL)
-DOWNLOAD_URL_RE = re.compile(r'{0}//archive.org/download/.*'.format(PROTOCOL))
+S3_URL = f'{PROTOCOL}//s3.us.archive.org/'
+DOWNLOAD_URL_RE = re.compile(f'{PROTOCOL}//archive.org/download/.*')
 S3_URL_RE = re.compile(r'.*s3.us.archive.org/.*')
 
 EXPECTED_S3_HEADERS = {
@@ -69,58 +67,54 @@ def test_get_files(nasa_item):
     files = nasa_item.get_files()
     assert isinstance(files, types.GeneratorType)
 
-    expected_files = set(['NASAarchiveLogo.jpg',
-                          'globe_west_540.jpg',
-                          'nasa_reviews.xml',
-                          'nasa_meta.xml',
-                          'nasa_archive.torrent',
-                          'nasa_files.xml', ])
-    files = set(x.name for x in files)
+    expected_files = {'NASAarchiveLogo.jpg',
+                      'globe_west_540.jpg',
+                      'nasa_reviews.xml',
+                      'nasa_meta.xml',
+                      'nasa_archive.torrent',
+                      'nasa_files.xml'}
+    files = {x.name for x in files}
     assert files == expected_files
 
 
 def test_get_files_by_name(nasa_item):
     files = nasa_item.get_files('globe_west_540.jpg')
-    assert set(f.name for f in files) == set(['globe_west_540.jpg'])
+    assert {f.name for f in files} == {'globe_west_540.jpg'}
 
     files = nasa_item.get_files(['globe_west_540.jpg', 'nasa_meta.xml'])
-    assert set(f.name
-               for f in files) == set(['globe_west_540.jpg', 'nasa_meta.xml'])
+    assert {f.name for f in files} == {'globe_west_540.jpg', 'nasa_meta.xml'}
 
 
 def test_get_files_by_formats(nasa_item):
-    files = set(f.name for f in nasa_item.get_files(formats='Archive BitTorrent'))
-    expected_files = set(['nasa_archive.torrent'])
+    files = {f.name for f in nasa_item.get_files(formats='Archive BitTorrent')}
+    expected_files = {'nasa_archive.torrent'}
     assert files == expected_files
 
-    files = set(
-        f.name for f in nasa_item.get_files(formats=['Archive BitTorrent', 'JPEG']))
-    expected_files = set(['nasa_archive.torrent', 'globe_west_540.jpg', ])
+    files = {f.name for f in nasa_item.get_files(formats=['Archive BitTorrent', 'JPEG'])}
+    expected_files = {'nasa_archive.torrent', 'globe_west_540.jpg'}
     assert files == expected_files
 
 
 def test_get_files_by_glob(nasa_item):
-    files = set(f.name for f in nasa_item.get_files(glob_pattern='*jpg|*torrent'))
-    expected_files = set(['NASAarchiveLogo.jpg',
-                          'globe_west_540.jpg',
-                          'nasa_archive.torrent', ])
+    files = {f.name for f in nasa_item.get_files(glob_pattern='*jpg|*torrent')}
+    expected_files = {'NASAarchiveLogo.jpg',
+                      'globe_west_540.jpg',
+                      'nasa_archive.torrent'}
     assert files == expected_files
 
-    files = set(f.name
-                for f in nasa_item.get_files(glob_pattern=['*jpg', '*torrent']))
-    expected_files = set(['NASAarchiveLogo.jpg',
-                          'globe_west_540.jpg',
-                          'nasa_archive.torrent', ])
+    files = {f.name for f in nasa_item.get_files(glob_pattern=['*jpg', '*torrent'])}
+    expected_files = {'NASAarchiveLogo.jpg',
+                      'globe_west_540.jpg',
+                      'nasa_archive.torrent'}
     assert files == expected_files
 
 
 def test_get_files_with_multiple_filters(nasa_item):
-    files = set(f.name for f in nasa_item.get_files(formats='JPEG',
-                                                    glob_pattern='*xml'))
-    expected_files = set(['globe_west_540.jpg',
-                          'nasa_reviews.xml',
-                          'nasa_meta.xml',
-                          'nasa_files.xml', ])
+    files = {f.name for f in nasa_item.get_files(formats='JPEG', glob_pattern='*xml')}
+    expected_files = {'globe_west_540.jpg',
+                      'nasa_reviews.xml',
+                      'nasa_meta.xml',
+                      'nasa_files.xml'}
     assert files == expected_files
 
 
@@ -223,7 +217,7 @@ def test_download_destdir(tmpdir, nasa_item):
 
 
 def test_download_no_directory(tmpdir, nasa_item):
-    url_re = re.compile(r'{0}//archive.org/download/.*'.format(PROTOCOL))
+    url_re = re.compile(f'{PROTOCOL}//archive.org/download/.*')
     tmpdir.chdir()
     with IaRequestsMock() as rsps:
         rsps.add(responses.GET, url_re, body='no dest dir')
@@ -240,10 +234,10 @@ def test_download_dry_run(tmpdir, capsys, nasa_item):
                  adding_headers={'content-length': '100'})
         nasa_item.download(formats='Metadata', dry_run=True)
 
-    expected = set(['nasa_reviews.xml', 'nasa_meta.xml', 'nasa_files.xml'])
+    expected = {'nasa_reviews.xml', 'nasa_meta.xml', 'nasa_files.xml'}
     out, err = capsys.readouterr()
 
-    assert set([x.split('/')[-1] for x in out.split('\n') if x]) == expected
+    assert {x.split('/')[-1] for x in out.split('\n') if x} == expected
 
 
 def test_download_verbose(tmpdir, capsys, nasa_item):
@@ -265,7 +259,7 @@ def test_download_dark_item(tmpdir, capsys, nasa_metadata, session):
         nasa_metadata['metadata']['identifier'] = 'dark-item'
         nasa_metadata['is_dark'] = True
         _item_metadata = json.dumps(nasa_metadata)
-        rsps.add(responses.GET, '{0}//archive.org/metadata/dark-item'.format(PROTOCOL),
+        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/dark-item',
                  body=_item_metadata,
                  content_type='application/json')
         _item = session.get_item('dark-item')
@@ -287,14 +281,14 @@ def test_upload(nasa_item):
                                       secret_key='b')
         for resp in _responses:
             request = resp.request
-            headers = dict((k.lower(), str(v)) for k, v in request.headers.items())
+            headers = {k.lower(): str(v) for k, v in request.headers.items()}
             scanner_header = '%20'.join(
                 resp.headers['x-archive-meta00-scanner'].split('%20')[:4])
             headers['x-archive-meta00-scanner'] = scanner_header
             assert 'user-agent' in headers
             del headers['user-agent']
             assert headers == EXPECTED_S3_HEADERS
-            assert request.url == '{0}//s3.us.archive.org/nasa/nasa.json'.format(PROTOCOL)
+            assert request.url == f'{PROTOCOL}//s3.us.archive.org/nasa/nasa.json'
 
 
 def test_upload_validate_identifier(session):
@@ -351,13 +345,13 @@ def test_upload_metadata(nasa_item):
             'D0%BD%D0%B5%D1%82...)')
         rsps.add(responses.PUT, S3_URL_RE,
                  adding_headers=_expected_headers)
-        md = dict(
-            foo='bar',
-            subject=['first', 'second'],
-            baz='Почему бы и нет...',
-            baz2=(u'\u041f\u043e\u0447\u0435\u043c\u0443 \u0431\u044b \u0438 '
-                  u'\u043d\u0435\u0442...'),
-        )
+        md = {
+            'foo': 'bar',
+            'subject': ['first', 'second'],
+            'baz': 'Почему бы и нет...',
+            'baz2': ('\u041f\u043e\u0447\u0435\u043c\u0443 \u0431\u044b \u0438 '
+                     '\u043d\u0435\u0442...'),
+        }
         _responses = nasa_item.upload(NASA_METADATA_PATH,
                                       metadata=md,
                                       access_key='a',
@@ -365,7 +359,7 @@ def test_upload_metadata(nasa_item):
         for resp in _responses:
             request = resp.request
             del request.headers['x-archive-meta00-scanner']
-            headers = dict((k.lower(), str(v)) for k, v in request.headers.items())
+            headers = {k.lower(): str(v) for k, v in request.headers.items()}
             assert 'user-agent' in headers
             del headers['user-agent']
             assert headers == _expected_headers
@@ -404,8 +398,8 @@ def test_upload_file_keys(nasa_item):
         files = {'new_key.txt': NASA_METADATA_PATH, '222': NASA_METADATA_PATH}
         _responses = nasa_item.upload(files, access_key='a', secret_key='b')
         expected_urls = [
-            '{0}//s3.us.archive.org/nasa/new_key.txt'.format(PROTOCOL),
-            '{0}//s3.us.archive.org/nasa/222'.format(PROTOCOL)
+            f'{PROTOCOL}//s3.us.archive.org/nasa/new_key.txt',
+            f'{PROTOCOL}//s3.us.archive.org/nasa/222',
         ]
         for resp in _responses:
             assert resp.request.url in expected_urls
@@ -427,8 +421,8 @@ def test_upload_dir(tmpdir, nasa_item):
                                       access_key='a',
                                       secret_key='b')
         expected_eps = [
-            '{0}nasa/foo.txt'.format(S3_URL),
-            '{0}nasa/foo2.txt'.format(S3_URL),
+            f'{S3_URL}nasa/foo.txt',
+            f'{S3_URL}nasa/foo2.txt',
         ]
         for resp in _responses:
             assert resp.request.url in expected_eps
@@ -439,8 +433,8 @@ def test_upload_dir(tmpdir, nasa_item):
                                       secret_key='b')
         tmp_path = norm_filepath(str(tmpdir))
         expected_eps = [
-            '{0}nasa{1}/dir_test/{2}'.format(S3_URL, tmp_path, 'foo.txt'),
-            '{0}nasa{1}/dir_test/{2}'.format(S3_URL, tmp_path, 'foo2.txt'),
+            f'{S3_URL}nasa{tmp_path}/dir_test/foo.txt',
+            f'{S3_URL}nasa{tmp_path}/dir_test/foo2.txt',
         ]
         for resp in _responses:
             assert resp.request.url in expected_eps
@@ -454,7 +448,7 @@ def test_upload_queue_derive(nasa_item):
         rsps.add(responses.PUT, S3_URL_RE, adding_headers=_expected_headers)
         _responses = nasa_item.upload(NASA_METADATA_PATH, access_key='a', secret_key='b')
         for resp in _responses:
-            headers = dict((k.lower(), str(v)) for k, v in resp.request.headers.items())
+            headers = {k.lower(): str(v) for k, v in resp.request.headers.items()}
             del headers['x-archive-meta00-scanner']
             assert 'user-agent' in headers
             del headers['user-agent']
@@ -506,7 +500,7 @@ def test_upload_delete(tmpdir, nasa_item):
                                 delete=True,
                                 queue_derive=True)
         for r in resp:
-            headers = dict((k.lower(), str(v)) for k, v in r.headers.items())
+            headers = {k.lower(): str(v) for k, v in r.headers.items()}
             del headers['content-type']
             assert headers == _expected_headers
             assert len(tmpdir.listdir()) == 0
@@ -532,27 +526,26 @@ def test_upload_checksum(tmpdir, nasa_item):
                                 secret_key='b',
                                 checksum=True)
         for r in resp:
-            headers = dict((k.lower(), str(v)) for k, v in r.headers.items())
+            headers = {k.lower(): str(v) for k, v in r.headers.items()}
             del headers['content-type']
             assert headers == _expected_headers
             assert r.status_code == 200
 
         # Skip.
         nasa_item.item_metadata['files'].append(
-            dict(name='checksum_test.txt',
-                 md5='33213e7683c1e6d15b2a658f3c567717'))
+            {'name': 'checksum_test.txt', 'md5': '33213e7683c1e6d15b2a658f3c567717'})
         resp = nasa_item.upload(test_file,
                                 access_key='a',
                                 secret_key='b',
                                 checksum=True)
         for r in resp:
-            headers = dict((k.lower(), str(v)) for k, v in r.headers.items())
+            headers = {k.lower(): str(v) for k, v in r.headers.items()}
             assert r.status_code is None
 
 
 def test_modify_metadata(nasa_item, nasa_metadata):
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.POST, '{0}//archive.org/metadata/nasa'.format(PROTOCOL))
+        rsps.add(responses.POST, f'{PROTOCOL}//archive.org/metadata/nasa')
 
         # Test simple add.
         md = {'foo': 'bar'}
@@ -635,8 +628,7 @@ def test_modify_metadata(nasa_item, nasa_metadata):
         md = {'title': 'new title'}
         nasa_metadata['metadata']['title'] = 'new title'
         _item_metadata = json.dumps(nasa_metadata)
-        rsps.add(responses.GET, '{0}//archive.org/metadata/nasa'.format(PROTOCOL),
-                 body=_item_metadata)
+        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa', body=_item_metadata)
         nasa_item.modify_metadata(md,
                                   access_key='a',
                                   secret_key='b')

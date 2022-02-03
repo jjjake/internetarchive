@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
+#
 # internetarchive documentation build configuration file, created by
 # sphinx-quickstart on Mon Sep 23 20:16:03 2013.
 #
@@ -290,6 +289,6 @@ texinfo_documents = [
 #autodoc_member_order = 'bysource'
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/2.7', None),
+    'python': ('https://docs.python.org/3', None),
     'requests': ('http://docs.python-requests.org/en/latest/', None)
 }

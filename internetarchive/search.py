@@ -27,12 +27,8 @@ search engine.
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import absolute_import, unicode_literals
-
 import itertools
 from logging import getLogger
-
-import six
 from requests.exceptions import ReadTimeout
 
 from internetarchive.auth import S3Auth
@@ -41,7 +37,7 @@ from internetarchive.auth import S3Auth
 log = getLogger(__name__)
 
 
-class Search(object):
+class Search:
     """This class represents an archive.org item search. You can use
     this class to search for Archive.org items using the advanced search
     engine.
@@ -74,17 +70,14 @@ class Search(object):
             self.fts = False
         self.query = query
         if self.fts and not self.dsl_fts:
-            self.query = '!L {}'.format(self.query)
-        self.fields = fields or list()
-        self.sorts = sorts or list()
-        self.request_kwargs = request_kwargs or dict()
+            self.query = f'!L {self.query}'
+        self.fields = fields or []
+        self.sorts = sorts or []
+        self.request_kwargs = request_kwargs or {}
         self._num_found = None
-        self.fts_url = '{0}//be-api.us.archive.org/ia-pub-fts-api'.format(
-            self.session.protocol)
-        self.scrape_url = '{0}//{1}/services/search/v1/scrape'.format(
-            self.session.protocol, self.session.host)
-        self.search_url = '{0}//{1}/advancedsearch.php'.format(
-            self.session.protocol, self.session.host)
+        self.fts_url = f'{self.session.protocol}//be-api.us.archive.org/ia-pub-fts-api'
+        self.scrape_url = f'{self.session.protocol}//{self.session.host}/services/search/v1/scrape'
+        self.search_url = f'{self.session.protocol}//{self.session.host}/advancedsearch.php'
         if self.session.access_key and self.session.secret_key:
             self.auth = S3Auth(self.session.access_key, self.session.secret_key)
         else:
@@ -92,7 +85,7 @@ class Search(object):
         self.max_retries = max_retries if max_retries is not None else 5
 
         # Initialize params.
-        default_params = dict(q=self.query)
+        default_params = {'q': self.query}
         if 'page' not in params:
             default_params['count'] = 10000
         else:
@@ -113,7 +106,7 @@ class Search(object):
         self.session.mount_http_adapter(max_retries=self.max_retries)
 
     def __repr__(self):
-        return 'Search(query={query!r})'.format(query=self.query)
+        return f'Search(query={self.query!r})'
 
     def __iter__(self):
         return self.iter_as_results()
@@ -123,18 +116,16 @@ class Search(object):
         if 'identifier' not in self.fields:
             self.fields.append('identifier')
         for k, v in enumerate(self.fields):
-            key = 'fl[{0}]'.format(k)
-            self.params[key] = v
+            self.params[f'fl[{k}]'] = v
 
         for i, field in enumerate(self.sorts):
-            self.params['sort[{0}]'.format(i)] = field
+            self.params[f'sort[{i}]'] = field
 
         self.params['output'] = 'json'
 
         r = self.session.get(self.search_url, params=self.params, **self.request_kwargs)
         j = r.json()
-        for item in j.get('response', {}).get('docs', []):
-            yield item
+        yield from j.get('response', {}).get('docs', [])
 
     def _scrape(self):
         if self.fields:
@@ -158,8 +149,7 @@ class Search(object):
             if 'cursor' not in j:
                 if i != num_found:
                     raise ReadTimeout('The server failed to return results in the'
-                                      ' allotted amount of time for'
-                                      ' {}'.format(r.request.url))
+                                      f' allotted amount of time for {r.request.url}')
                 break
 
     def _full_text_search(self):
@@ -182,11 +172,10 @@ class Search(object):
                                   **self.request_kwargs)
             j = r.json()
             scroll_id = j.get('_scroll_id')
-            hits = j.get('hits', dict()).get('hits')
+            hits = j.get('hits', {}).get('hits')
             if not hits:
                 return
-            for hit in hits:
-                yield hit
+            yield from hits
             if not hits or d['scroll'] is False:
                 break
             d['scroll_id'] = scroll_id
@@ -211,7 +200,7 @@ class Search(object):
         j = r.json()
         if j.get('error'):
             yield j
-        for agg in j.get('response', dict()).get('aggregations', dict()).items():
+        for agg in j.get('response', {}).get('aggregations', {}).items():
             yield {agg[0]: agg[1]}
 
     @property
@@ -234,7 +223,7 @@ class Search(object):
                                      auth=self.auth,
                                      **self.request_kwargs)
                 j = r.json()
-                self._num_found = j.get('hits', dict()).get('total')
+                self._num_found = j.get('hits', {}).get('total')
         return self._num_found
 
     def _handle_scrape_error(self, j):
@@ -242,8 +231,7 @@ class Search(object):
             if all(s in j['error'].lower() for s in ['invalid', 'secret']):
                 if not j['error'].endswith('.'):
                     j['error'] += '.'
-                raise ValueError("{0} Try running 'ia configure' "
-                                 "and retrying.".format(j['error']))
+                raise ValueError(f"{j['error']} Try running 'ia configure' and retrying.")
             raise ValueError(j.get('error'))
 
     def _get_item_from_search_result(self, search_result):
@@ -253,18 +241,14 @@ class Search(object):
         return SearchIterator(self, self._make_results_generator())
 
     def iter_as_items(self):
-        if six.PY2:
-            _map = itertools.imap(self._get_item_from_search_result,
-                                  self._make_results_generator())
-        else:
-            _map = map(self._get_item_from_search_result, self._make_results_generator())
+        _map = map(self._get_item_from_search_result, self._make_results_generator())
         return SearchIterator(self, _map)
 
     def __len__(self):
         return self.num_found
 
 
-class SearchIterator(object):
+class SearchIterator:
     """This class is an iterator wrapper for search results.
 
     It provides access to the underlying Search, and supports
@@ -287,4 +271,4 @@ class SearchIterator(object):
         return self
 
     def __repr__(self):
-        return '{0.__class__.__name__}({0.search!r}, {0.iterator!r})'.format(self)
+        return f'{self.__class__.__name__}({self.search!r}, {self.iterator!r})'

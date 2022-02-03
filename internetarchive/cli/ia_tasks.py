@@ -65,13 +65,11 @@ examples:
     ia tasks <id> --cmd fixer.php --task-args 'noop:1;asr:1'  # submit multiple fixer ops
     ia tasks --get-rate-limit --cmd derive.php  # Get rate-limit information for a specific command
 """
-from __future__ import absolute_import, print_function
 import sys
 import warnings
 import json
 
 from docopt import docopt
-import six
 
 from internetarchive.cli.argparser import get_args_dict
 
@@ -96,28 +94,26 @@ def main(argv, session):
                                 data=data)
         j = r.json()
         if j.get('success'):
-            print('success: {}'.format(j.get('value', dict()).get('log')))
+            task_log_url = j.get('value', {}).get('log')
+            print(f'success: {task_log_url}')
             sys.exit(0)
         elif 'already queued/running' in j.get('error', ''):
-            print('success: {} task already queued/running'.format(args['--cmd']))
+            print(f'success: {args["--cmd"]} task already queued/running')
             sys.exit(0)
         else:
-            print('error: {}'.format(j.get('error')))
+            print(f'error: {j.get("error")}')
             sys.exit(1)
 
     # Tasks read API.
     params = get_args_dict(args['--parameter'], query_string=True)
     if args['<identifier>']:
-        _params = dict(identifier=args['<identifier>'], catalog=1, history=1)
+        _params = {'identifier': args['<identifier>'], 'catalog': 1, 'history': 1}
         _params.update(params)
         params = _params
     elif args['--get-task-log']:
         log = session.get_task_log(args['--get-task-log'], params)
-        if six.PY2:
-            print(log.encode('utf-8', errors='surrogateescape'))
-        else:
-            print(log.encode('utf-8', errors='surrogateescape')
-                     .decode('utf-8', errors='replace'))
+        print(log.encode('utf-8', errors='surrogateescape')
+                 .decode('utf-8', errors='replace'))
         sys.exit(0)
 
     queryable_params = [
@@ -134,12 +130,12 @@ def main(argv, session):
 
     if not (args['<identifier>']
             or params.get('task_id')):
-        _params = dict(catalog=1, history=0)
+        _params = {'catalog': 1, 'history': 0}
         _params.update(params)
         params = _params
 
     if not any(x in params for x in queryable_params):
-        _params = dict(submitter=session.user_email, catalog=1, history=0, summary=0)
+        _params = {'submitter': session.user_email, 'catalog': 1, 'history': 0, 'summary': 0}
         _params.update(params)
         params = _params
 
@@ -151,7 +147,7 @@ def main(argv, session):
         # Legacy support for tab-delimted output.
         if args['--tab-output']:
             color = t.color if t.color else 'done'
-            task_args = '\t'.join(['{}={}'.format(k, v) for k, v in t.args.items()])
+            task_args = '\t'.join([f'{k}={v}' for k, v in t.args.items()])
             output = '\t'.join([str(x) for x in [
                 t.identifier,
                 t.task_id,

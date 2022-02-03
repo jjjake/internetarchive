@@ -27,9 +27,6 @@ settings across the internetarchive package.
 :copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-
-from __future__ import absolute_import, unicode_literals
-
 import os
 import locale
 import sys
@@ -45,8 +42,8 @@ import requests.sessions
 from requests.utils import default_headers
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3 import Retry
-from six.moves.urllib.parse import urlparse, unquote
 from requests.cookies import create_cookie
+from urllib.parse import urlparse, unquote
 
 from internetarchive import __version__, auth
 from internetarchive.config import get_config
@@ -100,14 +97,14 @@ class ArchiveSession(requests.sessions.Session):
 
         :returns: :class:`ArchiveSession` object.
         """
-        super(ArchiveSession, self).__init__()
+        super().__init__()
         http_adapter_kwargs = {} if not http_adapter_kwargs else http_adapter_kwargs
         debug = False if not debug else True
 
         self.config = get_config(config, config_file)
         self.config_file = config_file
         for ck, cv in self.config.get('cookies', {}).items():
-            raw_cookie = '{}={}'.format(ck, cv)
+            raw_cookie = f'{ck}={cv}'
             cookie_dict = parse_dict_cookies(raw_cookie)
             if not cookie_dict.get(ck):
                 continue
@@ -121,7 +118,7 @@ class ArchiveSession(requests.sessions.Session):
         if 'archive.org' not in self.host:
             self.host += '.archive.org'
         self.protocol = 'https:' if self.secure else 'http:'
-        user_email = self.config.get('cookies', dict()).get('logged-in-user')
+        user_email = self.config.get('cookies', {}).get('logged-in-user')
         if user_email:
             user_email = user_email.split(';')[0]
             user_email = unquote(user_email)
@@ -153,8 +150,9 @@ class ArchiveSession(requests.sessions.Session):
         except:
             lang = ''
         py_version = '{0}.{1}.{2}'.format(*sys.version_info)
-        return 'internetarchive/{0} ({1} {2}; N; {3}; {4}) Python/{5}'.format(
-            __version__, uname[0], uname[-1], lang, self.access_key, py_version)
+        return (f'internetarchive/{__version__} '
+                f'({uname[0]} {uname[-1]}; N; {lang}; {self.access_key}) '
+                f'Python/{py_version}')
 
     def rebuild_auth(self, prepared_request, response):
         """Never rebuild auth for archive.org URLs.
@@ -162,7 +160,7 @@ class ArchiveSession(requests.sessions.Session):
         u = urlparse(prepared_request.url)
         if u.netloc.endswith('archive.org'):
             return
-        super(ArchiveSession, self).rebuild_auth(prepared_request, response)
+        super().rebuild_auth(prepared_request, response)
 
     def mount_http_adapter(self, protocol=None, max_retries=None,
                            status_forcelist=None, host=None):
@@ -201,7 +199,7 @@ class ArchiveSession(requests.sessions.Session):
         max_retries_adapter = HTTPAdapter(**self.http_adapter_kwargs)
         # Don't mount on s3.us.archive.org, only archive.org!
         # IA-S3 requires a more complicated retry workflow.
-        self.mount('{0}//{1}'.format(protocol, host), max_retries_adapter)
+        self.mount(f'{protocol}//{host}', max_retries_adapter)
 
     def set_file_logger(self, log_level, path, logger_name='internetarchive'):
         """Convenience function to quickly configure any level of
@@ -257,8 +255,7 @@ class ArchiveSession(requests.sessions.Session):
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
         if not item_metadata:
-            logger.debug('no metadata provided for "{0}", '
-                         'retrieving now.'.format(identifier))
+            logger.debug(f'no metadata provided for "{identifier}", retrieving now.')
             item_metadata = self.get_metadata(identifier, request_kwargs)
         mediatype = item_metadata.get('metadata', {}).get('mediatype')
         try:
@@ -278,7 +275,7 @@ class ArchiveSession(requests.sessions.Session):
         :returns: Metadat API response.
         """
         request_kwargs = {} if not request_kwargs else request_kwargs
-        url = '{0}//{1}/metadata/{2}'.format(self.protocol, self.host, identifier)
+        url = f'{self.protocol}//{self.host}/metadata/{identifier}'
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12
         try:
@@ -289,7 +286,7 @@ class ArchiveSession(requests.sessions.Session):
             resp = self.get(url, auth=s3_auth, **request_kwargs)
             resp.raise_for_status()
         except Exception as exc:
-            error_msg = 'Error retrieving metadata from {0}, {1}'.format(url, exc)
+            error_msg = f'Error retrieving metadata from {url}, {exc}'
             logger.error(error_msg)
             raise type(exc)(error_msg)
         return resp.json()
@@ -342,12 +339,12 @@ class ArchiveSession(requests.sessions.Session):
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12
 
-        u = '{protocol}//s3.us.archive.org'.format(protocol=self.protocol)
-        p = dict(
-            check_limit=1,
-            accesskey=access_key,
-            bucket=identifier,
-        )
+        u = f'{self.protocol}//s3.us.archive.org'
+        p = {
+            'check_limit': 1,
+            'accesskey': access_key,
+            'bucket': identifier,
+        }
         try:
             r = self.get(u, params=p, **request_kwargs)
         except:
@@ -409,7 +406,7 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: :class:`requests.Response`
         """
-        headers = dict() if not headers else headers
+        headers = {} if not headers else headers
         if reduced_priority is not None:
             headers.update({'X-Accept-Reduced-Priority': '1'})
 
@@ -439,11 +436,10 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: collections.Iterable[CatalogTask]
         """
-        params = dict() if not params else params
-        params.update(dict(identifier=identifier, catalog=0, summary=0, history=1))
+        params = {} if not params else params
+        params.update({'identifier': identifier, 'catalog': 0, 'summary': 0, 'history': 1})
         c = Catalog(self, request_kwargs)
-        for j in c.iter_tasks(params):
-            yield j
+        yield from c.iter_tasks(params)
 
     def iter_catalog(self, identifier=None, params=None, request_kwargs=None):
         """A generator that returns queued or running tasks.
@@ -463,11 +459,10 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: collections.Iterable[CatalogTask]
         """
-        params = dict() if not params else params
-        params.update(dict(identifier=identifier, catalog=1, summary=0, history=0))
+        params = {} if not params else params
+        params.update({'identifier': identifier, 'catalog': 1, 'summary': 0, 'history': 0})
         c = Catalog(self, request_kwargs)
-        for j in c.iter_tasks(params):
-            yield j
+        yield from c.iter_tasks(params)
 
     def get_tasks_summary(self, identifier=None, params=None, request_kwargs=None):
         """Get the total counts of catalog tasks meeting all criteria,
@@ -512,7 +507,7 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: List[CatalogTask]
         """
-        params = dict() if not params else params
+        params = {} if not params else params
         c = Catalog(self, request_kwargs)
         if 'history' not in params:
             params['history'] = 1
@@ -535,8 +530,8 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: List[CatalogTask]
         """
-        params = dict() if not params else params
-        _params = dict(submitter=self.user_email, catalog=1, history=0, summary=0)
+        params = {} if not params else params
+        _params = {'submitter': self.user_email, 'catalog': 1, 'history': 0, 'summary': 0}
         params.update(_params)
         return self.get_tasks(params=params, request_kwargs=request_kwargs)
 
@@ -561,7 +556,7 @@ class ArchiveSession(requests.sessions.Session):
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always')
             try:
-                r = super(ArchiveSession, self).send(request, **kwargs)
+                r = super().send(request, **kwargs)
             except Exception as e:
                 try:
                     reraise_modify(e, e.request.url, prepend=False)

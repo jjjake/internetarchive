@@ -44,11 +44,7 @@ options:
                                  will not be saved to history/files/$key.~N~
                                  [default: True].
 """
-from __future__ import absolute_import, print_function, unicode_literals
-
 import sys
-import six
-
 import requests.exceptions
 from docopt import docopt, printable_usage
 from schema import Schema, SchemaError, Use, Or, And
@@ -67,9 +63,8 @@ def main(argv, session):
 
     # Validate args.
     s = Schema({
-        six.text_type: Use(lambda x: bool(x)),
-        '<file>': And(list, Use(
-            lambda x: convert_str_list_to_unicode(x) if six.PY2 else x)),
+        str: Use(bool),
+        '<file>': list,
         '--format': list,
         '--header': Or(None, And(Use(get_args_dict), dict),
                        error='--header must be formatted as --header="key:value"'),
@@ -81,7 +76,7 @@ def main(argv, session):
     try:
         args = s.validate(args)
     except SchemaError as exc:
-        print('{0}\n{1}'.format(str(exc), printable_usage(__doc__)), file=sys.stderr)
+        print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
         sys.exit(1)
 
     verbose = True if not args['--quiet'] else False
@@ -97,7 +92,7 @@ def main(argv, session):
         args['--header']['x-archive-keep-old-version'] = '1'
 
     if verbose:
-        print('Deleting files from {0}'.format(item.identifier))
+        print(f'Deleting files from {item.identifier}')
 
     if args['--all']:
         files = [f for f in item.get_files()]
@@ -109,10 +104,7 @@ def main(argv, session):
     else:
         fnames = []
         if args['<file>'] == ['-']:
-            if six.PY2:
-                fnames = convert_str_list_to_unicode([f.strip() for f in sys.stdin])
-            else:
-                fnames = [f.strip() for f in sys.stdin]
+            fnames = [f.strip() for f in sys.stdin]
         else:
             fnames = [f.strip() for f in args['<file>']]
 
@@ -127,12 +119,12 @@ def main(argv, session):
     for f in files:
         if not f:
             if verbose:
-                print(' error: "{0}" does not exist'.format(f.name), file=sys.stderr)
+                print(f' error: "{f.name}" does not exist', file=sys.stderr)
             errors = True
         if any(f.name.endswith(s) for s in no_delete):
             continue
         if args['--dry-run']:
-            print(' will delete: {0}/{1}'.format(item.identifier, f.name))
+            print(f' will delete: {item.identifier}/{f.name}')
             continue
         try:
             resp = f.delete(verbose=verbose,
@@ -140,14 +132,14 @@ def main(argv, session):
                             headers=args['--header'],
                             retries=args['--retries'])
         except requests.exceptions.RetryError as e:
-            print(' error: max retries exceeded for {0}'.format(f.name), file=sys.stderr)
+            print(f' error: max retries exceeded for {f.name}', file=sys.stderr)
             errors = True
             continue
 
         if resp.status_code != 204:
             errors = True
             msg = get_s3_xml_text(resp.content)
-            print(' error: {0} ({1})'.format(msg, resp.status_code), file=sys.stderr)
+            print(f' error: {msg} ({resp.status_code})', file=sys.stderr)
             continue
 
     if errors is True:

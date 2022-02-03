@@ -5,7 +5,7 @@ from internetarchive.cli.argparser import get_args_dict
 def test_get_args_dict():
     test_input = [
         'collection:test_collection',
-        "description: Attention: multiple colons",
+        'description: Attention: multiple colons',
         'unicode_test:தமிழ்',
         'subject:subject1, subject1',
         'subject:subject2',
@@ -13,7 +13,7 @@ def test_get_args_dict():
     ]
     test_output = {
         'collection': 'test_collection',
-        'description': " Attention: multiple colons",
+        'description': ' Attention: multiple colons',
         'unicode_test': 'தமிழ்',
         'subject': ['subject1, subject1', 'subject2', 'subject3; subject3'],
     }

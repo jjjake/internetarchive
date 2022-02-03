@@ -29,7 +29,7 @@ def test_get_session_with_config():
 
 def test_get_session_with_config_file(tmpdir):
     tmpdir.chdir()
-    test_conf = """[s3]\naccess = key2"""
+    test_conf = '[s3]\naccess = key2'
     with open('ia_test.ini', 'w') as fh:
         fh.write(test_conf)
     s = get_session(config_file='ia_test.ini')
@@ -48,7 +48,7 @@ def test_get_item_with_config(nasa_mocker):
 
 def test_get_item_with_config_file(tmpdir, nasa_mocker):
     tmpdir.chdir()
-    test_conf = """[s3]\naccess = key2"""
+    test_conf = '[s3]\naccess = key2'
     with open('ia_test.ini', 'w') as fh:
         fh.write(test_conf)
 
@@ -107,7 +107,7 @@ def test_get_files_with_get_item_kwargs(tmpdir):
         assert len(files) == 1
         assert files[0].name == 'nasa_meta.xml'
 
-        test_conf = """[s3]\naccess = key2"""
+        test_conf = '[s3]\naccess = key2'
         with open('ia_test.ini', 'w') as fh:
             fh.write(test_conf)
         files = get_files('nasa', files='nasa_meta.xml',

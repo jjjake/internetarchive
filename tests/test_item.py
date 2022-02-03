@@ -551,7 +551,7 @@ def test_modify_metadata(nasa_item, nasa_metadata):
         md = {'foo': 'bar'}
         p = nasa_item.modify_metadata(md, debug=True)
         _patch = json.dumps([
-            {"add": "/foo", "value": "bar"},
+            {'add': '/foo', 'value': 'bar'},
         ])
         expected_data = {
             'priority': -5,
@@ -573,7 +573,7 @@ def test_modify_metadata(nasa_item, nasa_metadata):
         expected_data = {
             'priority': -5,
             '-target': 'metadata',
-            '-patch': json.dumps([{"remove": "/title"}])
+            '-patch': json.dumps([{'remove': '/title'}])
         }
         assert set(p.data.keys()) == set(expected_data.keys())
         assert p.data['priority'] == expected_data['priority']
@@ -587,7 +587,7 @@ def test_modify_metadata(nasa_item, nasa_metadata):
         expected_data = {
             'priority': -1,
             '-target': 'metadata',
-            '-patch': json.dumps([{"add": "/subject", "value": ["one", "two", "last"]}])
+            '-patch': json.dumps([{'add': '/subject', 'value': ['one', 'two', 'last']}])
         }
         assert set(p.data.keys()) == set(expected_data.keys())
         assert p.data['priority'] == expected_data['priority']
@@ -601,7 +601,7 @@ def test_modify_metadata(nasa_item, nasa_metadata):
         expected_data = {
             'priority': -5,
             '-target': 'metadata',
-            '-patch': json.dumps([{"value": "new first", "replace": "/subject/2"}])
+            '-patch': json.dumps([{'value': 'new first', 'replace': '/subject/2'}])
         }
 
         # Avoid comparing the json strings, because they are not in a canonical form

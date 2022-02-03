@@ -218,8 +218,8 @@ def main(argv, session):
                 if any('/' in k for k in metadata):
                     metadata = get_args_dict_many_write(metadata)
             except ValueError:
-                print("error: The value of --modify, --remove, --append or --append-list "
-                      "is invalid. It must be formatted as: --modify=key:value",
+                print('error: The value of --modify, --remove, --append or --append-list '
+                      'is invalid. It must be formatted as: --modify=key:value',
                       file=sys.stderr)
                 sys.exit(1)
 

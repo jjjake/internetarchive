@@ -35,7 +35,7 @@ Usage::
 """
 
 __title__ = 'internetarchive'
-__version__ = '3.0.0.dev1'
+__version__ = '3.0.0.dev2'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
 __copyright__ = 'Copyright (C) 2012-2019 Internet Archive'

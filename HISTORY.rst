@@ -10,6 +10,10 @@ Unreleased
 
 - Removed Python 2.7 and 3.5 support
 
+**Features and Improvements**
+
+- ``page`` parameter is no longer required if ``rows`` parameter is specified in search requests.
+
 **Bugfixes**
 
 - Fixed treatment of list-like file metadata in ``ia list`` under Python 3

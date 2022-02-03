@@ -87,7 +87,10 @@ class Search:
         # Initialize params.
         default_params = {'q': self.query}
         if 'page' not in params:
-            default_params['count'] = 10000
+            if 'rows' in params:
+                params['page'] = 1
+            else:
+                default_params['count'] = 10000
         else:
             default_params['output'] = 'json'
         # In the beta endpoint 'scope' was called 'index'.

@@ -19,6 +19,7 @@ Unreleased
 
 - Fixed treatment of list-like file metadata in ``ia list`` under Python 3
 - Fixed `ia upload --debug` only displaying the first request.
+- Fixed uploading from stdin crashing with UnicodeDecodeError or TypeError exception.
 
 2.3.0 (2022-01-20)
 ++++++++++++++++++

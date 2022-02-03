@@ -84,7 +84,7 @@ def test_ia_list_format(capsys, nasa_mocker):
 
 def test_ia_list_non_existing(capsys):
     with IaRequestsMock() as rsps:
-        rsps.add_metadata_mock('nasa', body="{}")
+        rsps.add_metadata_mock('nasa', body='{}')
         try:
             ia_list.main(['list', 'nasa'], SESSION)
         except SystemExit as exc:

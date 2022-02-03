@@ -350,7 +350,7 @@ def _test_write_config_file(
 
 
 def test_write_config_file_blank():
-    '''Test that a blank HOME is populated with expected dirs and modes.'''
+    """Test that a blank HOME is populated with expected dirs and modes."""
     _test_write_config_file(
         expected_config_file='.config/internetarchive/ia.ini',
         expected_modes=[
@@ -362,7 +362,7 @@ def test_write_config_file_blank():
 
 
 def test_write_config_file_config_existing():
-    '''Test that .config's permissions remain but ia gets created correctly.'''
+    """Test that .config's permissions remain but ia gets created correctly."""
     _test_write_config_file(
         dirs=['.config'],
         expected_config_file='.config/internetarchive/ia.ini',
@@ -375,7 +375,7 @@ def test_write_config_file_config_existing():
 
 
 def test_write_config_file_config_internetarchive_existing():
-    '''Test that directory permissions are left as is'''
+    """Test that directory permissions are left as is"""
     _test_write_config_file(
         dirs=['.config', '.config/internetarchive'],
         expected_config_file='.config/internetarchive/ia.ini',
@@ -388,7 +388,7 @@ def test_write_config_file_config_internetarchive_existing():
 
 
 def test_write_config_file_existing_file():
-    '''Test that the permissions of the file are forced to 600'''
+    """Test that the permissions of the file are forced to 600"""
     _test_write_config_file(
         dirs=['.config', '.config/internetarchive'],
         expected_config_file='.config/internetarchive/ia.ini',
@@ -402,7 +402,7 @@ def test_write_config_file_existing_file():
 
 
 def test_write_config_file_existing_other_file():
-    '''Test that the permissions of the file are forced to 600 even outside XDG'''
+    """Test that the permissions of the file are forced to 600 even outside XDG"""
     _test_write_config_file(
         dirs=['foo'],
         expected_config_file='foo/ia.ini',
@@ -416,7 +416,7 @@ def test_write_config_file_existing_other_file():
 
 
 def test_write_config_file_custom_path_existing():
-    '''Test the creation of a config file at a custom location'''
+    """Test the creation of a config file at a custom location"""
     _test_write_config_file(
         dirs=['foo'],
         expected_config_file='foo/ia.ini',
@@ -429,7 +429,7 @@ def test_write_config_file_custom_path_existing():
 
 
 def test_write_config_file_custom_path_not_existing():
-    '''Ensure that an exception is thrown if the custom path dir doesn't exist'''
+    """Ensure that an exception is thrown if the custom path dir doesn't exist"""
     with tempfile.TemporaryDirectory() as temp_home_dir:
         with _environ(HOME=temp_home_dir):
             config_file = os.path.join(temp_home_dir, 'foo/ia.ini')

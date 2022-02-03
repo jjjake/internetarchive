@@ -1136,9 +1136,9 @@ class Item(BaseItem):
         Uploading file objects:
 
             >>> import io
-            >>> f = io.BytesIO(b"some initial binary data: \x00\x01")
+            >>> f = io.BytesIO(b'some initial binary data: \x00\x01')
             >>> r = item.upload({'remote-name.txt': f})
-            >>> f = io.BytesIO(b"some more binary data: \x00\x01")
+            >>> f = io.BytesIO(b'some more binary data: \x00\x01')
             >>> f.name = 'remote-name.txt'
             >>> r = item.upload(f)
 

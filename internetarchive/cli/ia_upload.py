@@ -104,7 +104,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
                 )
                 print(f'Endpoint:\n {r.url}\n')
                 print(f'HTTP Headers:\n{headers}')
-                return responses
+            return responses
 
         # Format error message for any non 200 responses that
         # we haven't caught yet,and write to stderr.

@@ -71,14 +71,6 @@ Install ``internetarchive`` into your virtualenv::
 
     $ pip install internetarchive
 
-Snap
-----
-
-You can install the latest ``ia`` `snap <https://snapcraft.io>`_, and help testing the most recent changes of the master branch in `all the supported Linux distros <https://snapcraft.io/docs/core/install>`_ with::
-
-    $ sudo snap install ia --edge
-
-Every time a new version of ``ia`` is pushed to the store, you will get it updated automatically.
 
 Binaries
 --------
@@ -88,10 +80,34 @@ Binaries are also available for the ``ia`` command-line tool::
     $ curl -LOs https://archive.org/download/ia-pex/ia
     $ chmod +x ia
 
-Binaries are generated with `PEX <https://github.com/pantsbuild/pex>`_. The only requirement for using the binaries is that you have Python installed on a Unix-like operating system.
+Binaries are generated with `PEX <https://github.com/pantsbuild/pex>`_. The only requirement for using the binaries is that you have Python 3 installed on a Unix-like operating system.
 
 For more details on the command-line interface please refer to the `README <https://github.com/jjjake/internetarchive/blob/master/README.rst>`_, or ``ia help``.
 
+
+Python 2
+--------
+
+If you are on an older operating system that only has Python 2 installed, it's highly suggested that you upgrade to Python 3. If for any reason you are not able to, the latest version of ``ia`` that supports Python 2 is 2.3.0.
+
+You can install and use version v2.3.0 with pip::
+
+    $ pip install internetarchive==2.3.0
+
+You can also download a binary of v2.3.0::
+
+    $ curl -LOs https://archive.org/download/ia-pex/ia-py2
+    $ chmod +x ia-py2
+
+
+Snap
+----
+
+You can install the latest ``ia`` `snap <https://snapcraft.io>`_, and help testing the most recent changes of the master branch in `all the supported Linux distros <https://snapcraft.io/docs/core/install>`_ with::
+
+    $ sudo snap install ia --edge
+
+Every time a new version of ``ia`` is pushed to the store, you will get it updated automatically.
 
 Get the Code
 ------------

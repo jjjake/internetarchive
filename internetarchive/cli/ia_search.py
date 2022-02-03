@@ -39,7 +39,7 @@ options:
     -t, --timeout=<seconds>          Set the timeout in seconds [default: 300].
 
 examples:
-    
+
     ia search 'collection:nasa' --parameters rows:1
 """
 import sys

@@ -67,6 +67,7 @@ from tempfile import TemporaryFile
 from copy import deepcopy
 import webbrowser
 import csv
+from locale import getpreferredencoding
 
 from docopt import docopt, printable_usage
 from requests.exceptions import HTTPError
@@ -219,7 +220,24 @@ def main(argv, session):
     if not args['--spreadsheet']:
         if args['-']:
             local_file = TemporaryFile()
-            local_file.write(sys.stdin.read())
+            # sys.stdin normally has the buffer attribute which returns bytes.
+            # However, this might not always be the case, e.g. on mocking for test purposes.
+            # Fall back to reading as str and encoding back to bytes.
+            # Note that the encoding attribute might also be None. In that case, fall back to
+            # locale.getpreferredencoding, the default of io.TextIOWrapper and open().
+            if hasattr(sys.stdin, 'buffer'):
+                def read():
+                    return sys.stdin.buffer.read(1048576)
+            else:
+                encoding = sys.stdin.encoding or getpreferredencoding(False)
+
+                def read():
+                    return sys.stdin.read(1048576).encode(encoding)
+            while True:
+                data = read()
+                if not data:
+                    break
+                local_file.write(data)
             local_file.seek(0)
         else:
             local_file = args['<file>']

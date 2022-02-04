@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import responses
+from contextlib import contextmanager
+from io import StringIO
+import sys
 
 from internetarchive.utils import json
 from tests.conftest import IaRequestsMock, load_test_data_file, ia_call
@@ -150,5 +153,26 @@ def test_ia_upload_remote_name(tmpdir_ch, caplog):
                  content_type='text/plain')
         ia_call(['ia', '--log', 'upload', 'nasa', 'test.txt', '--remote-name',
                  'hi.txt'])
+
+    assert f'uploaded hi.txt to {PROTOCOL}//s3.us.archive.org/nasa/hi.txt' in caplog.text
+
+
+def test_ia_upload_stdin(tmpdir_ch, caplog):
+    @contextmanager
+    def replace_stdin(f):
+        original_stdin = sys.stdin
+        sys.stdin = f
+        try:
+            yield
+        finally:
+            sys.stdin = original_stdin
+
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/hi.txt',
+                 body='',
+                 content_type='text/plain')
+        with replace_stdin(StringIO('foo')):
+            ia_call(['ia', '--log', 'upload', 'nasa', '-', '--remote-name', 'hi.txt'])
 
     assert f'uploaded hi.txt to {PROTOCOL}//s3.us.archive.org/nasa/hi.txt' in caplog.text

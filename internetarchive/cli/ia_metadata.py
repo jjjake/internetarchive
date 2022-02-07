@@ -50,7 +50,6 @@ options:
 """
 import sys
 import os
-import io
 from collections import defaultdict
 from copy import copy
 import csv
@@ -254,7 +253,7 @@ def main(argv, session):
     if args['--spreadsheet']:
         if not args['--priority']:
             args['--priority'] = -5
-        with io.open(args['--spreadsheet'], 'rU', newline='', encoding='utf-8') as csvfp:
+        with open(args['--spreadsheet'], 'r', newline='', encoding='utf-8') as csvfp:
             spreadsheet = csv.DictReader(csvfp)
             responses = []
             for row in spreadsheet:

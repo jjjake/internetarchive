@@ -60,7 +60,6 @@ options:
                                          will not be saved to history/files/$key.~N~
                                          [default: True].
 """
-import io
 import os
 import sys
 from tempfile import TemporaryFile
@@ -196,12 +195,14 @@ def main(argv, session):
 
     if args['--file-metadata']:
         try:
-            args['<file>'] = json.load(open(args['--file-metadata']))
+            with open(args['--file-metadata']) as fh:
+                args['<file>'] = json.load(fh)
         except JSONDecodeError:
             args['<file>'] = []
-            for line in open(args['--file-metadata']):
-                j = json.loads(line.strip())
-                args['<file>'].append(j)
+            with open(args['--file-metadata']) as fh:
+                for line in fh:
+                    j = json.loads(line.strip())
+                    args['<file>'].append(j)
     upload_kwargs = {
         'metadata': args['--metadata'],
         'headers': args['--header'],
@@ -262,7 +263,7 @@ def main(argv, session):
     # Bulk upload using spreadsheet.
     else:
         # Use the same session for each upload request.
-        with io.open(args['--spreadsheet'], 'rU', newline='', encoding='utf-8') as csvfp:
+        with open(args['--spreadsheet'], 'r', newline='', encoding='utf-8') as csvfp:
             spreadsheet = csv.DictReader(csvfp)
             prev_identifier = None
             for row in spreadsheet:

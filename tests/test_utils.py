@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import io
 import string
 
 from tests.conftest import IaRequestsMock, NASA_METADATA_PATH
@@ -8,7 +7,9 @@ import internetarchive.utils
 
 
 def test_utils():
-    list(internetarchive.utils.chunk_generator(io.open(__file__, encoding='utf-8'), 10))
+    with open(__file__, encoding='utf-8') as fh:
+        list(internetarchive.utils.chunk_generator(fh, 10))
+
     ifp = internetarchive.utils.IterableToFileAdapter([1, 2], 200)
     assert len(ifp) == 200
     ifp.read()

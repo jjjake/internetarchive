@@ -176,3 +176,159 @@ def test_ia_upload_stdin(tmpdir_ch, caplog):
             ia_call(['ia', '--log', 'upload', 'nasa', '-', '--remote-name', 'hi.txt'])
 
     assert f'uploaded hi.txt to {PROTOCOL}//s3.us.archive.org/nasa/hi.txt' in caplog.text
+
+
+def test_ia_upload_inexistent_file(tmpdir_ch, capsys, caplog):
+    ia_call(['ia', 'upload', 'foo', 'test.txt'], expected_exit_code=1)
+    out, err = capsys.readouterr()
+    assert '<file> should be a readable file or directory.' in err
+
+
+def test_ia_upload_spreadsheet(tmpdir_ch, caplog):
+    with open('foo.txt', 'w') as fh:
+        fh.write('foo')
+    with open('test.txt', 'w') as fh:
+        fh.write('bar')
+    with open('test.csv', 'w') as fh:
+        fh.write('identifier,file,REMOTE_NAME\n')
+        fh.write('nasa,foo.txt,\n')
+        fh.write(',test.txt,bar.txt\n')
+
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/foo.txt',
+                 body='',
+                 content_type='text/plain')
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/bar.txt',
+                 body='',
+                 content_type='text/plain')
+        ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'])
+
+    assert f'uploaded foo.txt to {PROTOCOL}//s3.us.archive.org/nasa/foo.txt' in caplog.text
+    assert f'uploaded bar.txt to {PROTOCOL}//s3.us.archive.org/nasa/bar.txt' in caplog.text
+
+
+def test_ia_upload_spreadsheet_item_column(tmpdir_ch, caplog):
+    with open('test.txt', 'w') as fh:
+        fh.write('foo')
+    with open('test.csv', 'w') as fh:
+        fh.write('item,file\n')
+        fh.write('nasa,test.txt\n')
+
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+                 body='',
+                 content_type='text/plain')
+        ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'])
+
+    assert f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+
+
+def test_ia_upload_spreadsheet_item_and_identifier_column(tmpdir_ch, caplog):
+    # item is preferred, and both are discarded
+    with open('test.txt', 'w') as fh:
+        fh.write('foo')
+    with open('test.csv', 'w') as fh:
+        fh.write('item,identifier,file\n')
+        fh.write('nasa,uhoh,test.txt\n')
+
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+                 body='',
+                 content_type='text/plain')
+
+        ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'])
+
+        # Verify that the item and identifier columns are not in the PUT request headers
+        putCalls = [c for c in rsps.calls if c.request.method == 'PUT']
+        assert len(putCalls) == 1
+        assert 'x-archive-meta00-identifier' not in putCalls[0].request.headers
+        assert 'x-archive-meta00-item' not in putCalls[0].request.headers
+
+    assert f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+
+
+def test_ia_upload_spreadsheet_missing_identifier(tmpdir_ch, capsys, caplog):
+    with open('test.txt', 'w') as fh:
+        fh.write('foo')
+    with open('test.csv', 'w') as fh:
+        fh.write('file\n')
+        fh.write('test.txt\n')
+
+    ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'], expected_exit_code=1)
+
+    assert 'error: no identifier column on spreadsheet.' in capsys.readouterr().err
+
+
+def test_ia_upload_spreadsheet_empty_identifier(tmpdir_ch, capsys, caplog):
+    with open('test.txt', 'w') as fh:
+        fh.write('foo')
+    with open('test.csv', 'w') as fh:
+        fh.write('identifier,file\n')
+        fh.write(',test.txt\n')
+
+    ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'], expected_exit_code=1)
+
+    assert 'error: no identifier column on spreadsheet.' in capsys.readouterr().err
+
+
+def test_ia_upload_spreadsheet_bom(tmpdir_ch, caplog):
+    with open('test.txt', 'w') as fh:
+        fh.write('foo')
+    with open('test.csv', 'wb') as fh:
+        fh.write(b'\xef\xbb\xbf')
+        fh.write(b'identifier,file\n')
+        fh.write(b'nasa,test.txt\n')
+
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+                 body='',
+                 content_type='text/plain')
+        ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'])
+
+    assert f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+
+
+def test_ia_upload_checksum(tmpdir_ch, caplog):
+    with open('test.txt', 'w') as fh:
+        fh.write('foo')
+
+    # First upload, file not in metadata yet
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+                 body='',
+                 content_type='text/plain')
+        ia_call(['ia', '--log', 'upload', 'nasa', 'test.txt', '--checksum'])
+    assert f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+
+    caplog.clear()
+
+    # Second upload with file in metadata
+    def insert_test_txt(body):
+        body = json.loads(body)
+        body['files'].append({'name': 'test.txt', 'md5': 'acbd18db4cc2f85cedef654fccc4a4d8'})
+        return json.dumps(body)
+
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa', transform_body=insert_test_txt)
+        ia_call(['ia', '--log', 'upload', 'nasa', 'test.txt', '--checksum'], expected_exit_code=1)
+
+    assert f'test.txt already exists: {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+
+    caplog.clear()
+
+    # Second upload with spreadsheet
+    with open('test.csv', 'w') as fh:
+        fh.write('identifier,file\n')
+        fh.write('nasa,test.txt\n')
+
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa', transform_body=insert_test_txt)
+        ia_call(['ia', '--log', 'upload', '--spreadsheet', 'test.csv', '--checksum'],
+                expected_exit_code=1)
+
+    assert f'test.txt already exists: {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text

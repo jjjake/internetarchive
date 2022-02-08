@@ -20,6 +20,11 @@ Unreleased
 - Fixed treatment of list-like file metadata in ``ia list`` under Python 3
 - Fixed `ia upload --debug` only displaying the first request.
 - Fixed uploading from stdin crashing with UnicodeDecodeError or TypeError exception.
+- Fixed ``ia upload`` silently ignoring exceptions.
+- Fixed uploading from a spreadsheet with a BOM (UTF-8 byte-order mark) raising a KeyError.
+- Fixed uploading from a spreadsheet not reusing the ``identifier`` column.
+- Fixed uploading from a spreadsheet not correctly dropping the ``item`` column from metadata.
+- Fixed uploading from a spreadsheet with ``--checksum`` crashing on skipped files.
 
 2.3.0 (2022-01-20)
 ++++++++++++++++++

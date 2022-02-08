@@ -103,18 +103,6 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
                 )
                 print(f'Endpoint:\n {r.url}\n')
                 print(f'HTTP Headers:\n{headers}')
-            return responses
-
-        # Format error message for any non 200 responses that
-        # we haven't caught yet,and write to stderr.
-        if responses and responses[-1].status_code and responses[-1].status_code != 200:
-            if not responses[-1].status_code:
-                return responses
-            filename = responses[-1].request.url.split('/')[-1]
-            try:
-                msg = get_s3_xml_text(responses[-1].content)
-            except:
-                msg = responses[-1].content
 
     return responses
 
@@ -263,7 +251,7 @@ def main(argv, session):
     # Bulk upload using spreadsheet.
     else:
         # Use the same session for each upload request.
-        with open(args['--spreadsheet'], 'r', newline='', encoding='utf-8') as csvfp:
+        with open(args['--spreadsheet'], 'r', newline='', encoding='utf-8-sig') as csvfp:
             spreadsheet = csv.DictReader(csvfp)
             prev_identifier = None
             for row in spreadsheet:
@@ -280,16 +268,16 @@ def main(argv, session):
                     local_file = row['file']
                 identifier = row.get('item', row.get('identifier'))
                 if not identifier:
-                    print('error: no identifier column on spreadsheet.',
-                          file=sys.stderr)
-                    sys.exit(1)
+                    if not prev_identifier:
+                        print('error: no identifier column on spreadsheet.',
+                              file=sys.stderr)
+                        sys.exit(1)
+                    identifier = prev_identifier
                 del row['file']
                 if 'identifier' in row:
                     del row['identifier']
-                elif 'item' in row:
+                if 'item' in row:
                     del row['item']
-                if (not identifier) and (prev_identifier):
-                    identifier = prev_identifier
                 item = session.get_item(identifier)
                 # TODO: Clean up how indexed metadata items are coerced
                 # into metadata.
@@ -301,7 +289,7 @@ def main(argv, session):
                 for _r in r:
                     if args['--debug']:
                         break
-                    if (not _r) or (not _r.ok):
+                    if (not _r.status_code) or (not _r.ok):
                         ERRORS = True
                     else:
                         if args['--open-after-upload']:

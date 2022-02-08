@@ -698,22 +698,16 @@ class Item(BaseItem):
         if glob_pattern:
             files = self.get_files(glob_pattern=glob_pattern, on_the_fly=on_the_fly)
 
-        if not files:
-            msg = f'skipping {self.identifier}, no matching files found.'
-            log.info(msg)
-            if verbose:
-                print(f' {msg}')
-            elif silent is False:
-                print(msg, end='')
-
         errors = []
         downloaded = 0
         responses = []
+        file_count = 0
 
         for f in files:
             if ignore_history_dir is True:
                 if f.name.startswith('history/'):
                     continue
+            file_count += 1
             if no_directory:
                 path = f.name
             else:
@@ -731,6 +725,15 @@ class Item(BaseItem):
                 errors.append(f.name)
             else:
                 downloaded += 1
+
+        if file_count == 0:
+            msg = f'skipping {self.identifier}, no matching files found.'
+            log.info(msg)
+            if verbose:
+                print(f' {msg}')
+            elif silent is False:
+                print(msg)
+            return
 
         if silent is False and verbose is False and dry_run is False:
             if errors:

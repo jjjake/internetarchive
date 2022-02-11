@@ -14,6 +14,8 @@ Unreleased
 
 - ``page`` parameter is no longer required if ``rows`` parameter is specified in search requests.
 - advancedsearch.php endpoint now supports IAS3 authorization.
+- ``ia upload`` now has a ``--keep-directories`` option to use the full local file paths as the
+  remote name.
 
 **Bugfixes**
 

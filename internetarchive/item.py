@@ -1039,7 +1039,7 @@ class Item(BaseItem):
                                  f'{retries_sleep} seconds and retrying. '
                                  f'{retries} retries left.')
                     if retries > 0:
-                        if self.session.s3_is_overloaded(access_key):
+                        if self.session.s3_is_overloaded(access_key=access_key):
                             sleep(retries_sleep)
                             log.info(error_msg)
                             if verbose:

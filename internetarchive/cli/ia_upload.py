@@ -59,6 +59,8 @@ options:
     --no-backup                          Turn off archive.org backups. Clobbered files
                                          will not be saved to history/files/$key.~N~
                                          [default: True].
+    --keep-directories                   Keep directories in the supplied file paths for
+                                         the remote filename. [default: False]
 """
 import os
 import sys
@@ -235,6 +237,8 @@ def main(argv, session):
             local_file = local_file[0]
         if args['--remote-name']:
             files = {args['--remote-name']: local_file}
+        elif args['--keep-directories']:
+            files = {f: f for f in local_file}
         else:
             files = local_file
 
@@ -264,6 +268,8 @@ def main(argv, session):
                 if row.get('REMOTE_NAME'):
                     local_file = {row['REMOTE_NAME']: row['file']}
                     del row['REMOTE_NAME']
+                elif args['--keep-directories']:
+                    local_file = {row['file']: row['file']}
                 else:
                     local_file = row['file']
                 identifier = row.get('item', row.get('identifier'))

@@ -2,6 +2,7 @@
 import responses
 from contextlib import contextmanager
 from io import StringIO
+import os
 import sys
 
 from internetarchive.utils import json
@@ -332,3 +333,49 @@ def test_ia_upload_checksum(tmpdir_ch, caplog):
                 expected_exit_code=1)
 
     assert f'test.txt already exists: {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+
+
+def test_ia_upload_keep_directories(tmpdir_ch, caplog):
+    os.mkdir('foo')
+    with open('foo/test.txt', 'w') as fh:
+        fh.write('foo')
+    with open('test.csv', 'w') as fh:
+        fh.write('identifier,file\n')
+        fh.write('nasa,foo/test.txt\n')
+
+    # Default behaviour
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+                 body='',
+                 content_type='text/plain')
+        ia_call(['ia', '--log', 'upload', 'nasa', 'foo/test.txt'])
+    assert f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+    caplog.clear()
+
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+                 body='',
+                 content_type='text/plain')
+        ia_call(['ia', '--log', 'upload', '--spreadsheet', 'test.csv'])
+    assert f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+    caplog.clear()
+
+    # With the option
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/foo/test.txt',
+                 body='',
+                 content_type='text/plain')
+        ia_call(['ia', '--log', 'upload', 'nasa', 'foo/test.txt', '--keep-directories'])
+    assert f'uploaded foo/test.txt to {PROTOCOL}//s3.us.archive.org/nasa/foo/test.txt' in caplog.text
+    caplog.clear()
+
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/foo/test.txt',
+                 body='',
+                 content_type='text/plain')
+        ia_call(['ia', '--log', 'upload', '--spreadsheet', 'test.csv', '--keep-directories'])
+    assert f'uploaded foo/test.txt to {PROTOCOL}//s3.us.archive.org/nasa/foo/test.txt' in caplog.text

@@ -8,7 +8,7 @@ Unreleased
 
 **Breaking changes**
 
-- Removed Python 2.7 and 3.5 support
+- Removed Python 2.7, 3.5, and 3.6 support
 
 **Features and Improvements**
 

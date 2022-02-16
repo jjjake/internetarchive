@@ -9,6 +9,9 @@ Unreleased
 **Breaking changes**
 
 - Removed Python 2.7, 3.5, and 3.6 support
+- ``ia download`` no longer has a ``--verbose`` option, and ``--silent`` has been renamed to ``--quiet``.
+- ``internetarchive.download``, ``Item.download`` and ``File.download`` no longer have a ``silent``
+  keyword argument. They are silent by default now unless ``verbose`` is set to ``True``.
 
 **Features and Improvements**
 
@@ -16,6 +19,7 @@ Unreleased
 - advancedsearch.php endpoint now supports IAS3 authorization.
 - ``ia upload`` now has a ``--keep-directories`` option to use the full local file paths as the
   remote name.
+- Added progress bars to ``ia download``
 
 **Bugfixes**
 

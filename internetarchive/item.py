@@ -564,7 +564,6 @@ class Item(BaseItem):
                  glob_pattern=None,
                  dry_run=None,
                  verbose=None,
-                 silent=None,
                  ignore_existing=None,
                  checksum=None,
                  destdir=None,
@@ -595,9 +594,6 @@ class Item(BaseItem):
 
         :type verbose: bool
         :param verbose: (optional) Turn on verbose output.
-
-        :type silent: bool
-        :param silent: (optional) Suppress all output.
 
         :type ignore_existing: bool
         :param ignore_existing: (optional) Skip files that already exist
@@ -651,7 +647,6 @@ class Item(BaseItem):
         """
         dry_run = bool(dry_run)
         verbose = bool(verbose)
-        silent = bool(silent)
         ignore_existing = bool(ignore_existing)
         ignore_errors = bool(ignore_errors)
         checksum = bool(checksum)
@@ -662,31 +657,22 @@ class Item(BaseItem):
         params = params or None
 
         if not dry_run:
-            if item_index and verbose is True:
-                print(f'{self.identifier} ({item_index}):')
-            elif item_index and silent is False:
-                print(f'{self.identifier} ({item_index}): ', end='')
-            elif item_index is None and verbose is True:
-                print(f'{self.identifier}:')
-            elif item_index is None and silent is False:
-                print(self.identifier, end=': ')
-            sys.stdout.flush()
+            if item_index and verbose:
+                print(f'{self.identifier} ({item_index}):', file=sys.stderr)
+            elif item_index is None and verbose:
+                print(f'{self.identifier}:', file=sys.stderr)
 
         if self.is_dark is True:
             msg = f'skipping {self.identifier}, item is dark'
             log.warning(msg)
             if verbose:
-                print(f' {msg}')
-            elif silent is False:
-                print(msg)
+                print(f' {msg}', file=sys.stderr)
             return
         elif self.metadata == {}:
             msg = f'skipping {self.identifier}, item does not exist.'
             log.warning(msg)
             if verbose:
-                print(f' {msg}')
-            elif silent is False:
-                print(msg)
+                print(f' {msg}', file=sys.stderr)
             return
 
         if files:
@@ -715,7 +701,7 @@ class Item(BaseItem):
             if dry_run:
                 print(f.url)
                 continue
-            r = f.download(path, verbose, silent, ignore_existing, checksum, destdir,
+            r = f.download(path, verbose, ignore_existing, checksum, destdir,
                            retries, ignore_errors, None, return_responses,
                            no_change_timestamp, params)
             if return_responses:
@@ -730,18 +716,8 @@ class Item(BaseItem):
             msg = f'skipping {self.identifier}, no matching files found.'
             log.info(msg)
             if verbose:
-                print(f' {msg}')
-            elif silent is False:
-                print(msg)
+                print(f' {msg}', file=sys.stderr)
             return
-
-        if silent is False and verbose is False and dry_run is False:
-            if errors:
-                print(' - errors')
-            elif not downloaded:
-                print(' - download failed')
-            else:
-                print(' - success')
 
         return responses if return_responses else errors
 

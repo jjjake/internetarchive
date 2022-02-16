@@ -245,9 +245,8 @@ def test_download_verbose(tmpdir, capsys, nasa_item):
                  adding_headers={'content-length': '100'})
         nasa_item.download(files='nasa_meta.xml', verbose=True)
         out, err = capsys.readouterr()
-        print(repr(out))
-        assert 'downloaded nasa/nasa_meta.xml to' in out
-        assert 'nasa_meta.xml' in out
+        print(repr(err))
+        assert 'downloading nasa_meta.xml' in err
 
 
 def test_download_dark_item(tmpdir, capsys, nasa_metadata, session):
@@ -266,7 +265,7 @@ def test_download_dark_item(tmpdir, capsys, nasa_metadata, session):
                  adding_headers={'content-length': '100'})
         _item.download(files='nasa_meta.xml', verbose=True)
         out, err = capsys.readouterr()
-        assert 'skipping dark-item, item is dark' in out
+        assert 'skipping dark-item, item is dark' in err
 
 
 def test_upload(nasa_item):

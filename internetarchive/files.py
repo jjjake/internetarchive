@@ -31,6 +31,8 @@ import socket
 from urllib.parse import quote
 from requests.exceptions import HTTPError, RetryError, ConnectTimeout, \
     ConnectionError, ReadTimeout
+from tqdm import tqdm
+from contextlib import nullcontext
 
 from internetarchive import iarequest, utils, auth
 
@@ -130,7 +132,7 @@ class File(BaseFile):
                 f'size={self.size!r}, '
                 f'format={self.format!r})')
 
-    def download(self, file_path=None, verbose=None, silent=None, ignore_existing=None,
+    def download(self, file_path=None, verbose=None, ignore_existing=None,
                  checksum=None, destdir=None, retries=None, ignore_errors=None,
                  fileobj=None, return_responses=None, no_change_timestamp=None,
                  params=None, chunk_size=None):
@@ -141,9 +143,6 @@ class File(BaseFile):
 
         :type verbose: bool
         :param verbose: (optional) Turn on verbose output.
-
-        :type silent: bool
-        :param silent: (optional) Suppress all output.
 
         :type ignore_existing: bool
         :param ignore_existing: Overwrite local files if they already
@@ -192,11 +191,6 @@ class File(BaseFile):
         no_change_timestamp = False if not no_change_timestamp else no_change_timestamp
         params = None if not params else params
 
-        if (fileobj and silent is None) or silent is not False:
-            silent = True
-        else:
-            silent = False
-
         self.item.session.mount_http_adapter(max_retries=retries)
         file_path = self.name if not file_path else file_path
 
@@ -212,10 +206,7 @@ class File(BaseFile):
                 msg = f'skipping {file_path}, file already exists.'
                 log.info(msg)
                 if verbose:
-                    print(f' {msg}')
-                elif silent is False:
-                    print('.', end='')
-                    sys.stdout.flush()
+                    print(f' {msg}', file=sys.stderr)
                 return
             elif checksum:
                 with open(file_path, 'rb') as fp:
@@ -225,10 +216,7 @@ class File(BaseFile):
                     msg = f'skipping {file_path}, file already exists based on checksum.'
                     log.info(msg)
                     if verbose:
-                        print(f' {msg}')
-                    elif silent is False:
-                        print('.', end='')
-                        sys.stdout.flush()
+                        print(f' {msg}', file=sys.stderr)
                     return
             else:
                 st = os.stat(file_path.encode('utf-8'))
@@ -237,10 +225,7 @@ class File(BaseFile):
                     msg = f'skipping {file_path}, file already exists based on length and date.'
                     log.info(msg)
                     if verbose:
-                        print(f' {msg}')
-                    elif silent is False:
-                        print('.', end='')
-                        sys.stdout.flush()
+                        print(f' {msg}', file=sys.stderr)
                     return
 
         parent_dir = os.path.dirname(file_path)
@@ -259,15 +244,27 @@ class File(BaseFile):
             if return_responses:
                 return response
 
+            if verbose:
+                total = int(response.headers.get('content-length', 0)) or None
+                progress_bar = tqdm(desc=f' downloading {self.name}',
+                                    total=total,
+                                    unit='iB',
+                                    unit_scale=True,
+                                    unit_divisor=1024)
+            else:
+                progress_bar = nullcontext()
+
             if not chunk_size:
-                chunk_size = 1000000
+                chunk_size = 1048576
             if not fileobj:
                 fileobj = open(file_path.encode('utf-8'), 'wb')
 
-            with fileobj:
+            with fileobj, progress_bar as bar:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:
-                        fileobj.write(chunk)
+                        size = fileobj.write(chunk)
+                        if bar is not None:
+                            bar.update(size)
         except (RetryError, HTTPError, ConnectTimeout,
                 ConnectionError, socket.error, ReadTimeout) as exc:
             msg = f'error downloading file {file_path}, exception raised: {exc}'
@@ -275,11 +272,8 @@ class File(BaseFile):
             if os.path.exists(file_path):
                 os.remove(file_path)
             if verbose:
-                print(f' {msg}')
-            elif silent is False:
-                print('e', end='')
-                sys.stdout.flush()
-            if ignore_errors is True:
+                print(f' {msg}', file=sys.stderr)
+            if ignore_errors:
                 return False
             else:
                 raise exc
@@ -295,11 +289,6 @@ class File(BaseFile):
 
         msg = f'downloaded {self.identifier}/{self.name} to {file_path}'
         log.info(msg)
-        if verbose:
-            print(f' {msg}')
-        elif silent is False:
-            print('d', end='')
-            sys.stdout.flush()
         return True
 
     def delete(self, cascade_delete=None, access_key=None, secret_key=None, verbose=None,

@@ -50,7 +50,9 @@ def test_clobber(tmpdir_ch):
 
     stdout, stderr = call_cmd(cmd)
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
-    assert 'nasa: . - success' == stdout
+    expected_stderr = ('nasa:\n'
+                       ' skipping nasa/nasa_meta.xml, file already exists based on length and date.')
+    assert expected_stderr == stderr
 
 
 def test_checksum(tmpdir_ch):
@@ -59,8 +61,7 @@ def test_checksum(tmpdir_ch):
 
     stdout, stderr = call_cmd('ia --insecure download --checksum nasa nasa_meta.xml')
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
-
-    assert 'nasa: . - success' == stdout
+    assert 'nasa:\n skipping nasa/nasa_meta.xml, file already exists based on checksum.' == stderr
 
 
 def test_no_directories(tmpdir_ch):

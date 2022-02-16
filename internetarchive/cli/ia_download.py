@@ -28,8 +28,7 @@ usage:
 
 options:
     -h, --help
-    -v, --verbose                            Turn on verbose output [default: False].
-    -q, --silent                             Turn off ia's output [default: False].
+    -q, --quiet                              Turn off ia's output [default: False].
     -d, --dry-run                            Print URLs to stdout and exit.
     -i, --ignore-existing                    Clobber files already downloaded.
     -C, --checksum                           Skip files based on checksum [default: False].
@@ -185,8 +184,7 @@ def main(argv, session):
             formats=args['--format'],
             glob_pattern=args['--glob'],
             dry_run=args['--dry-run'],
-            verbose=args['--verbose'],
-            silent=args['--silent'],
+            verbose=not args['--quiet'],
             ignore_existing=args['--ignore-existing'],
             checksum=args['--checksum'],
             destdir=args['--destdir'],

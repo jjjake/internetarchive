@@ -141,58 +141,64 @@ Downloading files can be done via the :func:`download <internetarchive.download>
     >>> from internetarchive import download
     >>> download('nasa', verbose=True)
     nasa:
-     downloaded nasa/globe_west_540.jpg to nasa/globe_west_540.jpg
-     downloaded nasa/NASAarchiveLogo.jpg to nasa/NASAarchiveLogo.jpg
-     downloaded nasa/globe_west_540_thumb.jpg to nasa/globe_west_540_thumb.jpg
-     downloaded nasa/nasa_reviews.xml to nasa/nasa_reviews.xml
-     downloaded nasa/nasa_meta.xml to nasa/nasa_meta.xml
-     downloaded nasa/nasa_archive.torrent to nasa/nasa_archive.torrent
-     downloaded nasa/nasa_files.xml to nasa/nasa_files.xml
+     downloading __ia_thumb.jpg: 100%|███████████████████████| 5.25k/5.25k [00:00<00:00, 2.67MiB/s]
+     downloading globe_west_540.jpg: 100%|████████████████████| 64.5k/64.5k [00:00<00:00, 420kiB/s]
+     downloading globe_west_540_thumb.jpg: 100%|█████████████| 6.02k/6.02k [00:00<00:00, 6.92MiB/s]
+     downloading nasa_archive.torrent: 100%|█████████████████| 2.01k/2.01k [00:00<00:00, 3.54MiB/s]
+     downloading nasa_files.xml: 2.56kiB [00:00, 4.64MiB/s]
+     downloading nasa_itemimage.jpg: 100%|███████████████████| 37.5k/37.5k [00:00<00:00, 26.7MiB/s]
+     downloading nasa_meta.sqlite: 100%|█████████████████████| 8.00k/8.00k [00:00<00:00, 7.56MiB/s]
+     downloading nasa_meta.xml: 7.64kiB [00:00, 18.9MiB/s]
+     downloading nasa_reviews.xml: 879iB [00:00, 850kiB/s]
 
 By default, the :func:`download <internetarchive.download>` function sets the ``mtime`` for downloaded files to the ``mtime`` of the file on archive.org. If we retry downloading the same set of files we downloaded above, no requests will be made. This is because the filename, mtime and size of the local files match the filename, mtime and size of the files on archive.org, so we assume that the file has already been downloaded. For example::
 
     >>> download('nasa', verbose=True)
     nasa:
+     skipping nasa/__ia_thumb.jpg, file already exists based on length and date.
      skipping nasa/globe_west_540.jpg, file already exists based on length and date.
-     skipping nasa/NASAarchiveLogo.jpg, file already exists based on length and date.
      skipping nasa/globe_west_540_thumb.jpg, file already exists based on length and date.
-     skipping nasa/nasa_reviews.xml, file already exists based on length and date.
-     skipping nasa/nasa_meta.xml, file already exists based on length and date.
      skipping nasa/nasa_archive.torrent, file already exists based on length and date.
      skipping nasa/nasa_files.xml, file already exists based on length and date.
+     skipping nasa/nasa_itemimage.jpg, file already exists based on length and date.
+     skipping nasa/nasa_meta.sqlite, file already exists based on length and date.
+     skipping nasa/nasa_meta.xml, file already exists based on length and date.
+     skipping nasa/nasa_reviews.xml, file already exists based on length and date.
 
 Alternatively, you can skip files based on md5 checksums. This is will take longer because checksums will need to be calculated for every file already downloaded, but will be safer::
 
     >>> download('nasa', verbose=True, checksum=True)
     nasa:
+     skipping nasa/__ia_thumb.jpg, file already exists based on checksum.
      skipping nasa/globe_west_540.jpg, file already exists based on checksum.
-     skipping nasa/NASAarchiveLogo.jpg, file already exists based on checksum.
      skipping nasa/globe_west_540_thumb.jpg, file already exists based on checksum.
-     skipping nasa/nasa_reviews.xml, file already exists based on checksum.
-     skipping nasa/nasa_meta.xml, file already exists based on checksum.
      skipping nasa/nasa_archive.torrent, file already exists based on checksum.
-     skipping nasa/nasa_files.xml, file already exists based on length and date.
+     downloading nasa_files.xml: 2.56kiB [00:00, 5.76MiB/s]
+     skipping nasa/nasa_itemimage.jpg, file already exists based on checksum.
+     skipping nasa/nasa_meta.sqlite, file already exists based on checksum.
+     skipping nasa/nasa_meta.xml, file already exists based on checksum.
+     skipping nasa/nasa_reviews.xml, file already exists based on checksum.
 
 By default, the :func:`download <internetarchive.download>` function will download all of the files in an item. However, there are a couple parameters that can be used to download only specific files. Files can be filtered using the ``glob_pattern`` parameter::
 
     >>> download('nasa', verbose=True, glob_pattern='*xml')
     nasa:
-     downloaded nasa/nasa_reviews.xml to nasa/nasa_reviews.xml
-     downloaded nasa/nasa_meta.xml to nasa/nasa_meta.xml
-     downloaded nasa/nasa_files.xml to nasa/nasa_files.xml
+     downloading nasa_files.xml: 2.56kiB [00:00, 1.92MiB/s]
+     downloading nasa_meta.xml: 7.64kiB [00:00, 19.7MiB/s]
+     downloading nasa_reviews.xml: 879iB [00:00, 832kiB/s]
 
 Files can also be filtered using the ``formats`` parameter. ``formats`` can either be a single format provided as a string::
 
     >>> download('goodytwoshoes00newyiala', verbose=True, formats='MARC')
     goodytwoshoes00newyiala:
-     downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc to goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc
+     downloading goodytwoshoes00newyiala_marc.xml: 3.04kiB [00:00, 6.60MiB/s]
 
 Or, a list of formats::
     
     >>> download('goodytwoshoes00newyiala', verbose=True, formats=['DjVuTXT', 'MARC'])
     goodytwoshoes00newyiala:
-     downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc to goodytwoshoes00newyiala/goodytwoshoes00newyiala_meta.mrc
-     downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala_djvu.txt to goodytwoshoes00newyiala/goodytwoshoes00newyiala_djvu.txt
+     downloading goodytwoshoes00newyiala_djvu.txt: 12.6kiB [00:00, 19.1MiB/s]
+     downloading goodytwoshoes00newyiala_marc.xml: 3.04kiB [00:00, 6.33MiB/s]
 
 
 Downloading On-The-Fly Files
@@ -200,9 +206,9 @@ Downloading On-The-Fly Files
 
 Some files on archive.org are generated on-the-fly as requested. This currently includes non-original files of the formats EPUB, MOBI, DAISY, and archive.org's own MARC XML. These files can be downloaded using the ``on_the_fly`` parameter::
 
-    >>> download('goodytwoshoes00newyiala', verbose=True, formats='EPUB', on_the_fly=True)
-    goodytwoshoes00newyiala:
-     downloaded goodytwoshoes00newyiala/goodytwoshoes00newyiala.epub to goodytwoshoes00newyiala/goodytwoshoes00newyiala.epub
+    >>> download('wonderfulwizardo00baumiala', verbose=True, glob_pattern='*_daisy.zip', on_the_fly=True)
+    wonderfulwizardo00baumiala:
+     downloading wonderfulwizardo00baumiala_daisy.zip: 100%|████| 153k/153k [00:00<00:00, 563kiB/s]
 
 
 Searching

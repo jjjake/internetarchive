@@ -306,7 +306,6 @@ def download(identifier,
              glob_pattern=None,
              dry_run=None,
              verbose=None,
-             silent=None,
              ignore_existing=None,
              checksum=None,
              destdir=None,
@@ -336,9 +335,6 @@ def download(identifier,
 
     :type verbose: bool
     :param verbose: (optional) Turn on verbose output.
-
-    :type silent: bool
-    :param silent: (optional) Suppress all output.
 
     :type ignore_existing: bool
     :param ignore_existing: (optional) Skip files that already exist
@@ -385,7 +381,6 @@ def download(identifier,
                       glob_pattern=glob_pattern,
                       dry_run=dry_run,
                       verbose=verbose,
-                      silent=silent,
                       ignore_existing=ignore_existing,
                       checksum=checksum,
                       destdir=destdir,

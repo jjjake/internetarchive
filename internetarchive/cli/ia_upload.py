@@ -80,6 +80,9 @@ from internetarchive.utils import (InvalidIdentifierException, JSONDecodeError, 
                                    is_valid_metadata_key, json, validate_s3_identifier)
 
 
+MAX_ITEM_SIZE = 2**40  # 1 TiB
+
+
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
     """Helper function for calling :meth:`Item.upload`"""
     responses = []
@@ -160,18 +163,21 @@ def main(argv, session):
             sys.exit(1)
 
     # Status check.
+    if args['<identifier>']:
+        item = session.get_item(args['<identifier>'])
     if args['--status-check']:
-        if session.s3_is_overloaded():
+        if session.s3_is_overloaded(identifier=args['<identifier>'], access_key=session.access_key):
             print(f'warning: {args["<identifier>"]} is over limit, and not accepting requests. '
                   'Expect 503 SlowDown errors.',
                   file=sys.stderr)
             sys.exit(1)
+        elif item.item_size >= MAX_ITEM_SIZE:
+            print(f'warning: {args["<identifier>"]} is exceeding the maximum item size '
+                  'and not accepting uploads.', file=sys.stderr)
+            sys.exit(1)
         else:
             print(f'success: {args["<identifier>"]} is accepting requests.')
             sys.exit()
-
-    elif args['<identifier>']:
-        item = session.get_item(args['<identifier>'])
 
     # Upload keyword arguments.
     if args['--size-hint']:

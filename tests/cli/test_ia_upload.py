@@ -42,6 +42,7 @@ def test_ia_upload_invalid_identifier(capsys, caplog):
 
 def test_ia_upload_status_check(capsys):
     with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
         rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
                  body=STATUS_CHECK_RESPONSE,
                  content_type='application/json')
@@ -53,6 +54,7 @@ def test_ia_upload_status_check(capsys):
         j = json.loads(STATUS_CHECK_RESPONSE)
         j['over_limit'] = 1
         rsps.reset()
+        rsps.add_metadata_mock('nasa')
         rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
                  body=json.dumps(j),
                  content_type='application/json')
@@ -61,6 +63,21 @@ def test_ia_upload_status_check(capsys):
         out, err = capsys.readouterr()
         assert ('warning: nasa is over limit, and not accepting requests. '
                 'Expect 503 SlowDown errors.') in err
+
+        def fake_big_item(body):
+            body = json.loads(body)
+            body['item_size'] = 2**41  # 2 TiB
+            return json.dumps(body)
+
+        rsps.reset()
+        rsps.add_metadata_mock('nasa', transform_body=fake_big_item)
+        rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
+                 body=STATUS_CHECK_RESPONSE,
+                 content_type='application/json')
+
+        ia_call(['ia', 'upload', 'nasa', '--status-check'], expected_exit_code=1)
+        out, err = capsys.readouterr()
+        assert 'warning: nasa is exceeding the maximum item size and not accepting uploads.' in err
 
 
 def test_ia_upload_debug(capsys, tmpdir_ch, nasa_mocker):

@@ -16,6 +16,9 @@ Unreleased
 - advancedsearch.php endpoint now supports IAS3 authorization.
 - ``ia upload`` now has a ``--keep-directories`` option to use the full local file paths as the
   remote name.
+- ``ia upload <identifier> --status-check`` now checks whether the item exceeds the maximum size.
+  It further now also checks S3 with the specific identifier and access key rather than whether S3
+  is overloaded in general.
 
 **Bugfixes**
 

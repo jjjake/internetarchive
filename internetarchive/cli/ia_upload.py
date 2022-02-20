@@ -84,7 +84,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
     """Helper function for calling :meth:`Item.upload`"""
     responses = []
     if (upload_kwargs['verbose']) and (prev_identifier != item.identifier):
-        print(f'{item.identifier}:')
+        print(f'{item.identifier}:', file=sys.stderr)
 
     try:
         response = item.upload(files, **upload_kwargs)
@@ -92,19 +92,19 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
     except HTTPError as exc:
         responses += [exc.response]
     except InvalidIdentifierException as exc:
-        print(str(exc))
+        print(str(exc), file=sys.stderr)
         sys.exit(1)
     finally:
         # Debug mode.
         if upload_kwargs['debug']:
             for i, r in enumerate(responses):
                 if i != 0:
-                    print('---')
+                    print('---', file=sys.stderr)
                 headers = '\n'.join(
                     [f' {k}:{v}' for (k, v) in r.headers.items()]
                 )
-                print(f'Endpoint:\n {r.url}\n')
-                print(f'HTTP Headers:\n{headers}')
+                print(f'Endpoint:\n {r.url}\n', file=sys.stderr)
+                print(f'HTTP Headers:\n{headers}', file=sys.stderr)
 
     return responses
 
@@ -167,7 +167,7 @@ def main(argv, session):
                   file=sys.stderr)
             sys.exit(1)
         else:
-            print(f'success: {args["<identifier>"]} is accepting requests.')
+            print(f'success: {args["<identifier>"]} is accepting requests.', file=sys.stderr)
             sys.exit()
 
     elif args['<identifier>']:

@@ -81,7 +81,7 @@ def modify_metadata(item, metadata, args):
             etype = 'error'
         print(f'{item.identifier} - {etype} ({r.status_code}): {error_msg}', file=sys.stderr)
         return r
-    print(f'{item.identifier} - success: {r.json()["log"]}')
+    print(f'{item.identifier} - success: {r.json()["log"]}', file=sys.stderr)
     return r
 
 
@@ -105,13 +105,15 @@ def remove_metadata(item, metadata, args):
                     r = item.remove_from_simplelist(c, 'holdings')
                     j = r.json()
                     if j.get('success'):
-                        print(f'{item.identifier} - success: {item.identifier} no longer in {c}')
+                        print(f'{item.identifier} - success: {item.identifier} no longer in {c}',
+                              file=sys.stderr)
                         sys.exit(0)
                     elif j.get('error', '').startswith('no row to delete for'):
-                        print(f'{item.identifier} - success: {item.identifier} no longer in {c}')
+                        print(f'{item.identifier} - success: {item.identifier} no longer in {c}',
+                              file=sys.stderr)
                         sys.exit(0)
                     else:
-                        print(f'{item.identifier} - error: {j.get("error")}')
+                        print(f'{item.identifier} - error: {j.get("error")}', file=sys.stderr)
                         sys.exit(1)
 
         if not isinstance(src_md, list):
@@ -188,7 +190,7 @@ def main(argv, session):
         if args['--exists']:
             if item.exists:
                 responses.append(True)
-                print(f'{identifier} exists')
+                print(f'{identifier} exists', file=sys.stderr)
             else:
                 responses.append(False)
                 print(f'{identifier} does not exist', file=sys.stderr)

@@ -48,7 +48,7 @@ def test_ia_upload_status_check(capsys):
 
         ia_call(['ia', 'upload', 'nasa', '--status-check'])
         out, err = capsys.readouterr()
-        assert 'success: nasa is accepting requests.' in out
+        assert 'success: nasa is accepting requests.' in err
 
         j = json.loads(STATUS_CHECK_RESPONSE)
         j['over_limit'] = 1
@@ -69,13 +69,13 @@ def test_ia_upload_debug(capsys, tmpdir_ch, nasa_mocker):
 
     ia_call(['ia', 'upload', '--debug', 'nasa', 'test.txt'])
     out, err = capsys.readouterr()
-    assert 'User-Agent' in out
-    assert 's3.us.archive.org/nasa/test.txt' in out
-    assert 'Accept:*/*' in out
-    assert 'Authorization:LOW ' in out
-    assert 'Connection:close' in out
-    assert 'Content-Length:3' in out
-    assert 'Accept-Encoding:gzip, deflate' in out
+    assert 'User-Agent' in err
+    assert 's3.us.archive.org/nasa/test.txt' in err
+    assert 'Accept:*/*' in err
+    assert 'Authorization:LOW ' in err
+    assert 'Connection:close' in err
+    assert 'Content-Length:3' in err
+    assert 'Accept-Encoding:gzip, deflate' in err
 
 
 def test_ia_upload_403(capsys):
@@ -114,14 +114,14 @@ def test_ia_upload_size_hint(capsys, tmpdir_ch, nasa_mocker):
 
     ia_call(['ia', 'upload', '--debug', 'nasa', '--size-hint', '30', 'test.txt'])
     out, err = capsys.readouterr()
-    assert 'User-Agent' in out
-    assert 's3.us.archive.org/nasa/test.txt' in out
-    assert 'x-archive-size-hint:30' in out
-    assert 'Accept:*/*' in out
-    assert 'Authorization:LOW ' in out
-    assert 'Connection:close' in out
-    assert 'Content-Length:3' in out
-    assert 'Accept-Encoding:gzip, deflate' in out
+    assert 'User-Agent' in err
+    assert 's3.us.archive.org/nasa/test.txt' in err
+    assert 'x-archive-size-hint:30' in err
+    assert 'Accept:*/*' in err
+    assert 'Authorization:LOW ' in err
+    assert 'Connection:close' in err
+    assert 'Content-Length:3' in err
+    assert 'Accept-Encoding:gzip, deflate' in err
 
 
 def test_ia_upload_unicode(tmpdir_ch, caplog):

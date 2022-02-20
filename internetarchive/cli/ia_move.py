@@ -76,6 +76,6 @@ def main(argv, session):
     r, src_file = ia_copy.main(argv, session, cmd='move')
     dr = src_file.delete(headers=args['--header'], cascade_delete=True)
     if dr.status_code == 204:
-        print(f'success: moved {src_path} to {dest_path}')
+        print(f'success: moved {src_path} to {dest_path}', file=sys.stderr)
         sys.exit(0)
-    print(f'error: {dr.content}')
+    print(f'error: {dr.content}', file=sys.stderr)

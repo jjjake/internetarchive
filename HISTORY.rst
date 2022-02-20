@@ -32,6 +32,7 @@ Unreleased
 - Fixed uploading from a spreadsheet not correctly dropping the ``item`` column from metadata.
 - Fixed uploading from a spreadsheet with ``--checksum`` crashing on skipped files.
 - Fixed minor bug in S3 overload check on upload error retries.
+- Fixed various messages being printed to stdout instead of stderr.
 
 2.3.0 (2022-01-20)
 ++++++++++++++++++

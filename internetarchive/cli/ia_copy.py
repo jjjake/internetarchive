@@ -139,9 +139,9 @@ def main(argv, session, cmd='copy'):
             msg = get_s3_xml_text(r.text)
         except Exception as e:
             msg = r.text
-        print(f'error: failed to {cmd} "{src_path}" to "{dest_path}" - {msg}')
+        print(f'error: failed to {cmd} "{src_path}" to "{dest_path}" - {msg}', file=sys.stderr)
         sys.exit(1)
     elif cmd == 'copy':
-        print(f'success: copied "{src_path}" to "{dest_path}".')
+        print(f'success: copied "{src_path}" to "{dest_path}".', file=sys.stderr)
     else:
         return (r, SRC_FILE)

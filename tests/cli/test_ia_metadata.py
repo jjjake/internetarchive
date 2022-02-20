@@ -11,7 +11,7 @@ def test_ia_metadata_exists(capsys):
         rsps.add_metadata_mock('nasa')
         ia_call(['ia', 'metadata', '--exists', 'nasa'], expected_exit_code=0)
         out, err = capsys.readouterr()
-        assert out == 'nasa exists\n'
+        assert err == 'nasa exists\n'
         rsps.reset()
         rsps.add_metadata_mock('nasa', '{}')
         sys.argv = ['ia', 'metadata', '--exists', 'nasa']
@@ -38,4 +38,4 @@ def test_ia_metadata_modify(capsys):
         valid_key = f'foo-{int(time())}'
         ia_call(['ia', 'metadata', '--modify', f'{valid_key}:test_value', 'nasa'])
         out, err = capsys.readouterr()
-        assert out == 'nasa - success: https://catalogd.archive.org/log/447613301\n'
+        assert err == 'nasa - success: https://catalogd.archive.org/log/447613301\n'

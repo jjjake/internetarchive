@@ -33,6 +33,7 @@ Unreleased
 - Fixed uploading from a spreadsheet with ``--checksum`` crashing on skipped files.
 - Fixed minor bug in S3 overload check on upload error retries.
 - Fixed various messages being printed to stdout instead of stderr.
+- Fixed format selection for on-the-fly files.
 
 2.3.0 (2022-01-20)
 ++++++++++++++++++

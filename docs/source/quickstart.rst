@@ -204,9 +204,9 @@ Or, a list of formats::
 Downloading On-The-Fly Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Some files on archive.org are generated on-the-fly as requested. This currently includes non-original files of the formats EPUB, MOBI, DAISY, and archive.org's own MARC XML. These files can be downloaded using the ``on_the_fly`` parameter::
+Some files on archive.org are generated on-the-fly as requested. This currently includes non-original files of the formats EPUB, MOBI, DAISY, and archive.org's own MARCXML. These files can be downloaded using the ``on_the_fly`` parameter::
 
-    >>> download('wonderfulwizardo00baumiala', verbose=True, glob_pattern='*_daisy.zip', on_the_fly=True)
+    >>> download('wonderfulwizardo00baumiala', verbose=True, formats='DAISY', on_the_fly=True)
     wonderfulwizardo00baumiala:
      downloading wonderfulwizardo00baumiala_daisy.zip: 100%|████| 153k/153k [00:00<00:00, 563kiB/s]
 

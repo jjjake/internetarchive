@@ -69,22 +69,22 @@ def main(argv, session):
                                          args['--password'],
                                          config_file=session.config_file,
                                          host=session.host)
-            print(f'Config saved to: {config_file_path}')
+            print(f'Config saved to: {config_file_path}', file=sys.stderr)
 
         # Netrc
         elif args['--netrc']:
-            print("Configuring 'ia' with netrc file...")
+            print("Configuring 'ia' with netrc file...", file=sys.stderr)
             try:
                 n = netrc.netrc()
             except netrc.NetrcParseError as exc:
-                print('error: netrc.netrc() cannot parse your .netrc file.')
+                print('error: netrc.netrc() cannot parse your .netrc file.', file=sys.stderr)
                 sys.exit(1)
             username, _, password = n.hosts['archive.org']
             config_file_path = configure(username,
                                          password,
                                          config_file=session.config_file,
                                          host=session.host)
-            print(f'Config saved to: {config_file_path}')
+            print(f'Config saved to: {config_file_path}', file=sys.stderr)
 
         # Interactive input.
         else:
@@ -94,5 +94,5 @@ def main(argv, session):
             print(f'\nConfig saved to: {config_file_path}')
 
     except AuthenticationError as exc:
-        print(f'\nerror: {exc}')
+        print(f'\nerror: {exc}', file=sys.stderr)
         sys.exit(1)

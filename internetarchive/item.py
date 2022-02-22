@@ -949,7 +949,7 @@ class Item(BaseItem):
             if (not self.tasks) and (ia_file) and (ia_file.md5 == md5_sum):
                 log.info(f'{key} already exists: {url}')
                 if verbose:
-                    print(f' {key} already exists, skipping.')
+                    print(f' {key} already exists, skipping.', file=sys.stderr)
                 if delete:
                     log.info(
                         f'{key} successfully uploaded to '
@@ -987,7 +987,7 @@ class Item(BaseItem):
                                               unit='MiB')
                     data = IterableToFileAdapter(progress_generator, size)
                 except:
-                    print(f' uploading {key}')
+                    print(f' uploading {key}', file=sys.stderr)
                     data = body
             else:
                 data = body

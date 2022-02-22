@@ -82,7 +82,7 @@ def main(argv, session):
     verbose = True if not args['--quiet'] else False
     item = session.get_item(args['<identifier>'])
     if not item.exists:
-        print('{0}: skipping, item does\'t exist.')
+        print('{0}: skipping, item does\'t exist.', file=sys.stderr)
 
     # Files that cannot be deleted via S3.
     no_delete = ['_meta.xml', '_files.xml', '_meta.sqlite']
@@ -92,7 +92,7 @@ def main(argv, session):
         args['--header']['x-archive-keep-old-version'] = '1'
 
     if verbose:
-        print(f'Deleting files from {item.identifier}')
+        print(f'Deleting files from {item.identifier}', file=sys.stderr)
 
     if args['--all']:
         files = [f for f in item.get_files()]
@@ -124,7 +124,7 @@ def main(argv, session):
         if any(f.name.endswith(s) for s in no_delete):
             continue
         if args['--dry-run']:
-            print(f' will delete: {item.identifier}/{f.name}')
+            print(f' will delete: {item.identifier}/{f.name}', file=sys.stderr)
             continue
         try:
             resp = f.delete(verbose=verbose,

@@ -95,13 +95,13 @@ def main(argv, session):
         j = r.json()
         if j.get('success'):
             task_log_url = j.get('value', {}).get('log')
-            print(f'success: {task_log_url}')
+            print(f'success: {task_log_url}', file=sys.stderr)
             sys.exit(0)
         elif 'already queued/running' in j.get('error', ''):
-            print(f'success: {args["--cmd"]} task already queued/running')
+            print(f'success: {args["--cmd"]} task already queued/running', file=sys.stderr)
             sys.exit(0)
         else:
-            print(f'error: {j.get("error")}')
+            print(f'error: {j.get("error")}', file=sys.stderr)
             sys.exit(1)
 
     # Tasks read API.

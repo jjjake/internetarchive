@@ -104,7 +104,7 @@ def load_ia_module(cmd):
               file=sys.stderr)
         matches = '\t'.join(difflib.get_close_matches(cmd, cmd_aliases.values()))
         if matches:
-            print(f'\nDid you mean one of these?\n\t{matches}')
+            print(f'\nDid you mean one of these?\n\t{matches}', file=sys.stderr)
         sys.exit(127)
 
 

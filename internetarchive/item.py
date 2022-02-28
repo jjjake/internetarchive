@@ -532,13 +532,13 @@ class Item(BaseItem):
         # Add support for on-the-fly files (e.g. EPUB).
         if on_the_fly:
             otf_files = [
-                f'{self.identifier}.epub',
-                f'{self.identifier}.mobi',
-                f'{self.identifier}_daisy.zip',
-                f'{self.identifier}_archive_marc.xml',
+                ('EPUB', f'{self.identifier}.epub'),
+                ('MOBI', f'{self.identifier}.mobi'),
+                ('DAISY', f'{self.identifier}_daisy.zip'),
+                ('MARCXML', f'{self.identifier}_archive_marc.xml'),
             ]
-            for f in otf_files:
-                item_files.append({'name': f, 'otf': True})
+            for format, f in otf_files:
+                item_files.append({'name': f, 'format': format, 'otf': True})
 
         if not any(k for k in [files, formats, glob_pattern]):
             for f in item_files:

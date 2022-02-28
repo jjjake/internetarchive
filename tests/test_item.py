@@ -237,6 +237,20 @@ def test_download_dry_run(tmpdir, capsys, nasa_item):
     assert {x.split('/')[-1] for x in out.split('\n') if x} == expected
 
 
+def test_download_dry_run_on_the_fly_formats(tmpdir, capsys, nasa_item):
+    tmpdir.chdir()
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='no dest dir',
+                 adding_headers={'content-length': '100'})
+        nasa_item.download(formats='MARCXML', on_the_fly=True, dry_run=True)
+
+    expected = {'nasa_archive_marc.xml'}
+    out, err = capsys.readouterr()
+
+    assert {x.split('/')[-1] for x in out.split('\n') if x} == expected
+
+
 def test_download_verbose(tmpdir, capsys, nasa_item):
     tmpdir.chdir()
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:

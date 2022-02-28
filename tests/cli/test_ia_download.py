@@ -43,6 +43,16 @@ def test_format(tmpdir_ch):
     assert files_downloaded(path='nasa') == {'nasa_archive.torrent'}
 
 
+def test_on_the_fly_format():
+    i = 'wonderfulwizardo00baumiala'
+
+    stdout, stderr = call_cmd(f'ia --insecure download --dry-run --format="DAISY" {i}')
+    assert stdout == ''
+
+    stdout, stderr = call_cmd(f'ia --insecure download --dry-run --format="DAISY" --on-the-fly {i}')
+    assert stdout == f'http://archive.org/download/{i}/{i}_daisy.zip'
+
+
 def test_clobber(tmpdir_ch):
     cmd = 'ia --insecure download nasa nasa_meta.xml'
     call_cmd(cmd)

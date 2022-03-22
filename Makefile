@@ -18,7 +18,7 @@ test:
 
 publish:
 	git tag -a v$(VERSION) -m 'version $(VERSION)'
-	git push --tags
+	git push --tags origin master
 	python setup.py sdist bdist_wheel
 	twine upload --repository-url https://upload.pypi.org/legacy/ --repository testpypi dist/internetarchive-$(VERSION).tar.gz
 
@@ -30,7 +30,7 @@ docs:
 	@echo "\033[95m\n\nBuild successful! View the docs homepage at docs/build/html/index.html.\n\033[0m"
 
 binary:
-	pex . --python-shebang='/usr/bin/env python' --python python3 -e internetarchive.cli.ia:main -o ia-$(VERSION)-py3-none-any.pex -r pex-requirements.txt
+	pex . --python-shebang='/usr/bin/env python3' --python python3 -e internetarchive.cli.ia:main -o ia-$(VERSION)-py3-none-any.pex -r pex-requirements.txt
 
 publish-binary:
 	./ia-$(VERSION)-py3-none-any.pex upload ia-pex ia-$(VERSION)-py3-none-any.pex --no-derive

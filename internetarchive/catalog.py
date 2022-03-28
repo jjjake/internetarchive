@@ -97,9 +97,8 @@ class Catalog:
 
         :type params: dict
         :param params: (optional) Query parameters, refer to
-                       `Tasks API
-                        <https://archive.org/services/docs/api/tasks.html>`_
-                       for available parameters.
+        `Tasks API <https://archive.org/services/docs/api/tasks.html>`_
+        for available parameters.
 
         :rtype: dict
         """
@@ -188,9 +187,8 @@ class Catalog:
 
         :type params: dict
         :param params: (optional) Query parameters, refer to
-                       `Tasks API
-                        <https://archive.org/services/docs/api/tasks.html>`_
-                       for available parameters.
+        `Tasks API <https://archive.org/services/docs/api/tasks.html>`_
+        for available parameters.
 
         :rtype: List[CatalogTask]
         """

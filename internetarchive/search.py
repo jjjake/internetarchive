@@ -148,7 +148,7 @@ class Search:
             j = r.json()
             if j.get('error'):
                 yield j
-            num_found = j['total']
+            num_found = int(j['total'])
             self._handle_scrape_error(j)
 
             self.params['cursor'] = j.get('cursor')

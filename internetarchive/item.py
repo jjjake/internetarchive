@@ -38,7 +38,12 @@ from copy import deepcopy
 from urllib.parse import quote
 from requests import Response
 from tqdm import tqdm
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, ConnectionError
+from urllib3.exceptions import ProtocolError
+try:
+    from http.client import RemoteDisconnected
+except ImportError:
+    from httplib import BadStatusLine as RemoteDisconnected
 
 from internetarchive.utils import (IdentifierListAsItems, get_md5,
                                    chunk_generator, IterableToFileAdapter,
@@ -1071,6 +1076,21 @@ class Item(BaseItem):
                     print(f' error uploading {key}: {msg}', file=sys.stderr)
                 # Raise HTTPError with error message.
                 raise type(exc)(error_msg, response=exc.response, request=exc.request)
+            except ConnectionError as exc:  # from requests
+                exc = exc.args[0]
+                if isinstance(exc, ProtocolError):  # from urllib3
+                    exc = exc.args[1]
+                    if isinstance(exc, RemoteDisconnected):  # from http.client
+                        msg = ("The server closed the connection after the file was uploaded. "
+                               "The upload might have succeeded anyway.")
+                        error_msg = (' error uploading {0} to {1}, '
+                                     '{2}'.format(key, self.identifier, msg))
+                        log.error(error_msg)
+                        return Response()
+                    else:
+                        raise
+                else:
+                    raise
             finally:
                 body.close()
 

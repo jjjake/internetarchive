@@ -37,10 +37,11 @@ from collections.abc import Mapping
 # Make preferred JSON package available via `from internetarchive.utils import json`
 try:
     import ujson as json
+    # ujson lacks a JSONDecodeError: https://github.com/ultrajson/ultrajson/issues/497
+    JSONDecodeError = ValueError
 except ImportError:
     import json  # type: ignore
-    
-JSONDecodeError = json.JSONDecodeError
+    JSONDecodeError = json.JSONDecodeError  # type: ignore
 
 
 def deep_update(d, u):

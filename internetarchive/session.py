@@ -581,8 +581,8 @@ class ArchiveSession(requests.sessions.Session):
                 return r
             insecure_warnings = ['SNIMissingWarning', 'InsecurePlatformWarning']
             if w:
-                for e in w:
-                    if any(x in str(e) for x in insecure_warnings):
+                for warning in w:
+                    if any(x in str(warning) for x in insecure_warnings):
                         insecure = True
                         break
         if insecure:

@@ -27,12 +27,15 @@ settings across the internetarchive package.
 :copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-import os
+from __future__ import annotations
+
 import locale
-import sys
 import logging
+import os
 import platform
+import sys
 import warnings
+from typing import Any
 
 import requests.sessions
 from requests.utils import default_headers
@@ -72,10 +75,10 @@ class ArchiveSession(requests.sessions.Session):
     }
 
     def __init__(self,
-                 config=None,
-                 config_file=None,
-                 debug=None,
-                 http_adapter_kwargs=None):
+                 config: dict | None = None,
+                 config_file: str | None = None,
+                 debug: bool = False,
+                 http_adapter_kwargs: dict | None = None):
         """Initialize :class:`ArchiveSession <ArchiveSession>` object with config.
 
         :type config: dict
@@ -94,8 +97,8 @@ class ArchiveSession(requests.sessions.Session):
         :returns: :class:`ArchiveSession` object.
         """
         super().__init__()
-        http_adapter_kwargs = {} if not http_adapter_kwargs else http_adapter_kwargs
-        debug = False if not debug else True
+        http_adapter_kwargs = http_adapter_kwargs or {}
+        debug = bool(debug)
 
         self.config = get_config(config, config_file)
         self.config_file = config_file
@@ -138,12 +141,12 @@ class ArchiveSession(requests.sessions.Session):
                                      logging_config.get('file', 'internetarchive.log'),
                                      'urllib3')
 
-    def _get_user_agent_string(self):
+    def _get_user_agent_string(self) -> str:
         """Generate a User-Agent string to be sent with every request."""
         uname = platform.uname()
         try:
             lang = locale.getlocale()[0][:2]
-        except:
+        except Exception:
             lang = ''
         py_version = '{0}.{1}.{2}'.format(*sys.version_info)
         return (f'internetarchive/{__version__} '
@@ -158,8 +161,8 @@ class ArchiveSession(requests.sessions.Session):
             return
         super().rebuild_auth(prepared_request, response)
 
-    def mount_http_adapter(self, protocol=None, max_retries=None,
-                           status_forcelist=None, host=None):
+    def mount_http_adapter(self, protocol: str | None = None, max_retries: int | None = None,
+                           status_forcelist: list | None = None, host: str = None):
         """Mount an HTTP adapter to the
         :class:`ArchiveSession <ArchiveSession>` object.
 
@@ -176,13 +179,12 @@ class ArchiveSession(requests.sessions.Session):
         :type host: str
         :param host: The host to mount your adapter to.
         """
-        protocol = protocol if protocol else self.protocol
-        host = host if host else 'archive.org'
+        protocol = protocol or self.protocol
+        host = host or 'archive.org'
         if max_retries is None:
             max_retries = self.http_adapter_kwargs.get('max_retries', 3)
 
-        if not status_forcelist:
-            status_forcelist = [500, 501, 502, 503, 504]
+        status_forcelist = status_forcelist or [500, 501, 502, 503, 504]
         if max_retries and isinstance(max_retries, (int, float)):
             max_retries = Retry(total=max_retries,
                                 connect=max_retries,
@@ -197,7 +199,7 @@ class ArchiveSession(requests.sessions.Session):
         # IA-S3 requires a more complicated retry workflow.
         self.mount(f'{protocol}//{host}', max_retries_adapter)
 
-    def set_file_logger(self, log_level, path, logger_name='internetarchive'):
+    def set_file_logger(self, log_level: str, path: str, logger_name: str = 'internetarchive'):
         """Convenience function to quickly configure any level of
         logging to a file.
 
@@ -233,7 +235,10 @@ class ArchiveSession(requests.sessions.Session):
 
         _log.addHandler(fh)
 
-    def get_item(self, identifier, item_metadata=None, request_kwargs=None):
+    def get_item(self,
+                 identifier: str,
+                 item_metadata: dict | None = None,
+                 request_kwargs: dict | None = None):
         """A method for creating :class:`internetarchive.Item <Item>` and
         :class:`internetarchive.Collection <Collection>` objects.
 
@@ -249,7 +254,7 @@ class ArchiveSession(requests.sessions.Session):
         :param request_kwargs: (optional) Keyword arguments to be used in
                                     :meth:`requests.sessions.Session.get` request.
         """
-        request_kwargs = {} if not request_kwargs else request_kwargs
+        request_kwargs = request_kwargs or {}
         if not item_metadata:
             logger.debug(f'no metadata provided for "{identifier}", retrieving now.')
             item_metadata = self.get_metadata(identifier, request_kwargs)
@@ -260,7 +265,7 @@ class ArchiveSession(requests.sessions.Session):
             item_class = Item
         return item_class(self, identifier, item_metadata)
 
-    def get_metadata(self, identifier, request_kwargs=None):
+    def get_metadata(self, identifier: str, request_kwargs: dict | None = None):
         """Get an item's metadata from the `Metadata API
         <http://blog.archive.org/2013/07/04/metadata-api/>`__
 
@@ -270,7 +275,7 @@ class ArchiveSession(requests.sessions.Session):
         :rtype: dict
         :returns: Metadat API response.
         """
-        request_kwargs = {} if not request_kwargs else request_kwargs
+        request_kwargs = request_kwargs or {}
         url = f'{self.protocol}//{self.host}/metadata/{identifier}'
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12
@@ -287,14 +292,15 @@ class ArchiveSession(requests.sessions.Session):
             raise type(exc)(error_msg)
         return resp.json()
 
-    def search_items(self, query,
-                     fields=None,
-                     sorts=None,
-                     params=None,
-                     full_text_search=None,
-                     dsl_fts=None,
-                     request_kwargs=None,
-                     max_retries=None):
+    def search_items(self,
+                     query: str,
+                     fields: list | None = None,
+                     sorts: Any | None = None,
+                     params: dict | None = None,
+                     full_text_search: bool = False,
+                     dsl_fts: bool = False,
+                     request_kwargs: dict | None = None,
+                     max_retries: int | None = None) -> Search:
         """Search for items on Archive.org.
 
         :type query: str
@@ -320,7 +326,7 @@ class ArchiveSession(requests.sessions.Session):
 
         :returns: A :class:`Search` object, yielding search results.
         """
-        request_kwargs = {} if not request_kwargs else request_kwargs
+        request_kwargs = request_kwargs or {}
         return Search(self, query,
                       fields=fields,
                       sorts=sorts,
@@ -343,7 +349,7 @@ class ArchiveSession(requests.sessions.Session):
         }
         try:
             r = self.get(u, params=p, **request_kwargs)
-        except:
+        except Exception:
             return True
         try:
             j = r.json()
@@ -354,13 +360,18 @@ class ArchiveSession(requests.sessions.Session):
         else:
             return True
 
-    def get_tasks_api_rate_limit(self, cmd='derive.php', request_kwargs=None):
-        c = Catalog(self, request_kwargs)
-        r = c.get_rate_limit(cmd=cmd)
-        return r
+    def get_tasks_api_rate_limit(self, cmd: str = 'derive.php', request_kwargs: dict | None = None):
+        return Catalog(self, request_kwargs).get_rate_limit(cmd=cmd)
 
-    def submit_task(self, identifier, cmd, comment=None, priority=None, data=None,
-                    headers=None, reduced_priority=None, request_kwargs=None):
+    def submit_task(self,
+                    identifier: str,
+                    cmd: str,
+                    comment: str = '',
+                    priority: int = 0,
+                    data: dict | None = None,
+                    headers: dict | None = None,
+                    reduced_priority: bool = False,
+                    request_kwargs: dict | None = None) -> requests.Response:
         """Submit an archive.org task.
 
         :type identifier: str
@@ -402,19 +413,19 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: :class:`requests.Response`
         """
-        headers = {} if not headers else headers
-        if reduced_priority is not None:
+        headers = headers or {}
+        if reduced_priority:
             headers.update({'X-Accept-Reduced-Priority': '1'})
+        return Catalog(self, request_kwargs).submit_task(identifier, cmd,
+                                                         comment=comment,
+                                                         priority=priority,
+                                                         data=data,
+                                                         headers=headers)
 
-        c = Catalog(self, request_kwargs)
-        r = c.submit_task(identifier, cmd,
-                          comment=comment,
-                          priority=priority,
-                          data=data,
-                          headers=headers)
-        return r
-
-    def iter_history(self, identifier, params=None, request_kwargs=None):
+    def iter_history(self,
+                     identifier: str | None = None,
+                     params: dict | None = None,
+                     request_kwargs: dict | None = None):
         """A generator that returns completed tasks.
 
         :type identifier: str
@@ -432,12 +443,15 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: collections.Iterable[CatalogTask]
         """
-        params = {} if not params else params
+        params = params or {}
         params.update({'identifier': identifier, 'catalog': 0, 'summary': 0, 'history': 1})
         c = Catalog(self, request_kwargs)
         yield from c.iter_tasks(params)
 
-    def iter_catalog(self, identifier=None, params=None, request_kwargs=None):
+    def iter_catalog(self,
+                     identifier: str | None = None,
+                     params: dict | None = None,
+                     request_kwargs: dict | None = None):
         """A generator that returns queued or running tasks.
 
         :type identifier: str
@@ -455,12 +469,14 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: collections.Iterable[CatalogTask]
         """
-        params = {} if not params else params
+        params = params or {}
         params.update({'identifier': identifier, 'catalog': 1, 'summary': 0, 'history': 0})
         c = Catalog(self, request_kwargs)
         yield from c.iter_tasks(params)
 
-    def get_tasks_summary(self, identifier=None, params=None, request_kwargs=None):
+    def get_tasks_summary(self, identifier: str | None = None,
+                          params: dict | None = None,
+                          request_kwargs: dict | None = None) -> dict:
         """Get the total counts of catalog tasks meeting all criteria,
         organized by run status (queued, running, error, and paused).
 
@@ -479,10 +495,11 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: dict
         """
-        c = Catalog(self, request_kwargs)
-        return c.get_summary(identifier=identifier, params=params)
+        return Catalog(self, request_kwargs).get_summary(identifier=identifier, params=params)
 
-    def get_tasks(self, identifier=None, params=None, request_kwargs=None):
+    def get_tasks(self, identifier: str | None = None,
+                  params: dict | None = None,
+                  request_kwargs: dict | None = None) -> list[CatalogTask]:
         """Get a list of all tasks meeting all criteria.
         The list is ordered by submission time.
 
@@ -503,15 +520,16 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: List[CatalogTask]
         """
-        params = {} if not params else params
-        c = Catalog(self, request_kwargs)
+        params = params or {}
         if 'history' not in params:
             params['history'] = 1
         if 'catalog' not in params:
             params['catalog'] = 1
-        return c.get_tasks(identifier=identifier, params=params)
+        return Catalog(self, request_kwargs).get_tasks(identifier=identifier, params=params)
 
-    def get_my_catalog(self, params=None, request_kwargs=None):
+    def get_my_catalog(self,
+                       params: dict | None = None,
+                       request_kwargs: dict | None = None) -> list[CatalogTask]:
         """Get all queued or running tasks.
 
         :type params: dict
@@ -526,12 +544,12 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: List[CatalogTask]
         """
-        params = {} if not params else params
+        params = params or {}
         _params = {'submitter': self.user_email, 'catalog': 1, 'history': 0, 'summary': 0}
         params.update(_params)
         return self.get_tasks(params=params, request_kwargs=request_kwargs)
 
-    def get_task_log(self, task_id, request_kwargs=None):
+    def get_task_log(self, task_id: str | int, request_kwargs: dict | None = None) -> str:
         """Get a task log.
 
         :type task_id: str or int
@@ -556,7 +574,7 @@ class ArchiveSession(requests.sessions.Session):
             except Exception as e:
                 try:
                     reraise_modify(e, e.request.url, prepend=False)
-                except:
+                except Exception:
                     logger.error(e)
                     raise e
             if self.protocol == 'http:':

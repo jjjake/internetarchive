@@ -7,7 +7,7 @@ from setuptools import setup
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
 
 with open('internetarchive/__init__.py', 'r') as f:
-    version = iteral_eval(_version_re.search(f.read()).group(1))
+    version = literal_eval(_version_re.search(f.read()).group(1))
 with open('README.rst', 'r') as f:
     readme = f.read()
 with open('HISTORY.rst', 'r') as f:

@@ -35,7 +35,7 @@ import os
 import platform
 import sys
 import warnings
-from typing import Any
+from typing import Iterable
 
 import requests.sessions
 from requests.utils import default_headers
@@ -295,7 +295,7 @@ class ArchiveSession(requests.sessions.Session):
     def search_items(self,
                      query: str,
                      fields: list | None = None,
-                     sorts: Any | None = None,
+                     sorts: Iterable[str] | None = None,
                      params: dict | None = None,
                      full_text_search: bool = False,
                      dsl_fts: bool = False,
@@ -423,7 +423,7 @@ class ArchiveSession(requests.sessions.Session):
                                                          headers=headers)
 
     def iter_history(self,
-                     identifier: str | None = None,
+                     identifier: str | None,
                      params: dict | None = None,
                      request_kwargs: dict | None = None):
         """A generator that returns completed tasks.

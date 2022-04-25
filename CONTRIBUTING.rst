@@ -37,7 +37,7 @@ Running Tests
 The minimal requirements for running tests are ``pytest``, ``pytest-pep8`` and ``responses``:
 
 .. code:: bash
-    
+
     $ pip install pytest pytest-pep8 responses
 
 Clone the `internetarchive lib <https://github.com/jjjake/internetarchive>`_:

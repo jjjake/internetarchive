@@ -34,7 +34,7 @@ You should see the help page.
     $ ./jq
     jq - commandline JSON processor [version 1.5]
     Usage: ./jq [options] <jq filter> [file...]
-    
+
         jq is a tool for processing JSON inputs, applying the
         given filter to its JSON text inputs and producing the
         filter's results as JSON on standard output.
@@ -43,7 +43,7 @@ You should see the help page.
         formatting).
         For more advanced filters see the jq(1) manpage ("man jq")
         and/or https://stedolan.github.io/jq
-    
+
         Some of the options include:
          -c        compact instead of pretty-printed output;
          -n        use `null` as the single input value;
@@ -84,7 +84,7 @@ Installing with a package manager
     $ brew install jq
 
     # FreeBSD
-    $ pkg install jq 
+    $ pkg install jq
 
     # Solaris
     $ pkgutil -i jq

@@ -1,12 +1,10 @@
 import os
 
-from tests.conftest import NASA_METADATA_PATH, PROTOCOL, IaRequestsMock
-
 import responses
 
 import internetarchive.session
 from internetarchive import __version__
-
+from tests.conftest import NASA_METADATA_PATH, PROTOCOL, IaRequestsMock
 
 CONFIG = {
     's3': {

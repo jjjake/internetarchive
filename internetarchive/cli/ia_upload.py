@@ -62,22 +62,28 @@ options:
     --keep-directories                   Keep directories in the supplied file paths for
                                          the remote filename. [default: False]
 """
+import csv
 import os
 import sys
-from tempfile import TemporaryFile
-from copy import deepcopy
 import webbrowser
-import csv
+from copy import deepcopy
 from locale import getpreferredencoding
+from tempfile import TemporaryFile
 
 from docopt import docopt, printable_usage
 from requests.exceptions import HTTPError
-from schema import Schema, Use, Or, And, SchemaError
+from schema import And, Or, Schema, SchemaError, Use
 
-from internetarchive.cli.argparser import get_args_dict, convert_str_list_to_unicode
+from internetarchive.cli.argparser import convert_str_list_to_unicode, get_args_dict
 from internetarchive.session import ArchiveSession
-from internetarchive.utils import (InvalidIdentifierException, JSONDecodeError, get_s3_xml_text,
-                                   is_valid_metadata_key, json, validate_s3_identifier)
+from internetarchive.utils import (
+    InvalidIdentifierException,
+    JSONDecodeError,
+    get_s3_xml_text,
+    is_valid_metadata_key,
+    json,
+    validate_s3_identifier,
+)
 
 
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):

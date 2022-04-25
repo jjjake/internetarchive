@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-import responses
-from contextlib import contextmanager
-from io import StringIO
 import os
 import sys
+from contextlib import contextmanager
+from io import StringIO
+
+import responses
 
 from internetarchive.utils import json
-from tests.conftest import IaRequestsMock, load_test_data_file, ia_call
+from tests.conftest import IaRequestsMock, ia_call, load_test_data_file
 
 PROTOCOL = 'https:'
 STATUS_CHECK_RESPONSE = load_test_data_file('s3_status_check.json')

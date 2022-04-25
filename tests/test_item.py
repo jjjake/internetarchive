@@ -1,21 +1,24 @@
 # -*- coding: utf-8 -*-
-from internetarchive.api import get_item
-from internetarchive.utils import norm_filepath, InvalidIdentifierException
-from tests.conftest import (PROTOCOL, IaRequestsMock, load_file,
-                            NASA_METADATA_PATH, load_test_data_file)
-
-import types
-import re
 import os
+import re
+import types
 from copy import deepcopy
 
 import pytest
 import responses
-from requests.exceptions import HTTPError, ConnectionError
+from requests.exceptions import ConnectionError, HTTPError
 
-from internetarchive import get_session
 import internetarchive.files
-from internetarchive.utils import json
+from internetarchive import get_session
+from internetarchive.api import get_item
+from internetarchive.utils import InvalidIdentifierException, json, norm_filepath
+from tests.conftest import (
+    NASA_METADATA_PATH,
+    PROTOCOL,
+    IaRequestsMock,
+    load_file,
+    load_test_data_file,
+)
 
 S3_URL = f'{PROTOCOL}//s3.us.archive.org/'
 DOWNLOAD_URL_RE = re.compile(f'{PROTOCOL}//archive.org/download/.*')

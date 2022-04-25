@@ -24,18 +24,23 @@ internetarchive.files
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-import os
-import sys
 import logging
+import os
 import socket
-from urllib.parse import quote
-from requests.exceptions import HTTPError, RetryError, ConnectTimeout, \
-    ConnectionError, ReadTimeout
-from tqdm import tqdm
+import sys
 from contextlib import nullcontext
+from urllib.parse import quote
 
-from internetarchive import iarequest, utils, auth
+from requests.exceptions import (
+    ConnectionError,
+    ConnectTimeout,
+    HTTPError,
+    ReadTimeout,
+    RetryError,
+)
+from tqdm import tqdm
 
+from internetarchive import auth, iarequest, utils
 
 log = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
-import sys
 import os
+import sys
 import time
 
-from tests.conftest import call_cmd, NASA_EXPECTED_FILES, files_downloaded
+from tests.conftest import NASA_EXPECTED_FILES, call_cmd, files_downloaded
 
 
 def test_no_args(tmpdir_ch):

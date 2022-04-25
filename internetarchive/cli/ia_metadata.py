@@ -48,17 +48,20 @@ options:
                                         Works on both single and multi-field metadata
                                         elements.
 """
-import sys
+import csv
 import os
+import sys
 from collections import defaultdict
 from copy import copy
-import csv
 
 from docopt import docopt, printable_usage
-from schema import Schema, SchemaError, Or, And, Use
+from schema import And, Or, Schema, SchemaError, Use
 
-from internetarchive.cli.argparser import get_args_dict, get_args_dict_many_write,\
-    get_args_header_dict
+from internetarchive.cli.argparser import (
+    get_args_dict,
+    get_args_dict_many_write,
+    get_args_header_dict,
+)
 from internetarchive.exceptions import ItemLocateError
 from internetarchive.utils import json
 

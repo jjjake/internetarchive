@@ -30,13 +30,13 @@ import hashlib
 import os
 import re
 import sys
-from xml.dom.minidom import parseString
 from collections.abc import Mapping
-
+from xml.dom.minidom import parseString
 
 # Make preferred JSON package available via `from internetarchive.utils import json`
 try:
     import ujson as json
+
     # ujson lacks a JSONDecodeError: https://github.com/ultrajson/ultrajson/issues/497
     JSONDecodeError = ValueError
 except ImportError:

@@ -1,10 +1,11 @@
 import contextlib
 import os
-from unittest import mock
-import pytest
-import responses
-import requests.adapters
 import tempfile
+from unittest import mock
+
+import pytest
+import requests.adapters
+import responses
 
 import internetarchive.config
 import internetarchive.session

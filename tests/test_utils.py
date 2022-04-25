@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import string
 
-from tests.conftest import IaRequestsMock, NASA_METADATA_PATH
-
 import internetarchive.utils
+from tests.conftest import NASA_METADATA_PATH, IaRequestsMock
 
 
 def test_utils():

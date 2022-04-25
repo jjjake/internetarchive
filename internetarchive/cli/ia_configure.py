@@ -35,8 +35,8 @@ options:
     -n, --netrc                Use netrc file for login.
     -c, --print-cookies        Print archive.org logged-in-* cookies.
 """
-import sys
 import netrc
+import sys
 
 from docopt import docopt
 

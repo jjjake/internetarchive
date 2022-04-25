@@ -29,10 +29,10 @@ search engine.
 """
 import itertools
 from logging import getLogger
+
 from requests.exceptions import ReadTimeout
 
 from internetarchive.auth import S3Auth
-
 
 log = getLogger(__name__)
 

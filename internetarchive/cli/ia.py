@@ -57,18 +57,19 @@ Documentation for 'ia' is available at:
 
 See 'ia help <command>' for help on a specific command.
 """
-import sys
-import os
 import difflib
 import errno
-from pkg_resources import iter_entry_points, DistributionNotFound
+import os
+import sys
 
 from docopt import docopt, printable_usage
-from schema import Schema, Or, SchemaError
+from pkg_resources import DistributionNotFound, iter_entry_points
+from schema import Or, Schema, SchemaError
 
 from internetarchive import __version__
 from internetarchive.api import get_session
 from internetarchive.utils import suppress_keyboard_interrupt_message
+
 suppress_keyboard_interrupt_message()
 
 

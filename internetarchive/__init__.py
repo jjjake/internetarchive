@@ -40,15 +40,25 @@ __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
 __copyright__ = 'Copyright (C) 2012-2019 Internet Archive'
 
-from internetarchive.item import Item
-from internetarchive.files import File
-from internetarchive.search import Search
+from internetarchive.api import (
+    configure,
+    delete,
+    download,
+    get_files,
+    get_item,
+    get_session,
+    get_tasks,
+    get_user_info,
+    get_username,
+    modify_metadata,
+    search_items,
+    upload,
+)
 from internetarchive.catalog import Catalog
+from internetarchive.files import File
+from internetarchive.item import Item
+from internetarchive.search import Search
 from internetarchive.session import ArchiveSession
-from internetarchive.api import get_item, get_files, modify_metadata, upload, \
-    download, delete, get_tasks, search_items, get_session, configure, get_username, \
-    get_user_info
-
 
 __all__ = [
     '__version__',

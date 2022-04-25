@@ -24,10 +24,18 @@ internetarchive.cli
 :copyright: (C) 2012-2016, 2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from internetarchive.cli import (ia, ia_configure, ia_delete, ia_download,
-                                 ia_list, ia_metadata, ia_search, ia_tasks,
-                                 ia_upload, argparser)
-
+from internetarchive.cli import (
+    argparser,
+    ia,
+    ia_configure,
+    ia_delete,
+    ia_download,
+    ia_list,
+    ia_metadata,
+    ia_search,
+    ia_tasks,
+    ia_upload,
+)
 
 __all__ = [
     'ia',

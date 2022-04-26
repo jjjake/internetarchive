@@ -27,6 +27,7 @@ settings across the internetarchive package.
 :copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+from __future__ import annotations
 
 import locale
 import logging

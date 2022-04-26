@@ -9,7 +9,7 @@ System-Wide Installation
 
 Installing the ``internetarchive`` library globally on your system can be done with `pip <http://www.pip-installer.org/>`_.
 This is the recommended method for installing ``internetarchive`` (`see below <installation.html#installing-pip>`_ for details on installing pip)::
-    
+
     $ sudo pip install internetarchive
 
 or, with `easy_install <http://pypi.python.org/pypi/setuptools>`_::

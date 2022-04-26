@@ -51,7 +51,7 @@ Release History
   All queries to the Scrape API are now tested to assert the number of docs returned matches the
   hit count returned by the Scrape API.
   If these numbers don't match, an exception is thrown in the Python API and the CLI exits with
-  a non-zero exit code and error message. 
+  a non-zero exit code and error message.
 - Use .archive.org as the default cookie domain. This fixes a bug where an AttributeError exception
   would be raised if a cookie wasn't set in a config file.
 
@@ -197,7 +197,7 @@ Release History
 - Removed backports.csv requirement for newer Python releases.
 - Authorization header is now used for metadata reads, to support privileged access to /metadata.
 - ``ia download`` no longer downloads history dir by default.
-- Added ``ignore_history_dir`` to ``Item.download()``. The default is False. 
+- Added ``ignore_history_dir`` to ``Item.download()``. The default is False.
 
 **Bugfixes**
 
@@ -215,7 +215,7 @@ Release History
 
 - Implemented new archive.org `Tasks API <https://archive.org/services/docs/api/tasks.html>`_.
 - Added support for darking and undarking items via the Tasks API.
-- Added support for submitting arbitrary tasks 
+- Added support for submitting arbitrary tasks
   (only darking/undarking currently supported, see Tasks API documentation).
 
 **Bugfixes**
@@ -513,7 +513,7 @@ Release History
 
 **Features and Improvements**
 
-- Added ``internetarchive.api.get_user_info()``. 
+- Added ``internetarchive.api.get_user_info()``.
 
 1.0.6 (2016-07-14)
 ++++++++++++++++++
@@ -558,7 +558,7 @@ Release History
 - ``ia delete`` no longer exits if a single request fails when deleting multiple files, but continues onto the next file.
   If any file fails, the command will exit with a non-zero status code.
 - All search requests now require authentication via IA-S3 keys.
-  You can run ``ia configure`` to generate a config file that will be used to authenticate all search requests automatically. 
+  You can run ``ia configure`` to generate a config file that will be used to authenticate all search requests automatically.
   For more details refer to the following links:
 
   http://internetarchive.readthedocs.io/en/latest/quickstart.html?highlight=configure#configuring
@@ -690,7 +690,7 @@ Release History
 
 **Bugfixes**
 
-- Added error message for failed ``ia configure`` calls due to invalid creds. 
+- Added error message for failed ``ia configure`` calls due to invalid creds.
 
 
 0.9.1 (2015-08-13)
@@ -754,7 +754,7 @@ Release History
 - Fixed IOError in ``ia search`` when using ``head``, ``tail``, etc..
 - Simplified ``ia search`` to output only JSON, rather than doing any special
   formatting.
-- Added experimental support for creating pex binaries of ia in ``Makefile``. 
+- Added experimental support for creating pex binaries of ia in ``Makefile``.
 
 0.7.7 (2014-12-17)
 ++++++++++++++++++
@@ -805,7 +805,7 @@ Release History
   retries in the upload method now as well. This will avoid uploading any data if a 503
   is expected. If a 503 is still returned, retries are attempted.
 - Added ``--status-check`` option to ``ia upload`` for S3 status check.
-- Added ``--source`` parameter to ``ia list`` for returning files matching IA source (i.e. 
+- Added ``--source`` parameter to ``ia list`` for returning files matching IA source (i.e.
   original, derivative, metadata, etc.).
 - Added support to ``ia upload`` for setting remote-name if only a single file is being
   uploaded.

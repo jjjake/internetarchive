@@ -79,7 +79,7 @@ For example, to remove the metadata field ``foo`` from the item ``<identifier>``
 
 Note that some metadata fields (e.g. ``mediatype``) cannot be modified, and must instead be set initially on upload.
 
-The default target to write to is ``metadata``. If you would like to write to another target, such as ``files``, you can specify so using the ``--target`` parameter. For example, if we had an item whose identifier was ``my_identifier`` and we wanted to add a metadata field to a file within the item called ``foo.txt``: 
+The default target to write to is ``metadata``. If you would like to write to another target, such as ``files``, you can specify so using the ``--target`` parameter. For example, if we had an item whose identifier was ``my_identifier`` and we wanted to add a metadata field to a file within the item called ``foo.txt``:
 
 .. code:: bash
 
@@ -154,7 +154,7 @@ You can upload files from ``stdin``:
 You can use the ``--retries`` parameter to retry on errors (i.e. if IA-S3 is overloaded):
 
 .. code:: bash
-    
+
     $ ia upload <identifier> file1 --retries 10
 
 Note that ``ia upload`` makes a backup of any files that are clobbered.
@@ -184,7 +184,7 @@ You can set a remote filename that differs from your local filename by specifyin
 
 See ``ia help upload`` for more details.
 
-Setting File-Level Metadata on Upload 
+Setting File-Level Metadata on Upload
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can set file-level metadata at time of upload via a JSON/JSONL file.
@@ -303,10 +303,10 @@ Search
 .. code:: bash
 
     $ ia search 'subject:"market street" collection:prelinger'
-    
+
 By default, ``ia search`` attempts to return all items meeting the search criteria,
 and the results are sorted by item identifier. If you want to just select the top ``n``
-items, you can specify a ``page`` and ``rows`` parameter. For example, to get the 
+items, you can specify a ``page`` and ``rows`` parameter. For example, to get the
 top 20 items matching the search 'dogs':
 
 .. code:: bash

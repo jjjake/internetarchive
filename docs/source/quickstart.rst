@@ -13,10 +13,10 @@ To automatically create a config file with your archive.org credentials, you can
 
     $ ia configure
     Enter your archive.org credentials below to configure 'ia'.
-    
+
     Email address: user@example.com
     Password:
-    
+
     Config saved to: /home/user/.config/ia.ini
 
 Your config file will be saved to ``$HOME/.config/ia.ini``, or ``$HOME/.ia`` if you do not have a ``.config`` directory in ``$HOME``. Alternatively, you can specify your own path to save the config to via ``ia --config-file '~/.ia-custom-config' configure``.
@@ -82,7 +82,7 @@ You can access all of an item's metadata via the :class:`Item <internetarchive.I
     'NASA Images'
 
 :func:`get_item <internetarchive.get_item>` retrieves all of an item's metadata via the `Internet Archive Metadata API <http://blog.archive.org/2013/07/04/metadata-api/>`_. This metadata can be accessed via the ``Item.item_metadata`` attribute::
-    
+
     >>> item.item_metadata.keys()
     dict_keys(['created', 'updated', 'd2', 'uniq', 'metadata', 'item_size', 'dir', 'd1', 'files', 'server', 'files_count', 'workable_servers'])
 
@@ -109,7 +109,7 @@ Adding new metadata to an item can be done using the :func:`modify_metadata <int
     200
 
 Modifying metadata can also be done via the :class:`Item <internetarchive.Item>` object. For example, changing the title we set in the example above can be done like so::
-    
+
     >>> r = item.modify_metadata({'title': 'My New Title'})
     >>> item.metadata['title']
     'My New Title'
@@ -194,7 +194,7 @@ Files can also be filtered using the ``formats`` parameter. ``formats`` can eith
      downloading goodytwoshoes00newyiala_marc.xml: 3.04kiB [00:00, 6.60MiB/s]
 
 Or, a list of formats::
-    
+
     >>> download('goodytwoshoes00newyiala', verbose=True, formats=['DjVuTXT', 'MARC'])
     goodytwoshoes00newyiala:
      downloading goodytwoshoes00newyiala_djvu.txt: 12.6kiB [00:00, 19.1MiB/s]

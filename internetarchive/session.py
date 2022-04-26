@@ -35,6 +35,7 @@ import platform
 import sys
 import warnings
 from urllib.parse import unquote, urlparse
+from typing import Iterable
 
 
 import requests.sessions

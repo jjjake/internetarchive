@@ -27,11 +27,12 @@ This module implements the Internetarchive API.
 :license: AGPL 3, see LICENSE for more details.
 """
 from getpass import getpass
+
 import requests
 
-from internetarchive import session
-from internetarchive import config as config_module
 from internetarchive import auth
+from internetarchive import config as config_module
+from internetarchive import session
 from internetarchive.exceptions import AuthenticationError
 
 

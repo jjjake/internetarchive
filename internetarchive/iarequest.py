@@ -24,18 +24,18 @@ internetarchive.iarequest
 :copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-import re
 import copy
 import logging
+import re
 from urllib.parse import quote
-import requests.models
+
 import requests
+import requests.models
 from jsonpatch import make_patch
 
-from internetarchive import auth, __version__
-from internetarchive.utils import json, needs_quote, delete_items_from_dict
+from internetarchive import __version__, auth
 from internetarchive.exceptions import ItemLocateError
-
+from internetarchive.utils import delete_items_from_dict, json, needs_quote
 
 logger = logging.getLogger(__name__)
 

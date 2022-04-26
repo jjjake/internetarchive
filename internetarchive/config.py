@@ -24,16 +24,16 @@ internetarchive.config
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+import configparser
 import errno
 import os
 from collections import defaultdict
-import configparser
 
 import requests
 
+from internetarchive import auth
 from internetarchive.exceptions import AuthenticationError
 from internetarchive.utils import deep_update
-from internetarchive import auth
 
 
 def get_auth_config(email, password, host=None):

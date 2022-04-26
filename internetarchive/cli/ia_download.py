@@ -62,11 +62,11 @@ options:
     -a, --download-history                   Also download files from the history directory.
 """
 import os
-from os.path import exists as dir_exists
 import sys
+from os.path import exists as dir_exists
 
 from docopt import docopt, printable_usage
-from schema import Schema, Use, Or, And, SchemaError
+from schema import And, Or, Schema, SchemaError, Use
 
 from internetarchive.cli.argparser import get_args_dict
 

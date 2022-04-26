@@ -24,31 +24,38 @@ internetarchive.item
 :copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+import math
 import os
 import sys
+from copy import deepcopy
 from fnmatch import fnmatch
+from functools import total_ordering
 from logging import getLogger
 from time import sleep
-import math
+from urllib.parse import quote
 from xml.parsers.expat import ExpatError
 
-from functools import total_ordering
-from copy import deepcopy
-
-from urllib.parse import quote
 from requests import Response
-from tqdm import tqdm
 from requests.exceptions import HTTPError
+from tqdm import tqdm
 
-from internetarchive.utils import (IdentifierListAsItems, get_md5,
-                                   chunk_generator, IterableToFileAdapter,
-                                   iter_directory, recursive_file_count,
-                                   norm_filepath, json)
+from internetarchive.auth import S3Auth
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
-from internetarchive.auth import S3Auth
-from internetarchive.utils import (get_s3_xml_text, get_file_size, is_dir,
-                                   validate_s3_identifier)
+from internetarchive.utils import (
+    IdentifierListAsItems,
+    IterableToFileAdapter,
+    chunk_generator,
+    get_file_size,
+    get_md5,
+    get_s3_xml_text,
+    is_dir,
+    iter_directory,
+    json,
+    norm_filepath,
+    recursive_file_count,
+    validate_s3_identifier,
+)
 
 log = getLogger(__name__)
 

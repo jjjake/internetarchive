@@ -45,12 +45,13 @@ options:
                                  [default: True].
 """
 import sys
+
 import requests.exceptions
 from docopt import docopt, printable_usage
-from schema import Schema, SchemaError, Use, Or, And
+from schema import And, Or, Schema, SchemaError, Use
 
-from internetarchive.utils import get_s3_xml_text
 from internetarchive.cli.argparser import convert_str_list_to_unicode, get_args_dict
+from internetarchive.utils import get_s3_xml_text
 
 
 def main(argv, session):

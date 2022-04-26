@@ -32,10 +32,10 @@ options:
     -g, --glob=<pattern>        Only return patterns match the given pattern.
     -f, --format=<format>       Return files matching <format>.
 """
-import sys
 import csv
-from itertools import chain
+import sys
 from fnmatch import fnmatch
+from itertools import chain
 
 from docopt import docopt
 

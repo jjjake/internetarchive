@@ -46,8 +46,8 @@ import sys
 from itertools import chain
 
 from docopt import docopt, printable_usage
-from schema import Schema, SchemaError, Use, Or, And
 from requests.exceptions import ConnectTimeout, ReadTimeout
+from schema import And, Or, Schema, SchemaError, Use
 
 from internetarchive import search_items
 from internetarchive.cli.argparser import get_args_dict

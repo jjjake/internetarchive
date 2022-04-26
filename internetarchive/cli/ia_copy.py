@@ -40,7 +40,7 @@ import sys
 from urllib.parse import quote
 
 from docopt import docopt, printable_usage
-from schema import Schema, Use, Or, And, SchemaError
+from schema import And, Or, Schema, SchemaError, Use
 
 import internetarchive as ia
 from internetarchive.cli.argparser import get_args_dict

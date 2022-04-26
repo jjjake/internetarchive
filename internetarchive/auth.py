@@ -27,6 +27,7 @@ This module contains the Archive.org authentication handlers for Requests.
 :license: AGPL 3, see LICENSE for more details.
 """
 from requests.auth import AuthBase
+
 from internetarchive.exceptions import AuthenticationError
 
 

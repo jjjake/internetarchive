@@ -27,7 +27,6 @@ settings across the internetarchive package.
 :copyright: (C) 2012-2021 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from __future__ import annotations
 
 import locale
 import logging
@@ -35,22 +34,22 @@ import os
 import platform
 import sys
 import warnings
+from urllib.parse import unquote, urlparse
 from typing import Iterable
 
+
 import requests.sessions
-from requests.utils import default_headers
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3 import Retry
 from requests.cookies import create_cookie
-from urllib.parse import urlparse, unquote
+from requests.packages.urllib3 import Retry
+from requests.utils import default_headers
 
 from internetarchive import __version__, auth
-from internetarchive.config import get_config
-from internetarchive.item import Item, Collection
-from internetarchive.search import Search
 from internetarchive.catalog import Catalog, CatalogTask
-from internetarchive.utils import reraise_modify, parse_dict_cookies
-
+from internetarchive.config import get_config
+from internetarchive.item import Collection, Item
+from internetarchive.search import Search
+from internetarchive.utils import parse_dict_cookies, reraise_modify
 
 logger = logging.getLogger(__name__)
 

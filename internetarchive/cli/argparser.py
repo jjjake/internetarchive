@@ -24,8 +24,8 @@ internetarchive.cli.argparser
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-from collections import defaultdict
 import sys
+from collections import defaultdict
 from urllib.parse import parse_qsl
 
 

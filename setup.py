@@ -6,13 +6,16 @@ from setuptools import setup
 
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
 
-with open('internetarchive/__init__.py', 'rb') as f:
-    version = str(literal_eval(_version_re.search(
-        f.read().decode('utf-8')).group(1)))
+with open('internetarchive/__init__.py', 'r') as f:
+    re_match = _version_re.search(f.read())
+if re_match:
+    version = literal_eval(re_match.group(1))
+else:
+    version = 'unknown'
 
-with open('README.rst', 'r', 'utf-8') as f:
+with open('README.rst', 'r') as f:
     readme = f.read()
-with open('HISTORY.rst', 'r', 'utf-8') as f:
+with open('HISTORY.rst', 'r') as f:
     history = f.read()
 
 setup(

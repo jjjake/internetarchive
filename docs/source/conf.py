@@ -17,6 +17,7 @@ import sys
 
 import alabaster
 
+
 import internetarchive
 from internetarchive import __version__
 
@@ -80,7 +81,7 @@ release = version
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns: list[str] = []
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -211,7 +212,7 @@ htmlhelp_basename = 'internetarchivedoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements = {
+latex_elements: dict[str, str] = {
 # The paper size ('letterpaper' or 'a4paper').
 #'papersize': 'letterpaper',
 

@@ -103,7 +103,7 @@ The value of this metadata field may contain HTML. ``<script>`` tags and CSS are
 date
 ^^^^
 
-The publication, production or other similar date of this item. 
+The publication, production or other similar date of this item.
 
 Please use an `ISO 8601`_ compatible format for this date.
 
@@ -140,7 +140,7 @@ The mediatype metadata field recognizes a limited set of values:
 
 - ``audio``: The majority of audio items should receive this mediatype value.
   Items for the `Live Music Archive <https://www.archive.org/details/etree>`_ should instead use the ``etree`` value.
-- ``collection``: Denotes the item as a collection to which other collections and items can belong. 
+- ``collection``: Denotes the item as a collection to which other collections and items can belong.
 - ``data``: This is the default value for mediatype.
   Items with a mediatype of ``data`` will be available in Internet Archive but you will not be able to browse to them.
   In addition there will be no online reader/player for the files.

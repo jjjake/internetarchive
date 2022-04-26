@@ -40,8 +40,8 @@ try:
     # ujson lacks a JSONDecodeError: https://github.com/ultrajson/ultrajson/issues/497
     JSONDecodeError = ValueError
 except ImportError:
-    import json
-    JSONDecodeError = json.JSONDecodeError
+    import json  # type: ignore
+    JSONDecodeError = json.JSONDecodeError  # type: ignore
 
 
 def deep_update(d, u):

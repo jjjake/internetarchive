@@ -31,13 +31,8 @@ import sys
 from contextlib import nullcontext
 from urllib.parse import quote
 
-from requests.exceptions import (
-    ConnectionError,
-    ConnectTimeout,
-    HTTPError,
-    ReadTimeout,
-    RetryError,
-)
+from requests.exceptions import (ConnectionError, ConnectTimeout, HTTPError,
+                                 ReadTimeout, RetryError)
 from tqdm import tqdm
 
 from internetarchive import auth, iarequest, utils

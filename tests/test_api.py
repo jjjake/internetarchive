@@ -5,23 +5,11 @@ import re
 import responses
 from requests.packages import urllib3
 
-from internetarchive import (
-    download,
-    get_files,
-    get_item,
-    get_session,
-    modify_metadata,
-    search_items,
-    upload,
-)
+from internetarchive import (download, get_files, get_item, get_session,
+                             modify_metadata, search_items, upload)
 from internetarchive.utils import InvalidIdentifierException, json
-from tests.conftest import (
-    NASA_METADATA_PATH,
-    PROTOCOL,
-    IaRequestsMock,
-    load_file,
-    load_test_data_file,
-)
+from tests.conftest import (NASA_METADATA_PATH, PROTOCOL, IaRequestsMock,
+                            load_file, load_test_data_file)
 
 TEST_SEARCH_RESPONSE = load_test_data_file('advanced_search_response.json')
 TEST_SCRAPE_RESPONSE = load_test_data_file('scrape_response.json')

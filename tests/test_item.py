@@ -11,14 +11,10 @@ from requests.exceptions import ConnectionError, HTTPError
 import internetarchive.files
 from internetarchive import get_session
 from internetarchive.api import get_item
-from internetarchive.utils import InvalidIdentifierException, json, norm_filepath
-from tests.conftest import (
-    NASA_METADATA_PATH,
-    PROTOCOL,
-    IaRequestsMock,
-    load_file,
-    load_test_data_file,
-)
+from internetarchive.utils import (InvalidIdentifierException, json,
+                                   norm_filepath)
+from tests.conftest import (NASA_METADATA_PATH, PROTOCOL, IaRequestsMock,
+                            load_file, load_test_data_file)
 
 S3_URL = f'{PROTOCOL}//s3.us.archive.org/'
 DOWNLOAD_URL_RE = re.compile(f'{PROTOCOL}//archive.org/download/.*')

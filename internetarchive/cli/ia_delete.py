@@ -50,7 +50,8 @@ import requests.exceptions
 from docopt import docopt, printable_usage
 from schema import And, Or, Schema, SchemaError, Use
 
-from internetarchive.cli.argparser import convert_str_list_to_unicode, get_args_dict
+from internetarchive.cli.argparser import (convert_str_list_to_unicode,
+                                           get_args_dict)
 from internetarchive.utils import get_s3_xml_text
 
 

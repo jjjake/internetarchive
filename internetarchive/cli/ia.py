@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
@@ -168,7 +167,7 @@ def main():
     ia_module = load_ia_module(cmd)
     try:
         sys.exit(ia_module.main(argv, session))
-    except IOError as e:
+    except OSError as e:
         # Handle Broken Pipe errors.
         if e.errno == errno.EPIPE:
             sys.stderr.close()

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
@@ -261,7 +260,7 @@ def main(argv, session):
     # Bulk upload using spreadsheet.
     else:
         # Use the same session for each upload request.
-        with open(args['--spreadsheet'], 'r', newline='', encoding='utf-8-sig') as csvfp:
+        with open(args['--spreadsheet'], newline='', encoding='utf-8-sig') as csvfp:
             spreadsheet = csv.DictReader(csvfp)
             prev_identifier = None
             for row in spreadsheet:

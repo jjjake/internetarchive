@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
@@ -205,7 +204,7 @@ def get_file_size(file_obj):
         if size > sys.maxsize:
             size = None
         file_obj.seek(0, os.SEEK_SET)
-    except IOError:
+    except OSError:
         size = None
     return size
 

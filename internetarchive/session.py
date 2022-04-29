@@ -35,9 +35,8 @@ import os
 import platform
 import sys
 import warnings
-from urllib.parse import unquote, urlparse
 from typing import Iterable
-
+from urllib.parse import unquote, urlparse
 
 import requests.sessions
 from requests.adapters import HTTPAdapter

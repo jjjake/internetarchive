@@ -17,7 +17,6 @@ import sys
 
 import alabaster
 
-
 import internetarchive
 from internetarchive import __version__
 

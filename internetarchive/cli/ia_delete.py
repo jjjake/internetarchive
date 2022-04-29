@@ -96,7 +96,7 @@ def main(argv, session):
         print(f'Deleting files from {item.identifier}', file=sys.stderr)
 
     if args['--all']:
-        files = [f for f in item.get_files()]
+        files = list(item.get_files())
         args['--cascade'] = True
     elif args['--glob']:
         files = item.get_files(glob_pattern=args['--glob'])

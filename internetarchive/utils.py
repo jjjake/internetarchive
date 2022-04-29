@@ -25,11 +25,14 @@ This module provides utility functions for the internetarchive library.
 :copyright: (C) 2012-2022 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+from __future__ import annotations
+
 import hashlib
 import os
 import re
 import sys
 from collections.abc import Mapping
+from typing import Iterable
 from xml.dom.minidom import parseString
 
 # Make preferred JSON package available via `from internetarchive.utils import json`
@@ -43,7 +46,7 @@ except ImportError:
     JSONDecodeError = json.JSONDecodeError  # type: ignore
 
 
-def deep_update(d, u):
+def deep_update(d: dict, u: Mapping) -> dict:
     for k, v in u.items():
         if isinstance(v, Mapping):
             r = deep_update(d.get(k, {}), v)
@@ -57,7 +60,7 @@ class InvalidIdentifierException(Exception):
     pass
 
 
-def validate_s3_identifier(string):
+def validate_s3_identifier(string: str) -> bool:
     legal_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-'
     # periods, underscores, and dashes are legal, but may not be the first
     # character!
@@ -78,7 +81,7 @@ def validate_s3_identifier(string):
     return True
 
 
-def needs_quote(s):
+def needs_quote(s: str) -> bool:
     try:
         s.encode('ascii')
     except (UnicodeDecodeError, UnicodeEncodeError):
@@ -86,16 +89,16 @@ def needs_quote(s):
     return re.search(r'\s', s) is not None
 
 
-def norm_filepath(fp):
+def norm_filepath(fp: bytes | str) -> str:
+    if isinstance(fp, bytes):
+        fp = fp.decode('utf-8')
     fp = fp.replace(os.path.sep, '/')
     if not fp.startswith('/'):
         fp = f'/{fp}'
-    if isinstance(fp, bytes):
-        fp = fp.decode('utf-8')
     return fp
 
 
-def get_md5(file_object):
+def get_md5(file_object) -> str:
     m = hashlib.md5()
     while True:
         data = file_object.read(8192)
@@ -106,7 +109,7 @@ def get_md5(file_object):
     return m.hexdigest()
 
 
-def chunk_generator(fp, chunk_size):
+def chunk_generator(fp, chunk_size: int):
     while True:
         chunk = fp.read(chunk_size)
         if not chunk:
@@ -114,7 +117,7 @@ def chunk_generator(fp, chunk_size):
         yield chunk
 
 
-def suppress_keyboard_interrupt_message():
+def suppress_keyboard_interrupt_message() -> None:
     """Register a new excepthook to suppress KeyboardInterrupt
     exception messages, and exit with status code 130.
 
@@ -131,14 +134,14 @@ def suppress_keyboard_interrupt_message():
 
 
 class IterableToFileAdapter:
-    def __init__(self, iterable, size):
+    def __init__(self, iterable, size: int):
         self.iterator = iter(iterable)
         self.length = size
 
-    def read(self, size=-1):  # TBD: add buffer for `len(data) > size` case
+    def read(self, size: int = -1):  # TBD: add buffer for `len(data) > size` case
         return next(self.iterator, b'')
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.length
 
 
@@ -153,7 +156,7 @@ class IdentifierListAsItems:
         self._items = [None] * len(self.ids)
         self.session = session
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.ids)
 
     def __getitem__(self, idx):
@@ -168,11 +171,11 @@ class IdentifierListAsItems:
         except ValueError:
             raise AttributeError
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self.ids!r})'
 
 
-def get_s3_xml_text(xml_str):
+def get_s3_xml_text(xml_str: str) -> str:
     def _get_tag_text(tag_name, xml_obj):
         text = ''
         elements = xml_obj.getElementsByTagName(tag_name)
@@ -196,7 +199,7 @@ def get_s3_xml_text(xml_str):
         return str(xml_str)
 
 
-def get_file_size(file_obj):
+def get_file_size(file_obj) -> int | None:
     try:
         file_obj.seek(0, os.SEEK_END)
         size = file_obj.tell()
@@ -209,7 +212,7 @@ def get_file_size(file_obj):
     return size
 
 
-def iter_directory(directory):
+def iter_directory(directory: str):
     """Given a directory, yield all files recursively as a two-tuple (filepath, s3key)"""
     for path, dir, files in os.walk(directory):
         for f in files:
@@ -266,7 +269,7 @@ def recursive_file_count(files, item=None, checksum=False):
     return total_files
 
 
-def is_dir(obj):
+def is_dir(obj) -> bool:
     """Special is_dir function to handle file-like object cases that
     cannot be stat'd"""
     try:
@@ -275,7 +278,11 @@ def is_dir(obj):
         return False
 
 
-def reraise_modify(caught_exc, append_msg, prepend=False):
+def reraise_modify(
+    caught_exc: Exception,
+    append_msg: str,
+    prepend: bool = False,
+) -> None:
     """Append message to exception while preserving attributes.
 
     Preserves exception class, and exception traceback.
@@ -332,7 +339,7 @@ def remove_none(obj):
         return obj
 
 
-def delete_items_from_dict(d, to_delete):
+def delete_items_from_dict(d: dict | list, to_delete):
     """Recursively deletes items from a dict,
     if the item's value(s) is in ``to_delete``.
     """
@@ -352,7 +359,7 @@ def delete_items_from_dict(d, to_delete):
     return remove_none(d)
 
 
-def is_valid_metadata_key(name):
+def is_valid_metadata_key(name: str) -> bool:
     # According to the documentation a metadata key
     # has to be a valid XML tag name.
     #
@@ -363,7 +370,11 @@ def is_valid_metadata_key(name):
     return bool(re.fullmatch(r'[A-Za-z][.\-0-9A-Za-z_]+(?:\[[0-9]+\])?', name))
 
 
-def merge_dictionaries(dict0, dict1, keys_to_drop=None):
+def merge_dictionaries(
+    dict0: dict,
+    dict1: dict,
+    keys_to_drop: Iterable | None = None,
+) -> dict:
     """Merge two dictionaries.
 
        Items in `dict0` can optionally be dropped before the merge.
@@ -392,8 +403,8 @@ def merge_dictionaries(dict0, dict1, keys_to_drop=None):
     return new_dict
 
 
-def parse_dict_cookies(value):
-    result = {}
+def parse_dict_cookies(value: str) -> dict[str, str | None]:
+    result: dict[str, str | None] = {}
     for item in value.split(';'):
         item = item.strip()
         if not item:

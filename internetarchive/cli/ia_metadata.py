@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
@@ -256,7 +255,7 @@ def main(argv, session):
     if args['--spreadsheet']:
         if not args['--priority']:
             args['--priority'] = -5
-        with open(args['--spreadsheet'], 'r', newline='', encoding='utf-8') as csvfp:
+        with open(args['--spreadsheet'], newline='', encoding='utf-8') as csvfp:
             spreadsheet = csv.DictReader(csvfp)
             responses = []
             for row in spreadsheet:

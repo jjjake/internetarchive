@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # internetarchive documentation build configuration file, created by
 # sphinx-quickstart on Mon Sep 23 20:16:03 2013.

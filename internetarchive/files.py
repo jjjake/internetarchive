@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
@@ -198,7 +197,7 @@ class File(BaseFile):
             if not os.path.exists(destdir) and return_responses is not True:
                 os.mkdir(destdir)
             if os.path.isfile(destdir):
-                raise IOError(f'{destdir} is not a directory!')
+                raise OSError(f'{destdir} is not a directory!')
             file_path = os.path.join(destdir, file_path)
 
         if not return_responses and os.path.exists(file_path.encode('utf-8')):
@@ -265,8 +264,7 @@ class File(BaseFile):
                         size = fileobj.write(chunk)
                         if bar is not None:
                             bar.update(size)
-        except (RetryError, HTTPError, ConnectTimeout,
-                ConnectionError, socket.error, ReadTimeout) as exc:
+        except (RetryError, HTTPError, ConnectTimeout, ConnectionError, OSError, ReadTimeout) as exc:
             msg = f'error downloading file {file_path}, exception raised: {exc}'
             log.error(msg)
             if os.path.exists(file_path):
@@ -352,7 +350,7 @@ class File(BaseFile):
                 resp = self.item.session.send(prepared_request)
                 resp.raise_for_status()
             except (RetryError, HTTPError, ConnectTimeout,
-                    ConnectionError, socket.error, ReadTimeout) as exc:
+                    ConnectionError, OSError, ReadTimeout) as exc:
                 error_msg = f'Error deleting {url}, {exc}'
                 log.error(error_msg)
                 raise

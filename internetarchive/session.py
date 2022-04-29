@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
@@ -147,7 +146,7 @@ class ArchiveSession(requests.sessions.Session):
             lang = locale.getlocale()[0][:2]
         except Exception:
             lang = ''
-        py_version = '{0}.{1}.{2}'.format(*sys.version_info)
+        py_version = '{}.{}.{}'.format(*sys.version_info)
         return (f'internetarchive/{__version__} '
                 f'({uname[0]} {uname[-1]}; N; {lang}; {self.access_key}) '
                 f'Python/{py_version}')

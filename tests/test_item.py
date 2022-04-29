@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import re
 import types
@@ -127,7 +126,7 @@ def test_download(tmpdir, nasa_item):
     with IaRequestsMock() as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='new test content')
         nasa_item.download(files='nasa_meta.xml')
-        with open('nasa/nasa_meta.xml', 'r') as fh:
+        with open('nasa/nasa_meta.xml') as fh:
             assert fh.read() == 'new test content'
 
 
@@ -159,7 +158,7 @@ def test_download_ignore_existing(tmpdir, nasa_item):
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='new test content')
         nasa_item.download(files='nasa_meta.xml', ignore_existing=True)
-        with open('nasa/nasa_meta.xml', 'r') as fh:
+        with open('nasa/nasa_meta.xml') as fh:
             assert fh.read() == 'test content'
 
 
@@ -208,7 +207,7 @@ def test_download_destdir(tmpdir, nasa_item):
         dest = os.path.join(str(tmpdir), 'new destdir')
         nasa_item.download(files='nasa_meta.xml', destdir=dest)
         assert 'nasa' in os.listdir(dest)
-        with open(os.path.join(dest, 'nasa/nasa_meta.xml'), 'r') as fh:
+        with open(os.path.join(dest, 'nasa/nasa_meta.xml')) as fh:
             assert fh.read() == 'new destdir'
 
 
@@ -218,7 +217,7 @@ def test_download_no_directory(tmpdir, nasa_item):
     with IaRequestsMock() as rsps:
         rsps.add(responses.GET, url_re, body='no dest dir')
         nasa_item.download(files='nasa_meta.xml', no_directory=True)
-        with open(os.path.join(str(tmpdir), 'nasa_meta.xml'), 'r') as fh:
+        with open(os.path.join(str(tmpdir), 'nasa_meta.xml')) as fh:
             assert fh.read() == 'no dest dir'
 
 

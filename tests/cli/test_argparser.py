@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from internetarchive.cli.argparser import get_args_dict
 
 

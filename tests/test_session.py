@@ -40,7 +40,7 @@ def test_archive_session(tmpdir):
 def test_get_item(tmpdir):
     tmpdir.chdir()
 
-    with open(NASA_METADATA_PATH, 'r') as fh:
+    with open(NASA_METADATA_PATH) as fh:
         item_metadata = fh.read().strip()
 
     with responses.RequestsMock() as rsps:
@@ -134,6 +134,6 @@ def test_cookies():
         rsps.add(responses.GET, f'{PROTOCOL}//example.com')
         s = internetarchive.session.ArchiveSession(CONFIG)
         r = s.get(f'{PROTOCOL}//example.com')
-        assert 'logged-in-sig' not in r.request.headers.get('Cookie', str())
-        assert 'logged-in-user' not in r.request.headers.get('Cookie', str())
-        assert '.archive.org' not in r.request.headers.get('Cookie', str())
+        assert 'logged-in-sig' not in r.request.headers.get('Cookie', '')
+        assert 'logged-in-user' not in r.request.headers.get('Cookie', '')
+        assert '.archive.org' not in r.request.headers.get('Cookie', '')

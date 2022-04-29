@@ -59,13 +59,13 @@ def files_downloaded(path):
     found_files = set()
     try:
         found_files = set(os.listdir(path))
-    except (FileNotFoundError, WindowsError, OSError):
+    except (FileNotFoundError, OSError):
         pass
     return found_files
 
 
 def load_file(filename):
-    with open(filename, 'r') as fh:
+    with open(filename) as fh:
         return fh.read()
 
 

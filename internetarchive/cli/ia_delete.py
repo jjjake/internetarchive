@@ -47,7 +47,7 @@ options:
 import sys
 
 import requests.exceptions
-from docopt import docopt, printable_usage
+from docopt import docopt, printable_usage  # type: ignore
 from schema import And, Or, Schema, SchemaError, Use
 
 from internetarchive.cli.argparser import convert_str_list_to_unicode, get_args_dict

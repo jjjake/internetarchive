@@ -45,7 +45,7 @@ examples:
 import sys
 from itertools import chain
 
-from docopt import docopt, printable_usage
+from docopt import docopt, printable_usage  # type: ignore
 from requests.exceptions import ConnectTimeout, ReadTimeout
 from schema import And, Or, Schema, SchemaError, Use
 

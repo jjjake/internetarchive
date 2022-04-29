@@ -132,6 +132,7 @@ def nasa_metadata():
     return json.loads(load_test_data_file('metadata/nasa.json'))
 
 
-@pytest.fixture
+# TODO: Why is this function defined twice in this file?  See issue #505
+@pytest.fixture  # type: ignore
 def nasa_item(nasa_mocker):
     return get_item('nasa')

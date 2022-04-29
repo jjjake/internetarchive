@@ -145,7 +145,7 @@ class ArchiveSession(requests.sessions.Session):
         """Generate a User-Agent string to be sent with every request."""
         uname = platform.uname()
         try:
-            lang = locale.getlocale()[0][:2]
+            lang = locale.getlocale()[0][:2]  # type: ignore
         except Exception:
             lang = ''
         py_version = '{0}.{1}.{2}'.format(*sys.version_info)
@@ -257,7 +257,7 @@ class ArchiveSession(requests.sessions.Session):
         request_kwargs = request_kwargs or {}
         if not item_metadata:
             logger.debug(f'no metadata provided for "{identifier}", retrieving now.')
-            item_metadata = self.get_metadata(identifier, request_kwargs)
+            item_metadata = self.get_metadata(identifier, request_kwargs) or {}
         mediatype = item_metadata.get('metadata', {}).get('mediatype')
         try:
             item_class = self.ITEM_MEDIATYPE_TABLE.get(mediatype, Item)

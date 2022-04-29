@@ -54,7 +54,7 @@ import sys
 from collections import defaultdict
 from copy import copy
 
-from docopt import docopt, printable_usage
+from docopt import docopt, printable_usage  # type: ignore
 from schema import And, Or, Schema, SchemaError, Use
 
 from internetarchive.cli.argparser import (

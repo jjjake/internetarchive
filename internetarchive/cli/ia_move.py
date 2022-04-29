@@ -34,7 +34,7 @@ options:
 """
 import sys
 
-from docopt import docopt, printable_usage
+from docopt import docopt, printable_usage  # type: ignore
 from schema import And, Or, Schema, SchemaError, Use
 
 from internetarchive.cli import ia_copy

@@ -61,7 +61,7 @@ import errno
 import os
 import sys
 
-from docopt import docopt, printable_usage
+from docopt import docopt, printable_usage  # type: ignore
 from pkg_resources import DistributionNotFound, iter_entry_points
 from schema import Or, Schema, SchemaError
 

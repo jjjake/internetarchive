@@ -38,7 +38,7 @@ options:
 import sys
 from urllib.parse import quote
 
-from docopt import docopt, printable_usage
+from docopt import docopt, printable_usage  # type: ignore
 from schema import And, Or, Schema, SchemaError, Use
 
 import internetarchive as ia

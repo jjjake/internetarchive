@@ -69,7 +69,7 @@ from copy import deepcopy
 from locale import getpreferredencoding
 from tempfile import TemporaryFile
 
-from docopt import docopt, printable_usage
+from docopt import docopt, printable_usage  # type: ignore
 from requests.exceptions import HTTPError
 from schema import And, Or, Schema, SchemaError, Use
 

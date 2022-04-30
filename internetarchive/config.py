@@ -23,10 +23,12 @@ internetarchive.config
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-import configparser
-import errno
+from __future__ import annotations
+
 import os
 from collections import defaultdict
+from configparser import RawConfigParser
+from typing import Mapping
 
 import requests
 
@@ -35,8 +37,7 @@ from internetarchive.exceptions import AuthenticationError
 from internetarchive.utils import deep_update
 
 
-def get_auth_config(email, password, host=None):
-    host = host if host else 'archive.org'
+def get_auth_config(email: str, password: str, host: str = 'archive.org') -> dict:
     u = f'https://{host}/services/xauthn/'
     p = {'op': 'login'}
     d = {'email': email, 'password': password}
@@ -70,7 +71,7 @@ def get_auth_config(email, password, host=None):
     return auth_config
 
 
-def write_config_file(auth_config, config_file=None):
+def write_config_file(auth_config: Mapping, config_file=None):
     config_file, is_xdg, config = parse_config_file(config_file)
 
     # S3 Keys.
@@ -107,7 +108,7 @@ def write_config_file(auth_config, config_file=None):
 
 
 def parse_config_file(config_file=None):
-    config = configparser.RawConfigParser()
+    config = RawConfigParser()
 
     is_xdg = False
     if not config_file:
@@ -157,14 +158,14 @@ def parse_config_file(config_file=None):
     return (config_file, is_xdg, config)
 
 
-def get_config(config=None, config_file=None):
-    _config = {} if not config else config
+def get_config(config=None, config_file=None) -> dict:
+    _config = config or {}
     config_file, is_xdg, config = parse_config_file(config_file)
 
     if not os.path.isfile(config_file):
         return _config
 
-    config_dict = defaultdict(dict)
+    config_dict: dict = defaultdict(dict)
     for sec in config.sections():
         try:
             for k, v in config.items(sec):

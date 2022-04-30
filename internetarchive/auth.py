@@ -25,6 +25,8 @@ This module contains the Archive.org authentication handlers for Requests.
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+from __future__ import annotations
+
 from requests.auth import AuthBase
 
 from internetarchive.exceptions import AuthenticationError
@@ -32,7 +34,7 @@ from internetarchive.exceptions import AuthenticationError
 
 class S3Auth(AuthBase):
     """Attaches S3 Basic Authentication to the given Request object."""
-    def __init__(self, access_key=None, secret_key=None):
+    def __init__(self, access_key: str | None = None, secret_key: str | None = None):
         self.access_key = access_key
         self.secret_key = secret_key
 
@@ -56,7 +58,7 @@ class S3Auth(AuthBase):
 
 class S3PostAuth(AuthBase):
     """Attaches S3 Basic Authentication to the given Request object."""
-    def __init__(self, access_key=None, secret_key=None):
+    def __init__(self, access_key: str | None = None, secret_key: str | None = None):
         self.access_key = access_key
         self.secret_key = secret_key
 

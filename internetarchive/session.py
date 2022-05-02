@@ -38,6 +38,7 @@ from typing import Iterable
 from urllib.parse import unquote, urlparse
 
 import requests.sessions
+from requests import Response
 from requests.adapters import HTTPAdapter
 from requests.cookies import create_cookie
 from requests.packages.urllib3 import Retry
@@ -562,7 +563,7 @@ class ArchiveSession(requests.sessions.Session):
         """
         return CatalogTask.get_task_log(task_id, self, request_kwargs)
 
-    def send(self, request, **kwargs):
+    def send(self, request, **kwargs) -> Response:
         # Catch urllib3 warnings for HTTPS related errors.
         insecure = False
         with warnings.catch_warnings(record=True) as w:
@@ -571,7 +572,7 @@ class ArchiveSession(requests.sessions.Session):
                 r = super().send(request, **kwargs)
             except Exception as e:
                 try:
-                    reraise_modify(e, e.request.url, prepend=False)
+                    reraise_modify(e, e.request.url, prepend=False)  # type: ignore
                 except Exception:
                     logger.error(e)
                     raise e

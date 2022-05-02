@@ -71,7 +71,7 @@ class BaseItem:
 
         # Archive.org metadata attributes.
         self.metadata: dict = {}
-        self.files: list[dict] = []
+        self.files: list[File] = []
         self.created = None
         self.d1 = None
         self.d2 = None
@@ -122,7 +122,7 @@ class BaseItem:
             k: v for k, v in self.item_metadata.items()
             if k not in self.EXCLUDED_ITEM_METADATA_KEYS}
         return hash(json.dumps(without_excluded_keys,
-                               sort_keys=True, check_circular=False))
+                               sort_keys=True, check_circular=False))  # type: ignore
 
 
 class Item(BaseItem):
@@ -1110,7 +1110,7 @@ class Item(BaseItem):
             finally:
                 body.close()
 
-    def upload(self, files,
+    def upload(self, files: list[File],
                metadata: Mapping | None = None,
                headers: dict | None = None,
                access_key: str | None = None,

@@ -1110,7 +1110,7 @@ class Item(BaseItem):
             finally:
                 body.close()
 
-    def upload(self, files: list[File],
+    def upload(self, files,
                metadata: Mapping | None = None,
                headers: dict | None = None,
                access_key: str | None = None,

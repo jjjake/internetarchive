@@ -71,7 +71,7 @@ class BaseItem:
 
         # Archive.org metadata attributes.
         self.metadata: dict = {}
-        self.files: list[File] = []
+        self.files: list[dict] = []
         self.created = None
         self.d1 = None
         self.d2 = None

@@ -105,7 +105,8 @@ class BaseItem:
             self.identifier = self.metadata.get('identifier')
 
         mc = self.metadata.get('collection', [])
-        self.collection = IdentifierListAsItems(mc, self.session)
+        # TODO: The `type: ignore` on the following line should be removed.  See #518
+        self.collection = IdentifierListAsItems(mc, self.session)  # type: ignore
 
     def __eq__(self, other) -> bool:
         return (self.item_metadata == other.item_metadata
@@ -970,7 +971,7 @@ class Item(BaseItem):
 
         # Build IA-S3 URL.
         if validate_identifier:
-            validate_s3_identifier(self.identifier)
+            validate_s3_identifier(self.identifier or "")
         key = norm_filepath(filename).split('/')[-1] if key is None else key
         base_url = f'{self.session.protocol}//s3.us.archive.org/{self.identifier}'
         url = f'{base_url}/{quote(norm_filepath(key).lstrip("/").encode("utf-8"))}'

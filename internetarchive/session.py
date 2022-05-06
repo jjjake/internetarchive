@@ -34,7 +34,7 @@ import os
 import platform
 import sys
 import warnings
-from typing import Iterable
+from typing import Iterable, Mapping, MutableMapping
 from urllib.parse import unquote, urlparse
 
 import requests.sessions
@@ -73,10 +73,10 @@ class ArchiveSession(requests.sessions.Session):
     }
 
     def __init__(self,
-                 config: dict | None = None,
+                 config: Mapping | None = None,
                  config_file: str | None = None,
                  debug: bool = False,
-                 http_adapter_kwargs: dict | None = None):
+                 http_adapter_kwargs: MutableMapping | None = None):
         """Initialize :class:`ArchiveSession <ArchiveSession>` object with config.
 
         :type config: dict
@@ -235,8 +235,8 @@ class ArchiveSession(requests.sessions.Session):
 
     def get_item(self,
                  identifier: str,
-                 item_metadata: dict | None = None,
-                 request_kwargs: dict | None = None):
+                 item_metadata: Mapping | None = None,
+                 request_kwargs: MutableMapping | None = None):
         """A method for creating :class:`internetarchive.Item <Item>` and
         :class:`internetarchive.Collection <Collection>` objects.
 
@@ -263,7 +263,7 @@ class ArchiveSession(requests.sessions.Session):
             item_class = Item
         return item_class(self, identifier, item_metadata)
 
-    def get_metadata(self, identifier: str, request_kwargs: dict | None = None):
+    def get_metadata(self, identifier: str, request_kwargs: MutableMapping | None = None):
         """Get an item's metadata from the `Metadata API
         <http://blog.archive.org/2013/07/04/metadata-api/>`__
 
@@ -292,13 +292,13 @@ class ArchiveSession(requests.sessions.Session):
 
     def search_items(self,
                      query: str,
-                     fields: list | None = None,
+                     fields: Iterable[str] | None = None,
                      sorts: Iterable[str] | None = None,
-                     params: dict | None = None,
+                     params: Mapping | None = None,
                      full_text_search: bool = False,
                      dsl_fts: bool = False,
-                     request_kwargs: dict | None = None,
-                     max_retries: int | None = None) -> Search:
+                     request_kwargs: Mapping | None = None,
+                     max_retries: int | Retry | None = None) -> Search:
         """Search for items on Archive.org.
 
         :type query: str
@@ -366,10 +366,10 @@ class ArchiveSession(requests.sessions.Session):
                     cmd: str,
                     comment: str = '',
                     priority: int = 0,
-                    data: dict | None = None,
+                    data: Mapping | None = None,
                     headers: dict | None = None,
                     reduced_priority: bool = False,
-                    request_kwargs: dict | None = None) -> requests.Response:
+                    request_kwargs: Mapping | None = None) -> requests.Response:
         """Submit an archive.org task.
 
         :type identifier: str
@@ -423,7 +423,7 @@ class ArchiveSession(requests.sessions.Session):
     def iter_history(self,
                      identifier: str | None,
                      params: dict | None = None,
-                     request_kwargs: dict | None = None):
+                     request_kwargs: Mapping | None = None):
         """A generator that returns completed tasks.
 
         :type identifier: str
@@ -449,7 +449,7 @@ class ArchiveSession(requests.sessions.Session):
     def iter_catalog(self,
                      identifier: str | None = None,
                      params: dict | None = None,
-                     request_kwargs: dict | None = None):
+                     request_kwargs: Mapping | None = None):
         """A generator that returns queued or running tasks.
 
         :type identifier: str
@@ -473,8 +473,8 @@ class ArchiveSession(requests.sessions.Session):
         yield from c.iter_tasks(params)
 
     def get_tasks_summary(self, identifier: str | None = None,
-                          params: dict | None = None,
-                          request_kwargs: dict | None = None) -> dict:
+                          params: Mapping | None = None,
+                          request_kwargs: Mapping | None = None) -> dict:
         """Get the total counts of catalog tasks meeting all criteria,
         organized by run status (queued, running, error, and paused).
 
@@ -496,8 +496,8 @@ class ArchiveSession(requests.sessions.Session):
         return Catalog(self, request_kwargs).get_summary(identifier=identifier, params=params)
 
     def get_tasks(self, identifier: str | None = None,
-                  params: dict | None = None,
-                  request_kwargs: dict | None = None) -> list[CatalogTask]:
+                  params: MutableMapping | None = None,
+                  request_kwargs: Mapping | None = None) -> set[CatalogTask]:
         """Get a list of all tasks meeting all criteria.
         The list is ordered by submission time.
 
@@ -527,7 +527,7 @@ class ArchiveSession(requests.sessions.Session):
 
     def get_my_catalog(self,
                        params: dict | None = None,
-                       request_kwargs: dict | None = None) -> list[CatalogTask]:
+                       request_kwargs: Mapping | None = None) -> set[CatalogTask]:
         """Get all queued or running tasks.
 
         :type params: dict
@@ -547,7 +547,7 @@ class ArchiveSession(requests.sessions.Session):
         params.update(_params)
         return self.get_tasks(params=params, request_kwargs=request_kwargs)
 
-    def get_task_log(self, task_id: str | int, request_kwargs: dict | None = None) -> str:
+    def get_task_log(self, task_id: str | int, request_kwargs: Mapping | None = None) -> str:
         """Get a task log.
 
         :type task_id: str or int

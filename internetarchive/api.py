@@ -233,7 +233,7 @@ def upload(
     headers: Mapping | None = None,
     access_key: str | None = None,
     secret_key: str | None = None,
-    queue_derive: bool = False,
+    queue_derive=None,
     verbose: bool = False,
     verify: bool = False,
     checksum: bool = False,

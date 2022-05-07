@@ -47,46 +47,52 @@ options:
                                         Works on both single and multi-field metadata
                                         elements.
 """
+from __future__ import annotations
+
 import csv
 import os
 import sys
 from collections import defaultdict
 from copy import copy
+from typing import Mapping, cast
+from urllib.request import Request
 
 from docopt import docopt, printable_usage  # type: ignore
+from requests import Response
 from schema import And, Or, Schema, SchemaError, Use
 
 from internetarchive.cli.argparser import (get_args_dict,
                                            get_args_dict_many_write,
                                            get_args_header_dict)
 from internetarchive.exceptions import ItemLocateError
+from internetarchive.item import Item
+from internetarchive.session import ArchiveSession
 from internetarchive.utils import json
 
 
-def modify_metadata(item, metadata, args):
-    append = True if args['--append'] else False
-    append_list = True if args['--append-list'] else False
+def modify_metadata(item: Item, metadata: Mapping, args: Mapping) -> Response:
+    append = bool(args['--append'])
+    append_list = bool(args['--append-list'])
     try:
         r = item.modify_metadata(metadata, target=args['--target'], append=append,
                                  priority=args['--priority'], append_list=append_list,
                                  headers=args['--header'])
+        assert isinstance(r, Response)  # mypy: modify_metadata() -> Request | Response
     except ItemLocateError as exc:
         print(f'{item.identifier} - error: {exc}', file=sys.stderr)
         sys.exit(1)
     if not r.json()['success']:
         error_msg = r.json()['error']
-        if 'no changes' in r.content.decode('utf-8'):
-            etype = 'warning'
-        else:
-            etype = 'error'
+
+        etype = 'warning' if 'no changes' in r.text else 'error'
         print(f'{item.identifier} - {etype} ({r.status_code}): {error_msg}', file=sys.stderr)
         return r
     print(f'{item.identifier} - success: {r.json()["log"]}', file=sys.stderr)
     return r
 
 
-def remove_metadata(item, metadata, args):
-    md = defaultdict(list)
+def remove_metadata(item: Item, metadata: Mapping, args: Mapping) -> Response:
+    md: dict[str, list | str] = defaultdict(list)
     for key in metadata:
         src_md = copy(item.metadata.get(key))
         if not src_md:
@@ -131,10 +137,10 @@ def remove_metadata(item, metadata, args):
         for x in src_md:
             if isinstance(metadata[key], list):
                 if x not in metadata[key]:
-                    md[key].append(x)
+                    md[key].append(x)  # type: ignore
             else:
                 if x != metadata[key]:
-                    md[key].append(x)
+                    md[key].append(x)  # type: ignore
 
         if len(md[key]) == len(src_md):
             del md[key]
@@ -156,7 +162,7 @@ def remove_metadata(item, metadata, args):
     return r
 
 
-def main(argv, session):
+def main(argv: dict, session: ArchiveSession) -> None:
     args = docopt(__doc__, argv=argv)
 
     # Validate args.
@@ -181,7 +187,7 @@ def main(argv, session):
         sys.exit(1)
 
     formats = set()
-    responses = []
+    responses: list[bool | Response] = []
 
     for i, identifier in enumerate(args['<identifier>']):
         item = session.get_item(identifier)
@@ -226,15 +232,16 @@ def main(argv, session):
             else:
                 responses.append(modify_metadata(item, metadata, args))
             if (i + 1) == len(args['<identifier>']):
-                if all(r.status_code == 200 for r in responses):
+                if all(cast(Response, r).status_code == 200 for r in responses):
                     sys.exit(0)
                 else:
                     for r in responses:
+                        assert isinstance(r, Response)
                         if r.status_code == 200:
                             continue
                         # We still want to exit 0 if the non-200 is a
                         # "no changes to xml" error.
-                        elif 'no changes' in r.content.decode('utf-8'):
+                        elif 'no changes' in r.text:
                             continue
                         else:
                             sys.exit(1)
@@ -267,15 +274,16 @@ def main(argv, session):
                 metadata = {k.lower(): v for k, v in row.items() if v}
                 responses.append(modify_metadata(item, metadata, args))
 
-            if all(r.status_code == 200 for r in responses):
+            if all(cast(Response, r).status_code == 200 for r in responses):
                 sys.exit(0)
             else:
                 for r in responses:
+                    assert isinstance(r, Response)
                     if r.status_code == 200:
                         continue
                     # We still want to exit 0 if the non-200 is a
                     # "no changes to xml" error.
-                    elif 'no changes' in r.content.decode('utf-8'):
+                    elif 'no changes' in r.text:
                         continue
                     else:
                         sys.exit(1)

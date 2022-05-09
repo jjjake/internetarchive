@@ -25,17 +25,26 @@ This module implements the Internetarchive API.
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+from __future__ import annotations
+
 from getpass import getpass
+from typing import Iterable, Mapping, MutableMapping
 
 import requests
+from urllib3 import Retry
 
-from internetarchive import auth
+from internetarchive import auth, catalog
 from internetarchive import config as config_module
-from internetarchive import session
+from internetarchive import files, item, search, session
 from internetarchive.exceptions import AuthenticationError
 
 
-def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=None):
+def get_session(
+    config: Mapping | None = None,
+    config_file: str | None = None,
+    debug: bool = False,
+    http_adapter_kwargs: MutableMapping | None = None,
+) -> session.ArchiveSession:
     """Return a new :class:`ArchiveSession` object. The :class:`ArchiveSession`
     object is the main interface to the ``internetarchive`` lib. It allows you to
     persist certain parameters across tasks.
@@ -72,13 +81,15 @@ def get_session(config=None, config_file=None, debug=None, http_adapter_kwargs=N
     return session.ArchiveSession(config, config_file, debug, http_adapter_kwargs)
 
 
-def get_item(identifier,
-             config=None,
-             config_file=None,
-             archive_session=None,
-             debug=None,
-             http_adapter_kwargs=None,
-             request_kwargs=None):
+def get_item(
+    identifier: str,
+    config: Mapping | None = None,
+    config_file: str | None = None,
+    archive_session: session.ArchiveSession | None = None,
+    debug: bool = False,
+    http_adapter_kwargs: MutableMapping | None = None,
+    request_kwargs: MutableMapping | None = None,
+) -> item.Item:
     """Get an :class:`Item` object.
 
     :type identifier: str
@@ -113,12 +124,14 @@ def get_item(identifier,
     return archive_session.get_item(identifier, request_kwargs=request_kwargs)
 
 
-def get_files(identifier,
-              files=None,
-              formats=None,
-              glob_pattern=None,
-              on_the_fly=None,
-              **get_item_kwargs):
+def get_files(
+    identifier: str,
+    files: Iterable | None = None,
+    formats: Iterable | None = None,
+    glob_pattern: str | None = None,
+    on_the_fly: bool = None,
+    **get_item_kwargs,
+) -> list[files.File]:
     r"""Get :class:`File` objects from an item.
 
     :type identifier: str
@@ -149,16 +162,19 @@ def get_files(identifier,
     return item.get_files(files, formats, glob_pattern, on_the_fly)
 
 
-def modify_metadata(identifier, metadata,
-                    target=None,
-                    append=None,
-                    append_list=None,
-                    priority=None,
-                    access_key=None,
-                    secret_key=None,
-                    debug=None,
-                    request_kwargs=None,
-                    **get_item_kwargs):
+def modify_metadata(
+    identifier: str,
+    metadata: Mapping,
+    target: str | None = None,
+    append: bool = False,
+    append_list: bool = False,
+    priority: int = 0,
+    access_key: str | None = None,
+    secret_key: str | None = None,
+    debug: bool = False,
+    request_kwargs: Mapping | None = None,
+    **get_item_kwargs,
+) -> list[requests.Response | requests.Request]:
     r"""Modify the metadata of an existing item on Archive.org.
 
     :type identifier: str
@@ -197,33 +213,38 @@ def modify_metadata(identifier, metadata,
               debug is ``True``.
     """
     item = get_item(identifier, **get_item_kwargs)
-    return item.modify_metadata(metadata,
-                                target=target,
-                                append=append,
-                                append_list=append_list,
-                                priority=priority,
-                                access_key=access_key,
-                                secret_key=secret_key,
-                                debug=debug,
-                                request_kwargs=request_kwargs)
+    return item.modify_metadata(
+        metadata,
+        target=target,
+        append=append,
+        append_list=append_list,
+        priority=priority,
+        access_key=access_key,
+        secret_key=secret_key,
+        debug=debug,
+        request_kwargs=request_kwargs,
+    )
 
 
-def upload(identifier, files,
-           metadata=None,
-           headers=None,
-           access_key=None,
-           secret_key=None,
-           queue_derive=None,
-           verbose=None,
-           verify=None,
-           checksum=None,
-           delete=None,
-           retries=None,
-           retries_sleep=None,
-           debug=None,
-           validate_identifier=None,
-           request_kwargs=None,
-           **get_item_kwargs):
+def upload(
+    identifier: str,
+    files,
+    metadata: Mapping | None = None,
+    headers: Mapping | None = None,
+    access_key: str | None = None,
+    secret_key: str | None = None,
+    queue_derive=None,
+    verbose: bool = False,
+    verify: bool = False,
+    checksum: bool = False,
+    delete: bool = False,
+    retries: int | None = None,
+    retries_sleep: int | None = None,
+    debug: bool = False,
+    validate_identifier: bool = False,
+    request_kwargs: Mapping | None = None,
+    **get_item_kwargs,
+) -> list[requests.Request | requests.Response]:
     r"""Upload files to an item. The item will be created if it does not exist.
 
     :type identifier: str
@@ -283,40 +304,44 @@ def upload(identifier, files,
     :returns: A list of :py:class:`requests.Response` objects.
     """
     item = get_item(identifier, **get_item_kwargs)
-    return item.upload(files,
-                       metadata=metadata,
-                       headers=headers,
-                       access_key=access_key,
-                       secret_key=secret_key,
-                       queue_derive=queue_derive,
-                       verbose=verbose,
-                       verify=verify,
-                       checksum=checksum,
-                       delete=delete,
-                       retries=retries,
-                       retries_sleep=retries_sleep,
-                       debug=debug,
-                       validate_identifier=validate_identifier,
-                       request_kwargs=request_kwargs)
+    return item.upload(
+        files,
+        metadata=metadata,
+        headers=headers,
+        access_key=access_key,
+        secret_key=secret_key,
+        queue_derive=queue_derive,
+        verbose=verbose,
+        verify=verify,
+        checksum=checksum,
+        delete=delete,
+        retries=retries,
+        retries_sleep=retries_sleep,
+        debug=debug,
+        validate_identifier=validate_identifier,
+        request_kwargs=request_kwargs,
+    )
 
 
-def download(identifier,
-             files=None,
-             formats=None,
-             glob_pattern=None,
-             dry_run=None,
-             verbose=None,
-             ignore_existing=None,
-             checksum=None,
-             destdir=None,
-             no_directory=None,
-             retries=None,
-             item_index=None,
-             ignore_errors=None,
-             on_the_fly=None,
-             return_responses=None,
-             no_change_timestamp=None,
-             **get_item_kwargs):
+def download(
+    identifier: str,
+    files: Iterable | None = None,
+    formats: Iterable | None = None,
+    glob_pattern: str | None = None,
+    dry_run: bool = False,
+    verbose: bool = False,
+    ignore_existing: bool = False,
+    checksum: bool = False,
+    destdir: str | None = None,
+    no_directory: bool = False,
+    retries: int | None = None,
+    item_index: int | None = None,
+    ignore_errors: bool = False,
+    on_the_fly: bool = False,
+    return_responses: bool = False,
+    no_change_timestamp: bool = False,
+    **get_item_kwargs,
+) -> bool:
     r"""Download files from an item.
 
     :type identifier: str
@@ -376,33 +401,38 @@ def download(identifier,
     :returns: True if all files were downloaded successfully.
     """
     item = get_item(identifier, **get_item_kwargs)
-    r = item.download(files=files,
-                      formats=formats,
-                      glob_pattern=glob_pattern,
-                      dry_run=dry_run,
-                      verbose=verbose,
-                      ignore_existing=ignore_existing,
-                      checksum=checksum,
-                      destdir=destdir,
-                      no_directory=no_directory,
-                      retries=retries,
-                      item_index=item_index,
-                      ignore_errors=ignore_errors,
-                      on_the_fly=on_the_fly,
-                      return_responses=return_responses,
-                      no_change_timestamp=no_change_timestamp)
+    r = item.download(
+        files=files,
+        formats=formats,
+        glob_pattern=glob_pattern,
+        dry_run=dry_run,
+        verbose=verbose,
+        ignore_existing=ignore_existing,
+        checksum=checksum,
+        destdir=destdir,
+        no_directory=no_directory,
+        retries=retries,
+        item_index=item_index,
+        ignore_errors=ignore_errors,
+        on_the_fly=on_the_fly,
+        return_responses=return_responses,
+        no_change_timestamp=no_change_timestamp,
+    )
     return r
 
 
-def delete(identifier,
-           files=None,
-           formats=None,
-           glob_pattern=None,
-           cascade_delete=None,
-           access_key=None,
-           secret_key=None,
-           verbose=None,
-           debug=None, **kwargs):
+def delete(
+    identifier: str,
+    files: Iterable | None = None,
+    formats: Iterable | None = None,
+    glob_pattern: str | None = None,
+    cascade_delete: bool = False,
+    access_key: str | None = None,
+    secret_key: str | None = None,
+    verbose: bool = False,
+    debug: bool = False,
+    **kwargs,
+) -> list[requests.Request | requests.Response]:
     """Delete files from an item. Note: Some system files, such as <itemname>_meta.xml,
     cannot be deleted.
 
@@ -433,26 +463,30 @@ def delete(identifier,
     :param debug: (optional) Set to True to print headers to stdout and exit exit without
                   sending the delete request.
     """
-    files = get_files(identifier, files, formats, glob_pattern, **kwargs)
+    _files = get_files(identifier, files, formats, glob_pattern, **kwargs)
 
     responses = []
-    for f in files:
-        r = f.delete(cascade_delete=cascade_delete,
-                     access_key=access_key,
-                     secret_key=secret_key,
-                     verbose=verbose,
-                     debug=debug)
+    for f in _files:
+        r = f.delete(
+            cascade_delete=cascade_delete,
+            access_key=access_key,
+            secret_key=secret_key,
+            verbose=verbose,
+            debug=debug,
+        )
         responses.append(r)
     return responses
 
 
-def get_tasks(identifier=None,
-              params=None,
-              config=None,
-              config_file=None,
-              archive_session=None,
-              http_adapter_kwargs=None,
-              request_kwargs=None):
+def get_tasks(
+    identifier: str = None,
+    params: MutableMapping | None = None,
+    config: Mapping | None = None,
+    config_file: str | None = None,
+    archive_session: session.ArchiveSession | None = None,
+    http_adapter_kwargs: MutableMapping | None = None,
+    request_kwargs: MutableMapping | None = None,
+) -> set[catalog.CatalogTask]:
     """Get tasks from the Archive.org catalog.
 
     :type identifier: str
@@ -466,24 +500,26 @@ def get_tasks(identifier=None,
     :returns: A set of :class:`CatalogTask` objects.
     """
     if not archive_session:
-        archive_session = get_session(config, config_file, http_adapter_kwargs)
-    return archive_session.get_tasks(identifier=identifier,
-                                     params=params,
-                                     request_kwargs=request_kwargs)
+        archive_session = get_session(config, config_file, False, http_adapter_kwargs)
+    return archive_session.get_tasks(
+        identifier=identifier, params=params, request_kwargs=request_kwargs
+    )
 
 
-def search_items(query,
-                 fields=None,
-                 sorts=None,
-                 params=None,
-                 full_text_search=None,
-                 dsl_fts=None,
-                 archive_session=None,
-                 config=None,
-                 config_file=None,
-                 http_adapter_kwargs=None,
-                 request_kwargs=None,
-                 max_retries=None):
+def search_items(
+    query: str,
+    fields: Iterable | None = None,
+    sorts=None,
+    params: Mapping | None = None,
+    full_text_search: bool = False,
+    dsl_fts: bool = False,
+    archive_session: session.ArchiveSession = None,
+    config: Mapping | None = None,
+    config_file: str | None = None,
+    http_adapter_kwargs: MutableMapping | None = None,
+    request_kwargs: Mapping | None = None,
+    max_retries: int | Retry | None = None,
+) -> search.Search:
     """Search for items on Archive.org.
 
     :type query: str
@@ -538,18 +574,25 @@ def search_items(query,
     :returns: A :class:`Search` object, yielding search results.
     """
     if not archive_session:
-        archive_session = get_session(config, config_file, http_adapter_kwargs)
-    return archive_session.search_items(query,
-                                        fields=fields,
-                                        sorts=sorts,
-                                        params=params,
-                                        full_text_search=full_text_search,
-                                        dsl_fts=dsl_fts,
-                                        request_kwargs=request_kwargs,
-                                        max_retries=max_retries)
+        archive_session = get_session(config, config_file, False, http_adapter_kwargs)
+    return archive_session.search_items(
+        query,
+        fields=fields,
+        sorts=sorts,
+        params=params,
+        full_text_search=full_text_search,
+        dsl_fts=dsl_fts,
+        request_kwargs=request_kwargs,
+        max_retries=max_retries,
+    )
 
 
-def configure(username=None, password=None, config_file=None, host=None):
+def configure(
+    username: str | None = None,
+    password: str | None = None,
+    config_file: str | None = None,
+    host: str | None = None,
+) -> str:
     """Configure internetarchive with your Archive.org credentials.
 
     :type username: str
@@ -562,14 +605,14 @@ def configure(username=None, password=None, config_file=None, host=None):
         >>> from internetarchive import configure
         >>> configure('user@example.com', 'password')
     """
-    username = input('Email address: ') if not username else username
-    password = getpass('Password: ') if not password else password
+    username = input("Email address: ") if not username else username
+    password = getpass("Password: ") if not password else password
     auth_config = config_module.get_auth_config(username, password, host)
     config_file_path = config_module.write_config_file(auth_config, config_file)
     return config_file_path
 
 
-def get_username(access_key, secret_key):
+def get_username(access_key: str, secret_key: str) -> str:
     """Returns an Archive.org username given an IA-S3 key pair.
 
     :type access_key: str
@@ -579,10 +622,10 @@ def get_username(access_key, secret_key):
     :param secret_key: IA-S3 secret_key to use when making the given request.
     """
     j = get_user_info(access_key, secret_key)
-    return j.get('username')
+    return j.get("username", "")
 
 
-def get_user_info(access_key, secret_key):
+def get_user_info(access_key: str, secret_key: str) -> dict[str, str]:
     """Returns details about an Archive.org user given an IA-S3 key pair.
 
     :type access_key: str
@@ -591,12 +634,12 @@ def get_user_info(access_key, secret_key):
     :type secret_key: str
     :param secret_key: IA-S3 secret_key to use when making the given request.
     """
-    u = 'https://s3.us.archive.org'
-    p = {'check_auth': 1}
+    u = "https://s3.us.archive.org"
+    p = {"check_auth": 1}
     r = requests.get(u, params=p, auth=auth.S3Auth(access_key, secret_key))
     r.raise_for_status()
     j = r.json()
-    if j.get('error'):
-        raise AuthenticationError(j.get('error'))
+    if j.get("error"):
+        raise AuthenticationError(j.get("error"))
     else:
         return j

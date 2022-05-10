@@ -479,8 +479,8 @@ def delete(
 
 
 def get_tasks(
-    identifier: str = None,
-    params: MutableMapping | None = None,
+    identifier: str = "",
+    params: dict | None = None,
     config: Mapping | None = None,
     config_file: str | None = None,
     archive_session: session.ArchiveSession | None = None,

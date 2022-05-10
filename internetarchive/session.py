@@ -367,7 +367,7 @@ class ArchiveSession(requests.sessions.Session):
                     cmd: str,
                     comment: str = '',
                     priority: int = 0,
-                    data: Mapping | None = None,
+                    data: dict | None = None,
                     headers: dict | None = None,
                     reduced_priority: bool = False,
                     request_kwargs: Mapping | None = None) -> requests.Response:
@@ -473,8 +473,8 @@ class ArchiveSession(requests.sessions.Session):
         c = Catalog(self, request_kwargs)
         yield from c.iter_tasks(params)
 
-    def get_tasks_summary(self, identifier: str | None = None,
-                          params: Mapping | None = None,
+    def get_tasks_summary(self, identifier: str = "",
+                          params: dict | None = None,
                           request_kwargs: Mapping | None = None) -> dict:
         """Get the total counts of catalog tasks meeting all criteria,
         organized by run status (queued, running, error, and paused).
@@ -496,8 +496,8 @@ class ArchiveSession(requests.sessions.Session):
         """
         return Catalog(self, request_kwargs).get_summary(identifier=identifier, params=params)
 
-    def get_tasks(self, identifier: str | None = None,
-                  params: MutableMapping | None = None,
+    def get_tasks(self, identifier: str = "",
+                  params: dict | None = None,
                   request_kwargs: Mapping | None = None) -> set[CatalogTask]:
         """Get a list of all tasks meeting all criteria.
         The list is ordered by submission time.
@@ -524,7 +524,7 @@ class ArchiveSession(requests.sessions.Session):
             params['history'] = 1
         if 'catalog' not in params:
             params['catalog'] = 1
-        return Catalog(self, request_kwargs).get_tasks(identifier=identifier, params=params)
+        return set(Catalog(self, request_kwargs).get_tasks(identifier=identifier, params=params))
 
     def get_my_catalog(self,
                        params: dict | None = None,

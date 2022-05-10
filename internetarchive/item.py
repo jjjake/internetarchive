@@ -591,8 +591,8 @@ class Item(BaseItem):
                         yield self.get_file(str(f.get('name')))
 
     def download(self,
-                 files: list[File] | None = None,
-                 formats: list[str] | None = None,
+                 files: File | list[File] | None = None,
+                 formats: str | list[str] | None = None,
                  glob_pattern: str | None = None,
                  dry_run: bool = False,
                  verbose: bool = False,
@@ -607,7 +607,7 @@ class Item(BaseItem):
                  return_responses: bool = False,
                  no_change_timestamp: bool = False,
                  ignore_history_dir: bool = False,
-                 params: Mapping | None = None) -> list:
+                 params: Mapping | None = None) -> list[Request | Response]:
         """Download files from an item.
 
         :param files: (optional) Only download files matching given file names.
@@ -757,7 +757,7 @@ class Item(BaseItem):
                         metadata: Mapping,
                         target: str | None = None,
                         append: bool = False,
-                        append_list: list[bool] | None = None,  # TODO: Is this a bool?
+                        append_list: bool = False,
                         priority: int = 0,
                         access_key: str | None = None,
                         secret_key: str | None = None,

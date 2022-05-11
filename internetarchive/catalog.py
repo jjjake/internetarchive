@@ -25,20 +25,24 @@ This module contains objects for interacting with the Archive.org catalog.
 :copyright: (C) 2012-2019 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
-import collections
+from __future__ import annotations
+
 from datetime import datetime
 from logging import getLogger
+from typing import Iterable, Mapping, MutableMapping
 
+from requests import Response
 from requests.exceptions import HTTPError
 
 from internetarchive import auth
+from internetarchive import session as ia_session
 from internetarchive.utils import json
 
 log = getLogger(__name__)
 
 
-def sort_by_date(task_dict):
-    if task_dict.category == 'summary':
+def sort_by_date(task_dict: CatalogTask) -> datetime:
+    if task_dict.category == 'summary':  # type: ignore
         return datetime.now()
     try:
         return datetime.strptime(task_dict['submittime'], '%Y-%m-%d %H:%M:%S.%f')
@@ -66,41 +70,41 @@ class Catalog:
         31643502
     """
 
-    def __init__(self, archive_session, request_kwargs=None):
+    def __init__(
+        self,
+        archive_session: ia_session.ArchiveSession,
+        request_kwargs: Mapping | None = None,
+    ):
         """
         Initialize :class:`Catalog <Catalog>` object.
 
-        :type archive_session: :class:`ArchiveSession <ArchiveSession>`
         :param archive_session: An :class:`ArchiveSession <ArchiveSession>`
                                 object.
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments to be used
+        :param request_kwargs: Keyword arguments to be used
                                in :meth:`requests.sessions.Session.get`
                                and :meth:`requests.sessions.Session.post`
                                requests.
         """
         self.session = archive_session
         self.auth = auth.S3Auth(self.session.access_key, self.session.secret_key)
-        self.request_kwargs = request_kwargs if request_kwargs else {}
+        self.request_kwargs = request_kwargs or {}
         self.url = f'{self.session.protocol}//{self.session.host}/services/tasks.php'
 
-    def get_summary(self, identifier=None, params=None):
+    def get_summary(self, identifier: str = "", params: dict | None = None) -> dict:
         """Get the total counts of catalog tasks meeting all criteria,
         organized by run status (queued, running, error, and paused).
 
 
-        :type identifier: str
-        :param identifier: (optional) Item identifier.
+        :param identifier: Item identifier.
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
         `Tasks API <https://archive.org/services/docs/api/tasks.html>`_
         for available parameters.
 
-        :rtype: dict
+        :returns: the total counts of catalog tasks meeting all criteria
         """
-        params = params if params else {}
+        params = params or {}
         if identifier:
             params['identifier'] = identifier
         params.update({'summary': 1, 'history': 0, 'catalog': 0})
@@ -111,17 +115,16 @@ class Catalog:
         else:
             return j
 
-    def make_tasks_request(self, params):
+    def make_tasks_request(self, params: Mapping | None) -> Response:
         """Make a GET request to the
          `Tasks API <https://archive.org/services/docs/api/tasks.html>`_
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
                        `Tasks API
                        <https://archive.org/services/docs/api/tasks.html>`_
                        for available parameters.
 
-        :rtype: :class:`requests.Response`
+        :returns: :class:`requests.Response`
         """
         r = self.session.get(self.url,
                              params=params,
@@ -135,18 +138,18 @@ class Catalog:
             raise HTTPError(error, response=r)
         return r
 
-    def iter_tasks(self, params=None):
+    def iter_tasks(self, params: MutableMapping | None = None) -> Iterable[CatalogTask]:
         """A generator that can make arbitrary requests to the
         Tasks API. It handles paging (via cursor) automatically.
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
                        `Tasks API
                        <https://archive.org/services/docs/api/tasks.html>`_
                        for available parameters.
 
-        :rtype: collections.Iterable[CatalogTask]
+        :returns: collections.Iterable[CatalogTask]
         """
+        params = params or {}
         while True:
             r = self.make_tasks_request(params)
             j = r.json()
@@ -158,7 +161,7 @@ class Catalog:
                 break
             params['cursor'] = j['value']['cursor']
 
-    def get_rate_limit(self, cmd='derive.php'):
+    def get_rate_limit(self, cmd: str = 'derive.php'):
         params = {'rate_limits': 1, 'cmd': cmd}
         r = self.make_tasks_request(params)
         line = ''
@@ -174,23 +177,21 @@ class Catalog:
         j = json.loads(line)
         return j
 
-    def get_tasks(self, identifier=None, params=None):
+    def get_tasks(self, identifier: str = "", params: dict | None = None) -> list[CatalogTask]:
         """Get a list of all tasks meeting all criteria.
         The list is ordered by submission time.
 
-        :type identifier: str
-        :param identifier: (optional) The item identifier, if provided
+        :param identifier: The item identifier, if provided
                            will return tasks for only this item filtered by
                            other criteria provided in params.
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
         `Tasks API <https://archive.org/services/docs/api/tasks.html>`_
         for available parameters.
 
-        :rtype: List[CatalogTask]
+        :returns: A list of all tasks meeting all criteria.
         """
-        params = params if params else {}
+        params = params or {}
         if identifier:
             params.update({'identifier': identifier})
         params.update({'limit': 0})
@@ -215,40 +216,34 @@ class Catalog:
         all_tasks = sorted(tasks, key=sort_by_date, reverse=True)
         return all_tasks
 
-    def submit_task(self, identifier, cmd,
-                    comment=None,
-                    priority=None,
-                    data=None,
-                    headers=None):
+    def submit_task(self, identifier: str, cmd: str,
+                    comment: str | None = None,
+                    priority: int = 0,
+                    data: dict | None = None,
+                    headers: dict | None = None) -> Response:
         """Submit an archive.org task.
 
-        :type identifier: str
         :param identifier: Item identifier.
 
-        :type cmd: str
         :param cmd: Task command to submit, see
                     `supported task commands
                     <https://archive.org/services/docs/api/tasks.html#supported-tasks>`_.
 
-        :type comment: str
-        :param comment: (optional) A reasonable explanation for why the
+        :param comment: A reasonable explanation for why the
                         task is being submitted.
 
-        :type priority: int
-        :param priority: (optional) Task priority from 10 to -10
+        :param priority: Task priority from 10 to -10
                          (default: 0).
 
-        :type data: dict
-        :param data: (optional) Extra POST data to submit with
+        :param data: Extra POST data to submit with
                      the request. Refer to `Tasks API Request Entity
                      <https://archive.org/services/docs/api/tasks.html#request-entity>`_.
 
-        :type headers: dict
-        :param headers: (optional) Add additional headers to request.
+        :param headers: Add additional headers to request.
 
-        :rtype: :class:`requests.Response`
+        :returns: :class:`requests.Response`
         """
-        data = {} if not data else data
+        data = data or {}
         data.update({'cmd': cmd, 'identifier': identifier})
         if comment:
             if 'args' in data:
@@ -269,13 +264,13 @@ class CatalogTask:
     """This class represents an Archive.org catalog task. It is primarily used by
     :class:`Catalog`, and should not be used directly.
     """
-    def __init__(self, task_dict, catalog_obj):
+    def __init__(self, task_dict: Mapping, catalog_obj: Catalog):
         self.session = catalog_obj.session
         self.request_kwargs = catalog_obj.request_kwargs
         self.color = None
         self.task_dict = task_dict
         for key, value in task_dict.items():
-            setattr(self, key, value)
+            setattr(self, key, value)  # Confuses mypy ;-)
 
     def __repr__(self):
         color = self.task_dict.get('color', 'done')
@@ -285,44 +280,45 @@ class CatalogTask:
                 ' submitter={submitter!r},'
                 ' color={task_color!r})'.format(task_color=color, **self.task_dict))
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         """Dict-like access provided as backward compatibility."""
         return self.task_dict[key]
 
     def json(self):
         return json.dumps(self.task_dict)
 
-    def task_log(self):
+    def task_log(self) -> str:
         """Get task log.
 
-        :rtype: str
         :returns: The task log as a string.
 
         """
-        if self.task_id is None:
+        task_id = self.task_id  # type: ignore
+        if task_id is None:
             raise ValueError('task_id is None')
-        return self.get_task_log(self.task_id, self.session, self.request_kwargs)
+        return self.get_task_log(task_id, self.session, self.request_kwargs)
 
     @staticmethod
-    def get_task_log(task_id, session, request_kwargs=None):
+    def get_task_log(
+        task_id: int | str | None,
+        session: ia_session.ArchiveSession,
+        request_kwargs: Mapping | None = None
+    ) -> str:
         """Static method for getting a task log, given a task_id.
 
         This method exists so a task log can be retrieved without
         retrieving the items task history first.
 
-        :type task_id: str or int
         :param task_id: The task id for the task log you'd like to fetch.
 
-        :type archive_session: :class:`ArchiveSession <ArchiveSession>`
+        :param archive_session: :class:`ArchiveSession <ArchiveSession>`
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments that
+        :param request_kwargs: Keyword arguments that
                                :py:class:`requests.Request` takes.
 
-        :rtype: str
         :returns: The task log as a string.
         """
-        request_kwargs = request_kwargs if request_kwargs else {}
+        request_kwargs = request_kwargs or {}
         _auth = auth.S3Auth(session.access_key, session.secret_key)
         if session.host == 'archive.org':
             host = 'catalogd.archive.org'

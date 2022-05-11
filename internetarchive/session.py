@@ -44,8 +44,7 @@ from requests.cookies import create_cookie
 from requests.packages.urllib3 import Retry
 from requests.utils import default_headers
 
-from internetarchive import __version__, auth
-from internetarchive.catalog import Catalog, CatalogTask
+from internetarchive import __version__, auth, catalog
 from internetarchive.config import get_config
 from internetarchive.item import Collection, Item
 from internetarchive.search import Search
@@ -360,7 +359,7 @@ class ArchiveSession(requests.sessions.Session):
             return True
 
     def get_tasks_api_rate_limit(self, cmd: str = 'derive.php', request_kwargs: dict | None = None):
-        return Catalog(self, request_kwargs).get_rate_limit(cmd=cmd)
+        return catalog.Catalog(self, request_kwargs).get_rate_limit(cmd=cmd)
 
     def submit_task(self,
                     identifier: str,
@@ -415,7 +414,7 @@ class ArchiveSession(requests.sessions.Session):
         headers = headers or {}
         if reduced_priority:
             headers.update({'X-Accept-Reduced-Priority': '1'})
-        return Catalog(self, request_kwargs).submit_task(identifier, cmd,
+        return catalog.Catalog(self, request_kwargs).submit_task(identifier, cmd,
                                                          comment=comment,
                                                          priority=priority,
                                                          data=data,
@@ -424,7 +423,7 @@ class ArchiveSession(requests.sessions.Session):
     def iter_history(self,
                      identifier: str | None,
                      params: dict | None = None,
-                     request_kwargs: Mapping | None = None):
+                     request_kwargs: Mapping | None = None) -> Iterable[catalog.CatalogTask]:
         """A generator that returns completed tasks.
 
         :type identifier: str
@@ -444,13 +443,13 @@ class ArchiveSession(requests.sessions.Session):
         """
         params = params or {}
         params.update({'identifier': identifier, 'catalog': 0, 'summary': 0, 'history': 1})
-        c = Catalog(self, request_kwargs)
+        c = catalog.Catalog(self, request_kwargs)
         yield from c.iter_tasks(params)
 
     def iter_catalog(self,
                      identifier: str | None = None,
                      params: dict | None = None,
-                     request_kwargs: Mapping | None = None):
+                     request_kwargs: Mapping | None = None) -> Iterable[catalog.CatalogTask]:
         """A generator that returns queued or running tasks.
 
         :type identifier: str
@@ -470,7 +469,7 @@ class ArchiveSession(requests.sessions.Session):
         """
         params = params or {}
         params.update({'identifier': identifier, 'catalog': 1, 'summary': 0, 'history': 0})
-        c = Catalog(self, request_kwargs)
+        c = catalog.Catalog(self, request_kwargs)
         yield from c.iter_tasks(params)
 
     def get_tasks_summary(self, identifier: str = "",
@@ -494,11 +493,11 @@ class ArchiveSession(requests.sessions.Session):
 
         :rtype: dict
         """
-        return Catalog(self, request_kwargs).get_summary(identifier=identifier, params=params)
+        return catalog.Catalog(self, request_kwargs).get_summary(identifier=identifier, params=params)
 
     def get_tasks(self, identifier: str = "",
                   params: dict | None = None,
-                  request_kwargs: Mapping | None = None) -> set[CatalogTask]:
+                  request_kwargs: Mapping | None = None) -> set[catalog.CatalogTask]:
         """Get a list of all tasks meeting all criteria.
         The list is ordered by submission time.
 
@@ -524,11 +523,14 @@ class ArchiveSession(requests.sessions.Session):
             params['history'] = 1
         if 'catalog' not in params:
             params['catalog'] = 1
-        return set(Catalog(self, request_kwargs).get_tasks(identifier=identifier, params=params))
+        return set(catalog.Catalog(self, request_kwargs).get_tasks(
+            identifier=identifier,
+            params=params)
+        )
 
     def get_my_catalog(self,
                        params: dict | None = None,
-                       request_kwargs: Mapping | None = None) -> set[CatalogTask]:
+                       request_kwargs: Mapping | None = None) -> set[catalog.CatalogTask]:
         """Get all queued or running tasks.
 
         :type params: dict
@@ -561,7 +563,7 @@ class ArchiveSession(requests.sessions.Session):
         :rtype: str
         :returns: The task log as a string.
         """
-        return CatalogTask.get_task_log(task_id, self, request_kwargs)
+        return catalog.CatalogTask.get_task_log(task_id, self, request_kwargs)
 
     def send(self, request, **kwargs) -> Response:
         # Catch urllib3 warnings for HTTPS related errors.

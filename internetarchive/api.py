@@ -49,17 +49,16 @@ def get_session(
     object is the main interface to the ``internetarchive`` lib. It allows you to
     persist certain parameters across tasks.
 
-    :type config: dict
-    :param config: (optional) A dictionary used to configure your session.
+    :param config: A dictionary used to configure your session.
 
-    :type config_file: str
-    :param config_file: (optional) A path to a config file used to configure your session.
+    :param config_file: A path to a config file used to configure your session.
 
-    :type http_adapter_kwargs: dict
-    :param http_adapter_kwargs: (optional) Keyword arguments that
+    :param debug: To be passed on to this session's method calls.
+
+    :param http_adapter_kwargs: Keyword arguments that
                                 :py:class:`requests.adapters.HTTPAdapter` takes.
 
-    :returns: :class:`ArchiveSession` object.
+    :returns: To persist certain parameters across tasks.
 
     Usage:
 

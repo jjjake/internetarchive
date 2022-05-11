@@ -382,16 +382,12 @@ def merge_dictionaries(
        If equal keys exist in both dictionaries,
        entries in`dict0` are overwritten.
 
-       :type dict0: dict
        :param dict0: A base dictionary with the bulk of the items.
 
-       :type dict1: dict
        :param dict1: Additional items which overwrite the items in `dict0`.
 
-       :type keys_to_drop: iterable
        :param keys_to_drop: An iterable of keys to drop from `dict0` before the merge.
 
-       :rtype: dict
        :returns: A merged dictionary.
        """
     new_dict = dict0.copy()

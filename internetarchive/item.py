@@ -41,8 +41,8 @@ from requests import Request, Response
 from requests.exceptions import HTTPError
 from tqdm import tqdm
 
+from internetarchive import catalog
 from internetarchive.auth import S3Auth
-from internetarchive.catalog import CatalogTask
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
 from internetarchive.utils import (IdentifierListAsItems,
@@ -273,7 +273,7 @@ class Item(BaseItem):
         self,
         params: dict | None = None,
         request_kwargs: Mapping | None = None,
-    ) -> list[CatalogTask]:
+    ) -> list[catalog.CatalogTask]:
         """Get a list of all tasks for the item, pending and complete.
 
         :type params: dict
@@ -296,7 +296,7 @@ class Item(BaseItem):
         self,
         params: Mapping | None = None,
         request_kwargs: Mapping | None = None,
-    ) -> list[CatalogTask]:
+    ) -> list[catalog.CatalogTask]:
         """Get a list of completed catalog tasks for the item.
 
         :type params: dict
@@ -313,7 +313,7 @@ class Item(BaseItem):
         self,
         params: Mapping | None = None,
         request_kwargs: Mapping | None = None,
-    ) -> list[CatalogTask]:
+    ) -> list[catalog.CatalogTask]:
         """Get a list of pending catalog tasks for the item.
 
         :type params: dict

@@ -49,17 +49,16 @@ def get_session(
     object is the main interface to the ``internetarchive`` lib. It allows you to
     persist certain parameters across tasks.
 
-    :type config: dict
-    :param config: (optional) A dictionary used to configure your session.
+    :param config: A dictionary used to configure your session.
 
-    :type config_file: str
-    :param config_file: (optional) A path to a config file used to configure your session.
+    :param config_file: A path to a config file used to configure your session.
 
-    :type http_adapter_kwargs: dict
-    :param http_adapter_kwargs: (optional) Keyword arguments that
+    :param debug: To be passed on to this session's method calls.
+
+    :param http_adapter_kwargs: Keyword arguments that
                                 :py:class:`requests.adapters.HTTPAdapter` takes.
 
-    :returns: :class:`ArchiveSession` object.
+    :returns: To persist certain parameters across tasks.
 
     Usage:
 
@@ -92,26 +91,24 @@ def get_item(
 ) -> item.Item:
     """Get an :class:`Item` object.
 
-    :type identifier: str
     :param identifier: The globally unique Archive.org item identifier.
 
-    :type config: dict
-    :param config: (optional) A dictionary used to configure your session.
+    :param config: A dictionary used to configure your session.
 
-    :type config_file: str
-    :param config_file: (optional) A path to a config file used to configure your session.
+    :param config_file: A path to a config file used to configure your session.
 
-    :type archive_session: :class:`ArchiveSession`
-    :param archive_session: (optional) An :class:`ArchiveSession` object can be provided
+    :param archive_session: An :class:`ArchiveSession` object can be provided
                             via the ``archive_session`` parameter.
 
-    :type http_adapter_kwargs: dict
-    :param http_adapter_kwargs: (optional) Keyword arguments that
+    :param debug: To be passed on to get_session().
+
+    :param http_adapter_kwargs: Keyword arguments that
                                 :py:class:`requests.adapters.HTTPAdapter` takes.
 
-    :type request_kwargs: dict
-    :param request_kwargs: (optional) Keyword arguments that
+    :param request_kwargs: Keyword arguments that
                            :py:class:`requests.Request` takes.
+
+    :returns: The Item that fits the criteria.
 
     Usage:
         >>> from internetarchive import get_item
@@ -134,23 +131,20 @@ def get_files(
 ) -> list[files.File]:
     r"""Get :class:`File` objects from an item.
 
-    :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
 
-    :param files: iterable
-    :param files: (optional) Only return files matching the given filenames.
+    :param files: Only return files matching the given filenames.
 
-    :param formats: iterable
-    :param formats: (optional) Only return files matching the given formats.
+    :param formats: Only return files matching the given formats.
 
-    :type glob_pattern: str
-    :param glob_pattern: (optional) Only return files matching the given glob pattern.
+    :param glob_pattern: Only return files matching the given glob pattern.
 
-    :type on_the_fly: bool
-    :param on_the_fly: (optional) Include on-the-fly files (i.e. derivative EPUB,
+    :param on_the_fly: Include on-the-fly files (i.e. derivative EPUB,
                        MOBI, DAISY files).
 
-    :param \*\*get_item_kwargs: (optional) Arguments that ``get_item()`` takes.
+    :param \*\*get_item_kwargs: Arguments that ``get_item()`` takes.
+
+    :returns: Files from an item.
 
     Usage:
         >>> from internetarchive import get_files
@@ -177,40 +171,30 @@ def modify_metadata(
 ) -> requests.Request | requests.Response:
     r"""Modify the metadata of an existing item on Archive.org.
 
-    :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
 
-    :type metadata: dict
     :param metadata: Metadata used to update the item.
 
-    :type target: str
-    :param target: (optional) The metadata target to update. Defaults to `metadata`.
+    :param target: The metadata target to update. Defaults to `metadata`.
 
-    :type append: bool
-    :param append: (optional) set to True to append metadata values to current values
+    :param append: set to True to append metadata values to current values
                    rather than replacing. Defaults to ``False``.
 
-    :type append_list: bool
-    :param append_list: (optional) Append values to an existing multi-value
+    :param append_list: Append values to an existing multi-value
                         metadata field. No duplicate values will be added.
 
-    :type priority: int
-    :param priority: (optional) Set task priority.
+    :param priority: Set task priority.
 
-    :type access_key: str
-    :param access_key: (optional) IA-S3 access_key to use when making the given request.
+    :param access_key: IA-S3 access_key to use when making the given request.
 
-    :type secret_key: str
-    :param secret_key: (optional) IA-S3 secret_key to use when making the given request.
+    :param secret_key: IA-S3 secret_key to use when making the given request.
 
-    :type debug: bool
-    :param debug: (optional) set to True to return a :class:`requests.Request <Request>`
+    :param debug: set to True to return a :class:`requests.Request <Request>`
                   object instead of sending request. Defaults to ``False``.
 
-    :param \*\*get_item_kwargs: (optional) Arguments that ``get_item`` takes.
+    :param \*\*get_item_kwargs: Arguments that ``get_item`` takes.
 
-    :returns: :class:`requests.Response` object or :class:`requests.Request` object if
-              debug is ``True``.
+    :returns: A Request if debug else a Response.
     """
     item = get_item(identifier, **get_item_kwargs)
     return item.modify_metadata(
@@ -247,61 +231,47 @@ def upload(
 ) -> list[requests.Request | requests.Response]:
     r"""Upload files to an item. The item will be created if it does not exist.
 
-    :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
 
     :param files: The filepaths or file-like objects to upload. This value can be an
                   iterable or a single file-like object or string.
 
-    :type metadata: dict
-    :param metadata: (optional) Metadata used to create a new item. If the item already
+    :param metadata: Metadata used to create a new item. If the item already
                      exists, the metadata will not be updated -- use ``modify_metadata``.
 
-    :type headers: dict
-    :param headers: (optional) Add additional HTTP headers to the request.
+    :param headers: Add additional HTTP headers to the request.
 
-    :type access_key: str
-    :param access_key: (optional) IA-S3 access_key to use when making the given request.
+    :param access_key: IA-S3 access_key to use when making the given request.
 
-    :type secret_key: str
-    :param secret_key: (optional) IA-S3 secret_key to use when making the given request.
+    :param secret_key: IA-S3 secret_key to use when making the given request.
 
-    :type queue_derive: bool
-    :param queue_derive: (optional) Set to False to prevent an item from being derived
+    :param queue_derive: Set to False to prevent an item from being derived
                          after upload.
 
-    :type verbose: bool
-    :param verbose: (optional) Display upload progress.
+    :param verbose: Display upload progress.
 
-    :type verify: bool
-    :param verify: (optional) Verify local MD5 checksum matches the MD5 checksum of the
+    :param verify: Verify local MD5 checksum matches the MD5 checksum of the
                    file received by IAS3.
 
-    :type checksum: bool
-    :param checksum: (optional) Skip uploading files based on checksum.
+    :param checksum: Skip uploading files based on checksum.
 
-    :type delete: bool
-    :param delete: (optional) Delete local file after the upload has been successfully
+    :param delete: Delete local file after the upload has been successfully
                    verified.
 
-    :type retries: int
-    :param retries: (optional) Number of times to retry the given request if S3 returns a
+    :param retries: Number of times to retry the given request if S3 returns a
                     503 SlowDown error.
 
-    :type retries_sleep: int
-    :param retries_sleep: (optional) Amount of time to sleep between ``retries``.
+    :param retries_sleep: Amount of time to sleep between ``retries``.
 
-    :type debug: bool
-    :param debug: (optional) Set to True to print headers to stdout, and exit without
+    :param debug: Set to True to print headers to stdout, and exit without
                   sending the upload request.
 
-    :type validate_identifier: bool
-    :param validate_identifier: (optional) Set to True to validate the identifier before
+    :param validate_identifier: Set to True to validate the identifier before
                                 uploading the file.
 
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
 
-    :returns: A list of :py:class:`requests.Response` objects.
+    :returns: A list Requests if debug else a list of Responses.
     """
     item = get_item(identifier, **get_item_kwargs)
     return item.upload(
@@ -344,61 +314,46 @@ def download(
 ) -> list[requests.Request | requests.Response]:
     r"""Download files from an item.
 
-    :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
 
-    :param files: (optional) Only return files matching the given file names.
+    :param files: Only return files matching the given file names.
 
-    :param formats: (optional) Only return files matching the given formats.
+    :param formats: Only return files matching the given formats.
 
-    :type glob_pattern: str
-    :param glob_pattern: (optional) Only return files matching the given glob pattern.
+    :param glob_pattern: Only return files matching the given glob pattern.
 
-    :type dry_run: bool
-    :param dry_run: (optional) Print URLs to files to stdout rather than downloading
+    :param dry_run: Print URLs to files to stdout rather than downloading
                     them.
 
-    :type verbose: bool
-    :param verbose: (optional) Turn on verbose output.
+    :param verbose: Turn on verbose output.
 
-    :type ignore_existing: bool
-    :param ignore_existing: (optional) Skip files that already exist
-                            locally.
+    :param ignore_existing: Skip files that already exist locally.
 
-    :type checksum: bool
-    :param checksum: (optional) Skip downloading file based on checksum.
+    :param checksum: Skip downloading file based on checksum.
 
-    :type destdir: str
-    :param destdir: (optional) The directory to download files to.
+    :param destdir: The directory to download files to.
 
-    :type no_directory: bool
-    :param no_directory: (optional) Download files to current working
+    :param no_directory: Download files to current working
                          directory rather than creating an item directory.
 
-    :type retries: int
-    :param retries: (optional) The number of times to retry on failed
+    :param retries: The number of times to retry on failed
                     requests.
 
-    :type item_index: int
-    :param item_index: (optional) The index of the item for displaying
+    :param item_index: The index of the item for displaying
                        progress in bulk downloads.
 
-    :type ignore_errors: bool
-    :param ignore_errors: (optional) Don't fail if a single file fails to
+    :param ignore_errors: Don't fail if a single file fails to
                           download, continue to download other files.
 
-    :type on_the_fly: bool
-    :param on_the_fly: (optional) Download on-the-fly files (i.e. derivative EPUB,
+    :param on_the_fly: Download on-the-fly files (i.e. derivative EPUB,
                        MOBI, DAISY files).
 
-    :type return_responses: bool
-    :param return_responses: (optional) Rather than downloading files to disk, return
+    :param return_responses: Rather than downloading files to disk, return
                              a list of response objects.
 
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
 
-    :rtype: bool
-    :returns: True if all files were downloaded successfully.
+    :returns: A list Requests if debug else a list of Responses.
     """
     item = get_item(identifier, **get_item_kwargs)
     r = item.download(
@@ -436,32 +391,27 @@ def delete(
     """Delete files from an item. Note: Some system files, such as <itemname>_meta.xml,
     cannot be deleted.
 
-    :type identifier: str
     :param identifier: The globally unique Archive.org identifier for a given item.
 
-    :param files: (optional) Only return files matching the given filenames.
+    :param files: Only return files matching the given filenames.
 
-    :param formats: (optional) Only return files matching the given formats.
+    :param formats: Only return files matching the given formats.
 
-    :type glob_pattern: str
-    :param glob_pattern: (optional) Only return files matching the given glob pattern.
+    :param glob_pattern: Only return files matching the given glob pattern.
 
-    :type cascade_delete: bool
-    :param cascade_delete: (optional) Delete all files associated with the specified file,
+    :param cascade_delete: Delete all files associated with the specified file,
                            including upstream derivatives and the original.
 
-    :type access_key: str
-    :param access_key: (optional) IA-S3 access_key to use when making the given request.
+    :param access_key: IA-S3 access_key to use when making the given request.
 
-    :type secret_key: str
-    :param secret_key: (optional) IA-S3 secret_key to use when making the given request.
+    :param secret_key: IA-S3 secret_key to use when making the given request.
 
-    :type verbose: bool
     :param verbose: Print actions to stdout.
 
-    :type debug: bool
-    :param debug: (optional) Set to True to print headers to stdout and exit exit without
+    :param debug: Set to True to print headers to stdout and exit exit without
                   sending the delete request.
+
+    :returns: A list Requests if debug else a list of Responses
     """
     _files = get_files(identifier, files, formats, glob_pattern, **kwargs)
 
@@ -489,12 +439,9 @@ def get_tasks(
 ) -> set[catalog.CatalogTask]:
     """Get tasks from the Archive.org catalog.
 
-    :type identifier: str
-    :param identifier: (optional) The Archive.org identifier for which to retrieve tasks
-                       for.
+    :param identifier: The Archive.org identifier for which to retrieve tasks for.
 
-    :type params: dict
-    :param params: (optional) The URL parameters to send with each request sent to the
+    :param params: The URL parameters to send with each request sent to the
                    Archive.org catalog API.
 
     :returns: A set of :class:`CatalogTask` objects.
@@ -522,42 +469,32 @@ def search_items(
 ) -> search.Search:
     """Search for items on Archive.org.
 
-    :type query: str
     :param query: The Archive.org search query to yield results for. Refer to
                   https://archive.org/advancedsearch.php#raw for help formatting your
                   query.
 
-    :type fields: list
-    :param fields: (optional) The metadata fields to return in the search results.
+    :param fields: The metadata fields to return in the search results.
 
-    :type params: dict
-    :param params: (optional) The URL parameters to send with each request sent to the
+    :param params: The URL parameters to send with each request sent to the
                    Archive.org Advancedsearch Api.
 
-    :type full_text_search: bool
-    :param full_text_search: (optional) Beta support for querying the archive.org
+    :param full_text_search: Beta support for querying the archive.org
                              Full Text Search API [default: False].
 
-    :type dsl_fts: bool
-    :param dsl_fts: (optional) Beta support for querying the archive.org Full Text
+    :param dsl_fts: Beta support for querying the archive.org Full Text
                     Search API in dsl (i.e. do not prepend ``!L `` to the
                     ``full_text_search`` query [default: False].
 
-    :type config: dict
-    :param secure: (optional) Configuration options for session.
+    :param secure: Configuration options for session.
 
-    :type config_file: str
-    :param config_file: (optional) A path to a config file used to configure your session.
+    :param config_file: A path to a config file used to configure your session.
 
-    :type http_adapter_kwargs: dict
-    :param http_adapter_kwargs: (optional) Keyword arguments that
+    :param http_adapter_kwargs: Keyword arguments that
                                 :py:class:`requests.adapters.HTTPAdapter` takes.
 
-    :type request_kwargs: dict
-    :param request_kwargs: (optional) Keyword arguments that
+    :param request_kwargs: Keyword arguments that
                            :py:class:`requests.Request` takes.
 
-    :type max_retries: int, object
     :param max_retries: The number of times to retry a failed request.
                         This can also be an `urllib3.Retry` object.
                         If you need more control (e.g. `status_forcelist`), use a
@@ -595,11 +532,11 @@ def configure(  # nosec: hardcoded_password_default
 ) -> str:
     """Configure internetarchive with your Archive.org credentials.
 
-    :type username: str
     :param username: The email address associated with your Archive.org account.
 
-    :type password: str
     :param password: Your Archive.org password.
+
+    :returns: The config file path.
 
     Usage:
         >>> from internetarchive import configure
@@ -617,11 +554,11 @@ def configure(  # nosec: hardcoded_password_default
 def get_username(access_key: str, secret_key: str) -> str:
     """Returns an Archive.org username given an IA-S3 key pair.
 
-    :type access_key: str
     :param access_key: IA-S3 access_key to use when making the given request.
 
-    :type secret_key: str
     :param secret_key: IA-S3 secret_key to use when making the given request.
+
+    :returns: The username.
     """
     j = get_user_info(access_key, secret_key)
     return j.get("username", "")
@@ -630,11 +567,11 @@ def get_username(access_key: str, secret_key: str) -> str:
 def get_user_info(access_key: str, secret_key: str) -> dict[str, str]:
     """Returns details about an Archive.org user given an IA-S3 key pair.
 
-    :type access_key: str
     :param access_key: IA-S3 access_key to use when making the given request.
 
-    :type secret_key: str
     :param secret_key: IA-S3 secret_key to use when making the given request.
+
+    :returns: Archive.org use info.
     """
     u = "https://s3.us.archive.org"
     p = {"check_auth": 1}

@@ -161,9 +161,8 @@ class Item(BaseItem):
         item_metadata: Mapping | None = None,
     ):
         """
-        :type archive_session: :class:`ArchiveSession <ArchiveSession>`
+        :param archive_session: :class:`ArchiveSession <ArchiveSession>`
 
-        :type identifier: str
         :param identifier: The globally unique Archive.org identifier for this item.
 
                            An identifier is composed of any unique combination of
@@ -177,8 +176,7 @@ class Item(BaseItem):
                            with the item or object and is involved in every manner of
                            accessing or referring to the item.
 
-        :type item_metadata: dict
-        :param item_metadata: (optional) The Archive.org item metadata used to initialize
+        :param item_metadata: The Archive.org item metadata used to initialize
                               this item.  If no item metadata is provided, it will be
                               retrieved from Archive.org using the provided identifier.
         """
@@ -230,7 +228,6 @@ class Item(BaseItem):
         """Check if the item identifier is available for creating a
         new item.
 
-        :rtype: bool
         :return: `True` if identifier is available, or `False` if it is
                  not available.
         """
@@ -247,10 +244,9 @@ class Item(BaseItem):
     ) -> dict:
         """Get a summary of the item's pending tasks.
 
-        :type params: dict
-        :param params: (optional) Params to send with your request.
+        :param params: Params to send with your request.
 
-        :rtype: dict
+        :returns: A summary of the item's pending tasks.
         """
         return self.session.get_tasks_summary(self.identifier, params, request_kwargs)
 
@@ -261,10 +257,8 @@ class Item(BaseItem):
     ) -> bool:
         """Get a list of completed catalog tasks for the item.
 
-        :type params: dict
-        :param params: (optional) Params to send with your request.
+        :param params: Params to send with your request.
 
-        :rtype: bool
         :returns: `True` if no tasks are pending, otherwise `False`.
         """
         return all(x == 0 for x in self.get_task_summary(params, request_kwargs).values())
@@ -276,17 +270,15 @@ class Item(BaseItem):
     ) -> list[catalog.CatalogTask]:
         """Get a list of all tasks for the item, pending and complete.
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
                        `Tasks API
                        <https://archive.org/services/docs/api/tasks.html>`_
                        for available parameters.
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments that
+        :param request_kwargs: Keyword arguments that
                                :py:func:`requests.get` takes.
 
-        :rtype: List[CatalogTask]
+        :returns: A list of all tasks for the item, pending and complete.
         """
         params = params or {}
         params.update({'catalog': 1, 'history': 1})
@@ -299,13 +291,9 @@ class Item(BaseItem):
     ) -> list[catalog.CatalogTask]:
         """Get a list of completed catalog tasks for the item.
 
-        :type params: dict
-        :param params: (optional) Params to send with your request.
+        :param params: Params to send with your request.
 
-        :rtype: list
-        :returns: A list of task dicts.
-
-        :rtype: List[CatalogTask]
+        :returns: A list of completed catalog tasks for the item.
         """
         return list(self.session.iter_history(self.identifier, params, request_kwargs))
 
@@ -316,13 +304,9 @@ class Item(BaseItem):
     ) -> list[catalog.CatalogTask]:
         """Get a list of pending catalog tasks for the item.
 
-        :type params: dict
-        :param params: (optional) Params to send with your request.
+        :param params: Params to send with your request.
 
-        :rtype: list
-        :returns: A list of task dicts.
-
-        :rtype: List[CatalogTask]
+        :returns: A list of pending catalog tasks for the item.
         """
         return list(self.session.iter_catalog(self.identifier, params, request_kwargs))
 
@@ -335,11 +319,9 @@ class Item(BaseItem):
                request_kwargs: Mapping | None = None) -> Response:
         """Derive an item.
 
-        :type priority: int
-        :param priority: (optional) Task priority from 10 to -10 [default: 0]
+        :param priority: Task priority from 10 to -10 [default: 0]
 
-        :type remove_derived: str
-        :param remove_derived: (optional) You can use wildcards ("globs")
+        :param remove_derived: You can use wildcards ("globs")
                                to only remove *some* prior derivatives.
                                For example, "*" (typed without the
                                quotation marks) specifies that all
@@ -349,14 +331,13 @@ class Item(BaseItem):
                                "{*.gif,*thumbs/*.jpg}" specifies that all
                                GIF and thumbs are to be rebuilt.
 
-        :type reduced_priority: bool
-        :param reduced_priority: (optional) Submit your derive at a lower priority.
+        :param reduced_priority: Submit your derive at a lower priority.
                                  This option is helpful to get around rate-limiting.
                                  Your task will more likey be accepted, but it might
                                  not run for a long time. Note that you still may be
                                  subject to rate-limiting.
 
-        :rtype: :class:`requests.Response`
+        :returns: :class:`requests.Response`
         """
         data = data or {}
 
@@ -385,15 +366,12 @@ class Item(BaseItem):
               request_kwargs: Mapping | None = None) -> Response:
         """Submit a fixer task on an item.
 
-        :type ops: str or list
-        :param ops: (optional) The fixer operation(s) to run on the item
+        :param ops: The fixer operation(s) to run on the item
                     [default: noop].
 
-        :type priority: str or int
-        :param priority: (optional) The task priority.
+        :param priority: The task priority.
 
-        :type reduced_priority: bool
-        :param reduced_priority: (optional) Submit your derive at a lower priority.
+        :param reduced_priority: Submit your derive at a lower priority.
                                  This option is helpful to get around rate-limiting.
                                  Your task will more likey be accepted, but it might
                                  not run for a long time. Note that you still may be
@@ -401,11 +379,10 @@ class Item(BaseItem):
                                  ``priority`` in that it will allow you to possibly
                                  avoid rate-limiting.
 
-        :type data: dict
-        :param data: (optional) Additional parameters to submit with
+        :param data: Additional parameters to submit with
                      the task.
 
-        :rtype: :class:`requests.Response`
+        :returns: :class:`requests.Response`
         """
         data = data or {}
 
@@ -434,15 +411,12 @@ class Item(BaseItem):
                request_kwargs: Mapping | None = None) -> Response:
         """Undark the item.
 
-        :type comment: str
         :param comment: The curation comment explaining reason for
                         undarking item
 
-        :type priority: str or int
-        :param priority: (optional) The task priority.
+        :param priority: The task priority.
 
-        :type reduced_priority: bool
-        :param reduced_priority: (optional) Submit your derive at a lower priority.
+        :param reduced_priority: Submit your derive at a lower priority.
                                  This option is helpful to get around rate-limiting.
                                  Your task will more likey be accepted, but it might
                                  not run for a long time. Note that you still may be
@@ -450,11 +424,10 @@ class Item(BaseItem):
                                  ``priority`` in that it will allow you to possibly
                                  avoid rate-limiting.
 
-        :type data: dict
-        :param data: (optional) Additional parameters to submit with
+        :param data: Additional parameters to submit with
                      the task.
 
-        :rtype: :class:`requests.Response`
+        :returns: :class:`requests.Response`
         """
         r = self.session.submit_task(self.identifier,
                                      'make_undark.php',
@@ -475,15 +448,12 @@ class Item(BaseItem):
              request_kwargs: Mapping | None = None) -> Response:
         """Dark the item.
 
-        :type comment: str
         :param comment: The curation comment explaining reason for
                         darking item
 
-        :type priority: str or int
-        :param priority: (optional) The task priority.
+        :param priority: The task priority.
 
-        :type reduced_priority: bool
-        :param reduced_priority: (optional) Submit your derive at a lower priority.
+        :param reduced_priority: Submit your derive at a lower priority.
                                  This option is helpful to get around rate-limiting.
                                  Your task will more likey be accepted, but it might
                                  not run for a long time. Note that you still may be
@@ -491,11 +461,10 @@ class Item(BaseItem):
                                  ``priority`` in that it will allow you to possibly
                                  avoid rate-limiting.
 
-        :type data: dict
-        :param data: (optional) Additional parameters to submit with
+        :param data: Additional parameters to submit with
                      the task.
 
-        :rtype: :class:`requests.Response`
+        :returns: :class:`requests.Response`
         """
         r = self.session.submit_task(self.identifier,
                                      'make_dark.php',
@@ -537,12 +506,10 @@ class Item(BaseItem):
     def get_file(self, file_name: str, file_metadata: Mapping | None = None) -> File:
         """Get a :class:`File <File>` object for the named file.
 
-        :rtype: :class:`internetarchive.File <File>`
-        :returns: An :class:`internetarchive.File <File>` object.
-
-        :type file_metadata: dict
-        :param file_metadata: (optional) a dict of metadata for the
+        :param file_metadata: a dict of metadata for the
                               given file.
+
+        :returns: An :class:`internetarchive.File <File>` object.
         """
         return File(self, file_name, file_metadata)
 
@@ -610,71 +577,54 @@ class Item(BaseItem):
                  params: Mapping | None = None) -> list[Request | Response]:
         """Download files from an item.
 
-        :param files: (optional) Only download files matching given file names.
+        :param files: Only download files matching given file names.
 
-        :type formats: str
-        :param formats: (optional) Only download files matching the given
+        :param formats: Only download files matching the given
                         Formats.
 
-        :type glob_pattern: str
-        :param glob_pattern: (optional) Only download files matching the given
+        :param glob_pattern: Only download files matching the given
                              glob pattern.
 
-        :type dry_run: bool
-        :param dry_run: (optional) Output download URLs to stdout, don't
+        :param dry_run: Output download URLs to stdout, don't
                         download anything.
 
-        :type verbose: bool
-        :param verbose: (optional) Turn on verbose output.
+        :param verbose: Turn on verbose output.
 
-        :type ignore_existing: bool
-        :param ignore_existing: (optional) Skip files that already exist
+        :param ignore_existing: Skip files that already exist
                                 locally.
 
-        :type checksum: bool
-        :param checksum: (optional) Skip downloading file based on checksum.
+        :param checksum: Skip downloading file based on checksum.
 
-        :type destdir: str
-        :param destdir: (optional) The directory to download files to.
+        :param destdir: The directory to download files to.
 
-        :type no_directory: bool
-        :param no_directory: (optional) Download files to current working
+        :param no_directory: Download files to current working
                              directory rather than creating an item directory.
 
-        :type retries: int
-        :param retries: (optional) The number of times to retry on failed
+        :param retries: The number of times to retry on failed
                         requests.
 
-        :type item_index: int
-        :param item_index: (optional) The index of the item for displaying
+        :param item_index: The index of the item for displaying
                            progress in bulk downloads.
 
-        :type ignore_errors: bool
-        :param ignore_errors: (optional) Don't fail if a single file fails to
+        :param ignore_errors: Don't fail if a single file fails to
                               download, continue to download other files.
 
-        :type on_the_fly: bool
-        :param on_the_fly: (optional) Download on-the-fly files (i.e. derivative EPUB,
+        :param on_the_fly: Download on-the-fly files (i.e. derivative EPUB,
                            MOBI, DAISY files).
 
-        :type return_responses: bool
-        :param return_responses: (optional) Rather than downloading files to disk, return
+        :param return_responses: Rather than downloading files to disk, return
                                  a list of response objects.
 
-        :type no_change_timestamp: bool
-        :param no_change_timestamp: (optional) If True, leave the time stamp as the
+        :param no_change_timestamp: If True, leave the time stamp as the
                                     current time instead of changing it to that given in
                                     the original archive.
 
-        :type params: dict
-        :param params: (optional) URL parameters to send with
+        :param params: URL parameters to send with
                        download request (e.g. `cnt=0`).
 
-        :type ignore_history_dir: bool
-        :param ignore_history_dir: (optional) Do not download any files from the history
+        :param ignore_history_dir: Do not download any files from the history
                                    dir. This param defaults to ``False``.
 
-        :rtype: bool
         :returns: True if if all files have been downloaded successfully.
         """
         dry_run = bool(dry_run)
@@ -770,22 +720,19 @@ class Item(BaseItem):
         latest Json-Patch standard. It currently complies with `version 02
         <https://tools.ietf.org/html/draft-ietf-appsawg-json-patch-02>`__.
 
-        :type metadata: dict
         :param metadata: Metadata used to update the item.
 
-        :type target: str
-        :param target: (optional) Set the metadata target to update.
+        :param target: Set the metadata target to update.
 
-        :type priority: int
-        :param priority: (optional) Set task priority.
+        :param priority: Set task priority.
 
-        :type append: bool
-        :param append: (optional) Append value to an existing multi-value
+        :param append: Append value to an existing multi-value
                        metadata field.
 
-        :type append_list: bool
-        :param append_list: (optional) Append values to an existing multi-value
+        :param append_list: Append values to an existing multi-value
                             metadata field. No duplicate values will be added.
+
+        :returns: A Request if debug else a Response.
 
         Usage::
 
@@ -793,10 +740,6 @@ class Item(BaseItem):
             >>> item = internetarchive.Item('mapi_test_item1')
             >>> md = {'new_key': 'new_value', 'foo': ['bar', 'bar2']}
             >>> item.modify_metadata(md)
-
-        :rtype: Response
-        :returns: A dictionary containing the status_code and response
-                  returned from the Metadata API.
         """
         append = bool(append)
         access_key = access_key or self.session.access_key
@@ -838,7 +781,7 @@ class Item(BaseItem):
     def remove_from_simplelist(self, parent, list) -> Response:
         """Remove item from a simplelist.
 
-        :rtype: :class:`requests.Response`
+        :returns: :class:`requests.Response`
         """
         patch = {
             'op': 'delete',
@@ -875,52 +818,39 @@ class Item(BaseItem):
         :type body: Filepath or file-like object.
         :param body: File or data to be uploaded.
 
-        :type key: str
-        :param key: (optional) Remote filename.
+        :param key: Remote filename.
 
-        :type metadata: dict
-        :param metadata: (optional) Metadata used to create a new item.
+        :param metadata: Metadata used to create a new item.
 
-        :type file_metadata: dict
-        :param file_metadata: (optional) File-level metadata to add to
+        :param file_metadata: File-level metadata to add to
                               the files.xml entry for the file being
                               uploaded.
 
-        :type headers: dict
-        :param headers: (optional) Add additional IA-S3 headers to request.
+        :param headers: Add additional IA-S3 headers to request.
 
-        :type queue_derive: bool
-        :param queue_derive: (optional) Set to False to prevent an item from
+        :param queue_derive: Set to False to prevent an item from
                              being derived after upload.
 
-        :type verify: bool
-        :param verify: (optional) Verify local MD5 checksum matches the MD5
+        :param verify: Verify local MD5 checksum matches the MD5
                        checksum of the file received by IAS3.
 
-        :type checksum: bool
-        :param checksum: (optional) Skip based on checksum.
+        :param checksum: Skip based on checksum.
 
-        :type delete: bool
-        :param delete: (optional) Delete local file after the upload has been
+        :param delete: Delete local file after the upload has been
                        successfully verified.
 
-        :type retries: int
-        :param retries: (optional) Number of times to retry the given request
+        :param retries: Number of times to retry the given request
                         if S3 returns a 503 SlowDown error.
 
-        :type retries_sleep: int
-        :param retries_sleep: (optional) Amount of time to sleep between
+        :param retries_sleep: Amount of time to sleep between
                               ``retries``.
 
-        :type verbose: bool
-        :param verbose: (optional) Print progress to stdout.
+        :param verbose: Print progress to stdout.
 
-        :type debug: bool
-        :param debug: (optional) Set to True to print headers to stdout, and
+        :param debug: Set to True to print headers to stdout, and
                       exit without sending the upload request.
 
-        :type validate_identifier: bool
-        :param validate_identifier: (optional) Set to True to validate the identifier before
+        :param validate_identifier: Set to True to validate the identifier before
                                     uploading the file.
 
         Usage::
@@ -1134,6 +1064,8 @@ class Item(BaseItem):
 
         :param \*\*kwargs: Optional arguments that :func:`Item.upload_file()` takes.
 
+        :returns: A list of :class:`requests.Response` objects.
+
         Usage::
 
             >>> import internetarchive
@@ -1163,9 +1095,6 @@ class Item(BaseItem):
         Setting the remote filename with a dict::
 
             >>> r = item.upload({'remote-name.txt': '/path/to/local/file.txt'})
-
-        :rtype: list
-        :returns: A list of :class:`requests.Response` objects.
         """
         queue_derive = True if queue_derive is None else queue_derive
         remote_dir_name = None

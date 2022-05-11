@@ -78,12 +78,10 @@ class Catalog:
         """
         Initialize :class:`Catalog <Catalog>` object.
 
-        :type archive_session: :class:`ArchiveSession <ArchiveSession>`
         :param archive_session: An :class:`ArchiveSession <ArchiveSession>`
                                 object.
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments to be used
+        :param request_kwargs: Keyword arguments to be used
                                in :meth:`requests.sessions.Session.get`
                                and :meth:`requests.sessions.Session.post`
                                requests.
@@ -98,15 +96,13 @@ class Catalog:
         organized by run status (queued, running, error, and paused).
 
 
-        :type identifier: str
-        :param identifier: (optional) Item identifier.
+        :param identifier: Item identifier.
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
         `Tasks API <https://archive.org/services/docs/api/tasks.html>`_
         for available parameters.
 
-        :rtype: dict
+        :returns: the total counts of catalog tasks meeting all criteria
         """
         params = params or {}
         if identifier:
@@ -123,13 +119,12 @@ class Catalog:
         """Make a GET request to the
          `Tasks API <https://archive.org/services/docs/api/tasks.html>`_
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
                        `Tasks API
                        <https://archive.org/services/docs/api/tasks.html>`_
                        for available parameters.
 
-        :rtype: :class:`requests.Response`
+        :returns: :class:`requests.Response`
         """
         r = self.session.get(self.url,
                              params=params,
@@ -147,13 +142,12 @@ class Catalog:
         """A generator that can make arbitrary requests to the
         Tasks API. It handles paging (via cursor) automatically.
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
                        `Tasks API
                        <https://archive.org/services/docs/api/tasks.html>`_
                        for available parameters.
 
-        :rtype: collections.Iterable[CatalogTask]
+        :returns: collections.Iterable[CatalogTask]
         """
         params = params or {}
         while True:
@@ -187,17 +181,15 @@ class Catalog:
         """Get a list of all tasks meeting all criteria.
         The list is ordered by submission time.
 
-        :type identifier: str
-        :param identifier: (optional) The item identifier, if provided
+        :param identifier: The item identifier, if provided
                            will return tasks for only this item filtered by
                            other criteria provided in params.
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
         `Tasks API <https://archive.org/services/docs/api/tasks.html>`_
         for available parameters.
 
-        :rtype: List[CatalogTask]
+        :returns: A list of all tasks meeting all criteria.
         """
         params = params or {}
         if identifier:
@@ -231,31 +223,25 @@ class Catalog:
                     headers: dict | None = None) -> Response:
         """Submit an archive.org task.
 
-        :type identifier: str
         :param identifier: Item identifier.
 
-        :type cmd: str
         :param cmd: Task command to submit, see
                     `supported task commands
                     <https://archive.org/services/docs/api/tasks.html#supported-tasks>`_.
 
-        :type comment: str
-        :param comment: (optional) A reasonable explanation for why the
+        :param comment: A reasonable explanation for why the
                         task is being submitted.
 
-        :type priority: int
-        :param priority: (optional) Task priority from 10 to -10
+        :param priority: Task priority from 10 to -10
                          (default: 0).
 
-        :type data: dict
-        :param data: (optional) Extra POST data to submit with
+        :param data: Extra POST data to submit with
                      the request. Refer to `Tasks API Request Entity
                      <https://archive.org/services/docs/api/tasks.html#request-entity>`_.
 
-        :type headers: dict
-        :param headers: (optional) Add additional headers to request.
+        :param headers: Add additional headers to request.
 
-        :rtype: :class:`requests.Response`
+        :returns: :class:`requests.Response`
         """
         data = data or {}
         data.update({'cmd': cmd, 'identifier': identifier})
@@ -304,7 +290,6 @@ class CatalogTask:
     def task_log(self) -> str:
         """Get task log.
 
-        :rtype: str
         :returns: The task log as a string.
 
         """
@@ -324,16 +309,13 @@ class CatalogTask:
         This method exists so a task log can be retrieved without
         retrieving the items task history first.
 
-        :type task_id: str or int
         :param task_id: The task id for the task log you'd like to fetch.
 
-        :type archive_session: :class:`ArchiveSession <ArchiveSession>`
+        :param archive_session: :class:`ArchiveSession <ArchiveSession>`
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments that
+        :param request_kwargs: Keyword arguments that
                                :py:class:`requests.Request` takes.
 
-        :rtype: str
         :returns: The task log as a string.
         """
         request_kwargs = request_kwargs or {}

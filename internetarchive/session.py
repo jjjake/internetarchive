@@ -79,16 +79,13 @@ class ArchiveSession(requests.sessions.Session):
                  http_adapter_kwargs: MutableMapping | None = None):
         """Initialize :class:`ArchiveSession <ArchiveSession>` object with config.
 
-        :type config: dict
-        :param config: (optional) A config dict used for initializing the
+        :param config: A config dict used for initializing the
                        :class:`ArchiveSession <ArchiveSession>` object.
 
-        :type config_file: str
-        :param config_file: (optional) Path to config file used for initializing the
+        :param config_file: Path to config file used for initializing the
                             :class:`ArchiveSession <ArchiveSession>` object.
 
-        :type http_adapter_kwargs: dict
-        :param http_adapter_kwargs: (optional) Keyword arguments used to initialize the
+        :param http_adapter_kwargs: Keyword arguments used to initialize the
                                     :class:`requests.adapters.HTTPAdapter <HTTPAdapter>`
                                     object.
 
@@ -160,21 +157,17 @@ class ArchiveSession(requests.sessions.Session):
         super().rebuild_auth(prepared_request, response)
 
     def mount_http_adapter(self, protocol: str | None = None, max_retries: int | None = None,
-                           status_forcelist: list | None = None, host: str = None):
+                           status_forcelist: list | None = None, host: str = None) -> None:
         """Mount an HTTP adapter to the
         :class:`ArchiveSession <ArchiveSession>` object.
 
-        :type protocol: str
         :param protocol: HTTP protocol to mount your adapter to (e.g. 'https://').
 
-        :type max_retries: int, object
         :param max_retries: The number of times to retry a failed request.
                             This can also be an `urllib3.Retry` object.
 
-        :type status_forcelist: list
         :param status_forcelist: A list of status codes (as int's) to retry on.
 
-        :type host: str
         :param host: The host to mount your adapter to.
         """
         protocol = protocol or self.protocol
@@ -197,19 +190,21 @@ class ArchiveSession(requests.sessions.Session):
         # IA-S3 requires a more complicated retry workflow.
         self.mount(f'{protocol}//{host}', max_retries_adapter)
 
-    def set_file_logger(self, log_level: str, path: str, logger_name: str = 'internetarchive'):
+    def set_file_logger(
+        self,
+        log_level: str,
+        path: str,
+        logger_name: str = 'internetarchive'
+    ) -> None:
         """Convenience function to quickly configure any level of
         logging to a file.
 
-        :type log_level: str
         :param log_level: A log level as specified in the `logging` module.
 
-        :type path: string
         :param path: Path to the log file. The file will be created if it doesn't already
                      exist.
 
-        :type logger_name: str
-        :param logger_name: (optional) The name of the logger.
+        :param logger_name: The name of the logger.
         """
         _log_level = {
             'CRITICAL': 50,
@@ -240,16 +235,13 @@ class ArchiveSession(requests.sessions.Session):
         """A method for creating :class:`internetarchive.Item <Item>` and
         :class:`internetarchive.Collection <Collection>` objects.
 
-        :type identifier: str
         :param identifier: A globally unique Archive.org identifier.
 
-        :type item_metadata: dict
-        :param item_metadata: (optional) A metadata dict used to initialize the Item or
+        :param item_metadata: A metadata dict used to initialize the Item or
                               Collection object. Metadata will automatically be retrieved
                               from Archive.org if nothing is provided.
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments to be used in
+        :param request_kwargs: Keyword arguments to be used in
                                     :meth:`requests.sessions.Session.get` request.
         """
         request_kwargs = request_kwargs or {}
@@ -267,10 +259,8 @@ class ArchiveSession(requests.sessions.Session):
         """Get an item's metadata from the `Metadata API
         <http://blog.archive.org/2013/07/04/metadata-api/>`__
 
-        :type identifier: str
         :param identifier: Globally unique Archive.org identifier.
 
-        :rtype: dict
         :returns: Metadat API response.
         """
         request_kwargs = request_kwargs or {}
@@ -301,24 +291,19 @@ class ArchiveSession(requests.sessions.Session):
                      max_retries: int | Retry | None = None) -> Search:
         """Search for items on Archive.org.
 
-        :type query: str
         :param query: The Archive.org search query to yield results for. Refer to
                       https://archive.org/advancedsearch.php#raw for help formatting your
                       query.
 
-        :type fields: bool
-        :param fields: (optional) The metadata fields to return in the search results.
+        :param fields: The metadata fields to return in the search results.
 
-        :type params: dict
-        :param params: (optional) The URL parameters to send with each request sent to the
+        :param params: The URL parameters to send with each request sent to the
                        Archive.org Advancedsearch Api.
 
-        :type full_text_search: bool
-        :param full_text_search: (optional) Beta support for querying the archive.org
+        :param full_text_search: Beta support for querying the archive.org
                                  Full Text Search API [default: False].
 
-        :type dsl_fts: bool
-        :param dsl_fts: (optional) Beta support for querying the archive.org Full Text
+        :param dsl_fts: Beta support for querying the archive.org Full Text
                         Search API in dsl (i.e. do not prepend ``!L `` to the
                         ``full_text_search`` query [default: False].
 
@@ -372,32 +357,25 @@ class ArchiveSession(requests.sessions.Session):
                     request_kwargs: Mapping | None = None) -> requests.Response:
         """Submit an archive.org task.
 
-        :type identifier: str
         :param identifier: Item identifier.
 
-        :type cmd: str
         :param cmd: Task command to submit, see
                     `supported task commands
                     <https://archive.org/services/docs/api/tasks.html#supported-tasks>`_.
 
-        :type comment: str
-        :param comment: (optional) A reasonable explanation for why the
+        :param comment: A reasonable explanation for why the
                         task is being submitted.
 
-        :type priority: int
-        :param priority: (optional) Task priority from 10 to -10
+        :param priority: Task priority from 10 to -10
                          (default: 0).
 
-        :type data: dict
-        :param data: (optional) Extra POST data to submit with
+        :param data: Extra POST data to submit with
                      the request. Refer to `Tasks API Request Entity
                      <https://archive.org/services/docs/api/tasks.html#request-entity>`_.
 
-        :type headers: dict
-        :param headers: (optional) Add additional headers to request.
+        :param headers: Add additional headers to request.
 
-        :type reduced_priority: bool
-        :param reduced_priority: (optional) Submit your derive at a lower priority.
+        :param reduced_priority: Submit your derive at a lower priority.
                                  This option is helpful to get around rate-limiting.
                                  Your task will more likey be accepted, but it might
                                  not run for a long time. Note that you still may be
@@ -405,11 +383,10 @@ class ArchiveSession(requests.sessions.Session):
                                  ``priority`` in that it will allow you to possibly
                                  avoid rate-limiting.
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments to be used in
+        :param request_kwargs: Keyword arguments to be used in
                                :meth:`requests.sessions.Session.post` request.
 
-        :rtype: :class:`requests.Response`
+        :returns: :class:`requests.Response`
         """
         headers = headers or {}
         if reduced_priority:
@@ -426,20 +403,17 @@ class ArchiveSession(requests.sessions.Session):
                      request_kwargs: Mapping | None = None) -> Iterable[catalog.CatalogTask]:
         """A generator that returns completed tasks.
 
-        :type identifier: str
-        :param identifier: (optional) Item identifier.
+        :param identifier: Item identifier.
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
                        `Tasks API
                        <https://archive.org/services/docs/api/tasks.html>`_
                        for available parameters.
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments to be used in
+        :param request_kwargs: Keyword arguments to be used in
                                :meth:`requests.sessions.Session.get` request.
 
-        :rtype: collections.Iterable[CatalogTask]
+        :returns: An iterable of completed CatalogTasks.
         """
         params = params or {}
         params.update({'identifier': identifier, 'catalog': 0, 'summary': 0, 'history': 1})
@@ -452,20 +426,17 @@ class ArchiveSession(requests.sessions.Session):
                      request_kwargs: Mapping | None = None) -> Iterable[catalog.CatalogTask]:
         """A generator that returns queued or running tasks.
 
-        :type identifier: str
-        :param identifier: (optional) Item identifier.
+        :param identifier: Item identifier.
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
                        `Tasks API
                        <https://archive.org/services/docs/api/tasks.html>`_
                        for available parameters.
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments to be used in
+        :param request_kwargs: Keyword arguments to be used in
                                :meth:`requests.sessions.Session.get` request.
 
-        :rtype: collections.Iterable[CatalogTask]
+        :returns: An iterable of queued or running CatalogTasks.
         """
         params = params or {}
         params.update({'identifier': identifier, 'catalog': 1, 'summary': 0, 'history': 0})
@@ -478,20 +449,17 @@ class ArchiveSession(requests.sessions.Session):
         """Get the total counts of catalog tasks meeting all criteria,
         organized by run status (queued, running, error, and paused).
 
-        :type identifier: str
-        :param identifier: (optional) Item identifier.
+        :param identifier: Item identifier.
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
                        `Tasks API
                        <https://archive.org/services/docs/api/tasks.html>`_
                        for available parameters.
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments to be used in
+        :param request_kwargs: Keyword arguments to be used in
                                :meth:`requests.sessions.Session.get` request.
 
-        :rtype: dict
+        :returns: Counts of catalog tasks meeting all criteria.
         """
         return catalog.Catalog(self, request_kwargs).get_summary(identifier=identifier, params=params)
 
@@ -501,22 +469,19 @@ class ArchiveSession(requests.sessions.Session):
         """Get a list of all tasks meeting all criteria.
         The list is ordered by submission time.
 
-        :type identifier: str
-        :param identifier: (optional) The item identifier, if provided
+        :param identifier: The item identifier, if provided
                            will return tasks for only this item filtered by
                            other criteria provided in params.
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
                        `Tasks API
                        <https://archive.org/services/docs/api/tasks.html>`_
                        for available parameters.
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments to be used in
+        :param request_kwargs: Keyword arguments to be used in
                                :meth:`requests.sessions.Session.get` request.
 
-        :rtype: List[CatalogTask]
+        :returns: A set of all tasks meeting all criteria.
         """
         params = params or {}
         if 'history' not in params:
@@ -533,17 +498,15 @@ class ArchiveSession(requests.sessions.Session):
                        request_kwargs: Mapping | None = None) -> set[catalog.CatalogTask]:
         """Get all queued or running tasks.
 
-        :type params: dict
-        :param params: (optional) Query parameters, refer to
+        :param params: Query parameters, refer to
                        `Tasks API
                        <https://archive.org/services/docs/api/tasks.html>`_
                        for available parameters.
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments to be used in
+        :param request_kwargs: Keyword arguments to be used in
                                :meth:`requests.sessions.Session.get` request.
 
-        :rtype: List[CatalogTask]
+        :returns: A set of all queued or running tasks.
         """
         params = params or {}
         _params = {'submitter': self.user_email, 'catalog': 1, 'history': 0, 'summary': 0}
@@ -553,14 +516,11 @@ class ArchiveSession(requests.sessions.Session):
     def get_task_log(self, task_id: str | int, request_kwargs: Mapping | None = None) -> str:
         """Get a task log.
 
-        :type task_id: str or int
         :param task_id: The task id for the task log you'd like to fetch.
 
-        :type request_kwargs: dict
-        :param request_kwargs: (optional) Keyword arguments that
+        :param request_kwargs: Keyword arguments that
                                :py:class:`requests.Request` takes.
 
-        :rtype: str
         :returns: The task log as a string.
         """
         return catalog.CatalogTask.get_task_log(task_id, self, request_kwargs)

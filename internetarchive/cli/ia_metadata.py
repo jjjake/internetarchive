@@ -54,23 +54,21 @@ import os
 import sys
 from collections import defaultdict
 from copy import copy
-from typing import Mapping, cast
-from urllib.request import Request
+from typing import Mapping
 
 from docopt import docopt, printable_usage  # type: ignore
 from requests import Response
 from schema import And, Or, Schema, SchemaError, Use
 
+from internetarchive import item, session
 from internetarchive.cli.argparser import (get_args_dict,
                                            get_args_dict_many_write,
                                            get_args_header_dict)
 from internetarchive.exceptions import ItemLocateError
-from internetarchive.item import Item
-from internetarchive.session import ArchiveSession
 from internetarchive.utils import json
 
 
-def modify_metadata(item: Item, metadata: Mapping, args: Mapping) -> Response:
+def modify_metadata(item: item.Item, metadata: Mapping, args: Mapping) -> Response:
     append = bool(args['--append'])
     append_list = bool(args['--append-list'])
     try:
@@ -91,7 +89,7 @@ def modify_metadata(item: Item, metadata: Mapping, args: Mapping) -> Response:
     return r
 
 
-def remove_metadata(item: Item, metadata: Mapping, args: Mapping) -> Response:
+def remove_metadata(item: item.Item, metadata: Mapping, args: Mapping) -> Response:
     md: dict[str, list | str] = defaultdict(list)
     for key in metadata:
         src_md = copy(item.metadata.get(key))
@@ -162,7 +160,7 @@ def remove_metadata(item: Item, metadata: Mapping, args: Mapping) -> Response:
     return r
 
 
-def main(argv: dict, session: ArchiveSession) -> None:
+def main(argv: dict, session: session.ArchiveSession) -> None:
     args = docopt(__doc__, argv=argv)
 
     # Validate args.
@@ -232,7 +230,7 @@ def main(argv: dict, session: ArchiveSession) -> None:
             else:
                 responses.append(modify_metadata(item, metadata, args))
             if (i + 1) == len(args['<identifier>']):
-                if all(cast(Response, r).status_code == 200 for r in responses):
+                if all(r.status_code == 200 for r in responses):  # type: ignore
                     sys.exit(0)
                 else:
                     for r in responses:
@@ -274,7 +272,7 @@ def main(argv: dict, session: ArchiveSession) -> None:
                 metadata = {k.lower(): v for k, v in row.items() if v}
                 responses.append(modify_metadata(item, metadata, args))
 
-            if all(cast(Response, r).status_code == 200 for r in responses):
+            if all(r.status_code == 200 for r in responses):  # type: ignore
                 sys.exit(0)
             else:
                 for r in responses:

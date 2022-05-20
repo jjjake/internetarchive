@@ -49,12 +49,13 @@ import requests.exceptions
 from docopt import docopt, printable_usage  # type: ignore
 from schema import And, Or, Schema, SchemaError, Use
 
+from internetarchive import ArchiveSession
 from internetarchive.cli.argparser import (convert_str_list_to_unicode,
                                            get_args_dict)
 from internetarchive.utils import get_s3_xml_text
 
 
-def main(argv, session):
+def main(argv, session: ArchiveSession) -> None:
     args = docopt(__doc__, argv=argv)
 
     # Validation error messages.

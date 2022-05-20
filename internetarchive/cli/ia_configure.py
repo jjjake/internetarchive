@@ -34,16 +34,18 @@ options:
     -n, --netrc                Use netrc file for login.
     -c, --print-cookies        Print archive.org logged-in-* cookies.
 """
+from __future__ import annotations
+
 import netrc
 import sys
 
 from docopt import docopt
 
-from internetarchive import configure
+from internetarchive import ArchiveSession, configure
 from internetarchive.exceptions import AuthenticationError
 
 
-def main(argv, session):
+def main(argv: list[str], session: ArchiveSession) -> None:
     args = docopt(__doc__, argv=argv)
     if args['--print-cookies']:
         user = session.config.get('cookies', {}).get('logged-in-user')

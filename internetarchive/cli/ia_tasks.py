@@ -69,11 +69,12 @@ import warnings
 
 from docopt import docopt
 
+from internetarchive import ArchiveSession
 from internetarchive.cli.argparser import get_args_dict
 from internetarchive.utils import json
 
 
-def main(argv, session):
+def main(argv, session: ArchiveSession) -> None:
     args = docopt(__doc__, argv=argv)
 
     # Tasks write API.

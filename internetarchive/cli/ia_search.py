@@ -48,13 +48,13 @@ from docopt import docopt, printable_usage  # type: ignore
 from requests.exceptions import ConnectTimeout, ReadTimeout
 from schema import And, Or, Schema, SchemaError, Use
 
-from internetarchive import search_items
+from internetarchive import ArchiveSession, search_items
 from internetarchive.cli.argparser import get_args_dict
 from internetarchive.exceptions import AuthenticationError
 from internetarchive.utils import json
 
 
-def main(argv, session=None):
+def main(argv, session: ArchiveSession = None) -> None:
     args = docopt(__doc__, argv=argv)
 
     # Validate args.
@@ -91,7 +91,7 @@ def main(argv, session=None):
                                   full_text_search=args['--fts'],
                                   dsl_fts=args['--dsl-fts'],
                                   request_kwargs=r_kwargs)
-
+    assert search
     try:
         if args['--num-found']:
             print(search.num_found)

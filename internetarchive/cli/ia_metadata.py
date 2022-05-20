@@ -81,7 +81,6 @@ def modify_metadata(item: item.Item, metadata: Mapping, args: Mapping) -> Respon
         sys.exit(1)
     if not r.json()['success']:
         error_msg = r.json()['error']
-
         etype = 'warning' if 'no changes' in r.text else 'error'
         print(f'{item.identifier} - {etype} ({r.status_code}): {error_msg}', file=sys.stderr)
         return r

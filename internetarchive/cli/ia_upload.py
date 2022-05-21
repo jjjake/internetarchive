@@ -69,9 +69,9 @@ from copy import deepcopy
 from locale import getpreferredencoding
 from tempfile import TemporaryFile
 
-from docopt import docopt, printable_usage  # type: ignore
+from docopt import docopt, printable_usage
 from requests.exceptions import HTTPError
-from schema import And, Or, Schema, SchemaError, Use
+from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
 
 from internetarchive.cli.argparser import (convert_str_list_to_unicode,
                                            get_args_dict)

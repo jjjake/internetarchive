@@ -61,9 +61,9 @@ import errno
 import os
 import sys
 
-from docopt import docopt, printable_usage  # type: ignore
+from docopt import docopt, printable_usage
 from pkg_resources import DistributionNotFound, iter_entry_points
-from schema import Or, Schema, SchemaError
+from schema import Or, Schema, SchemaError  # type: ignore[import]
 
 from internetarchive import __version__
 from internetarchive.api import get_session

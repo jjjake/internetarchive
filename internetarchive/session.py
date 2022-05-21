@@ -41,8 +41,8 @@ import requests.sessions
 from requests import Response
 from requests.adapters import HTTPAdapter
 from requests.cookies import create_cookie
-from requests.packages.urllib3 import Retry
 from requests.utils import default_headers
+from urllib3 import Retry
 
 from internetarchive import __version__, auth, catalog
 from internetarchive.config import get_config
@@ -177,14 +177,17 @@ class ArchiveSession(requests.sessions.Session):
 
         status_forcelist = status_forcelist or [500, 501, 502, 503, 504]
         if max_retries and isinstance(max_retries, (int, float)):
-            max_retries = Retry(total=max_retries,
+            self.http_adapter_kwargs['max_retries'] = Retry(total=max_retries,
                                 connect=max_retries,
                                 read=max_retries,
                                 redirect=False,
                                 allowed_methods=Retry.DEFAULT_ALLOWED_METHODS,
                                 status_forcelist=status_forcelist,
                                 backoff_factor=1)
-        self.http_adapter_kwargs['max_retries'] = max_retries
+
+        else:
+            self.http_adapter_kwargs['max_retries'] = max_retries
+
         max_retries_adapter = HTTPAdapter(**self.http_adapter_kwargs)
         # Don't mount on s3.us.archive.org, only archive.org!
         # IA-S3 requires a more complicated retry workflow.

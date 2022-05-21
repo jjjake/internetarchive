@@ -34,8 +34,8 @@ options:
 """
 import sys
 
-from docopt import docopt, printable_usage  # type: ignore
-from schema import And, Or, Schema, SchemaError, Use
+from docopt import docopt, printable_usage
+from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
 
 from internetarchive.cli import ia_copy
 from internetarchive.cli.argparser import get_args_dict

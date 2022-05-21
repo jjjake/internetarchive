@@ -72,11 +72,14 @@ repos:
     rev: v0.950
     hooks:
       - id: mypy
-        args:
-          - --ignore-missing-imports
-          - --scripts-are-modules
         additional_dependencies:
-          - types-all
+          - types-docopt
+          - types-requests
+          - types-ujson
+          - types-urllib3
+          - types-setuptools
+          - tqdm-stubs
+          - types-jsonpatch
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.32.0

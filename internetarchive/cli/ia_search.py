@@ -84,15 +84,15 @@ def main(argv, session: ArchiveSession = None) -> None:
         'timeout': args['--timeout'],
     }
 
-    session = session or ArchiveSession()
-    search = session.search_items(args['<query>'],
+    # session = session or ArchiveSession()
+    search = session.search_items(args['<query>'],  # type: ignore
                                   fields=fields,
                                   sorts=sorts,
                                   params=args['--parameters'],
                                   full_text_search=args['--fts'],
                                   dsl_fts=args['--dsl-fts'],
                                   request_kwargs=r_kwargs)
-    assert search
+    # assert search
     try:
         if args['--num-found']:
             print(search.num_found)

@@ -8,29 +8,16 @@ jobs:
       - uses: actions/setup-python@v3
         with:
           cache: 'pip'
-      - name: Install dependencies
-        run: |
+      - run: |
           pip install --upgrade pip wheel
           pip install .[all]
-      - name: Lint with black
-        run: black --check . || true
-      - name: Lint with flake8
-        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-      - name: Lint with flake8 strictly
-        run: |
-          flake8 . \
-            --count --exit-zero
-            --max-complexity=10
-            --max-line-length=88
-            --show-source
-            --statistics
-      - name: Lint with mypy
-        run: |
+      - run: black --check . || true
+      - run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      - run: flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88
+                      --show-source --statistics
+      - run: |
           mkdir --parents --verbose .mypy_cache
           mypy --non-interactive . || true
-      - name: Test with Pytest
-        run: pytest . || true
-      - name: Test doctests with pytest
-        run: pytest --doctest-modules . || true
-      - name: Check vulnerabilities with safety
-        run: safety check
+      - run: pytest . || true
+      - run: pytest --doctest-modules . || true
+      - run: safety check

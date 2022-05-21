@@ -12,7 +12,7 @@ jobs:
           pip install --upgrade pip wheel
           pip install .[all]
       - run: black --check . || true
-      - run: flake8 . --max-complexity=43 --max-line-length=102 --show-source --statistics .
+      - run: flake8 . --max-complexity=43 --max-line-length=102 --show-source --statistics
                       --ignore=B001,B006,B007,B011,B014,E121,E122,E128,E265,E712,E722,E741,F401,F811,F841,R502,R503,R504,W503
       - run: |
           mkdir --parents --verbose .mypy_cache

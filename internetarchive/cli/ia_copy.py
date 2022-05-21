@@ -35,6 +35,8 @@ options:
                                    will not be saved to history/files/$key.~N~
                                    [default: True].
 """
+from __future__ import annotations
+
 import sys
 from urllib.parse import quote
 

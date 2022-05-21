@@ -82,7 +82,7 @@ def main(argv: list[str], session: ArchiveSession) -> None:
                 sys.exit(1)
             username, _, password = n.hosts['archive.org']
             config_file_path = configure(username,
-                                         password,
+                                         password or "",
                                          config_file=session.config_file,
                                          host=session.host)
             print(f'Config saved to: {config_file_path}', file=sys.stderr)

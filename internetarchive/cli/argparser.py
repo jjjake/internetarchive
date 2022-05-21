@@ -61,7 +61,7 @@ def get_args_header_dict(args: list[str]) -> dict:
 
 
 def get_args_dict_many_write(metadata: Mapping):
-    changes = defaultdict(list)
+    changes: dict[str, dict] = defaultdict(dict)
     for key, value in metadata.items():
         target = '/'.join(key.split('/')[:-1])
         field = key.split('/')[-1]

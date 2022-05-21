@@ -84,6 +84,7 @@ def main(argv, session: ArchiveSession = None) -> None:
         'timeout': args['--timeout'],
     }
 
+    session = session or ArchiveSession()
     search = session.search_items(args['<query>'],
                                   fields=fields,
                                   sorts=sorts,

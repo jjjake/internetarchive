@@ -60,6 +60,8 @@ options:
     -p, --parameters=<key:value>...          Parameters to send with your query (e.g. `cnt=0`).
     -a, --download-history                   Also download files from the history directory.
 """
+from __future__ import annotations
+
 import os
 import sys
 from os.path import exists as dir_exists

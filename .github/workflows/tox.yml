@@ -12,5 +12,6 @@ jobs:
       - uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python }}
+          cache: pip
       - run: pip install tox
       - run: tox -e py

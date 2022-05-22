@@ -11,6 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
+        with:
+          cache: pip
       - run: pip install pre-commit
       - run: pre-commit --version
       - run: pre-commit install

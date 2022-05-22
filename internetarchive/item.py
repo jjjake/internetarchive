@@ -950,7 +950,7 @@ class Item(BaseItem):
                                               total=expected_size,
                                               unit='MiB')
                     data = IterableToFileAdapter(progress_generator, size)
-                except:
+                except Exception:
                     print(f' uploading {key}', file=sys.stderr)
                     data = body
             else:

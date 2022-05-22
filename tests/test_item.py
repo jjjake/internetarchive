@@ -309,7 +309,7 @@ def test_upload_validate_identifier(session):
                         access_key='a',
                         secret_key='b',
                         validate_identifier=True)
-            assert False
+            raise AssertionError("Given invalid identifier was not correctly validated.")
         except Exception as exc:
             assert isinstance(exc, InvalidIdentifierException)
 

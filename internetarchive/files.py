@@ -264,7 +264,7 @@ class File(BaseFile):
                         size = fileobj.write(chunk)
                         if bar is not None:
                             bar.update(size)
-        except (RetryError, HTTPError, ConnectTimeout, ConnectionError, OSError, ReadTimeout) as exc:
+        except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout) as exc:
             msg = f'error downloading file {file_path}, exception raised: {exc}'
             log.error(msg)
             if os.path.exists(file_path):

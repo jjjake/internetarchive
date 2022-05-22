@@ -2,7 +2,7 @@ import os
 import re
 
 import responses
-from requests.packages import urllib3
+import urllib3
 
 from internetarchive import (download, get_files, get_item, get_session,
                              modify_metadata, search_items, upload)
@@ -227,7 +227,7 @@ def test_upload_validate_identifier():
               access_key='test_access',
               secret_key='test_secret',
               validate_identifier=True)
-        assert False
+        raise AssertionError("Given invalid identifier was not correctly validated.")
     except Exception as exc:
         assert isinstance(exc, InvalidIdentifierException)
 

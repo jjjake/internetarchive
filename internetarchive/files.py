@@ -30,8 +30,13 @@ import sys
 from contextlib import nullcontext
 from urllib.parse import quote
 
-from requests.exceptions import (ConnectionError, ConnectTimeout, HTTPError,
-                                 ReadTimeout, RetryError)
+from requests.exceptions import (
+    ConnectionError,
+    ConnectTimeout,
+    HTTPError,
+    ReadTimeout,
+    RetryError,
+)
 from tqdm import tqdm
 
 from internetarchive import auth, iarequest, utils
@@ -350,7 +355,7 @@ class File(BaseFile):
                 resp = self.item.session.send(prepared_request)
                 resp.raise_for_status()
             except (RetryError, HTTPError, ConnectTimeout,
-                    ConnectionError, OSError, ReadTimeout) as exc:
+                    OSError, ReadTimeout) as exc:
                 error_msg = f'Error deleting {url}, {exc}'
                 log.error(error_msg)
                 raise

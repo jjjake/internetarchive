@@ -195,7 +195,7 @@ def get_s3_xml_text(xml_str: str) -> str:
             return f'{_msg} - {_resource.strip()}'
         else:
             return _msg
-    except:
+    except Exception:
         return str(xml_str)
 
 
@@ -214,7 +214,7 @@ def get_file_size(file_obj) -> int | None:
 
 def iter_directory(directory: str):
     """Given a directory, yield all files recursively as a two-tuple (filepath, s3key)"""
-    for path, dir, files in os.walk(directory):
+    for path, _dir, files in os.walk(directory):
         for f in files:
             filepath = os.path.join(path, f)
             key = os.path.relpath(filepath, directory)
@@ -351,7 +351,7 @@ def delete_items_from_dict(d: dict | list, to_delete):
                 for k, v in d.copy().items():
                     if v == single_to_delete:
                         del d[k]
-        for k, v in d.items():
+        for v in d.values():
             delete_items_from_dict(v, to_delete)
     elif isinstance(d, list):
         for i in d:

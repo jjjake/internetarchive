@@ -146,7 +146,7 @@ def parse_config_file(config_file=None):
         config.set('cookies', 'logged-in-sig', None)
 
     if config.has_section('general'):
-        for k, v in config.items('general'):
+        for k, _v in config.items('general'):
             if k in ['secure']:
                 config.set('general', k, config.getboolean('general', k))
         if not config.get('general', 'screenname'):

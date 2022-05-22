@@ -13,5 +13,5 @@ jobs:
           pip install .[all]
       - run: black --check . || true
       - run: flake8 .
-      - run: mypy --install-types --non-interactive .
+      - run: mypy .
       - run: safety check

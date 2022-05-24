@@ -19,7 +19,7 @@ NASA_FILES = {
 def test_ia_list(capsys, nasa_mocker):
     ia_list.main(['list', 'nasa'], SESSION)
     out, err = capsys.readouterr()
-    assert {l for l in out.split('\n') if l} == NASA_FILES
+    assert {line for line in out.split('\n') if line} == NASA_FILES
 
 
 def test_ia_list_verbose(capsys, nasa_mocker):
@@ -28,14 +28,14 @@ def test_ia_list_verbose(capsys, nasa_mocker):
     out, err = capsys.readouterr()
     _nasa_files = deepcopy(NASA_FILES)
     _nasa_files.add('name')
-    assert {l for l in out.split('\n') if l} == _nasa_files
+    assert {line for line in out.split('\n') if line} == _nasa_files
 
 
 def test_ia_list_all(capsys, nasa_mocker):
     ia_list.main(['list', '--all', 'nasa'], SESSION)
 
     out, err = capsys.readouterr()
-    out = [l for l in out.split('\n') if l]
+    out = [line for line in out.split('\n') if line]
     assert len(out) == 6
     assert all(len(f.split('\t')) == 9 for f in out)
     assert all(f.split('\t')[0] in NASA_FILES for f in out)

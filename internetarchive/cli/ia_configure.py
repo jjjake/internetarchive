@@ -86,7 +86,7 @@ def main(argv, session):
             print("Configuring 'ia' with netrc file...", file=sys.stderr)
             try:
                 n = netrc.netrc()
-            except netrc.NetrcParseError as exc:
+            except netrc.NetrcParseError:
                 print(
                     'error: netrc.netrc() cannot parse your .netrc file.',
                     file=sys.stderr,

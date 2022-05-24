@@ -49,7 +49,7 @@ def test_get_auth_config_auth_fail():
         body='{"error": "failed"}',
     )
     try:
-        r = internetarchive.config.get_auth_config('test@example.com', 'password1')
+        _ = internetarchive.config.get_auth_config('test@example.com', 'password1')
     except AuthenticationError as exc:
         return
         assert str(exc) == (
@@ -357,7 +357,7 @@ def _test_write_config_file(
                 for d in dirs:
                     os.mkdir(d)
             if create_expected_file:
-                with open(expected_config_file, 'w') as fp:
+                with open(expected_config_file, 'w') as _:
                     os.chmod(expected_config_file, 0o777)
             config_file = internetarchive.config.write_config_file(
                 {}, config_file_param

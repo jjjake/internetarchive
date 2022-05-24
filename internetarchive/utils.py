@@ -192,7 +192,7 @@ def get_s3_xml_text(xml_str: str) -> str:
                     text += node.data
         return text
 
-    tag_names = ['Message', 'Resource']
+    # tag_names = ['Message', 'Resource']
     try:
         p = parseString(xml_str)
         _msg = _get_tag_text('Message', p)
@@ -281,7 +281,7 @@ def is_dir(obj) -> bool:
     cannot be stat'd"""
     try:
         return os.path.isdir(obj)
-    except TypeError as exc:
+    except TypeError:
         return False
 
 

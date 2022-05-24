@@ -131,7 +131,7 @@ class Catalog:
         )
         try:
             r.raise_for_status()
-        except HTTPError as exc:
+        except HTTPError:
             j = r.json()
             error = j['error']
             raise HTTPError(error, response=r)

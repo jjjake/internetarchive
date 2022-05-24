@@ -57,11 +57,11 @@ def main(argv, session):
     args = docopt(__doc__, argv=argv)
 
     # Validation error messages.
-    invalid_id_msg = (
-        '<identifier> should be between 3 and 80 characters in length, and '
-        'can only contain alphanumeric characters, underscores ( _ ), or '
-        'dashes ( - )'
-    )
+    # invalid_id_msg = (
+    #    '<identifier> should be between 3 and 80 characters in length, and '
+    #    'can only contain alphanumeric characters, underscores ( _ ), or '
+    #    'dashes ( - )'
+    # )
 
     # Validate args.
     s = Schema(
@@ -143,7 +143,7 @@ def main(argv, session):
                 headers=args['--header'],
                 retries=args['--retries'],
             )
-        except requests.exceptions.RetryError as e:
+        except requests.exceptions.RetryError:
             print(f' error: max retries exceeded for {f.name}', file=sys.stderr)
             errors = True
             continue

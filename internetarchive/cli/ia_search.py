@@ -115,13 +115,13 @@ def main(argv, session=None):
                     sys.exit(1)
     except ValueError as e:
         print(f'error: {e}', file=sys.stderr)
-    except ConnectTimeout as exc:
+    except ConnectTimeout:
         print(
             'error: Request timed out. Increase the --timeout and try again.',
             file=sys.stderr,
         )
         sys.exit(1)
-    except ReadTimeout as exc:
+    except ReadTimeout:
         print(
             'error: The server timed out and failed to return all search results,'
             ' please try again',

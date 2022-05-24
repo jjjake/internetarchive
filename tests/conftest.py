@@ -142,5 +142,5 @@ def nasa_metadata():
 
 # TODO: Why is this function defined twice in this file?  See issue #505
 @pytest.fixture  # type: ignore
-def nasa_item(nasa_mocker):
+def nasa_item(nasa_mocker):  # noqa: F811
     return get_item('nasa')

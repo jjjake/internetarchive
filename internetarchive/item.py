@@ -136,8 +136,10 @@ class BaseItem:
             if k not in self.EXCLUDED_ITEM_METADATA_KEYS
         }
         return hash(
-            json.dumps(without_excluded_keys, sort_keys=True, check_circular=False)
-        )  # type: ignore
+            json.dumps(  # type: ignore
+                without_excluded_keys, sort_keys=True, check_circular=False
+            )
+        )
 
 
 class Item(BaseItem):

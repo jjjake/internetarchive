@@ -163,7 +163,7 @@ def main(argv, session, cmd='copy'):
     if r.status_code != 200:
         try:
             msg = get_s3_xml_text(r.text)
-        except Exception as e:
+        except Exception:
             msg = r.text
         print(
             f'error: failed to {cmd} "{src_path}" to "{dest_path}" - {msg}',

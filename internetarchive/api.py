@@ -429,7 +429,7 @@ def delete(
 
 
 def get_tasks(
-    identifier: str = "",
+    identifier: str = '',
     params: dict | None = None,
     config: Mapping | None = None,
     config_file: str | None = None,
@@ -525,10 +525,10 @@ def search_items(
 
 
 def configure(  # nosec: hardcoded_password_default
-    username: str = "",
-    password: str = "",
-    config_file: str = "",
-    host: str = "",
+    username: str = '',
+    password: str = '',
+    config_file: str = '',
+    host: str = '',
 ) -> str:
     """Configure internetarchive with your Archive.org credentials.
 
@@ -543,8 +543,8 @@ def configure(  # nosec: hardcoded_password_default
         >>> configure('user@example.com', 'password')
     """
     auth_config = config_module.get_auth_config(
-        username or input("Email address: "),
-        password or getpass("Password: "),
+        username or input('Email address: '),
+        password or getpass('Password: '),
         host,
     )
     config_file_path = config_module.write_config_file(auth_config, config_file)
@@ -561,7 +561,7 @@ def get_username(access_key: str, secret_key: str) -> str:
     :returns: The username.
     """
     j = get_user_info(access_key, secret_key)
-    return j.get("username", "")
+    return j.get('username', '')
 
 
 def get_user_info(access_key: str, secret_key: str) -> dict[str, str]:
@@ -573,12 +573,12 @@ def get_user_info(access_key: str, secret_key: str) -> dict[str, str]:
 
     :returns: Archive.org use info.
     """
-    u = "https://s3.us.archive.org"
-    p = {"check_auth": 1}
+    u = 'https://s3.us.archive.org'
+    p = {'check_auth': 1}
     r = requests.get(u, params=p, auth=auth.S3Auth(access_key, secret_key))
     r.raise_for_status()
     j = r.json()
-    if j.get("error"):
-        raise AuthenticationError(j.get("error"))
+    if j.get('error'):
+        raise AuthenticationError(j.get('error'))
     else:
         return j

@@ -51,14 +51,18 @@ class Search:
         ...     print(result['identifier'])
     """
 
-    def __init__(self, archive_session, query,
-                 fields=None,
-                 sorts=None,
-                 params=None,
-                 full_text_search=None,
-                 dsl_fts=None,
-                 request_kwargs=None,
-                 max_retries=None):
+    def __init__(
+        self,
+        archive_session,
+        query,
+        fields=None,
+        sorts=None,
+        params=None,
+        full_text_search=None,
+        dsl_fts=None,
+        request_kwargs=None,
+        max_retries=None,
+    ):
         params = params or {}
 
         self.session = archive_session
@@ -75,8 +79,12 @@ class Search:
         self.request_kwargs = request_kwargs or {}
         self._num_found = None
         self.fts_url = f'{self.session.protocol}//be-api.us.archive.org/ia-pub-fts-api'
-        self.scrape_url = f'{self.session.protocol}//{self.session.host}/services/search/v1/scrape'
-        self.search_url = f'{self.session.protocol}//{self.session.host}/advancedsearch.php'
+        self.scrape_url = (
+            f'{self.session.protocol}//{self.session.host}/services/search/v1/scrape'
+        )
+        self.search_url = (
+            f'{self.session.protocol}//{self.session.host}/advancedsearch.php'
+        )
         if self.session.access_key and self.session.secret_key:
             self.auth = S3Auth(self.session.access_key, self.session.secret_key)
         else:
@@ -125,10 +133,9 @@ class Search:
 
         self.params['output'] = 'json'
 
-        r = self.session.get(self.search_url,
-                             params=self.params,
-                             auth=self.auth,
-                             **self.request_kwargs)
+        r = self.session.get(
+            self.search_url, params=self.params, auth=self.auth, **self.request_kwargs
+        )
         j = r.json()
         if j.get('error'):
             yield j
@@ -140,10 +147,12 @@ class Search:
         if self.sorts:
             self.params['sorts'] = ','.join(self.sorts)
         while True:
-            r = self.session.post(self.scrape_url,
-                                  params=self.params,
-                                  auth=self.auth,
-                                  **self.request_kwargs)
+            r = self.session.post(
+                self.scrape_url,
+                params=self.params,
+                auth=self.auth,
+                **self.request_kwargs,
+            )
             j = r.json()
             if j.get('error'):
                 yield j
@@ -157,8 +166,10 @@ class Search:
                 yield item
             if 'cursor' not in j:
                 if i != num_found:
-                    raise ReadTimeout('The server failed to return results in the'
-                                      f' allotted amount of time for {r.request.url}')
+                    raise ReadTimeout(
+                        'The server failed to return results in the'
+                        f' allotted amount of time for {r.request.url}'
+                    )
                 break
 
     def _full_text_search(self):
@@ -174,11 +185,13 @@ class Search:
             d['size'] = self.params['size']
 
         while True:
-            r = self.session.post(self.fts_url,
-                                  params=self.params,
-                                  json=d,
-                                  auth=self.auth,
-                                  **self.request_kwargs)
+            r = self.session.post(
+                self.fts_url,
+                params=self.params,
+                json=d,
+                auth=self.auth,
+                **self.request_kwargs,
+            )
             j = r.json()
             scroll_id = j.get('_scroll_id')
             hits = j.get('hits', {}).get('hits')
@@ -200,8 +213,7 @@ class Search:
             return self._scrape()
 
     def _user_aggs(self):
-        """Experimental support for user aggregations.
-        """
+        """Experimental support for user aggregations."""
         self.params['page'] = '1'
         self.params['rows'] = '1'
         self.params['output'] = 'json'
@@ -218,19 +230,20 @@ class Search:
             if not self.fts:
                 p = self.params.copy()
                 p['total_only'] = 'true'
-                r = self.session.post(self.scrape_url,
-                                      params=p,
-                                      auth=self.auth,
-                                      **self.request_kwargs)
+                r = self.session.post(
+                    self.scrape_url, params=p, auth=self.auth, **self.request_kwargs
+                )
                 j = r.json()
                 self._handle_scrape_error(j)
                 self._num_found = j.get('total')
             else:
                 self.params['q'] = self.query
-                r = self.session.get(self.fts_url,
-                                     params=self.params,
-                                     auth=self.auth,
-                                     **self.request_kwargs)
+                r = self.session.get(
+                    self.fts_url,
+                    params=self.params,
+                    auth=self.auth,
+                    **self.request_kwargs,
+                )
                 j = r.json()
                 self._num_found = j.get('hits', {}).get('total')
         return self._num_found
@@ -240,7 +253,9 @@ class Search:
             if all(s in j['error'].lower() for s in ['invalid', 'secret']):
                 if not j['error'].endswith('.'):
                     j['error'] += '.'
-                raise ValueError(f"{j['error']} Try running 'ia configure' and retrying.")
+                raise ValueError(
+                    f"{j['error']} Try running 'ia configure' and retrying."
+                )
             raise ValueError(j.get('error'))
 
     def _get_item_from_search_result(self, search_result):

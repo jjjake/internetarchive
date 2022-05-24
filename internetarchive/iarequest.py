@@ -40,13 +40,15 @@ logger = logging.getLogger(__name__)
 
 
 class S3Request(requests.models.Request):
-    def __init__(self,
-                 metadata=None,
-                 file_metadata=None,
-                 queue_derive=True,
-                 access_key=None,
-                 secret_key=None,
-                 **kwargs):
+    def __init__(
+        self,
+        metadata=None,
+        file_metadata=None,
+        queue_derive=True,
+        access_key=None,
+        secret_key=None,
+        **kwargs,
+    ):
 
         super().__init__(**kwargs)
 
@@ -72,7 +74,6 @@ class S3Request(requests.models.Request):
             auth=self.auth,
             cookies=self.cookies,
             hooks=self.hooks,
-
             # S3Request kwargs.
             metadata=self.metadata,
             file_metadata=self.file_metadata,
@@ -82,14 +83,26 @@ class S3Request(requests.models.Request):
 
 
 class S3PreparedRequest(requests.models.PreparedRequest):
-    def prepare(self, method=None, url=None, headers=None, files=None, data=None,
-                params=None, auth=None, cookies=None, hooks=None, queue_derive=None,
-                metadata=None, file_metadata=None):
+    def prepare(
+        self,
+        method=None,
+        url=None,
+        headers=None,
+        files=None,
+        data=None,
+        params=None,
+        auth=None,
+        cookies=None,
+        hooks=None,
+        queue_derive=None,
+        metadata=None,
+        file_metadata=None,
+    ):
         self.prepare_method(method)
         self.prepare_url(url, params)
-        self.prepare_headers(headers, metadata,
-                             file_metadata=file_metadata,
-                             queue_derive=queue_derive)
+        self.prepare_headers(
+            headers, metadata, file_metadata=file_metadata, queue_derive=queue_derive
+        )
         self.prepare_cookies(cookies)
         self.prepare_body(data, files)
         self.prepare_auth(auth, url)
@@ -136,7 +149,7 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                     meta_value = json.dumps(meta_value)
                 # Convert the metadata value into a list if it is not already
                 # iterable.
-                if (isinstance(meta_value, str) or not hasattr(meta_value, '__iter__')):
+                if isinstance(meta_value, str) or not hasattr(meta_value, '__iter__'):
                     meta_value = [meta_value]
                 # Convert metadata items into HTTP headers and add to
                 # ``headers`` dict.
@@ -144,7 +157,7 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                     if not value:
                         continue
                     header_key = f'x-archive-{meta_type}{i:02d}-{meta_key}'
-                    if (isinstance(value, str) and needs_quote(value)):
+                    if isinstance(value, str) and needs_quote(value):
                         value = f'uri({quote(value)})'
                     # because rfc822 http headers disallow _ in names, IA-S3 will
                     # translate two hyphens in a row (--) into an underscore (_).
@@ -160,16 +173,18 @@ class S3PreparedRequest(requests.models.PreparedRequest):
 
 
 class MetadataRequest(requests.models.Request):
-    def __init__(self,
-                 metadata=None,
-                 source_metadata=None,
-                 target=None,
-                 priority=None,
-                 access_key=None,
-                 secret_key=None,
-                 append=None,
-                 append_list=None,
-                 **kwargs):
+    def __init__(
+        self,
+        metadata=None,
+        source_metadata=None,
+        target=None,
+        priority=None,
+        access_key=None,
+        secret_key=None,
+        append=None,
+        append_list=None,
+        **kwargs,
+    ):
 
         super().__init__(**kwargs)
 
@@ -196,7 +211,6 @@ class MetadataRequest(requests.models.Request):
             auth=self.auth,
             cookies=self.cookies,
             hooks=self.hooks,
-
             # MetadataRequest kwargs.
             metadata=self.metadata,
             priority=self.priority,
@@ -209,16 +223,31 @@ class MetadataRequest(requests.models.Request):
 
 
 class MetadataPreparedRequest(requests.models.PreparedRequest):
-    def prepare(self, method=None, url=None, headers=None, files=None, data=None,
-                params=None, auth=None, cookies=None, hooks=None, metadata={},
-                source_metadata=None, target=None, priority=None, append=None,
-                append_list=None):
+    def prepare(
+        self,
+        method=None,
+        url=None,
+        headers=None,
+        files=None,
+        data=None,
+        params=None,
+        auth=None,
+        cookies=None,
+        hooks=None,
+        metadata={},
+        source_metadata=None,
+        target=None,
+        priority=None,
+        append=None,
+        append_list=None,
+    ):
         self.prepare_method(method)
         self.prepare_url(url, params)
         self.prepare_headers(headers)
         self.prepare_cookies(cookies)
-        self.prepare_body(metadata, source_metadata, target, priority, append,
-                          append_list)
+        self.prepare_body(
+            metadata, source_metadata, target, priority, append, append_list
+        )
         self.prepare_auth(auth, url)
         # Note that prepare_auth must be last to enable authentication schemes
         # such as OAuth to work on a fully prepared request.
@@ -226,8 +255,9 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         # This MUST go after prepare_auth. Authenticators could add a hook
         self.prepare_hooks(hooks)
 
-    def prepare_body(self, metadata, source_metadata, target, priority, append,
-                     append_list):
+    def prepare_body(
+        self, metadata, source_metadata, target, priority, append, append_list
+    ):
         priority = -5 if not priority else priority
 
         if not source_metadata:
@@ -235,36 +265,44 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             source_metadata = r.json()
 
         # Write to many targets
-        if (isinstance(metadata, list)
-                or any('/' in k for k in metadata)
-                or all(isinstance(k, dict) for k in metadata.values())):
+        if (
+            isinstance(metadata, list)
+            or any('/' in k for k in metadata)
+            or all(isinstance(k, dict) for k in metadata.values())
+        ):
             changes = []
 
             if any(not k for k in metadata):
-                raise ValueError('Invalid metadata provided, '
-                                 'check your input and try again')
+                raise ValueError(
+                    'Invalid metadata provided, ' 'check your input and try again'
+                )
 
             if target:
                 metadata = {target: metadata}
             for key in metadata:
                 if key == 'metadata':
                     try:
-                        patch = prepare_patch(metadata[key],
-                                              source_metadata['metadata'],
-                                              append,
-                                              append_list)
+                        patch = prepare_patch(
+                            metadata[key],
+                            source_metadata['metadata'],
+                            append,
+                            append_list,
+                        )
                     except KeyError:
                         raise ItemLocateError
                 elif key.startswith('files'):
-                    patch = prepare_files_patch(metadata[key],
-                                                source_metadata['files'],
-                                                append,
-                                                key,
-                                                append_list)
+                    patch = prepare_files_patch(
+                        metadata[key],
+                        source_metadata['files'],
+                        append,
+                        key,
+                        append_list,
+                    )
                 else:
                     key = key.split('/')[0]
-                    patch = prepare_target_patch(metadata, source_metadata, append,
-                                                 target, append_list, key)
+                    patch = prepare_target_patch(
+                        metadata, source_metadata, append, target, append_list, key
+                    )
                 changes.append({'target': key, 'patch': patch})
             self.data = {
                 '-changes': json.dumps(changes),
@@ -276,17 +314,20 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             if not target or 'metadata' in target:
                 target = 'metadata'
                 try:
-                    patch = prepare_patch(metadata, source_metadata['metadata'], append,
-                                          append_list)
+                    patch = prepare_patch(
+                        metadata, source_metadata['metadata'], append, append_list
+                    )
                 except KeyError:
                     raise ItemLocateError
             elif 'files' in target:
-                patch = prepare_files_patch(metadata, source_metadata['files'], append,
-                                            target, append_list)
+                patch = prepare_files_patch(
+                    metadata, source_metadata['files'], append, target, append_list
+                )
             else:
                 metadata = {target: metadata}
-                patch = prepare_target_patch(metadata, source_metadata, append,
-                                             target, append_list, target)
+                patch = prepare_target_patch(
+                    metadata, source_metadata, append, target, append_list, target
+                )
             self.data = {
                 '-patch': json.dumps(patch),
                 '-target': target,
@@ -303,8 +344,9 @@ def prepare_patch(metadata, source_metadata, append, append_list=None):
         if not destination_metadata:
             destination_metadata = []
     else:
-        prepared_metadata = prepare_metadata(metadata, source_metadata, append,
-                                             append_list)
+        prepared_metadata = prepare_metadata(
+            metadata, source_metadata, append, append_list
+        )
     if isinstance(destination_metadata, dict):
         destination_metadata.update(prepared_metadata)
     elif isinstance(metadata, list) and not destination_metadata:
@@ -324,7 +366,6 @@ def prepare_patch(metadata, source_metadata, append, append_list=None):
 
 
 def prepare_target_patch(metadata, source_metadata, append, target, append_list, key):
-
     def dictify(lst, key=None, value=None):
         if not lst:
             return value
@@ -414,7 +455,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
     # Index all items which contain an index.
     for key in metadata:
         # Insert values from indexed keys into prepared_metadata dict.
-        if (rm_index(key) in indexed_keys):
+        if rm_index(key) in indexed_keys:
             try:
                 prepared_metadata[rm_index(key)][get_index(key)] = metadata[key]
             except IndexError:

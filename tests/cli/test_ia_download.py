@@ -49,7 +49,9 @@ def test_on_the_fly_format():
     stdout, stderr = call_cmd(f'ia --insecure download --dry-run --format="DAISY" {i}')
     assert stdout == ''
 
-    stdout, stderr = call_cmd(f'ia --insecure download --dry-run --format="DAISY" --on-the-fly {i}')
+    stdout, stderr = call_cmd(
+        f'ia --insecure download --dry-run --format="DAISY" --on-the-fly {i}'
+    )
     assert stdout == f'http://archive.org/download/{i}/{i}_daisy.zip'
 
 
@@ -60,8 +62,10 @@ def test_clobber(tmpdir_ch):
 
     stdout, stderr = call_cmd(cmd)
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
-    expected_stderr = ('nasa:\n'
-                       ' skipping nasa/nasa_meta.xml, file already exists based on length and date.')
+    expected_stderr = (
+        'nasa:\n'
+        ' skipping nasa/nasa_meta.xml, file already exists based on length and date.'
+    )
     assert expected_stderr == stderr
 
 
@@ -71,7 +75,10 @@ def test_checksum(tmpdir_ch):
 
     stdout, stderr = call_cmd('ia --insecure download --checksum nasa nasa_meta.xml')
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
-    assert 'nasa:\n skipping nasa/nasa_meta.xml, file already exists based on checksum.' == stderr
+    assert (
+        'nasa:\n skipping nasa/nasa_meta.xml, file already exists based on checksum.'
+        == stderr
+    )
 
 
 def test_no_directories(tmpdir_ch):
@@ -90,8 +97,9 @@ def test_destdir(tmpdir_ch):
     assert files_downloaded('thisdirdoesnotexist/nasa') == {'nasa_meta.xml'}
 
     tmpdir_ch.mkdir('dir2/')
-    cmd = ('ia --insecure download --no-directories --destdir=dir2/ '
-           'nasa nasa_meta.xml')
+    cmd = (
+        'ia --insecure download --no-directories --destdir=dir2/ ' 'nasa nasa_meta.xml'
+    )
     call_cmd(cmd)
     assert files_downloaded('dir2') == {'nasa_meta.xml'}
 

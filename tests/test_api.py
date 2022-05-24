@@ -4,11 +4,23 @@ import re
 import responses
 from requests.packages import urllib3
 
-from internetarchive import (download, get_files, get_item, get_session,
-                             modify_metadata, search_items, upload)
+from internetarchive import (
+    download,
+    get_files,
+    get_item,
+    get_session,
+    modify_metadata,
+    search_items,
+    upload,
+)
 from internetarchive.utils import InvalidIdentifierException, json
-from tests.conftest import (NASA_METADATA_PATH, PROTOCOL, IaRequestsMock,
-                            load_file, load_test_data_file)
+from tests.conftest import (
+    NASA_METADATA_PATH,
+    PROTOCOL,
+    IaRequestsMock,
+    load_file,
+    load_test_data_file,
+)
 
 TEST_SEARCH_RESPONSE = load_test_data_file('advanced_search_response.json')
 TEST_SCRAPE_RESPONSE = load_test_data_file('scrape_response.json')
@@ -63,11 +75,12 @@ def test_get_item_with_kwargs():
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
         item = get_item('nasa', http_adapter_kwargs={'max_retries': 13})
-        assert isinstance(item.session.adapters[f'{PROTOCOL}//'].max_retries,
-                          urllib3.Retry)
+        assert isinstance(
+            item.session.adapters[f'{PROTOCOL}//'].max_retries, urllib3.Retry
+        )
 
     try:
-        get_item('nasa', request_kwargs={'timeout': .0000000000001})
+        get_item('nasa', request_kwargs={'timeout': 0.0000000000001})
     except Exception as exc:
         assert 'timed out' in str(exc)
 
@@ -97,9 +110,9 @@ def test_get_files_with_get_item_kwargs(tmpdir):
         assert len(files) == 1
         assert files[0].name == 'nasa_meta.xml'
 
-        files = get_files('nasa',
-                          files='nasa_meta.xml',
-                          config={'logging': {'level': 'INFO'}})
+        files = get_files(
+            'nasa', files='nasa_meta.xml', config={'logging': {'level': 'INFO'}}
+        )
         files = list(files)
         assert len(files) == 1
         assert files[0].name == 'nasa_meta.xml'
@@ -107,21 +120,19 @@ def test_get_files_with_get_item_kwargs(tmpdir):
         test_conf = '[s3]\naccess = key2'
         with open('ia_test.ini', 'w') as fh:
             fh.write(test_conf)
-        files = get_files('nasa', files='nasa_meta.xml',
-                          config_file='ia_test.ini')
+        files = get_files('nasa', files='nasa_meta.xml', config_file='ia_test.ini')
         files = list(files)
         assert len(files) == 1
         assert files[0].name == 'nasa_meta.xml'
 
-        files = get_files('nasa',
-                          files='nasa_meta.xml',
-                          http_adapter_kwargs={'max_retries': 3})
+        files = get_files(
+            'nasa', files='nasa_meta.xml', http_adapter_kwargs={'max_retries': 3}
+        )
         files = list(files)
         assert len(files) == 1
         assert files[0].name == 'nasa_meta.xml'
 
-        files = get_files('nasa', files='nasa_meta.xml',
-                          request_kwargs={'timeout': 4})
+        files = get_files('nasa', files='nasa_meta.xml', request_kwargs={'timeout': 4})
         files = list(files)
         assert len(files) == 1
         assert files[0].name == 'nasa_meta.xml'
@@ -174,17 +185,25 @@ def test_get_files_glob_pattern():
 
 def test_modify_metadata():
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa',
-                 body='{"metadata":{"title":"foo"}}')
-        rsps.add(responses.POST, f'{PROTOCOL}//archive.org/metadata/nasa',
-                 body=('{"success":true,"task_id":423444944,'
-                       '"log":"https://catalogd.archive.org/log/423444944"}'))
+        rsps.add(
+            responses.GET,
+            f'{PROTOCOL}//archive.org/metadata/nasa',
+            body='{"metadata":{"title":"foo"}}',
+        )
+        rsps.add(
+            responses.POST,
+            f'{PROTOCOL}//archive.org/metadata/nasa',
+            body=(
+                '{"success":true,"task_id":423444944,'
+                '"log":"https://catalogd.archive.org/log/423444944"}'
+            ),
+        )
         r = modify_metadata('nasa', {'foo': 1})
         assert r.status_code == 200
         assert r.json() == {
             'task_id': 423444944,
             'success': True,
-            'log': 'https://catalogd.archive.org/log/423444944'
+            'log': 'https://catalogd.archive.org/log/423444944',
         }
 
 
@@ -198,19 +217,25 @@ def test_upload():
         'authorization': 'LOW test_access:test_secret',
     }
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.PUT, re.compile(r'.*s3.us.archive.org/.*'),
-                 adding_headers=expected_s3_headers)
+        rsps.add(
+            responses.PUT,
+            re.compile(r'.*s3.us.archive.org/.*'),
+            adding_headers=expected_s3_headers,
+        )
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa',
-                 body='{}')
-        _responses = upload('nasa', NASA_METADATA_PATH,
-                            access_key='test_access',
-                            secret_key='test_secret')
+        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa', body='{}')
+        _responses = upload(
+            'nasa',
+            NASA_METADATA_PATH,
+            access_key='test_access',
+            secret_key='test_secret',
+        )
         for response in _responses:
             req = response.request
             headers = {k.lower(): str(v) for k, v in req.headers.items()}
             scanner_header = '%20'.join(
-                response.headers['x-archive-meta00-scanner'].split('%20')[:4])
+                response.headers['x-archive-meta00-scanner'].split('%20')[:4]
+            )
             headers['x-archive-meta00-scanner'] = scanner_header
             assert 'user-agent' in headers
             del headers['accept']
@@ -223,10 +248,13 @@ def test_upload():
 
 def test_upload_validate_identifier():
     try:
-        upload('føø', NASA_METADATA_PATH,
-              access_key='test_access',
-              secret_key='test_secret',
-              validate_identifier=True)
+        upload(
+            'føø',
+            NASA_METADATA_PATH,
+            access_key='test_access',
+            secret_key='test_secret',
+            validate_identifier=True,
+        )
         assert False
     except Exception as exc:
         assert isinstance(exc, InvalidIdentifierException)
@@ -240,24 +268,31 @@ def test_upload_validate_identifier():
         'authorization': 'LOW test_access:test_secret',
     }
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.PUT, re.compile(r'.*s3.us.archive.org/.*'),
-                 adding_headers=expected_s3_headers)
+        rsps.add(
+            responses.PUT,
+            re.compile(r'.*s3.us.archive.org/.*'),
+            adding_headers=expected_s3_headers,
+        )
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa',
-                 body='{}')
-        upload('nasa', NASA_METADATA_PATH,
-              access_key='test_access',
-              secret_key='test_secret',
-              validate_identifier=True)
+        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa', body='{}')
+        upload(
+            'nasa',
+            NASA_METADATA_PATH,
+            access_key='test_access',
+            secret_key='test_secret',
+            validate_identifier=True,
+        )
         assert True
 
 
 def test_download(tmpdir):
     tmpdir.chdir()
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET,
-                 f'{PROTOCOL}//archive.org/download/nasa/nasa_meta.xml',
-                 body='test content')
+        rsps.add(
+            responses.GET,
+            f'{PROTOCOL}//archive.org/download/nasa/nasa_meta.xml',
+            body='test content',
+        )
         rsps.add_metadata_mock('nasa')
         download('nasa', 'nasa_meta.xml')
         p = os.path.join(str(tmpdir), 'nasa')
@@ -266,19 +301,29 @@ def test_download(tmpdir):
 
 
 def test_search_items(session):
-    results_url = (f'{PROTOCOL}//archive.org/services/search/v1/scrape'
-                   '?q=identifier%3Anasa&count=10000')
-    count_url = (f'{PROTOCOL}//archive.org/services/search/v1/scrape'
-                 '?q=identifier%3Anasa&total_only=true'
-                 '&count=10000')
+    results_url = (
+        f'{PROTOCOL}//archive.org/services/search/v1/scrape'
+        '?q=identifier%3Anasa&count=10000'
+    )
+    count_url = (
+        f'{PROTOCOL}//archive.org/services/search/v1/scrape'
+        '?q=identifier%3Anasa&total_only=true'
+        '&count=10000'
+    )
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.POST, results_url,
-                 body=TEST_SCRAPE_RESPONSE,
-                 match_querystring=True)
-        rsps.add(responses.POST, count_url,
-                 body='{"items":[],"count":0,"total":1}',
-                 match_querystring=True,
-                 content_type='application/json; charset=UTF-8')
+        rsps.add(
+            responses.POST,
+            results_url,
+            body=TEST_SCRAPE_RESPONSE,
+            match_querystring=True,
+        )
+        rsps.add(
+            responses.POST,
+            count_url,
+            body='{"items":[],"count":0,"total":1}',
+            match_querystring=True,
+            content_type='application/json; charset=UTF-8',
+        )
         r = search_items('identifier:nasa', archive_session=session)
         expected_results = [{'identifier': 'nasa'}]
         assert r.num_found == 1
@@ -292,34 +337,45 @@ def test_search_items(session):
 
 def test_search_items_with_fields(session):
     _j = json.loads(TEST_SCRAPE_RESPONSE)
-    _j['items'] = [
-        {'identifier': 'nasa', 'title': 'NASA Images'}
-    ]
+    _j['items'] = [{'identifier': 'nasa', 'title': 'NASA Images'}]
     search_response_str = json.dumps(_j)
-    results_url = (f'{PROTOCOL}//archive.org/services/search/v1/scrape'
-                   '?q=identifier%3Anasa&count=10000'
-                   '&fields=identifier%2Ctitle')
-    count_url = (f'{PROTOCOL}//archive.org/services/search/v1/scrape'
-                 '?q=identifier%3Anasa&total_only=true'
-                 '&count=10000')
+    results_url = (
+        f'{PROTOCOL}//archive.org/services/search/v1/scrape'
+        '?q=identifier%3Anasa&count=10000'
+        '&fields=identifier%2Ctitle'
+    )
+    count_url = (
+        f'{PROTOCOL}//archive.org/services/search/v1/scrape'
+        '?q=identifier%3Anasa&total_only=true'
+        '&count=10000'
+    )
     with IaRequestsMock() as rsps:
-        rsps.add(responses.POST, results_url,
-                 match_querystring=True,
-                 body=search_response_str)
-        rsps.add(responses.POST, count_url,
-                 body='{"items":[],"count":0,"total":1}',
-                 match_querystring=True,
-                 content_type='application/json; charset=UTF-8')
-        r = search_items('identifier:nasa', fields=['identifier', 'title'],
-                         archive_session=session)
+        rsps.add(
+            responses.POST,
+            results_url,
+            match_querystring=True,
+            body=search_response_str,
+        )
+        rsps.add(
+            responses.POST,
+            count_url,
+            body='{"items":[],"count":0,"total":1}',
+            match_querystring=True,
+            content_type='application/json; charset=UTF-8',
+        )
+        r = search_items(
+            'identifier:nasa', fields=['identifier', 'title'], archive_session=session
+        )
         assert list(r) == [{'identifier': 'nasa', 'title': 'NASA Images'}]
 
 
 def test_search_items_as_items(session):
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.POST,
-                 f'{PROTOCOL}//archive.org/services/search/v1/scrape',
-                 body=TEST_SCRAPE_RESPONSE)
+        rsps.add(
+            responses.POST,
+            f'{PROTOCOL}//archive.org/services/search/v1/scrape',
+            body=TEST_SCRAPE_RESPONSE,
+        )
         rsps.add_metadata_mock('nasa')
         r = search_items('identifier:nasa', archive_session=session)
         assert [x.identifier for x in r.iter_as_items()] == ['nasa']
@@ -328,31 +384,28 @@ def test_search_items_as_items(session):
 
 def test_search_items_fts(session):
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.POST,
-                 f'{PROTOCOL}//be-api.us.archive.org/ia-pub-fts-api',
-                 body=TEST_SCRAPE_RESPONSE)
+        rsps.add(
+            responses.POST,
+            f'{PROTOCOL}//be-api.us.archive.org/ia-pub-fts-api',
+            body=TEST_SCRAPE_RESPONSE,
+        )
         rsps.add_metadata_mock('nasa')
 
-        r = search_items('nina simone',
-                         full_text_search=True,
-                         archive_session=session)
+        r = search_items('nina simone', full_text_search=True, archive_session=session)
         print(r.search_url)
         assert r.fts == True
         assert r.dsl_fts == False
         assert r.query == '!L nina simone'
         assert r.params == {'count': 10000, 'q': '!L nina simone'}
 
-        r = search_items('nina simone',
-                         full_text_search=True,
-                         dsl_fts=True,
-                         archive_session=session)
+        r = search_items(
+            'nina simone', full_text_search=True, dsl_fts=True, archive_session=session
+        )
         assert r.fts == True
         assert r.dsl_fts == True
         assert r.query == 'nina simone'
         assert r.params == {'count': 10000, 'q': 'nina simone'}
-        r = search_items('nina simone',
-                         dsl_fts=True,
-                         archive_session=session)
+        r = search_items('nina simone', dsl_fts=True, archive_session=session)
         assert r.fts == True
         assert r.dsl_fts == True
         assert r.query == 'nina simone'
@@ -365,15 +418,21 @@ def test_page_row_specification(session):
     _j['response']['numFound'] = 1
     _search_r = json.dumps(_j)
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/advancedsearch.php',
-                 body=_search_r)
+        rsps.add(
+            responses.GET, f'{PROTOCOL}//archive.org/advancedsearch.php', body=_search_r
+        )
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.POST,
-                 f'{PROTOCOL}//archive.org/services/search/v1/scrape',
-                 body='{"items":[],"count":0,"total":1}',
-                 match_querystring=False,
-                 content_type='application/json; charset=UTF-8')
-        r = search_items('identifier:nasa', params={'page': '1', 'rows': '1'},
-                         archive_session=session)
+        rsps.add(
+            responses.POST,
+            f'{PROTOCOL}//archive.org/services/search/v1/scrape',
+            body='{"items":[],"count":0,"total":1}',
+            match_querystring=False,
+            content_type='application/json; charset=UTF-8',
+        )
+        r = search_items(
+            'identifier:nasa',
+            params={'page': '1', 'rows': '1'},
+            archive_session=session,
+        )
         assert r.iter_as_items().search == r
         assert len(r.iter_as_items()) == 1

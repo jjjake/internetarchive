@@ -54,7 +54,9 @@ def main(argv, session):
         columns.remove('name')
         columns.insert(0, 'name')
 
-    dict_writer = csv.DictWriter(sys.stdout, columns, delimiter='\t', lineterminator='\n')
+    dict_writer = csv.DictWriter(
+        sys.stdout, columns, delimiter='\t', lineterminator='\n'
+    )
 
     if args.get('--glob'):
         patterns = args['--glob'].split('|')
@@ -70,7 +72,9 @@ def main(argv, session):
                 if isinstance(val, (list, tuple, set)):
                     val = ';'.join(val)
                 if key == 'name' and args.get('--location'):
-                    file_dict[key] = f'https://{session.host}/download/{item.identifier}/{val}'
+                    file_dict[
+                        key
+                    ] = f'https://{session.host}/download/{item.identifier}/{val}'
                 else:
                     file_dict[key] = val
         output.append(file_dict)

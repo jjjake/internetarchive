@@ -85,19 +85,23 @@ def main(argv, session):
         data = get_args_dict(args['--data'], query_string=True)
         task_args = get_args_dict(args['--task-args'], query_string=True)
         data['args'] = task_args
-        r = session.submit_task(args['<identifier>'],
-                                args['--cmd'],
-                                comment=args['--comment'],
-                                priority=data.get('priority'),
-                                reduced_priority=args['--reduced-priority'],
-                                data=data)
+        r = session.submit_task(
+            args['<identifier>'],
+            args['--cmd'],
+            comment=args['--comment'],
+            priority=data.get('priority'),
+            reduced_priority=args['--reduced-priority'],
+            data=data,
+        )
         j = r.json()
         if j.get('success'):
             task_log_url = j.get('value', {}).get('log')
             print(f'success: {task_log_url}', file=sys.stderr)
             sys.exit(0)
         elif 'already queued/running' in j.get('error', ''):
-            print(f'success: {args["--cmd"]} task already queued/running', file=sys.stderr)
+            print(
+                f'success: {args["--cmd"]} task already queued/running', file=sys.stderr
+            )
             sys.exit(0)
         else:
             print(f'error: {j.get("error")}', file=sys.stderr)
@@ -111,8 +115,11 @@ def main(argv, session):
         params = _params
     elif args['--get-task-log']:
         log = session.get_task_log(args['--get-task-log'], params)
-        print(log.encode('utf-8', errors='surrogateescape')
-                 .decode('utf-8', errors='replace'))
+        print(
+            log.encode('utf-8', errors='surrogateescape').decode(
+                'utf-8', errors='replace'
+            )
+        )
         sys.exit(0)
 
     queryable_params = [
@@ -127,36 +134,48 @@ def main(argv, session):
         'submittime',
     ]
 
-    if not (args['<identifier>']
-            or params.get('task_id')):
+    if not (args['<identifier>'] or params.get('task_id')):
         _params = {'catalog': 1, 'history': 0}
         _params.update(params)
         params = _params
 
     if not any(x in params for x in queryable_params):
-        _params = {'submitter': session.user_email, 'catalog': 1, 'history': 0, 'summary': 0}
+        _params = {
+            'submitter': session.user_email,
+            'catalog': 1,
+            'history': 0,
+            'summary': 0,
+        }
         _params.update(params)
         params = _params
 
     if args['--tab-output']:
-        warn_msg = ('tab-delimited output will be removed in a future release. '
-                    'Please switch to the default JSON output.')
+        warn_msg = (
+            'tab-delimited output will be removed in a future release. '
+            'Please switch to the default JSON output.'
+        )
         warnings.warn(warn_msg)
     for t in session.get_tasks(params=params):
         # Legacy support for tab-delimted output.
         if args['--tab-output']:
             color = t.color if t.color else 'done'
             task_args = '\t'.join([f'{k}={v}' for k, v in t.args.items()])
-            output = '\t'.join([str(x) for x in [
-                t.identifier,
-                t.task_id,
-                t.server,
-                t.submittime,
-                t.cmd,
-                color,
-                t.submitter,
-                task_args,
-            ] if x])
+            output = '\t'.join(
+                [
+                    str(x)
+                    for x in [
+                        t.identifier,
+                        t.task_id,
+                        t.server,
+                        t.submittime,
+                        t.cmd,
+                        color,
+                        t.submitter,
+                        task_args,
+                    ]
+                    if x
+                ]
+            )
             print(output)
             sys.stdout.flush()
         else:

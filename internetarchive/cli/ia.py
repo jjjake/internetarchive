@@ -56,6 +56,8 @@ Documentation for 'ia' is available at:
 
 See 'ia help <command>' for help on a specific command.
 """
+from __future__ import annotations
+
 import difflib
 import errno
 import os
@@ -87,7 +89,7 @@ cmd_aliases = {
 }
 
 
-def load_ia_module(cmd):
+def load_ia_module(cmd: str):
     """Dynamically import ia module."""
     try:
         if cmd in list(cmd_aliases.keys()) + list(cmd_aliases.values()):
@@ -108,7 +110,7 @@ def load_ia_module(cmd):
         sys.exit(127)
 
 
-def main():
+def main() -> None:
     """This is the CLI driver for ia-wrapper."""
     args = docopt(__doc__, version=__version__, options_first=True)
 
@@ -146,7 +148,7 @@ def main():
 
     argv = [cmd] + args['<args>']
 
-    config = {}
+    config: dict[str, dict] = {}
     if args['--log']:
         config['logging'] = {'level': 'INFO'}
     elif args['--debug']:

@@ -69,11 +69,12 @@ import warnings
 
 from docopt import docopt
 
+from internetarchive import ArchiveSession
 from internetarchive.cli.argparser import get_args_dict
 from internetarchive.utils import json
 
 
-def main(argv, session):
+def main(argv, session: ArchiveSession) -> None:
     args = docopt(__doc__, argv=argv)
 
     # Tasks write API.
@@ -88,7 +89,7 @@ def main(argv, session):
         r = session.submit_task(args['<identifier>'],
                                 args['--cmd'],
                                 comment=args['--comment'],
-                                priority=data.get('priority'),
+                                priority=int(data.get('priority', 0)),
                                 reduced_priority=args['--reduced-priority'],
                                 data=data)
         j = r.json()
@@ -144,21 +145,20 @@ def main(argv, session):
         warnings.warn(warn_msg)
     for t in session.get_tasks(params=params):
         # Legacy support for tab-delimted output.
+        # Mypy is confused by CatalogTask members being created from kwargs
         if args['--tab-output']:
             color = t.color if t.color else 'done'
-            task_args = '\t'.join([f'{k}={v}' for k, v in t.args.items()])
-            output = '\t'.join([str(x) for x in [
-                t.identifier,
-                t.task_id,
-                t.server,
-                t.submittime,
-                t.cmd,
-                color,
-                t.submitter,
+            task_args = '\t'.join([f'{k}={v}' for k, v in t.args.items()])  # type: ignore
+            output = '\t'.join([str(x) for x in [  # type: ignore
+                t.identifier,  # type: ignore
+                t.task_id,  # type: ignore
+                t.server,  # type: ignore
+                t.submittime,  # type: ignore
+                t.cmd,  # type: ignore
+                color,  # type: ignore
+                t.submitter,  # type: ignore
                 task_args,
             ] if x])
-            print(output)
-            sys.stdout.flush()
+            print(output, flush=True)
         else:
-            print(t.json())
-            sys.stdout.flush()
+            print(t.json(), flush=True)

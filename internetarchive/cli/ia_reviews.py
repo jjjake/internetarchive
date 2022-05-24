@@ -44,8 +44,10 @@ import sys
 from docopt import docopt
 from requests.exceptions import HTTPError
 
+from internetarchive import ArchiveSession
 
-def main(argv, session):
+
+def main(argv, session: ArchiveSession) -> None:
     args = docopt(__doc__, argv=argv)
 
     item = session.get_item(args['<identifier>'])

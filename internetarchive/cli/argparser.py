@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import sys
 from collections import defaultdict
-from typing import Mapping, cast
+from typing import Mapping
 from urllib.parse import parse_qsl
 
 
@@ -45,7 +45,7 @@ def get_args_dict(args: list[str], query_string: bool = False, header: bool = Fa
             key, value = md.split(':', 1)
             assert value
             if value not in metadata[key]:
-                cast(list, metadata[key]).append(value)
+                metadata[key].append(value)  # type: ignore
 
     for key in metadata:
         # Flatten single item lists.

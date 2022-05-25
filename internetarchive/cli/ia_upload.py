@@ -73,12 +73,16 @@ from docopt import docopt, printable_usage
 from requests.exceptions import HTTPError
 from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
 
-from internetarchive.cli.argparser import (convert_str_list_to_unicode,
-                                           get_args_dict)
+from internetarchive.cli.argparser import convert_str_list_to_unicode, get_args_dict
 from internetarchive.session import ArchiveSession
-from internetarchive.utils import (InvalidIdentifierException, JSONDecodeError,
-                                   get_s3_xml_text, is_valid_metadata_key,
-                                   json, validate_s3_identifier)
+from internetarchive.utils import (
+    InvalidIdentifierException,
+    JSONDecodeError,
+    get_s3_xml_text,
+    is_valid_metadata_key,
+    json,
+    validate_s3_identifier,
+)
 
 
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):

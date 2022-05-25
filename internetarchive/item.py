@@ -45,12 +45,20 @@ from internetarchive import catalog
 from internetarchive.auth import S3Auth
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
-from internetarchive.utils import (IdentifierListAsItems,
-                                   IterableToFileAdapter, chunk_generator,
-                                   get_file_size, get_md5, get_s3_xml_text,
-                                   is_dir, iter_directory, json, norm_filepath,
-                                   recursive_file_count,
-                                   validate_s3_identifier)
+from internetarchive.utils import (
+    IdentifierListAsItems,
+    IterableToFileAdapter,
+    chunk_generator,
+    get_file_size,
+    get_md5,
+    get_s3_xml_text,
+    is_dir,
+    iter_directory,
+    json,
+    norm_filepath,
+    recursive_file_count,
+    validate_s3_identifier,
+)
 
 log = getLogger(__name__)
 

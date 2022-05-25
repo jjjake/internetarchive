@@ -14,8 +14,7 @@ def test_utils():
 
 
 def test_needs_quote():
-    notascii = ('ȧƈƈḗƞŧḗḓ ŧḗẋŧ ƒǿř ŧḗşŧīƞɠ, ℛℯα∂α♭ℓℯ ♭ʊ☂ η☺т Ѧ$☾ℐℐ, '
-                '¡ooʇ ןnɟǝsn sı uʍop-ǝpısdn')
+    notascii = 'ȧƈƈḗƞŧḗḓ ŧḗẋŧ ƒǿř ŧḗşŧīƞɠ, ℛℯα∂α♭ℓℯ ♭ʊ☂ η☺т Ѧ$☾ℐℐ, ' '¡ooʇ ןnɟǝsn sı uʍop-ǝpısdn'
     assert internetarchive.utils.needs_quote(notascii)
     assert internetarchive.utils.needs_quote(string.whitespace)
     assert not internetarchive.utils.needs_quote(string.ascii_letters + string.digits)
@@ -55,20 +54,25 @@ def test_IdentifierListAsItems(session):
 def test_IdentifierListAsItems_len(session):
     assert len(internetarchive.utils.IdentifierListAsItems(['foo', 'bar'], session)) == 2
 
+
 # TODO: Add test of slice access to IdenfierListAsItems
 
 
 def test_get_s3_xml_text():
-    xml_str = ('<Error><Code>NoSuchBucket</Code>'
-               '<Message>The specified bucket does not exist.</Message>'
-               '<Resource>'
-               'does-not-exist-! not found by Metadata::get_obj()[server]'
-               '</Resource>'
-               '<RequestId>d56bdc63-169b-4b4f-8c47-0fac6de39040</RequestId></Error>')
+    xml_str = (
+        '<Error><Code>NoSuchBucket</Code>'
+        '<Message>The specified bucket does not exist.</Message>'
+        '<Resource>'
+        'does-not-exist-! not found by Metadata::get_obj()[server]'
+        '</Resource>'
+        '<RequestId>d56bdc63-169b-4b4f-8c47-0fac6de39040</RequestId></Error>'
+    )
 
     expected_txt = internetarchive.utils.get_s3_xml_text(xml_str)
-    assert expected_txt == ('The specified bucket does not exist. - does-not-exist-! '
-                            'not found by Metadata::get_obj()[server]')
+    assert expected_txt == (
+        'The specified bucket does not exist. - does-not-exist-! '
+        'not found by Metadata::get_obj()[server]'
+    )
 
 
 def test_get_file_size():
@@ -85,10 +89,23 @@ def test_is_valid_metadata_key():
     # Keys starting with "xml" should also be invalid
     # due to the XML specification, but are supported
     # by the Internet Archive.
-    valid = ('adaptive_ocr', 'bookreader-defaults', 'frames_per_second',
-             'identifier', 'possible-copyright-status', 'index[0]')
-    invalid = ('Analog Format', "Date of transfer (probably today's date)",
-               '_metadata_key', '58', '_', '<invalid>', 'a')
+    valid = (
+        'adaptive_ocr',
+        'bookreader-defaults',
+        'frames_per_second',
+        'identifier',
+        'possible-copyright-status',
+        'index[0]',
+    )
+    invalid = (
+        'Analog Format',
+        "Date of transfer (probably today's date)",
+        '_metadata_key',
+        '58',
+        '_',
+        '<invalid>',
+        'a',
+    )
 
     for metadata_key in valid:
         assert internetarchive.utils.is_valid_metadata_key(metadata_key)

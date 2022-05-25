@@ -73,12 +73,16 @@ from docopt import docopt, printable_usage  # type: ignore
 from requests.exceptions import HTTPError
 from schema import And, Or, Schema, SchemaError, Use
 
-from internetarchive.cli.argparser import (convert_str_list_to_unicode,
-                                           get_args_dict)
+from internetarchive.cli.argparser import convert_str_list_to_unicode, get_args_dict
 from internetarchive.session import ArchiveSession
-from internetarchive.utils import (InvalidIdentifierException, JSONDecodeError,
-                                   get_s3_xml_text, is_valid_metadata_key,
-                                   json, validate_s3_identifier)
+from internetarchive.utils import (
+    InvalidIdentifierException,
+    JSONDecodeError,
+    get_s3_xml_text,
+    is_valid_metadata_key,
+    json,
+    validate_s3_identifier,
+)
 
 
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
@@ -101,9 +105,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
             for i, r in enumerate(responses):
                 if i != 0:
                     print('---', file=sys.stderr)
-                headers = '\n'.join(
-                    [f' {k}:{v}' for (k, v) in r.headers.items()]
-                )
+                headers = '\n'.join([f' {k}:{v}' for (k, v) in r.headers.items()])
                 print(f'Endpoint:\n {r.url}\n', file=sys.stderr)
                 print(f'HTTP Headers:\n{headers}', file=sys.stderr)
 
@@ -115,33 +117,60 @@ def main(argv, session):
     ERRORS = False
 
     # Validate args.
-    s = Schema({
-        str: Use(bool),
-        '<identifier>': Or(None, And(str, validate_s3_identifier,
-            error=('<identifier> should be between 3 and 80 characters in length, and '
-                   'can only contain alphanumeric characters, periods ".", '
-                   'underscores "_", or dashes "-". However, <identifier> cannot begin '
-                   'with periods, underscores, or dashes.'))),
-        '<file>': And(
-            And(lambda f: all(os.path.exists(x) for x in f if x != '-'),
-                error='<file> should be a readable file or directory.'),
-            And(lambda f: False if f == ['-'] and not args['--remote-name'] else True,
-                error='--remote-name must be provided when uploading from stdin.')),
-        '--remote-name': Or(None, str),
-        '--spreadsheet': Or(None, os.path.isfile,
-                            error='--spreadsheet should be a readable file.'),
-        '--file-metadata': Or(None, os.path.isfile,
-                              error='--file-metadata should be a readable file.'),
-        '--metadata': Or(None, And(Use(get_args_dict), dict),
-                         error='--metadata must be formatted as --metadata="key:value"'),
-        '--header': Or(None, And(Use(get_args_dict), dict),
-                       error='--header must be formatted as --header="key:value"'),
-        '--retries': Use(lambda x: int(x[0]) if x else 0),
-        '--sleep': Use(lambda l: int(l[0]), error='--sleep value must be an integer.'),
-        '--size-hint': Or(Use(lambda l: str(l[0]) if l else None), int, None,
-                          error='--size-hint value must be an integer.'),
-        '--status-check': bool,
-    })
+    s = Schema(
+        {
+            str: Use(bool),
+            '<identifier>': Or(
+                None,
+                And(
+                    str,
+                    validate_s3_identifier,
+                    error=(
+                        '<identifier> should be between 3 and 80 characters in length, and '
+                        'can only contain alphanumeric characters, periods ".", '
+                        'underscores "_", or dashes "-". However, <identifier> cannot begin '
+                        'with periods, underscores, or dashes.'
+                    ),
+                ),
+            ),
+            '<file>': And(
+                And(
+                    lambda f: all(os.path.exists(x) for x in f if x != '-'),
+                    error='<file> should be a readable file or directory.',
+                ),
+                And(
+                    lambda f: False if f == ['-'] and not args['--remote-name'] else True,
+                    error='--remote-name must be provided when uploading from stdin.',
+                ),
+            ),
+            '--remote-name': Or(None, str),
+            '--spreadsheet': Or(
+                None, os.path.isfile, error='--spreadsheet should be a readable file.'
+            ),
+            '--file-metadata': Or(
+                None, os.path.isfile, error='--file-metadata should be a readable file.'
+            ),
+            '--metadata': Or(
+                None,
+                And(Use(get_args_dict), dict),
+                error='--metadata must be formatted as --metadata="key:value"',
+            ),
+            '--header': Or(
+                None,
+                And(Use(get_args_dict), dict),
+                error='--header must be formatted as --header="key:value"',
+            ),
+            '--retries': Use(lambda x: int(x[0]) if x else 0),
+            '--sleep': Use(lambda l: int(l[0]), error='--sleep value must be an integer.'),
+            '--size-hint': Or(
+                Use(lambda l: str(l[0]) if l else None),
+                int,
+                None,
+                error='--size-hint value must be an integer.',
+            ),
+            '--status-check': bool,
+        }
+    )
     try:
         args = s.validate(args)
     except SchemaError as exc:
@@ -155,17 +184,21 @@ def main(argv, session):
             collection_id = collection_id[0]
         collection = session.get_item(collection_id)
         if not collection.exists:
-            print('You must upload to a collection that exists. '
-                  f'"{collection_id}" does not exist.\n{printable_usage(__doc__)}',
-                  file=sys.stderr)
+            print(
+                'You must upload to a collection that exists. '
+                f'"{collection_id}" does not exist.\n{printable_usage(__doc__)}',
+                file=sys.stderr,
+            )
             sys.exit(1)
 
     # Status check.
     if args['--status-check']:
         if session.s3_is_overloaded():
-            print(f'warning: {args["<identifier>"]} is over limit, and not accepting requests. '
-                  'Expect 503 SlowDown errors.',
-                  file=sys.stderr)
+            print(
+                f'warning: {args["<identifier>"]} is over limit, and not accepting requests. '
+                'Expect 503 SlowDown errors.',
+                file=sys.stderr,
+            )
             sys.exit(1)
         else:
             print(f'success: {args["<identifier>"]} is accepting requests.', file=sys.stderr)
@@ -218,13 +251,16 @@ def main(argv, session):
             # Note that the encoding attribute might also be None. In that case, fall back to
             # locale.getpreferredencoding, the default of io.TextIOWrapper and open().
             if hasattr(sys.stdin, 'buffer'):
+
                 def read():
                     return sys.stdin.buffer.read(1048576)
+
             else:
                 encoding = sys.stdin.encoding or getpreferredencoding(False)
 
                 def read():
                     return sys.stdin.read(1048576).encode(encoding)
+
             while True:
                 data = read()
                 if not data:
@@ -262,8 +298,9 @@ def main(argv, session):
             for row in spreadsheet:
                 for metadata_key in row:
                     if not is_valid_metadata_key(metadata_key):
-                        print(f'error: "{metadata_key}" is not a valid metadata key.',
-                              file=sys.stderr)
+                        print(
+                            f'error: "{metadata_key}" is not a valid metadata key.', file=sys.stderr
+                        )
                         sys.exit(1)
                 upload_kwargs_copy = deepcopy(upload_kwargs)
                 if row.get('REMOTE_NAME'):
@@ -276,8 +313,7 @@ def main(argv, session):
                 identifier = row.get('item', row.get('identifier'))
                 if not identifier:
                     if not prev_identifier:
-                        print('error: no identifier column on spreadsheet.',
-                              file=sys.stderr)
+                        print('error: no identifier column on spreadsheet.', file=sys.stderr)
                         sys.exit(1)
                     identifier = prev_identifier
                 del row['file']
@@ -291,8 +327,7 @@ def main(argv, session):
                 md_args = [f'{k.lower()}:{v}' for (k, v) in row.items() if v]
                 metadata = get_args_dict(md_args)
                 upload_kwargs_copy['metadata'].update(metadata)
-                r = _upload_files(item, local_file, upload_kwargs_copy, prev_identifier,
-                                  session)
+                r = _upload_files(item, local_file, upload_kwargs_copy, prev_identifier, session)
                 for _r in r:
                     if args['--debug']:
                         break

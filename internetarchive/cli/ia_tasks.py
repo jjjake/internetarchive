@@ -86,12 +86,14 @@ def main(argv, session: ArchiveSession) -> None:
         data = get_args_dict(args['--data'], query_string=True)
         task_args = get_args_dict(args['--task-args'], query_string=True)
         data['args'] = task_args
-        r = session.submit_task(args['<identifier>'],
-                                args['--cmd'],
-                                comment=args['--comment'],
-                                priority=int(data.get('priority', 0)),
-                                reduced_priority=args['--reduced-priority'],
-                                data=data)
+        r = session.submit_task(
+            args['<identifier>'],
+            args['--cmd'],
+            comment=args['--comment'],
+            priority=int(data.get('priority', 0)),
+            reduced_priority=args['--reduced-priority'],
+            data=data,
+        )
         j = r.json()
         if j.get('success'):
             task_log_url = j.get('value', {}).get('log')
@@ -112,8 +114,7 @@ def main(argv, session: ArchiveSession) -> None:
         params = _params
     elif args['--get-task-log']:
         log = session.get_task_log(args['--get-task-log'], params)
-        print(log.encode('utf-8', errors='surrogateescape')
-                 .decode('utf-8', errors='replace'))
+        print(log.encode('utf-8', errors='surrogateescape').decode('utf-8', errors='replace'))
         sys.exit(0)
 
     queryable_params = [
@@ -128,8 +129,7 @@ def main(argv, session: ArchiveSession) -> None:
         'submittime',
     ]
 
-    if not (args['<identifier>']
-            or params.get('task_id')):
+    if not (args['<identifier>'] or params.get('task_id')):
         _params = {'catalog': 1, 'history': 0}
         _params.update(params)
         params = _params
@@ -140,8 +140,10 @@ def main(argv, session: ArchiveSession) -> None:
         params = _params
 
     if args['--tab-output']:
-        warn_msg = ('tab-delimited output will be removed in a future release. '
-                    'Please switch to the default JSON output.')
+        warn_msg = (
+            'tab-delimited output will be removed in a future release. '
+            'Please switch to the default JSON output.'
+        )
         warnings.warn(warn_msg)
     for t in session.get_tasks(params=params):
         # Legacy support for tab-delimted output.
@@ -149,16 +151,22 @@ def main(argv, session: ArchiveSession) -> None:
         if args['--tab-output']:
             color = t.color if t.color else 'done'
             task_args = '\t'.join([f'{k}={v}' for k, v in t.args.items()])  # type: ignore
-            output = '\t'.join([str(x) for x in [  # type: ignore
-                t.identifier,  # type: ignore
-                t.task_id,  # type: ignore
-                t.server,  # type: ignore
-                t.submittime,  # type: ignore
-                t.cmd,  # type: ignore
-                color,  # type: ignore
-                t.submitter,  # type: ignore
-                task_args,
-            ] if x])
+            output = '\t'.join(
+                [
+                    str(x)
+                    for x in [  # type: ignore
+                        t.identifier,  # type: ignore
+                        t.task_id,  # type: ignore
+                        t.server,  # type: ignore
+                        t.submittime,  # type: ignore
+                        t.cmd,  # type: ignore
+                        color,  # type: ignore
+                        t.submitter,  # type: ignore
+                        task_args,
+                    ]
+                    if x
+                ]
+            )
             print(output, flush=True)
         else:
             print(t.json(), flush=True)

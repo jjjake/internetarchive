@@ -58,17 +58,21 @@ def main(argv, session: ArchiveSession = None) -> None:
     args = docopt(__doc__, argv=argv)
 
     # Validate args.
-    s = Schema({
-        str: Use(bool),
-        '<query>': Use(lambda x: ' '.join(x)),
-        '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
-        '--header': Or(None, And(Use(get_args_dict), dict),
-                       error='--header must be formatted as --header="key:value"'),
-        '--sort': list,
-        '--field': list,
-        '--timeout': Use(lambda x: float(x[0]),
-                         error='--timeout must be integer or float.')
-    })
+    s = Schema(
+        {
+            str: Use(bool),
+            '<query>': Use(lambda x: ' '.join(x)),
+            '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
+            '--header': Or(
+                None,
+                And(Use(get_args_dict), dict),
+                error='--header must be formatted as --header="key:value"',
+            ),
+            '--sort': list,
+            '--field': list,
+            '--timeout': Use(lambda x: float(x[0]), error='--timeout must be integer or float.'),
+        }
+    )
     try:
         args = s.validate(args)
     except SchemaError as exc:
@@ -84,13 +88,15 @@ def main(argv, session: ArchiveSession = None) -> None:
         'timeout': args['--timeout'],
     }
 
-    search = session.search_items(args['<query>'],  # type: ignore
-                                  fields=fields,
-                                  sorts=sorts,
-                                  params=args['--parameters'],
-                                  full_text_search=args['--fts'],
-                                  dsl_fts=args['--dsl-fts'],
-                                  request_kwargs=r_kwargs)
+    search = session.search_items(  # type: ignore[union-attr]
+        args['<query>'],
+        fields=fields,
+        sorts=sorts,
+        params=args['--parameters'],
+        full_text_search=args['--fts'],
+        dsl_fts=args['--dsl-fts'],
+        request_kwargs=r_kwargs,
+    )
 
     try:
         if args['--num-found']:
@@ -108,12 +114,14 @@ def main(argv, session: ArchiveSession = None) -> None:
     except ValueError as e:
         print(f'error: {e}', file=sys.stderr)
     except ConnectTimeout as exc:
-        print('error: Request timed out. Increase the --timeout and try again.',
-              file=sys.stderr)
+        print('error: Request timed out. Increase the --timeout and try again.', file=sys.stderr)
         sys.exit(1)
     except ReadTimeout as exc:
-        print('error: The server timed out and failed to return all search results,'
-              ' please try again', file=sys.stderr)
+        print(
+            'error: The server timed out and failed to return all search results,'
+            ' please try again',
+            file=sys.stderr,
+        )
         sys.exit(1)
     except AuthenticationError as exc:
         print(f'error: {exc}', file=sys.stderr)

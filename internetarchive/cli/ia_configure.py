@@ -52,24 +52,33 @@ def main(argv: list[str], session: ArchiveSession) -> None:
         sig = session.config.get('cookies', {}).get('logged-in-sig')
         if not user or not sig:
             if not user and not sig:
-                print('error: "logged-in-user" and "logged-in-sig" cookies '
-                      'not found in config file, try reconfiguring.', file=sys.stderr)
+                print(
+                    'error: "logged-in-user" and "logged-in-sig" cookies '
+                    'not found in config file, try reconfiguring.',
+                    file=sys.stderr,
+                )
             elif not user:
-                print('error: "logged-in-user" cookie not found in config file, '
-                      'try reconfiguring.', file=sys.stderr)
+                print(
+                    'error: "logged-in-user" cookie not found in config file, ' 'try reconfiguring.',
+                    file=sys.stderr,
+                )
             elif not sig:
-                print('error: "logged-in-sig" cookie not found in config file, '
-                      'try reconfiguring.', file=sys.stderr)
+                print(
+                    'error: "logged-in-sig" cookie not found in config file, ' 'try reconfiguring.',
+                    file=sys.stderr,
+                )
             sys.exit(1)
         print(f'logged-in-user={user}; logged-in-sig={sig}')
         sys.exit()
     try:
         # CLI params.
         if args['--username'] and args['--password']:
-            config_file_path = configure(args['--username'],
-                                         args['--password'],
-                                         config_file=session.config_file,
-                                         host=session.host)
+            config_file_path = configure(
+                args['--username'],
+                args['--password'],
+                config_file=session.config_file,
+                host=session.host,
+            )
             print(f'Config saved to: {config_file_path}', file=sys.stderr)
 
         # Netrc
@@ -81,17 +90,15 @@ def main(argv: list[str], session: ArchiveSession) -> None:
                 print('error: netrc.netrc() cannot parse your .netrc file.', file=sys.stderr)
                 sys.exit(1)
             username, _, password = n.hosts['archive.org']
-            config_file_path = configure(username,
-                                         password or "",
-                                         config_file=session.config_file,
-                                         host=session.host)
+            config_file_path = configure(
+                username, password or '', config_file=session.config_file, host=session.host
+            )
             print(f'Config saved to: {config_file_path}', file=sys.stderr)
 
         # Interactive input.
         else:
             print("Enter your Archive.org credentials below to configure 'ia'.\n")
-            config_file_path = configure(config_file=session.config_file,
-                                         host=session.host)
+            config_file_path = configure(config_file=session.config_file, host=session.host)
             print(f'\nConfig saved to: {config_file_path}')
 
     except AuthenticationError as exc:

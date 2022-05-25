@@ -44,9 +44,9 @@ examples:
 import sys
 from itertools import chain
 
-from docopt import docopt, printable_usage  # type: ignore
+from docopt import docopt, printable_usage
 from requests.exceptions import ConnectTimeout, ReadTimeout
-from schema import And, Or, Schema, SchemaError, Use
+from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
 
 from internetarchive import ArchiveSession, search_items
 from internetarchive.cli.argparser import get_args_dict

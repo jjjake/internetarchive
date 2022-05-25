@@ -56,14 +56,16 @@ from collections import defaultdict
 from copy import copy
 from typing import Mapping
 
-from docopt import docopt, printable_usage  # type: ignore
+from docopt import docopt, printable_usage
 from requests import Response
-from schema import And, Or, Schema, SchemaError, Use
+from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
 
 from internetarchive import item, session
-from internetarchive.cli.argparser import (get_args_dict,
-                                           get_args_dict_many_write,
-                                           get_args_header_dict)
+from internetarchive.cli.argparser import (
+    get_args_dict,
+    get_args_dict_many_write,
+    get_args_header_dict,
+)
 from internetarchive.exceptions import ItemLocateError
 from internetarchive.utils import json
 

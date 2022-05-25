@@ -46,7 +46,7 @@ def sort_by_date(task_dict: CatalogTask) -> datetime:
         return datetime.now()
     try:
         return datetime.strptime(task_dict['submittime'], '%Y-%m-%d %H:%M:%S.%f')
-    except:
+    except Exception:
         return datetime.strptime(task_dict['submittime'], '%Y-%m-%d %H:%M:%S')
 
 

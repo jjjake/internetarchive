@@ -46,12 +46,11 @@ options:
 import sys
 
 import requests.exceptions
-from docopt import docopt, printable_usage  # type: ignore
-from schema import And, Or, Schema, SchemaError, Use
+from docopt import docopt, printable_usage
+from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
 
 from internetarchive import ArchiveSession
-from internetarchive.cli.argparser import (convert_str_list_to_unicode,
-                                           get_args_dict)
+from internetarchive.cli.argparser import convert_str_list_to_unicode, get_args_dict
 from internetarchive.utils import get_s3_xml_text
 
 

@@ -6,10 +6,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
+        with:
+          cache: pip
       - run: pip install --upgrade pip wheel
-      - run: pip install black flake8 flake8-2020 flake8-comprehensions mypy safety
+      - run: pip install .[all]
       - run: black --check . || true
       - run: flake8 .  # See setup.cfg for configuration
       - run: pip install -r pex-requirements.txt -r tests/requirements.txt
-      - run: mypy --non-interactive .  # See setup.cfg for configuration
+      - run: mypy .  # See setup.cfg for configuration
       - run: safety check

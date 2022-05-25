@@ -40,9 +40,9 @@ from __future__ import annotations
 import sys
 from urllib.parse import quote
 
-from docopt import docopt, printable_usage  # type: ignore
+from docopt import docopt, printable_usage
 from requests import Response
-from schema import And, Or, Schema, SchemaError, Use
+from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
 
 import internetarchive as ia
 from internetarchive.cli.argparser import get_args_dict

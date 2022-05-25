@@ -59,7 +59,7 @@ def files_downloaded(path):
     found_files = set()
     try:
         found_files = set(os.listdir(path))
-    except (FileNotFoundError, OSError):
+    except OSError:
         pass
     return found_files
 

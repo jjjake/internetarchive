@@ -210,7 +210,7 @@ class MetadataRequest(requests.models.Request):
 
 class MetadataPreparedRequest(requests.models.PreparedRequest):
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
-                params=None, auth=None, cookies=None, hooks=None, metadata={},
+                params=None, auth=None, cookies=None, hooks=None, metadata={},  # noqa: B006
                 source_metadata=None, target=None, priority=None, append=None,
                 append_list=None):
         self.prepare_method(method)
@@ -329,7 +329,7 @@ def prepare_target_patch(metadata, source_metadata, append, target, append_list,
         if not lst:
             return value
         sub_dict = dictify(lst[1:], key, value)
-        for i, v in enumerate(lst):
+        for v in lst:
             md = {v: copy.deepcopy(sub_dict)}
             return md
 

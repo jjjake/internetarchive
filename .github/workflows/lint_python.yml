@@ -8,10 +8,10 @@ jobs:
       - uses: actions/setup-python@v3
         with:
           cache: pip
-      - run: |
-          pip install --upgrade pip wheel
-          pip install .[all]
+      - run: pip install --upgrade pip wheel
+      - run: pip install .[all]
       - run: black --check . || true
-      - run: flake8 .
-      - run: mypy .
+      - run: flake8 .  # See setup.cfg for configuration
+      - run: pip install -r pex-requirements.txt -r tests/requirements.txt
+      - run: mypy .  # See setup.cfg for configuration
       - run: safety check

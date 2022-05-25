@@ -60,17 +60,23 @@ options:
     -p, --parameters=<key:value>...          Parameters to send with your query (e.g. `cnt=0`).
     -a, --download-history                   Also download files from the history directory.
 """
+from __future__ import annotations
+
 import os
 import sys
 from os.path import exists as dir_exists
+from typing import TextIO
 
 from docopt import docopt, printable_usage
 from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
 
+from internetarchive import ArchiveSession
 from internetarchive.cli.argparser import get_args_dict
+from internetarchive.files import File
+from internetarchive.search import Search
 
 
-def main(argv, session):
+def main(argv, session: ArchiveSession) -> None:
     args = docopt(__doc__, argv=argv)
 
     # Validation error messages.
@@ -82,7 +88,7 @@ def main(argv, session):
         str: Use(bool),
         '--destdir': Or([], And(Use(lambda d: d[0]), dir_exists), error=destdir_msg),
         '--format': list,
-        '--glob': Use(lambda l: l[0] if l else None),
+        '--glob': Use(lambda item: item[0] if item else None),
         '<file>': list,
         '--search': Or(str, None),
         '--itemlist': Or(None, And(lambda f: os.path.isfile(f)), error=itemlist_msg),
@@ -97,15 +103,15 @@ def main(argv, session):
 
     try:
         args = s.validate(args)
-        if args['--glob']:
-            if args['--format']:
-                raise(SchemaError(None, '--glob and --format cannot be used together.'))
+        if args['--glob'] and args['--format']:
+            raise(SchemaError(None, '--glob and --format cannot be used together.'))
 
     except SchemaError as exc:
         print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
         sys.exit(1)
 
     retries = int(args['--retries'])
+    ids: list[File | str] | Search | TextIO
 
     if args['--itemlist']:
         with open(args['--itemlist']) as fp:

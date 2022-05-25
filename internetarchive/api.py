@@ -77,7 +77,7 @@ def get_session(
         >>> s.get_tasks(task_ids=31643513)[0].server
         'ia311234'
     """
-    return session.ArchiveSession(config, config_file, debug, http_adapter_kwargs)
+    return session.ArchiveSession(config, config_file or "", debug, http_adapter_kwargs)
 
 
 def get_item(

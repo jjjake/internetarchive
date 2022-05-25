@@ -37,11 +37,12 @@ import sys
 from docopt import docopt, printable_usage
 from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
 
+from internetarchive import ArchiveSession
 from internetarchive.cli import ia_copy
 from internetarchive.cli.argparser import get_args_dict
 
 
-def main(argv, session):
+def main(argv, session: ArchiveSession) -> None:
     args = docopt(__doc__, argv=argv)
     src_path = args['<src-identifier>/<src-file>']
     dest_path = args['<dest-identifier>/<dest-file>']

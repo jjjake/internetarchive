@@ -48,13 +48,13 @@ from docopt import docopt, printable_usage
 from requests.exceptions import ConnectTimeout, ReadTimeout
 from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
 
-from internetarchive import search_items
+from internetarchive import ArchiveSession, search_items
 from internetarchive.cli.argparser import get_args_dict
 from internetarchive.exceptions import AuthenticationError
 from internetarchive.utils import json
 
 
-def main(argv, session=None):
+def main(argv, session: ArchiveSession = None) -> None:
     args = docopt(__doc__, argv=argv)
 
     # Validate args.
@@ -84,7 +84,7 @@ def main(argv, session=None):
         'timeout': args['--timeout'],
     }
 
-    search = session.search_items(args['<query>'],
+    search = session.search_items(args['<query>'],  # type: ignore
                                   fields=fields,
                                   sorts=sorts,
                                   params=args['--parameters'],

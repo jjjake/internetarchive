@@ -35,10 +35,13 @@ options:
                                    will not be saved to history/files/$key.~N~
                                    [default: True].
 """
+from __future__ import annotations
+
 import sys
 from urllib.parse import quote
 
 from docopt import docopt, printable_usage
+from requests import Response
 from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
 
 import internetarchive as ia
@@ -46,16 +49,18 @@ from internetarchive.cli.argparser import get_args_dict
 from internetarchive.utils import get_s3_xml_text, merge_dictionaries
 
 
-def assert_src_file_exists(src_location):
-    assert SRC_ITEM.exists
+def assert_src_file_exists(src_location: str) -> bool:
+    assert SRC_ITEM.exists  # type: ignore
     global SRC_FILE
     src_filename = src_location.split('/', 1)[-1]
-    SRC_FILE = SRC_ITEM.get_file(src_filename)
-    assert SRC_FILE.exists
+    SRC_FILE = SRC_ITEM.get_file(src_filename)  # type: ignore
+    assert SRC_FILE.exists  # type: ignore
     return True
 
 
-def main(argv, session, cmd='copy'):
+def main(
+    argv: list[str] | None, session: ia.session.ArchiveSession, cmd: str = 'copy'
+) -> tuple[Response, ia.files.File]:
     args = docopt(__doc__, argv=argv)
     src_path = args['<src-identifier>/<src-file>']
     dest_path = args['<dest-identifier>/<dest-file>']
@@ -69,7 +74,7 @@ def main(argv, session, cmd='copy'):
         sys.exit(1)
 
     global SRC_ITEM
-    SRC_ITEM = session.get_item(src_path.split('/')[0])
+    SRC_ITEM = session.get_item(src_path.split('/')[0])  # type: ignore
 
     # Validate args.
     s = Schema({
@@ -108,14 +113,11 @@ def main(argv, session, cmd='copy'):
 
     # New metadata takes precedence over old metadata.
     if not args['--replace-metadata']:
-        args['--metadata'] = merge_dictionaries(SRC_ITEM.metadata,
+        args['--metadata'] = merge_dictionaries(SRC_ITEM.metadata,  # type: ignore
                                                 args['--metadata'])
 
     # File metadata is copied by default but can be dropped.
-    if args['--ignore-file-metadata']:
-        file_metadata = None
-    else:
-        file_metadata = SRC_FILE.metadata
+    file_metadata = None if args['--ignore-file-metadata'] else SRC_FILE.metadata  # type: ignore
 
     # Add keep-old-version by default.
     if not args['--header'].get('x-archive-keep-old-version') and not args['--no-backup']:
@@ -142,5 +144,4 @@ def main(argv, session, cmd='copy'):
         sys.exit(1)
     elif cmd == 'copy':
         print(f'success: copied "{src_path}" to "{dest_path}".', file=sys.stderr)
-    else:
-        return (r, SRC_FILE)
+    return (r, SRC_FILE)  # type: ignore

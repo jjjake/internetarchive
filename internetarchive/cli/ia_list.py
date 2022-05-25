@@ -38,8 +38,10 @@ from itertools import chain
 
 from docopt import docopt
 
+from internetarchive import ArchiveSession
 
-def main(argv, session):
+
+def main(argv, session: ArchiveSession) -> None:
     args = docopt(__doc__, argv=argv)
     item = session.get_item(args['<identifier>'])
 

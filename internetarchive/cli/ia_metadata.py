@@ -252,8 +252,8 @@ def main(argv: dict, session: session.ArchiveSession) -> None:
 
         # Dump JSON to stdout.
         else:
-            metadata = json.dumps(item.item_metadata)
-            print(metadata)
+            metadata_str = json.dumps(item.item_metadata)
+            print(metadata_str)
 
     # Edit metadata for items in bulk, using a spreadsheet as input.
     if args['--spreadsheet']:

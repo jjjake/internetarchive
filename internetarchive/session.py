@@ -74,7 +74,7 @@ class ArchiveSession(requests.sessions.Session):
 
     def __init__(self,
                  config: Mapping | None = None,
-                 config_file: str | None = None,
+                 config_file: str = "",
                  debug: bool = False,
                  http_adapter_kwargs: MutableMapping | None = None):
         """Initialize :class:`ArchiveSession <ArchiveSession>` object with config.
@@ -107,8 +107,8 @@ class ArchiveSession(requests.sessions.Session):
                                    path=cookie_dict.get('path', '/'))
             self.cookies.set_cookie(cookie)
 
-        self.secure = self.config.get('general', {}).get('secure', True)
-        self.host = self.config.get('general', {}).get('host', 'archive.org')
+        self.secure: bool = self.config.get('general', {}).get('secure', True)
+        self.host: str = self.config.get('general', {}).get('host', 'archive.org')
         if 'archive.org' not in self.host:
             self.host += '.archive.org'
         self.protocol = 'https:' if self.secure else 'http:'
@@ -116,10 +116,10 @@ class ArchiveSession(requests.sessions.Session):
         if user_email:
             user_email = user_email.split(';')[0]
             user_email = unquote(user_email)
-        self.user_email = user_email
-        self.access_key = self.config.get('s3', {}).get('access')
-        self.secret_key = self.config.get('s3', {}).get('secret')
-        self.http_adapter_kwargs = http_adapter_kwargs
+        self.user_email: str = user_email
+        self.access_key: str = self.config.get('s3', {}).get('access')
+        self.secret_key: str = self.config.get('s3', {}).get('secret')
+        self.http_adapter_kwargs: MutableMapping = http_adapter_kwargs or {}
 
         self.headers = default_headers()
         self.headers.update({'User-Agent': self._get_user_agent_string()})

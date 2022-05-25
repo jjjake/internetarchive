@@ -72,11 +72,13 @@ class ArchiveSession(requests.sessions.Session):
         'collection': Collection,
     }
 
-    def __init__(self,
-                 config: Mapping | None = None,
-                 config_file: str = "",
-                 debug: bool = False,
-                 http_adapter_kwargs: MutableMapping | None = None):
+    def __init__(
+        self,
+        config: Mapping | None = None,
+        config_file: str = '',
+        debug: bool = False,
+        http_adapter_kwargs: MutableMapping | None = None,
+    ):
         """Initialize :class:`ArchiveSession <ArchiveSession>` object with config.
 
         :param config: A config dict used for initializing the
@@ -102,9 +104,12 @@ class ArchiveSession(requests.sessions.Session):
             cookie_dict = parse_dict_cookies(raw_cookie)
             if not cookie_dict.get(ck):
                 continue
-            cookie = create_cookie(ck, cookie_dict[ck],
-                                   domain=cookie_dict.get('domain', '.archive.org'),
-                                   path=cookie_dict.get('path', '/'))
+            cookie = create_cookie(
+                ck,
+                cookie_dict[ck],
+                domain=cookie_dict.get('domain', '.archive.org'),
+                path=cookie_dict.get('path', '/'),
+            )
             self.cookies.set_cookie(cookie)
 
         self.secure: bool = self.config.get('general', {}).get('secure', True)
@@ -129,12 +134,16 @@ class ArchiveSession(requests.sessions.Session):
 
         logging_config = self.config.get('logging', {})
         if logging_config.get('level'):
-            self.set_file_logger(logging_config.get('level', 'NOTSET'),
-                                 logging_config.get('file', 'internetarchive.log'))
+            self.set_file_logger(
+                logging_config.get('level', 'NOTSET'),
+                logging_config.get('file', 'internetarchive.log'),
+            )
             if debug or (logger.level <= 10):
-                self.set_file_logger(logging_config.get('level', 'NOTSET'),
-                                     logging_config.get('file', 'internetarchive.log'),
-                                     'urllib3')
+                self.set_file_logger(
+                    logging_config.get('level', 'NOTSET'),
+                    logging_config.get('file', 'internetarchive.log'),
+                    'urllib3',
+                )
 
     def _get_user_agent_string(self) -> str:
         """Generate a User-Agent string to be sent with every request."""
@@ -144,20 +153,26 @@ class ArchiveSession(requests.sessions.Session):
         except Exception:
             lang = ''
         py_version = '{}.{}.{}'.format(*sys.version_info)
-        return (f'internetarchive/{__version__} '
-                f'({uname[0]} {uname[-1]}; N; {lang}; {self.access_key}) '
-                f'Python/{py_version}')
+        return (
+            f'internetarchive/{__version__} '
+            f'({uname[0]} {uname[-1]}; N; {lang}; {self.access_key}) '
+            f'Python/{py_version}'
+        )
 
     def rebuild_auth(self, prepared_request, response):
-        """Never rebuild auth for archive.org URLs.
-        """
+        """Never rebuild auth for archive.org URLs."""
         u = urlparse(prepared_request.url)
         if u.netloc.endswith('archive.org'):
             return
         super().rebuild_auth(prepared_request, response)
 
-    def mount_http_adapter(self, protocol: str | None = None, max_retries: int | None = None,
-                           status_forcelist: list | None = None, host: str = None) -> None:
+    def mount_http_adapter(
+        self,
+        protocol: str | None = None,
+        max_retries: int | None = None,
+        status_forcelist: list | None = None,
+        host: str = None,
+    ) -> None:
         """Mount an HTTP adapter to the
         :class:`ArchiveSession <ArchiveSession>` object.
 
@@ -177,13 +192,15 @@ class ArchiveSession(requests.sessions.Session):
 
         status_forcelist = status_forcelist or [500, 501, 502, 503, 504]
         if max_retries and isinstance(max_retries, (int, float)):
-            self.http_adapter_kwargs['max_retries'] = Retry(total=max_retries,
-                                connect=max_retries,
-                                read=max_retries,
-                                redirect=False,
-                                allowed_methods=Retry.DEFAULT_ALLOWED_METHODS,
-                                status_forcelist=status_forcelist,
-                                backoff_factor=1)
+            self.http_adapter_kwargs['max_retries'] = Retry(
+                total=max_retries,
+                connect=max_retries,
+                read=max_retries,
+                redirect=False,
+                allowed_methods=Retry.DEFAULT_ALLOWED_METHODS,
+                status_forcelist=status_forcelist,
+                backoff_factor=1,
+            )
 
         else:
             self.http_adapter_kwargs['max_retries'] = max_retries
@@ -194,10 +211,7 @@ class ArchiveSession(requests.sessions.Session):
         self.mount(f'{protocol}//{host}', max_retries_adapter)
 
     def set_file_logger(
-        self,
-        log_level: str,
-        path: str,
-        logger_name: str = 'internetarchive'
+        self, log_level: str, path: str, logger_name: str = 'internetarchive'
     ) -> None:
         """Convenience function to quickly configure any level of
         logging to a file.
@@ -231,10 +245,12 @@ class ArchiveSession(requests.sessions.Session):
 
         _log.addHandler(fh)
 
-    def get_item(self,
-                 identifier: str,
-                 item_metadata: Mapping | None = None,
-                 request_kwargs: MutableMapping | None = None):
+    def get_item(
+        self,
+        identifier: str,
+        item_metadata: Mapping | None = None,
+        request_kwargs: MutableMapping | None = None,
+    ):
         """A method for creating :class:`internetarchive.Item <Item>` and
         :class:`internetarchive.Collection <Collection>` objects.
 
@@ -283,15 +299,17 @@ class ArchiveSession(requests.sessions.Session):
             raise type(exc)(error_msg)
         return resp.json()
 
-    def search_items(self,
-                     query: str,
-                     fields: Iterable[str] | None = None,
-                     sorts: Iterable[str] | None = None,
-                     params: Mapping | None = None,
-                     full_text_search: bool = False,
-                     dsl_fts: bool = False,
-                     request_kwargs: Mapping | None = None,
-                     max_retries: int | Retry | None = None) -> Search:
+    def search_items(
+        self,
+        query: str,
+        fields: Iterable[str] | None = None,
+        sorts: Iterable[str] | None = None,
+        params: Mapping | None = None,
+        full_text_search: bool = False,
+        dsl_fts: bool = False,
+        request_kwargs: Mapping | None = None,
+        max_retries: int | Retry | None = None,
+    ) -> Search:
         """Search for items on Archive.org.
 
         :param query: The Archive.org search query to yield results for. Refer to
@@ -313,14 +331,17 @@ class ArchiveSession(requests.sessions.Session):
         :returns: A :class:`Search` object, yielding search results.
         """
         request_kwargs = request_kwargs or {}
-        return Search(self, query,
-                      fields=fields,
-                      sorts=sorts,
-                      params=params,
-                      full_text_search=full_text_search,
-                      dsl_fts=dsl_fts,
-                      request_kwargs=request_kwargs,
-                      max_retries=max_retries)
+        return Search(
+            self,
+            query,
+            fields=fields,
+            sorts=sorts,
+            params=params,
+            full_text_search=full_text_search,
+            dsl_fts=dsl_fts,
+            request_kwargs=request_kwargs,
+            max_retries=max_retries,
+        )
 
     def s3_is_overloaded(self, identifier=None, access_key=None, request_kwargs=None):
         request_kwargs = {} if not request_kwargs else request_kwargs
@@ -349,15 +370,17 @@ class ArchiveSession(requests.sessions.Session):
     def get_tasks_api_rate_limit(self, cmd: str = 'derive.php', request_kwargs: dict | None = None):
         return catalog.Catalog(self, request_kwargs).get_rate_limit(cmd=cmd)
 
-    def submit_task(self,
-                    identifier: str,
-                    cmd: str,
-                    comment: str = '',
-                    priority: int = 0,
-                    data: dict | None = None,
-                    headers: dict | None = None,
-                    reduced_priority: bool = False,
-                    request_kwargs: Mapping | None = None) -> requests.Response:
+    def submit_task(
+        self,
+        identifier: str,
+        cmd: str,
+        comment: str = '',
+        priority: int = 0,
+        data: dict | None = None,
+        headers: dict | None = None,
+        reduced_priority: bool = False,
+        request_kwargs: Mapping | None = None,
+    ) -> requests.Response:
         """Submit an archive.org task.
 
         :param identifier: Item identifier.
@@ -394,16 +417,21 @@ class ArchiveSession(requests.sessions.Session):
         headers = headers or {}
         if reduced_priority:
             headers.update({'X-Accept-Reduced-Priority': '1'})
-        return catalog.Catalog(self, request_kwargs).submit_task(identifier, cmd,
-                                                         comment=comment,
-                                                         priority=priority,
-                                                         data=data,
-                                                         headers=headers)
+        return catalog.Catalog(self, request_kwargs).submit_task(
+            identifier,
+            cmd,
+            comment=comment,
+            priority=priority,
+            data=data,
+            headers=headers,
+        )
 
-    def iter_history(self,
-                     identifier: str | None,
-                     params: dict | None = None,
-                     request_kwargs: Mapping | None = None) -> Iterable[catalog.CatalogTask]:
+    def iter_history(
+        self,
+        identifier: str | None,
+        params: dict | None = None,
+        request_kwargs: Mapping | None = None,
+    ) -> Iterable[catalog.CatalogTask]:
         """A generator that returns completed tasks.
 
         :param identifier: Item identifier.
@@ -423,10 +451,12 @@ class ArchiveSession(requests.sessions.Session):
         c = catalog.Catalog(self, request_kwargs)
         yield from c.iter_tasks(params)
 
-    def iter_catalog(self,
-                     identifier: str | None = None,
-                     params: dict | None = None,
-                     request_kwargs: Mapping | None = None) -> Iterable[catalog.CatalogTask]:
+    def iter_catalog(
+        self,
+        identifier: str | None = None,
+        params: dict | None = None,
+        request_kwargs: Mapping | None = None,
+    ) -> Iterable[catalog.CatalogTask]:
         """A generator that returns queued or running tasks.
 
         :param identifier: Item identifier.
@@ -446,9 +476,12 @@ class ArchiveSession(requests.sessions.Session):
         c = catalog.Catalog(self, request_kwargs)
         yield from c.iter_tasks(params)
 
-    def get_tasks_summary(self, identifier: str = "",
-                          params: dict | None = None,
-                          request_kwargs: Mapping | None = None) -> dict:
+    def get_tasks_summary(
+        self,
+        identifier: str = '',
+        params: dict | None = None,
+        request_kwargs: Mapping | None = None,
+    ) -> dict:
         """Get the total counts of catalog tasks meeting all criteria,
         organized by run status (queued, running, error, and paused).
 
@@ -466,9 +499,12 @@ class ArchiveSession(requests.sessions.Session):
         """
         return catalog.Catalog(self, request_kwargs).get_summary(identifier=identifier, params=params)
 
-    def get_tasks(self, identifier: str = "",
-                  params: dict | None = None,
-                  request_kwargs: Mapping | None = None) -> set[catalog.CatalogTask]:
+    def get_tasks(
+        self,
+        identifier: str = '',
+        params: dict | None = None,
+        request_kwargs: Mapping | None = None,
+    ) -> set[catalog.CatalogTask]:
         """Get a list of all tasks meeting all criteria.
         The list is ordered by submission time.
 
@@ -491,14 +527,13 @@ class ArchiveSession(requests.sessions.Session):
             params['history'] = 1
         if 'catalog' not in params:
             params['catalog'] = 1
-        return set(catalog.Catalog(self, request_kwargs).get_tasks(
-            identifier=identifier,
-            params=params)
+        return set(
+            catalog.Catalog(self, request_kwargs).get_tasks(identifier=identifier, params=params)
         )
 
-    def get_my_catalog(self,
-                       params: dict | None = None,
-                       request_kwargs: Mapping | None = None) -> set[catalog.CatalogTask]:
+    def get_my_catalog(
+        self, params: dict | None = None, request_kwargs: Mapping | None = None
+    ) -> set[catalog.CatalogTask]:
         """Get all queued or running tasks.
 
         :param params: Query parameters, refer to
@@ -512,7 +547,12 @@ class ArchiveSession(requests.sessions.Session):
         :returns: A set of all queued or running tasks.
         """
         params = params or {}
-        _params = {'submitter': self.user_email, 'catalog': 1, 'history': 0, 'summary': 0}
+        _params = {
+            'submitter': self.user_email,
+            'catalog': 1,
+            'history': 0,
+            'summary': 0,
+        }
         params.update(_params)
         return self.get_tasks(params=params, request_kwargs=request_kwargs)
 
@@ -551,8 +591,11 @@ class ArchiveSession(requests.sessions.Session):
                         break
         if insecure:
             from requests.exceptions import RequestException
-            msg = ('You are attempting to make an HTTPS request on an insecure platform,'
-                   ' please see:\n\n\thttps://archive.org/services/docs/api'
-                   '/internetarchive/troubleshooting.html#https-issues\n')
+
+            msg = (
+                'You are attempting to make an HTTPS request on an insecure platform,'
+                ' please see:\n\n\thttps://archive.org/services/docs/api'
+                '/internetarchive/troubleshooting.html#https-issues\n'
+            )
             raise RequestException(msg)
         return r

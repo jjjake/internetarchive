@@ -48,16 +48,27 @@ def main(argv, session: ArchiveSession) -> None:
     dest_path = args['<dest-identifier>/<dest-file>']
 
     # Validate args.
-    s = Schema({
-        str: Use(bool),
-        '--metadata': list,
-        '--header': Or(None, And(Use(get_args_dict), dict),
-            error='--header must be formatted as --header="key:value"'),
-        '<src-identifier>/<src-file>': And(str, lambda x: '/' in x,
-            error='Source not formatted correctly. See usage example.'),
-        '<dest-identifier>/<dest-file>': And(str, lambda x: '/' in x,
-            error='Destination not formatted correctly. See usage example.'),
-    })
+    s = Schema(
+        {
+            str: Use(bool),
+            '--metadata': list,
+            '--header': Or(
+                None,
+                And(Use(get_args_dict), dict),
+                error='--header must be formatted as --header="key:value"',
+            ),
+            '<src-identifier>/<src-file>': And(
+                str,
+                lambda x: '/' in x,
+                error='Source not formatted correctly. See usage example.',
+            ),
+            '<dest-identifier>/<dest-file>': And(
+                str,
+                lambda x: '/' in x,
+                error='Destination not formatted correctly. See usage example.',
+            ),
+        }
+    )
     try:
         args = s.validate(args)
     except SchemaError as exc:

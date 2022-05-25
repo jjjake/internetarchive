@@ -66,7 +66,7 @@ def get_auth_config(email: str, password: str, host: str = 'archive.org') -> dic
         },
         'general': {
             'screenname': j['values']['screenname'],
-        }
+        },
     }
     return auth_config
 

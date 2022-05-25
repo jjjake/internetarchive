@@ -69,8 +69,10 @@ def main(argv, session: ArchiveSession) -> None:
     if j.get('success') or 'no change detected' in j.get('error', '').lower():
         task_id = j.get('value', {}).get('task_id')
         if task_id:
-            print(f'{item.identifier} - success: https://catalogd.archive.org/log/{task_id}',
-                  file=sys.stderr)
+            print(
+                f'{item.identifier} - success: https://catalogd.archive.org/log/{task_id}',
+                file=sys.stderr,
+            )
         else:
             print(f'{item.identifier} - warning: no changes detected!', file=sys.stderr)
         sys.exit(0)

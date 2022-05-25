@@ -61,14 +61,12 @@ from internetarchive.session import ArchiveSession
 
 __all__ = [
     '__version__',
-
     # Classes.
     'ArchiveSession',
     'Item',
     'File',
     'Search',
     'Catalog',
-
     # API.
     'get_item',
     'get_files',

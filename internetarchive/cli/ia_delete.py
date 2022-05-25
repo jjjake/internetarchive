@@ -58,22 +58,29 @@ def main(argv, session: ArchiveSession) -> None:
     args = docopt(__doc__, argv=argv)
 
     # Validation error messages.
-    invalid_id_msg = ('<identifier> should be between 3 and 80 characters in length, and '
-                      'can only contain alphanumeric characters, underscores ( _ ), or '
-                      'dashes ( - )')
+    invalid_id_msg = (
+        '<identifier> should be between 3 and 80 characters in length, and '
+        'can only contain alphanumeric characters, underscores ( _ ), or '
+        'dashes ( - )'
+    )
 
     # Validate args.
-    s = Schema({
-        str: Use(bool),
-        '<file>': list,
-        '--format': list,
-        '--header': Or(None, And(Use(get_args_dict), dict),
-                       error='--header must be formatted as --header="key:value"'),
-        '--glob': list,
-        'delete': bool,
-        '--retries': Use(lambda i: int(i[0])),
-        '<identifier>': str,
-    })
+    s = Schema(
+        {
+            str: Use(bool),
+            '<file>': list,
+            '--format': list,
+            '--header': Or(
+                None,
+                And(Use(get_args_dict), dict),
+                error='--header must be formatted as --header="key:value"',
+            ),
+            '--glob': list,
+            'delete': bool,
+            '--retries': Use(lambda i: int(i[0])),
+            '<identifier>': str,
+        }
+    )
     try:
         args = s.validate(args)
     except SchemaError as exc:
@@ -83,7 +90,7 @@ def main(argv, session: ArchiveSession) -> None:
     verbose = True if not args['--quiet'] else False
     item = session.get_item(args['<identifier>'])
     if not item.exists:
-        print('{0}: skipping, item does\'t exist.', file=sys.stderr)
+        print("{0}: skipping, item doesn't exist.", file=sys.stderr)
 
     # Files that cannot be deleted via S3.
     no_delete = ['_meta.xml', '_files.xml', '_meta.sqlite']
@@ -128,10 +135,12 @@ def main(argv, session: ArchiveSession) -> None:
             print(f' will delete: {item.identifier}/{f.name}', file=sys.stderr)
             continue
         try:
-            resp = f.delete(verbose=verbose,
-                            cascade_delete=args['--cascade'],
-                            headers=args['--header'],
-                            retries=args['--retries'])
+            resp = f.delete(
+                verbose=verbose,
+                cascade_delete=args['--cascade'],
+                headers=args['--header'],
+                retries=args['--retries'],
+            )
         except requests.exceptions.RetryError as e:
             print(f' error: max retries exceeded for {f.name}', file=sys.stderr)
             errors = True

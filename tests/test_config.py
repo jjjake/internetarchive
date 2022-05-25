@@ -30,8 +30,7 @@ def test_get_auth_config():
             "screenname":"jakej"
         },
         "version": 1}"""
-    responses.add(responses.POST, 'https://archive.org/services/xauthn/',
-                  body=test_body)
+    responses.add(responses.POST, 'https://archive.org/services/xauthn/', body=test_body)
     r = internetarchive.config.get_auth_config('test@example.com', 'password1')
     assert r['s3']['access'] == 'Ac3ssK3y'
     assert r['s3']['secret'] == 'S3cretK3y'
@@ -42,14 +41,16 @@ def test_get_auth_config():
 @responses.activate
 def test_get_auth_config_auth_fail():
     # No logged-in-sig cookie set raises AuthenticationError.
-    responses.add(responses.POST, 'https://archive.org/services/xauthn/',
-                  body='{"error": "failed"}')
+    responses.add(
+        responses.POST,
+        'https://archive.org/services/xauthn/',
+        body='{"error": "failed"}',
+    )
     try:
         r = internetarchive.config.get_auth_config('test@example.com', 'password1')
     except AuthenticationError as exc:
         return
-        assert str(exc) == ('Authentication failed. Please check your credentials '
-                            'and try again.')
+        assert str(exc) == ('Authentication failed. Please check your credentials ' 'and try again.')
 
 
 def test_get_config():
@@ -58,19 +59,20 @@ def test_get_config():
 
 
 def test_get_config_with_config_file(tmpdir):
-    test_conf = ('[s3]\n'
-                 'access = test-access\n'
-                 'secret = test-secret\n'
-                 '[cookies]\n'
-                 'logged-in-sig = test-sig\n'
-                 'logged-in-user = test@archive.org\n')
+    test_conf = (
+        '[s3]\n'
+        'access = test-access\n'
+        'secret = test-secret\n'
+        '[cookies]\n'
+        'logged-in-sig = test-sig\n'
+        'logged-in-user = test@archive.org\n'
+    )
 
     tmpdir.chdir()
     with open('ia_test.ini', 'w') as fp:
         fp.write(test_conf)
 
-    config = internetarchive.config.get_config(config_file='ia_test.ini',
-                                               config={'custom': 'test'})
+    config = internetarchive.config.get_config(config_file='ia_test.ini', config={'custom': 'test'})
     assert config['cookies']['logged-in-sig'] == 'test-sig'
     assert config['cookies']['logged-in-user'] == 'test@archive.org'
     assert config['s3']['access'] == 'test-access'
@@ -125,12 +127,14 @@ def test_get_config_home_not_set_with_config():
 
 
 def test_get_config_config_and_config_file(tmpdir):
-    test_conf = ('[s3]\n'
-                 'access = test-access\n'
-                 'secret = test-secret\n'
-                 '[cookies]\n'
-                 'logged-in-sig = test-sig\n'
-                 'logged-in-user = test@archive.org\n')
+    test_conf = (
+        '[s3]\n'
+        'access = test-access\n'
+        'secret = test-secret\n'
+        '[cookies]\n'
+        'logged-in-sig = test-sig\n'
+        'logged-in-user = test@archive.org\n'
+    )
 
     tmpdir.chdir()
 
@@ -148,8 +152,7 @@ def test_get_config_config_and_config_file(tmpdir):
         },
     }
     del test_conf['s3']['access']
-    config = internetarchive.config.get_config(config_file='ia_test.ini',
-                                               config=test_conf)
+    config = internetarchive.config.get_config(config_file='ia_test.ini', config=test_conf)
     assert config['cookies']['logged-in-sig'] == 'test-sig'
     assert config['cookies']['logged-in-user'] == 'test@archive.org'
     assert config['s3']['access'] == 'test-access'
@@ -175,12 +178,13 @@ def _environ(**kwargs):
 
 
 def _test_parse_config_file(
-        expected_result,
-        config_file_contents='',
-        config_file_paths=None,
-        home=None,
-        xdg_config_home=None,
-        config_file_param=None):
+    expected_result,
+    config_file_contents='',
+    config_file_paths=None,
+    home=None,
+    xdg_config_home=None,
+    config_file_param=None,
+):
     # expected_result: (config_file_path, is_xdg); config isn't compared.
     # config_file_contents: str
     # config_file_paths: list of filenames to write config_file_contents to
@@ -193,6 +197,7 @@ def _test_parse_config_file(
         config_file_paths = []
 
     with tempfile.TemporaryDirectory() as tmp_test_dir:
+
         def _replace_path(s):
             if s and s.startswith('$TMPTESTDIR/'):
                 return os.path.join(tmp_test_dir, s.split('/', 1)[1])
@@ -216,15 +221,14 @@ def _test_parse_config_file(
             env['XDG_CONFIG_HOME'] = xdg_config_home
         with _environ(**env):
             config_file_path, is_xdg, config = internetarchive.config.parse_config_file(
-                config_file=config_file_param)
+                config_file=config_file_param
+            )
 
     assert (config_file_path, is_xdg) == expected_result[0:2]
 
 
 def test_parse_config_file_blank():
-    _test_parse_config_file(
-        expected_result=('$TMPTESTDIR/.config/internetarchive/ia.ini', True)
-    )
+    _test_parse_config_file(expected_result=('$TMPTESTDIR/.config/internetarchive/ia.ini', True))
 
 
 def test_parse_config_file_existing_config_ia():
@@ -254,7 +258,7 @@ def test_parse_config_file_existing_all():
         config_file_paths=[
             '$TMPTESTDIR/.config/internetarchive/ia.ini',
             '$TMPTESTDIR/.config/ia.ini',
-            '$TMPTESTDIR/.ia'
+            '$TMPTESTDIR/.ia',
         ],
     )
 
@@ -288,7 +292,7 @@ def test_parse_config_file_direct_path_overrides_existing_files():
         config_file_paths=[
             '$TMPTESTDIR/.config/internetarchive/ia.ini',
             '$TMPTESTDIR/.config/ia.ini',
-            '$TMPTESTDIR/.ia'
+            '$TMPTESTDIR/.ia',
         ],
         config_file_param='/path/to/ia.ini',
     )
@@ -310,11 +314,12 @@ def test_parse_config_file_with_environment_variable_and_parameter():
 
 
 def _test_write_config_file(
-        expected_config_file,
-        expected_modes,
-        dirs=None,
-        create_expected_file=False,
-        config_file_param=None):
+    expected_config_file,
+    expected_modes,
+    dirs=None,
+    create_expected_file=False,
+    config_file_param=None,
+):
     # expected_config_file: str
     # expected_modes: list of (path, mode) tuples
     # dirs: list of str, directories to create before running write_config_file

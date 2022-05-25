@@ -60,8 +60,9 @@ def test_clobber(tmpdir_ch):
 
     stdout, stderr = call_cmd(cmd)
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
-    expected_stderr = ('nasa:\n'
-                       ' skipping nasa/nasa_meta.xml, file already exists based on length and date.')
+    expected_stderr = (
+        'nasa:\n' ' skipping nasa/nasa_meta.xml, file already exists based on length and date.'
+    )
     assert expected_stderr == stderr
 
 
@@ -90,8 +91,7 @@ def test_destdir(tmpdir_ch):
     assert files_downloaded('thisdirdoesnotexist/nasa') == {'nasa_meta.xml'}
 
     tmpdir_ch.mkdir('dir2/')
-    cmd = ('ia --insecure download --no-directories --destdir=dir2/ '
-           'nasa nasa_meta.xml')
+    cmd = 'ia --insecure download --no-directories --destdir=dir2/ ' 'nasa nasa_meta.xml'
     call_cmd(cmd)
     assert files_downloaded('dir2') == {'nasa_meta.xml'}
 

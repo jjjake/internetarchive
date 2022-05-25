@@ -84,27 +84,29 @@ def main(argv, session: ArchiveSession) -> None:
     itemlist_msg = '--itemlist must be a valid path to an existing file.'
 
     # Validate args.
-    s = Schema({
-        str: Use(bool),
-        '--destdir': Or([], And(Use(lambda d: d[0]), dir_exists), error=destdir_msg),
-        '--format': list,
-        '--glob': Use(lambda item: item[0] if item else None),
-        '<file>': list,
-        '--search': Or(str, None),
-        '--itemlist': Or(None, And(lambda f: os.path.isfile(f)), error=itemlist_msg),
-        '<identifier>': Or(str, None),
-        '--retries': Use(lambda x: x[0]),
-        '--search-parameters': Use(lambda x: get_args_dict(x, query_string=True)),
-        '--on-the-fly': Use(bool),
-        '--no-change-timestamp': Use(bool),
-        '--download-history': Use(bool),
-        '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
-    })
+    s = Schema(
+        {
+            str: Use(bool),
+            '--destdir': Or([], And(Use(lambda d: d[0]), dir_exists), error=destdir_msg),
+            '--format': list,
+            '--glob': Use(lambda item: item[0] if item else None),
+            '<file>': list,
+            '--search': Or(str, None),
+            '--itemlist': Or(None, And(lambda f: os.path.isfile(f)), error=itemlist_msg),
+            '<identifier>': Or(str, None),
+            '--retries': Use(lambda x: x[0]),
+            '--search-parameters': Use(lambda x: get_args_dict(x, query_string=True)),
+            '--on-the-fly': Use(bool),
+            '--no-change-timestamp': Use(bool),
+            '--download-history': Use(bool),
+            '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
+        }
+    )
 
     try:
         args = s.validate(args)
         if args['--glob'] and args['--format']:
-            raise(SchemaError(None, '--glob and --format cannot be used together.'))
+            raise (SchemaError(None, '--glob and --format cannot be used together.'))
 
     except SchemaError as exc:
         print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
@@ -119,11 +121,13 @@ def main(argv, session: ArchiveSession) -> None:
         total_ids = len(ids)
     elif args['--search']:
         try:
-            _search = session.search_items(args['--search'],
-                                           params=args['--search-parameters'])
+            _search = session.search_items(args['--search'], params=args['--search-parameters'])
             total_ids = _search.num_found
             if total_ids == 0:
-                print(f'error: the query "{args["--search"]}" returned no results', file=sys.stderr)
+                print(
+                    f'error: the query "{args["--search"]}" returned no results',
+                    file=sys.stderr,
+                )
                 sys.exit(1)
             ids = _search
         except ValueError as e:
@@ -155,12 +159,17 @@ def main(argv, session: ArchiveSession) -> None:
             try:
                 assert len(f) == 1
             except AssertionError:
-                print(f'error: {identifier}/{args["<file>"][0]} does not exist!', file=sys.stderr)
+                print(
+                    f'error: {identifier}/{args["<file>"][0]} does not exist!',
+                    file=sys.stderr,
+                )
                 sys.exit(1)
             stdout_buf = sys.stdout.buffer
-            f[0].download(retries=args['--retries'],
-                          fileobj=stdout_buf,
-                          params=args['--parameters'])
+            f[0].download(
+                retries=args['--retries'],
+                fileobj=stdout_buf,
+                params=args['--parameters'],
+            )
             sys.exit(0)
         try:
             identifier = identifier.strip()
@@ -174,7 +183,10 @@ def main(argv, session: ArchiveSession) -> None:
         try:
             item = session.get_item(identifier)
         except Exception as exc:
-            print(f'{identifier}: failed to retrieve item metadata - errors', file=sys.stderr)
+            print(
+                f'{identifier}: failed to retrieve item metadata - errors',
+                file=sys.stderr,
+            )
             raise
             if 'You are attempting to make an HTTPS' in str(exc):
                 print(f'\n{exc}', file=sys.stderr)

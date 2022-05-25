@@ -71,13 +71,13 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies:
+          - tqdm-stubs
           - types-docopt
+          - types-jsonpatch
           - types-requests
+          - types-setuptools
           - types-ujson
           - types-urllib3
-          - types-setuptools
-          - tqdm-stubs
-          - types-jsonpatch
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.32.1

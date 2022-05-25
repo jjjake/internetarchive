@@ -70,7 +70,7 @@ def test_ia_upload_status_check(capsys):
         ia_call(['ia', 'upload', 'nasa', '--status-check'], expected_exit_code=1)
         out, err = capsys.readouterr()
         assert (
-            'warning: nasa is over limit, and not accepting requests. ' 'Expect 503 SlowDown errors.'
+            'warning: nasa is over limit, and not accepting requests. Expect 503 SlowDown errors.'
         ) in err
 
 

@@ -14,7 +14,7 @@ def test_utils():
 
 
 def test_needs_quote():
-    notascii = 'ȧƈƈḗƞŧḗḓ ŧḗẋŧ ƒǿř ŧḗşŧīƞɠ, ℛℯα∂α♭ℓℯ ♭ʊ☂ η☺т Ѧ$☾ℐℐ, ' '¡ooʇ ןnɟǝsn sı uʍop-ǝpısdn'
+    notascii = 'ȧƈƈḗƞŧḗḓ ŧḗẋŧ ƒǿř ŧḗşŧīƞɠ, ℛℯα∂α♭ℓℯ ♭ʊ☂ η☺т Ѧ$☾ℐℐ, ¡ooʇ ןnɟǝsn sı uʍop-ǝpısdn'
     assert internetarchive.utils.needs_quote(notascii)
     assert internetarchive.utils.needs_quote(string.whitespace)
     assert not internetarchive.utils.needs_quote(string.ascii_letters + string.digits)

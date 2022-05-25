@@ -67,12 +67,12 @@ def validate_s3_identifier(string: str) -> bool:
     # character!
     if any(string.startswith(c) is True for c in ['.', '_', '-']):
         raise InvalidIdentifierException(
-            'Identifier cannot begin with periods ".", underscores ' '"_", or dashes "-".'
+            'Identifier cannot begin with periods ".", underscores "_", or dashes "-".'
         )
 
     if len(string) > 100 or len(string) < 3:
         raise InvalidIdentifierException(
-            'Identifier should be between 3 and 80 characters in ' 'length.'
+            'Identifier should be between 3 and 80 characters in length.'
         )
 
     if any(c not in legal_chars for c in string):

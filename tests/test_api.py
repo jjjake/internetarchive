@@ -284,9 +284,7 @@ def test_download(tmpdir):
 
 
 def test_search_items(session):
-    results_url = (
-        f'{PROTOCOL}//archive.org/services/search/v1/scrape' '?q=identifier%3Anasa&count=10000'
-    )
+    results_url = f'{PROTOCOL}//archive.org/services/search/v1/scrape?q=identifier%3Anasa&count=10000'
     count_url = (
         f'{PROTOCOL}//archive.org/services/search/v1/scrape'
         '?q=identifier%3Anasa&total_only=true'

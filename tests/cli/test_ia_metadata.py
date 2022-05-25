@@ -28,9 +28,7 @@ def test_ia_metadata_formats(capsys, nasa_mocker):
 
 
 def test_ia_metadata_modify(capsys):
-    md_rsp = (
-        '{"success":true,"task_id":447613301,' '"log":"https://catalogd.archive.org/log/447613301"}'
-    )
+    md_rsp = '{"success":true,"task_id":447613301,"log":"https://catalogd.archive.org/log/447613301"}'
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
         rsps.add_metadata_mock('nasa', body=md_rsp, method=responses.POST)

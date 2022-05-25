@@ -223,7 +223,7 @@ class Item(BaseItem):
             """Make URLs for the separate tabs of Collections details page."""
             self._make_URL(tab, self.details + f'&tab={tab}')  # type: ignore
 
-        DEFAULT_URL_FORMAT = '{0.session.protocol}//{0.session.host}' '/{path}/{0.identifier}'
+        DEFAULT_URL_FORMAT = '{0.session.protocol}//{0.session.host}/{path}/{0.identifier}'
 
         def _make_URL(self, path: str, url_format: str = DEFAULT_URL_FORMAT) -> None:
             setattr(self, path, url_format.format(self._itm_obj, path=path))

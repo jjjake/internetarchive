@@ -46,7 +46,7 @@ def test_get_auth_config_auth_fail():
         r = internetarchive.config.get_auth_config('test@example.com', 'password1')
     except AuthenticationError as exc:
         return
-        assert str(exc) == ('Authentication failed. Please check your credentials ' 'and try again.')
+        assert str(exc) == ('Authentication failed. Please check your credentials and try again.')
 
 
 def test_get_config():

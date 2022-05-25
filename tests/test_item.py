@@ -359,7 +359,7 @@ def test_upload_metadata(nasa_item):
             'subject': ['first', 'second'],
             'baz': 'Почему бы и нет...',
             'baz2': (
-                '\u041f\u043e\u0447\u0435\u043c\u0443 \u0431\u044b \u0438 ' '\u043d\u0435\u0442...'
+                '\u041f\u043e\u0447\u0435\u043c\u0443 \u0431\u044b \u0438 \u043d\u0435\u0442...'
             ),
         }
         _responses = nasa_item.upload(NASA_METADATA_PATH, metadata=md, access_key='a', secret_key='b')

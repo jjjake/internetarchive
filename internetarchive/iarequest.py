@@ -269,7 +269,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             changes = []
 
             if any(not k for k in metadata):
-                raise ValueError('Invalid metadata provided, ' 'check your input and try again')
+                raise ValueError('Invalid metadata provided, check your input and try again')
 
             if target:
                 metadata = {target: metadata}

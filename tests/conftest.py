@@ -89,12 +89,7 @@ def call_cmd(cmd, expected_exit_code=0):
 
 class IaRequestsMock(RequestsMock):
     def add_metadata_mock(
-        self,
-        identifier,
-        body=None,
-        method=responses.GET,
-        protocol='https?',
-        transform_body=None,
+        self, identifier, body=None, method=responses.GET, protocol='https?', transform_body=None
     ):
         url = re.compile(f'{protocol}://archive.org/metadata/{identifier}')
         if body is None:
@@ -141,6 +136,6 @@ def nasa_metadata():
 
 
 # TODO: Why is this function defined twice in this file?  See issue #505
-@pytest.fixture  # type: ignore
-def nasa_item(nasa_mocker):
+@pytest.fixture  # type: ignore[no-redef]
+def nasa_item(nasa_mocker):  # noqa: F811
     return get_item('nasa')

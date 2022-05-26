@@ -323,7 +323,7 @@ def test_search_items(session):
         assert len(r.iter_as_results()) == 1
         assert list(r) == expected_results
         assert list(r.iter_as_results()) == expected_results
-        assert r.fts == False
+        assert r.fts is False
 
 
 def test_search_items_with_fields(session):
@@ -382,19 +382,19 @@ def test_search_items_fts(session):
 
         r = search_items('nina simone', full_text_search=True, archive_session=session)
         print(r.search_url)
-        assert r.fts == True
-        assert r.dsl_fts == False
+        assert r.fts is True
+        assert r.dsl_fts is False
         assert r.query == '!L nina simone'
         assert r.params == {'count': 10000, 'q': '!L nina simone'}
 
         r = search_items('nina simone', full_text_search=True, dsl_fts=True, archive_session=session)
-        assert r.fts == True
-        assert r.dsl_fts == True
+        assert r.fts is True
+        assert r.dsl_fts is True
         assert r.query == 'nina simone'
         assert r.params == {'count': 10000, 'q': 'nina simone'}
         r = search_items('nina simone', dsl_fts=True, archive_session=session)
-        assert r.fts == True
-        assert r.dsl_fts == True
+        assert r.fts is True
+        assert r.dsl_fts is True
         assert r.query == 'nina simone'
         assert r.params == {'count': 10000, 'q': 'nina simone'}
 

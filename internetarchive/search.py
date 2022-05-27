@@ -130,6 +130,9 @@ class Search:
                              auth=self.auth,
                              **self.request_kwargs)
         j = r.json()
+        num_found = int(j['response']['numFound'])
+        if not self._num_found:
+            self._num_found = num_found
         if j.get('error'):
             yield j
         yield from j.get('response', {}).get('docs', [])
@@ -148,6 +151,8 @@ class Search:
             if j.get('error'):
                 yield j
             num_found = int(j['total'])
+            if not self._num_found:
+                self._num_found = num_found
             self._handle_scrape_error(j)
 
             self.params['cursor'] = j.get('cursor')

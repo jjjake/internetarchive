@@ -8,7 +8,7 @@ Release History
 
 **Features and Improvements**
 
-- Cut down on the number of HTTP requests made by search. 
+- Cut down on the number of HTTP requests made by search.
 - Added Python type hints, and other Python 3 improvements.
 
 3.0.0 (2022-03-17)

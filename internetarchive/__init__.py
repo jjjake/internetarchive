@@ -37,6 +37,8 @@ __title__ = 'internetarchive'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
 __copyright__ = 'Copyright (C) 2012-2019 Internet Archive'
+
+from .__version__ import __version__  # isort:skip
 from internetarchive.api import (
     configure,
     delete,
@@ -56,8 +58,6 @@ from internetarchive.files import File
 from internetarchive.item import Item
 from internetarchive.search import Search
 from internetarchive.session import ArchiveSession
-
-from .__version__ import __version__
 
 __all__ = [
     '__version__',

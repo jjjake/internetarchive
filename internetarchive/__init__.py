@@ -34,10 +34,10 @@ Usage::
 """
 
 __title__ = 'internetarchive'
-__version__ = '3.0.1'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
 __copyright__ = 'Copyright (C) 2012-2019 Internet Archive'
+from .__version__ import __version__
 
 from internetarchive.api import (
     configure,

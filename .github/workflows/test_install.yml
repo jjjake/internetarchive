@@ -1,0 +1,16 @@
+name: test_install
+on:
+  pull_request:
+  push:
+    branches: [master]
+jobs:
+  install_internetarchive:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        setuptools-version: ["45.2.0", "58.1.0", "62.4.0"]
+    steps:
+      - uses: actions/checkout@v3
+      - run: pip install setuptools=="${{ matrix.setuptools-version }}"
+      - run: pip install .

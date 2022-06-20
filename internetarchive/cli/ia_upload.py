@@ -238,8 +238,9 @@ def main(argv, session):
         else:
             local_file = args['<file>']
             # Properly expand a period to the contents of the current working directory.
-            if local_file and local_file[0] == '.':
-                local_file = os.listdir('.')
+            if '.' in local_file:
+                local_file = [p for p in local_file if p != '.']
+                local_file = os.listdir('.') + local_file
 
         if isinstance(local_file, (list, tuple, set)) and args['--remote-name']:
             local_file = local_file[0]

@@ -134,11 +134,18 @@ def suppress_keyboard_interrupt_message() -> None:
 
 
 class IterableToFileAdapter:
-    def __init__(self, iterable, size: int):
+    def __init__(self, iterable, size: int, pre_encode: bool = False):
         self.iterator = iter(iterable)
         self.length = size
+        # pre_encode is needed because http doesn't know that it
+        # needs to encode a TextIO object when it's wrapped
+        # in the Iterator from tqdm.
+        # So, this FileAdapter provides pre-encoded output
+        self.pre_encode = pre_encode
 
     def read(self, size: int = -1):  # TBD: add buffer for `len(data) > size` case
+        if self.pre_encode:
+            return next(self.iterator, '').encode("iso-8859-1")
         return next(self.iterator, b'')
 
     def __len__(self) -> int:

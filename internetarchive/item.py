@@ -25,6 +25,7 @@ internetarchive.item
 """
 from __future__ import annotations
 
+import io
 import math
 import os
 import sys
@@ -953,11 +954,20 @@ class Item(BaseItem):
                     expected_size = math.ceil(size / chunk_size)
                     chunks = chunk_generator(body, chunk_size)
                     progress_generator = tqdm(chunks,
-                                              desc=f' uploading {key}',
-                                              dynamic_ncols=True,
-                                              total=expected_size,
-                                              unit='MiB')
-                    data = IterableToFileAdapter(progress_generator, size)
+                                          desc=f' uploading {key}',
+                                          dynamic_ncols=True,
+                                          total=expected_size,
+                                          unit='MiB')
+                    data = None
+                    # pre_encode is needed because http doesn't know that it
+                    # needs to encode a TextIO object when it's wrapped
+                    # in the Iterator from tqdm.
+                    # So, this FileAdapter provides pre-encoded output
+                    data = IterableToFileAdapter(
+                        progress_generator,
+                        size,
+                        pre_encode=isinstance(body, io.TextIOBase)
+                    )
                 except Exception:
                     print(f' uploading {key}', file=sys.stderr)
                     data = body

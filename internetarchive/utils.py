@@ -145,6 +145,11 @@ class IterableToFileAdapter:
 
     def read(self, size: int = -1):  # TBD: add buffer for `len(data) > size` case
         if self.pre_encode:
+            # this adapter is intended to emulate the encoding that is usually
+            # done by the http lib.
+            # As of 2022, iso-8859-1 encoding is used to meet the HTTP standard,
+            # see in the cpython repo (https://github.com/python/cpython
+            # Lib/http/client.py lines 246; 1340; or grep 'iso-8859-1'
             return next(self.iterator, '').encode("iso-8859-1")
         return next(self.iterator, b'')
 

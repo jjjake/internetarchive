@@ -121,7 +121,8 @@ class ArchiveSession(requests.sessions.Session):
         self.secret_key: str = self.config.get('s3', {}).get('secret')
         self.http_adapter_kwargs: MutableMapping = http_adapter_kwargs or {}
 
-        self.headers = default_headers()
+        # mypy doesn't like 'headers: Dict[Union[bytes, str]] = Dict[str]'
+        self.headers = default_headers()  # type: ignore
         self.headers.update({'User-Agent': self._get_user_agent_string()})
         self.headers.update({'Connection': 'close'})
 

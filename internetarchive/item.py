@@ -954,10 +954,10 @@ class Item(BaseItem):
                     expected_size = math.ceil(size / chunk_size)
                     chunks = chunk_generator(body, chunk_size)
                     progress_generator = tqdm(chunks,
-                                          desc=f' uploading {key}',
-                                          dynamic_ncols=True,
-                                          total=expected_size,
-                                          unit='MiB')
+                                              desc=f' uploading {key}',
+                                              dynamic_ncols=True,
+                                              total=expected_size,
+                                              unit='MiB')
                     data = None
                     # pre_encode is needed because http doesn't know that it
                     # needs to encode a TextIO object when it's wrapped

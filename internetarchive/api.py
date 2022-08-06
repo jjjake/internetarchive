@@ -528,7 +528,7 @@ def configure(  # nosec: hardcoded_password_default
     username: str = '',
     password: str = '',
     config_file: str = '',
-    host: str = '',
+    host: str = 'archive.org',
 ) -> str:
     """Configure internetarchive with your Archive.org credentials.
 

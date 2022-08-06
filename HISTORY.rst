@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+3.0.2 (2022-06-15)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed bug where installation would fail in some cases if ``requests``, ``tqdm``,
+  or ``jsonpatch`` were not already installed.
+
 3.0.1 (2022-06-02)
 ++++++++++++++++++
 

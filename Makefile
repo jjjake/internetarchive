@@ -1,6 +1,6 @@
 .PHONY: docs
 
-VERSION=$(shell grep -m1 __version__ internetarchive/__init__.py | cut -d\' -f2)
+VERSION=$(shell grep -m1 __version__ internetarchive/__version__.py | cut -d\' -f2)
 
 init:
 	pip install responses==0.5.0 pytest-cov pytest-pep8

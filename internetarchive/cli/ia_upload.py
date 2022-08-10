@@ -114,7 +114,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
     return responses
 
 
-def main(argv, session):
+def main(argv, session):  # noqa: C901
     args = docopt(__doc__, argv=argv)
     ERRORS = False
 

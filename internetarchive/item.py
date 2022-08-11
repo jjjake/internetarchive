@@ -529,6 +529,7 @@ class Item(BaseItem):
                   on_the_fly: bool = False):
         files = files or []
         formats = formats or []
+        exclude_pattern = exclude_pattern or ''
         on_the_fly = bool(on_the_fly)
 
         if not isinstance(files, (list, tuple, set)):
@@ -560,15 +561,12 @@ class Item(BaseItem):
             elif glob_pattern:
                 if not isinstance(glob_pattern, list):
                     patterns = glob_pattern.split('|')
-                    if exclude_pattern:
-                        if not isinstance(exclude_pattern, list):
-                            exclude_patterns = exclude_pattern.split('|')
-                        else:
-                            exclude_patterns = exclude_pattern
-                    else:
-                        exclude_patterns = []
                 else:
                     patterns = glob_pattern
+                if not isinstance(exclude_pattern, list):
+                    exclude_patterns = exclude_pattern.split('|')
+                else:
+                    exclude_patterns = exclude_pattern
                 for p in patterns:
                     if fnmatch(f.get('name', ''), p):
                         if not any(fnmatch(f.get('name', ''), e) for e in exclude_patterns):

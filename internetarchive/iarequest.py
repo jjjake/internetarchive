@@ -450,7 +450,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
         if key not in _done:
             indexes = []
             for k in metadata:
-                if not get_index(k) or 
+                if not get_index(k):
                     continue
                 elif rm_index(k) != key:
                     continue

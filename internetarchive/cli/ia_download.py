@@ -38,6 +38,8 @@ options:
     -P, --search-parameters=<key:value>...   Download items returned from a specified search query.
     -g, --glob=<pattern>                     Only download files whose filename matches the
                                              given glob pattern.
+    -e, --exclude=<pattern>                  Exclude files whose filename matches the given
+                                             glob pattern.
     -f, --format=<format>...                 Only download files of the specified format.
                                              Use this option multiple times to download multiple
                                              formats.
@@ -89,6 +91,7 @@ def main(argv, session: ArchiveSession) -> None:
         '--destdir': Or([], And(Use(lambda d: d[0]), dir_exists), error=destdir_msg),
         '--format': list,
         '--glob': Use(lambda item: item[0] if item else None),
+        '--exclude': Use(lambda item: item[0] if item else None),
         '<file>': list,
         '--search': Or(str, None),
         '--itemlist': Or(None, And(lambda f: os.path.isfile(f)), error=itemlist_msg),
@@ -105,6 +108,10 @@ def main(argv, session: ArchiveSession) -> None:
         args = s.validate(args)
         if args['--glob'] and args['--format']:
             raise(SchemaError(None, '--glob and --format cannot be used together.'))
+        elif args['--exclude'] and args['--format']:
+            raise(SchemaError(None, '--exclude and --format cannot be used together.'))
+        elif args['--exclude'] and not args['--glob']:
+            raise(SchemaError(None, '--exclude should only be used in conjunction with --glob.'))
 
     except SchemaError as exc:
         print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
@@ -188,6 +195,7 @@ def main(argv, session: ArchiveSession) -> None:
             files=files,
             formats=args['--format'],
             glob_pattern=args['--glob'],
+            exclude_pattern=args['--exclude'],
             dry_run=args['--dry-run'],
             verbose=not args['--quiet'],
             ignore_existing=args['--ignore-existing'],

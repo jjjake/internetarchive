@@ -121,8 +121,7 @@ class ArchiveSession(requests.sessions.Session):
         self.secret_key: str = self.config.get('s3', {}).get('secret')
         self.http_adapter_kwargs: MutableMapping = http_adapter_kwargs or {}
 
-        # mypy doesn't like 'headers: Dict[Union[bytes, str]] = Dict[str]'
-        self.headers = default_headers()  # type: ignore
+        self.headers = default_headers()  # type: ignore[assignment]
         self.headers.update({'User-Agent': self._get_user_agent_string()})
         self.headers.update({'Connection': 'close'})
 
@@ -324,7 +323,7 @@ class ArchiveSession(requests.sessions.Session):
                       max_retries=max_retries)
 
     def s3_is_overloaded(self, identifier=None, access_key=None, request_kwargs=None):
-        request_kwargs = {} if not request_kwargs else request_kwargs
+        request_kwargs = request_kwargs or {}
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12
 
@@ -342,10 +341,7 @@ class ArchiveSession(requests.sessions.Session):
             j = r.json()
         except ValueError:
             return True
-        if j.get('over_limit') == 0:
-            return False
-        else:
-            return True
+        return j.get('over_limit') != 0
 
     def get_tasks_api_rate_limit(self, cmd: str = 'derive.php', request_kwargs: dict | None = None):
         return catalog.Catalog(self, request_kwargs).get_rate_limit(cmd=cmd)

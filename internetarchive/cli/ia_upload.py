@@ -114,7 +114,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
     return responses
 
 
-def main(argv, session):
+def main(argv, session):  # noqa: C901
     args = docopt(__doc__, argv=argv)
     ERRORS = False
 
@@ -237,6 +237,10 @@ def main(argv, session):
             local_file.seek(0)
         else:
             local_file = args['<file>']
+            # Properly expand a period to the contents of the current working directory.
+            if '.' in local_file:
+                local_file = [p for p in local_file if p != '.']
+                local_file = os.listdir('.') + local_file
 
         if isinstance(local_file, (list, tuple, set)) and args['--remote-name']:
             local_file = local_file[0]

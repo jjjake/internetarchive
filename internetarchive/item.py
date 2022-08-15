@@ -526,9 +526,11 @@ class Item(BaseItem):
                   files: File | list[File] | None = None,
                   formats: str | list[str] | None = None,
                   glob_pattern: str | None = None,
+                  exclude_pattern: str | None = None,
                   on_the_fly: bool = False):
         files = files or []
         formats = formats or []
+        exclude_pattern = exclude_pattern or ''
         on_the_fly = bool(on_the_fly)
 
         if not isinstance(files, (list, tuple, set)):
@@ -562,14 +564,20 @@ class Item(BaseItem):
                     patterns = glob_pattern.split('|')
                 else:
                     patterns = glob_pattern
+                if not isinstance(exclude_pattern, list):
+                    exclude_patterns = exclude_pattern.split('|')
+                else:
+                    exclude_patterns = exclude_pattern
                 for p in patterns:
                     if fnmatch(f.get('name', ''), p):
-                        yield self.get_file(str(f.get('name')))
+                        if not any(fnmatch(f.get('name', ''), e) for e in exclude_patterns):
+                            yield self.get_file(str(f.get('name')))
 
     def download(self,
                  files: File | list[File] | None = None,
                  formats: str | list[str] | None = None,
                  glob_pattern: str | None = None,
+                 exclude_pattern: str | None = None,
                  dry_run: bool = False,
                  verbose: bool = False,
                  ignore_existing: bool = False,
@@ -593,6 +601,9 @@ class Item(BaseItem):
 
         :param glob_pattern: Only download files matching the given
                              glob pattern.
+
+        :param exclude_pattern: Exclude files whose filename matches the given
+                                glob pattern.
 
         :param dry_run: Output download URLs to stdout, don't
                         download anything.
@@ -673,7 +684,11 @@ class Item(BaseItem):
         if formats:
             files = self.get_files(formats=formats, on_the_fly=on_the_fly)
         if glob_pattern:
-            files = self.get_files(glob_pattern=glob_pattern, on_the_fly=on_the_fly)
+            files = self.get_files(
+                glob_pattern=glob_pattern,
+                exclude_pattern=exclude_pattern,
+                on_the_fly=on_the_fly
+            )
 
         errors = []
         downloaded = 0

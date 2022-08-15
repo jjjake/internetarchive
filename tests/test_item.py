@@ -108,6 +108,26 @@ def test_get_files_by_glob(nasa_item):
     assert files == expected_files
 
 
+def test_get_files_by_glob_with_exclude(nasa_item):
+    files = {
+        f.name
+        for f in nasa_item.get_files(
+            glob_pattern="*jpg|*torrent", exclude_pattern="*540*|*Logo*"
+        )
+    }
+    expected_files = {"nasa_archive.torrent"}
+    assert files == expected_files
+
+    files = {
+        f.name
+        for f in nasa_item.get_files(
+            glob_pattern=["*jpg", "*torrent"], exclude_pattern=["*540*", "*Logo*"]
+        )
+    }
+    expected_files = {"nasa_archive.torrent"}
+    assert files == expected_files
+
+
 def test_get_files_with_multiple_filters(nasa_item):
     files = {f.name for f in nasa_item.get_files(formats='JPEG', glob_pattern='*xml')}
     expected_files = {'globe_west_540.jpg',

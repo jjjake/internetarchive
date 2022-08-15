@@ -126,6 +126,7 @@ def get_files(
     files: files.File | list[files.File] | None = None,
     formats: str | list[str] | None = None,
     glob_pattern: str | None = None,
+    exclude_pattern: str | None = None,
     on_the_fly: bool = False,
     **get_item_kwargs,
 ) -> list[files.File]:
@@ -138,6 +139,8 @@ def get_files(
     :param formats: Only return files matching the given formats.
 
     :param glob_pattern: Only return files matching the given glob pattern.
+
+    :param exclude_pattern: Exclude files matching the given glob pattern.
 
     :param on_the_fly: Include on-the-fly files (i.e. derivative EPUB,
                        MOBI, DAISY files).
@@ -153,7 +156,7 @@ def get_files(
         ['nasa_reviews.xml', 'nasa_meta.xml', 'nasa_files.xml']
     """
     item = get_item(identifier, **get_item_kwargs)
-    return item.get_files(files, formats, glob_pattern, on_the_fly)
+    return item.get_files(files, formats, glob_pattern, exclude_pattern, on_the_fly)
 
 
 def modify_metadata(

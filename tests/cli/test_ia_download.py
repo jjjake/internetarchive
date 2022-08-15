@@ -38,6 +38,16 @@ def test_glob(tmpdir_ch):
     assert files_downloaded(path='nasa') == expected_files
 
 
+def test_exclude(tmpdir_ch):
+    expected_files = {
+        'globe_west_540.jpg',
+        'nasa_itemimage.jpg',
+    }
+
+    call_cmd('ia --insecure download --glob="*jpg" --exclude="*thumb*" nasa')
+    assert files_downloaded(path='nasa') == expected_files
+
+
 def test_format(tmpdir_ch):
     call_cmd('ia --insecure download --format="Archive BitTorrent" nasa')
     assert files_downloaded(path='nasa') == {'nasa_archive.torrent'}

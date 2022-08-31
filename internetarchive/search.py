@@ -151,7 +151,6 @@ class Search:
             if j.get('error'):
                 yield j
             if j['total'] is None:
-                # print('UNEXPECTED RESPONSE:', j)
                 # Unexpected empty response when iterating on cursor
                 # Retry with same cursor:
                 continue

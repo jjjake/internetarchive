@@ -72,6 +72,10 @@ def validate_s3_identifier(string: str) -> bool:
         raise InvalidIdentifierException('Identifier should be between 3 and 80 characters in '
                                         'length.')
 
+    # Support for uploading to user items, e.g. first character can be `@`.
+    if string.startswith('@'):
+        string = string[1:]
+
     if any(c not in legal_chars for c in string):
         raise InvalidIdentifierException('Identifier can only contain alphanumeric characters, '
                                         'periods ".", underscores "_", or dashes "-". However, '

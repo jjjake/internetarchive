@@ -222,7 +222,7 @@ class File(BaseFile):
                     if verbose:
                         print(f' {msg}', file=sys.stderr)
                     return
-            else:
+            elif not fileobj:
                 st = os.stat(file_path.encode('utf-8'))
                 if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
                         or self.name.endswith('_files.xml') and st.st_size != 0:

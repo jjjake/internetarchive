@@ -86,21 +86,20 @@ from internetarchive.utils import (
 )
 
 
-def _check_files(files):
+def _check_files_exist(files):
     return [
-        file
-        for file in files
+        file for file in files
         if Path(file).exists()
     ]
 
 
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
     """Helper function for calling :meth:`Item.upload`"""
-    # Exclude files that do not exist.
-    files = _check_files(files)
+    # Exclude files that do not exist. (Make a copy of the list)
+    files = _check_files_exist(files)
 
     # Check if the list has any element.
-    if len(files) < 1:
+    if not files:
         raise FileNotFoundError("No valid file was found. Check your paths.")
 
     responses = []

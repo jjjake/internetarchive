@@ -377,7 +377,7 @@ class ArchiveSession(requests.sessions.Session):
 
         :param reduced_priority: Submit your derive at a lower priority.
                                  This option is helpful to get around rate-limiting.
-                                 Your task will more likey be accepted, but it might
+                                 Your task will more likely be accepted, but it might
                                  not run for a long time. Note that you still may be
                                  subject to rate-limiting. This is different than
                                  ``priority`` in that it will allow you to possibly

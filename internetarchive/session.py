@@ -157,7 +157,7 @@ class ArchiveSession(requests.sessions.Session):
         super().rebuild_auth(prepared_request, response)
 
     def mount_http_adapter(self, protocol: str | None = None, max_retries: int | None = None,
-                           status_forcelist: list | None = None, host: str = None) -> None:
+                           status_forcelist: list | None = None, host: str | None = None) -> None:
         """Mount an HTTP adapter to the
         :class:`ArchiveSession <ArchiveSession>` object.
 
@@ -377,7 +377,7 @@ class ArchiveSession(requests.sessions.Session):
 
         :param reduced_priority: Submit your derive at a lower priority.
                                  This option is helpful to get around rate-limiting.
-                                 Your task will more likey be accepted, but it might
+                                 Your task will more likely be accepted, but it might
                                  not run for a long time. Note that you still may be
                                  subject to rate-limiting. This is different than
                                  ``priority`` in that it will allow you to possibly

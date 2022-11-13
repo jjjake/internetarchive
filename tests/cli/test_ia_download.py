@@ -2,6 +2,8 @@ import os
 import sys
 import time
 
+import pytest
+
 from tests.conftest import NASA_EXPECTED_FILES, call_cmd, files_downloaded
 
 

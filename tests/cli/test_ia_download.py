@@ -10,10 +10,10 @@ def test_no_args(tmpdir_ch):
     assert files_downloaded(path='nasa') == NASA_EXPECTED_FILES
 
 
-# TODO: Fix this test
-# def test_https(tmpdir_ch):
-#    call_cmd('ia download nasa')
-#    assert files_downloaded(path='nasa') == NASA_EXPECTED_FILES
+@pytest.mark.xfail("CI" in os.environ, reason="May timeout on continuous integration")
+def test_https(tmpdir_ch):
+    call_cmd('ia download nasa')
+    assert files_downloaded(path='nasa') == NASA_EXPECTED_FILES
 
 
 def test_dry_run():

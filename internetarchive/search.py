@@ -276,10 +276,7 @@ class SearchIterator:
         return self.search.num_found
 
     def __next__(self):
-        return self.iterator.__next__()
-
-    def next(self):
-        return self.iterator.next()
+        return next(self.iterator)
 
     def __iter__(self):
         return self

@@ -41,6 +41,8 @@ examples:
 
     ia search 'collection:nasa' --parameters rows:1
 """
+from __future__ import annotations
+
 import sys
 from itertools import chain
 
@@ -54,7 +56,7 @@ from internetarchive.exceptions import AuthenticationError
 from internetarchive.utils import json
 
 
-def main(argv, session: ArchiveSession = None) -> None:
+def main(argv, session: ArchiveSession | None = None) -> None:
     args = docopt(__doc__, argv=argv)
 
     # Validate args.

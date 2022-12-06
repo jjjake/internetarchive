@@ -157,7 +157,7 @@ class ArchiveSession(requests.sessions.Session):
         super().rebuild_auth(prepared_request, response)
 
     def mount_http_adapter(self, protocol: str | None = None, max_retries: int | None = None,
-                           status_forcelist: list | None = None, host: str = None) -> None:
+                           status_forcelist: list | None = None, host: str | None = None) -> None:
         """Mount an HTTP adapter to the
         :class:`ArchiveSession <ArchiveSession>` object.
 
@@ -323,7 +323,7 @@ class ArchiveSession(requests.sessions.Session):
                       max_retries=max_retries)
 
     def s3_is_overloaded(self, identifier=None, access_key=None, request_kwargs=None):
-        request_kwargs = {} if not request_kwargs else request_kwargs
+        request_kwargs = request_kwargs or {}
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12
 
@@ -341,10 +341,7 @@ class ArchiveSession(requests.sessions.Session):
             j = r.json()
         except ValueError:
             return True
-        if j.get('over_limit') == 0:
-            return False
-        else:
-            return True
+        return j.get('over_limit') != 0
 
     def get_tasks_api_rate_limit(self, cmd: str = 'derive.php', request_kwargs: dict | None = None):
         return catalog.Catalog(self, request_kwargs).get_rate_limit(cmd=cmd)
@@ -380,7 +377,7 @@ class ArchiveSession(requests.sessions.Session):
 
         :param reduced_priority: Submit your derive at a lower priority.
                                  This option is helpful to get around rate-limiting.
-                                 Your task will more likey be accepted, but it might
+                                 Your task will more likely be accepted, but it might
                                  not run for a long time. Note that you still may be
                                  subject to rate-limiting. This is different than
                                  ``priority`` in that it will allow you to possibly

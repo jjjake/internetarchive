@@ -1,6 +1,7 @@
 .cache
 .coverage
 .DS_Store
+.envrc
 .idea
 .pytest_cache/
 .python-version

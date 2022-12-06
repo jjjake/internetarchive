@@ -27,7 +27,7 @@ import logging
 import os
 import socket
 import sys
-from contextlib import nullcontext
+from contextlib import nullcontext, suppress
 from urllib.parse import quote
 
 from requests.exceptions import (
@@ -66,7 +66,7 @@ class BaseFile:
         self.mtime = None
         self.crc32 = None
 
-        self.exists = True if file_metadata else False
+        self.exists = bool(file_metadata)
 
         for key in file_metadata:
             setattr(self, key, file_metadata[key])
@@ -189,14 +189,14 @@ class File(BaseFile):
         verbose = False if verbose is None else verbose
         ignore_existing = False if ignore_existing is None else ignore_existing
         checksum = False if checksum is None else checksum
-        retries = 2 if not retries else retries
-        ignore_errors = False if not ignore_errors else ignore_errors
-        return_responses = False if not return_responses else return_responses
-        no_change_timestamp = False if not no_change_timestamp else no_change_timestamp
-        params = None if not params else params
+        retries = retries or 2
+        ignore_errors = ignore_errors or False
+        return_responses = return_responses or False
+        no_change_timestamp = no_change_timestamp or False
+        params = params or None
 
         self.item.session.mount_http_adapter(max_retries=retries)
-        file_path = self.name if not file_path else file_path
+        file_path = file_path or self.name
 
         if destdir:
             if not os.path.exists(destdir) and return_responses is not True:
@@ -222,7 +222,7 @@ class File(BaseFile):
                     if verbose:
                         print(f' {msg}', file=sys.stderr)
                     return
-            else:
+            elif not fileobj:
                 st = os.stat(file_path.encode('utf-8'))
                 if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
                         or self.name.endswith('_files.xml') and st.st_size != 0:
@@ -284,11 +284,8 @@ class File(BaseFile):
         # Set mtime with mtime from files.xml.
         if not no_change_timestamp:
             # If we want to set the timestamp to that of the original archive...
-            try:
+            with suppress(OSError):  # Probably file-like object, e.g. sys.stdout.
                 os.utime(file_path.encode('utf-8'), (0, self.mtime))
-            except OSError:
-                # Probably file-like object, e.g. sys.stdout.
-                pass
 
         msg = f'downloaded {self.identifier}/{self.name} to {file_path}'
         log.info(msg)
@@ -322,10 +319,10 @@ class File(BaseFile):
         cascade_delete = '0' if not cascade_delete else '1'
         access_key = self.item.session.access_key if not access_key else access_key
         secret_key = self.item.session.secret_key if not secret_key else secret_key
-        debug = False if not debug else debug
-        verbose = False if not verbose else verbose
-        max_retries = 2 if retries is None else retries
-        headers = {} if headers is None else headers
+        debug = debug or False
+        verbose = verbose or False
+        max_retries = retries or 2
+        headers = headers or {}
 
         if 'x-archive-cascade-delete' not in headers:
             headers['x-archive-cascade-delete'] = cascade_delete

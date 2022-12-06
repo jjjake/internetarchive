@@ -64,6 +64,7 @@ options:
 import csv
 import os
 import sys
+from pathlib import Path
 import webbrowser
 from copy import deepcopy
 from locale import getpreferredencoding
@@ -85,8 +86,22 @@ from internetarchive.utils import (
 )
 
 
+def _check_files_exist(files):
+    return [
+        file for file in files
+        if Path(file).exists()
+    ]
+
+
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
     """Helper function for calling :meth:`Item.upload`"""
+    # Exclude files that do not exist. (Make a copy of the list)
+    files = _check_files_exist(files)
+
+    # Check if the list has any element.
+    if not files:
+        raise FileNotFoundError("No valid file was found. Check your paths.")
+
     responses = []
     if (upload_kwargs['verbose']) and (prev_identifier != item.identifier):
         print(f'{item.identifier}:', file=sys.stderr)
@@ -114,7 +129,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_sess
     return responses
 
 
-def main(argv, session):
+def main(argv, session):  # noqa: C901
     args = docopt(__doc__, argv=argv)
     ERRORS = False
 
@@ -237,6 +252,10 @@ def main(argv, session):
             local_file.seek(0)
         else:
             local_file = args['<file>']
+            # Properly expand a period to the contents of the current working directory.
+            if '.' in local_file:
+                local_file = [p for p in local_file if p != '.']
+                local_file = os.listdir('.') + local_file
 
         if isinstance(local_file, (list, tuple, set)) and args['--remote-name']:
             local_file = local_file[0]

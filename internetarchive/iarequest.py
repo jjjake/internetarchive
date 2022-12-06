@@ -175,7 +175,7 @@ class MetadataRequest(requests.models.Request):
 
         if not self.auth:
             self.auth = auth.S3PostAuth(access_key, secret_key)
-        metadata = {} if not metadata else metadata
+        metadata = metadata or {}
 
         self.metadata = metadata
         self.source_metadata = source_metadata
@@ -228,7 +228,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
 
     def prepare_body(self, metadata, source_metadata, target, priority, append,
                      append_list):
-        priority = -5 if not priority else priority
+        priority = priority or -5
 
         if not source_metadata:
             r = requests.get(self.url)
@@ -452,9 +452,9 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
             for k in metadata:
                 if not get_index(k):
                     continue
-                elif not rm_index(k) == key:
+                elif rm_index(k) != key:
                     continue
-                elif not metadata[k] == 'REMOVE_TAG':
+                elif metadata[k] != 'REMOVE_TAG':
                     continue
                 else:
                     indexes.append(get_index(k))

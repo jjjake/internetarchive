@@ -72,6 +72,10 @@ def validate_s3_identifier(string: str) -> bool:
         raise InvalidIdentifierException('Identifier should be between 3 and 80 characters in '
                                         'length.')
 
+    # Support for uploading to user items, e.g. first character can be `@`.
+    if string.startswith('@'):
+        string = string[1:]
+
     if any(c not in legal_chars for c in string):
         raise InvalidIdentifierException('Identifier can only contain alphanumeric characters, '
                                         'periods ".", underscores "_", or dashes "-". However, '
@@ -134,11 +138,23 @@ def suppress_keyboard_interrupt_message() -> None:
 
 
 class IterableToFileAdapter:
-    def __init__(self, iterable, size: int):
+    def __init__(self, iterable, size: int, pre_encode: bool = False):
         self.iterator = iter(iterable)
         self.length = size
+        # pre_encode is needed because http doesn't know that it
+        # needs to encode a TextIO object when it's wrapped
+        # in the Iterator from tqdm.
+        # So, this FileAdapter provides pre-encoded output
+        self.pre_encode = pre_encode
 
     def read(self, size: int = -1):  # TBD: add buffer for `len(data) > size` case
+        if self.pre_encode:
+            # this adapter is intended to emulate the encoding that is usually
+            # done by the http lib.
+            # As of 2022, iso-8859-1 encoding is used to meet the HTTP standard,
+            # see in the cpython repo (https://github.com/python/cpython
+            # Lib/http/client.py lines 246; 1340; or grep 'iso-8859-1'
+            return next(self.iterator, '').encode("iso-8859-1")
         return next(self.iterator, b'')
 
     def __len__(self) -> int:

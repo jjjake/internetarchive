@@ -107,11 +107,11 @@ def main(argv, session: ArchiveSession) -> None:
     try:
         args = s.validate(args)
         if args['--glob'] and args['--format']:
-            raise(SchemaError(None, '--glob and --format cannot be used together.'))
+            raise SchemaError(None, '--glob and --format cannot be used together.')
         elif args['--exclude'] and args['--format']:
-            raise(SchemaError(None, '--exclude and --format cannot be used together.'))
+            raise SchemaError(None, '--exclude and --format cannot be used together.')
         elif args['--exclude'] and not args['--glob']:
-            raise(SchemaError(None, '--exclude should only be used in conjunction with --glob.'))
+            raise SchemaError(None, '--exclude should only be used in conjunction with --glob.')
 
     except SchemaError as exc:
         print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)

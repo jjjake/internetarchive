@@ -9,15 +9,15 @@ def test_ia_search_itemlist(capsys):
 
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         url = f'{PROTOCOL}//archive.org/services/search/v1/scrape'
-        p = {
+        p1 = {
             'q': 'collection:attentionkmartshoppers',
             'count': '10000'
         }
-        p2 = p.copy()
-        p2['cursor'] = 'W3siaWRlbnRpZmllciI6IjE5NjEtTC0wNTkxNCJ9XQ==' 
+        p2 = p1.copy()
+        p2['cursor'] = 'W3siaWRlbnRpZmllciI6IjE5NjEtTC0wNTkxNCJ9XQ=='
         rsps.add(responses.POST, url,
                  body=test_scrape_response,
-                 match=[responses.matchers.query_param_matcher(p)])
+                 match=[responses.matchers.query_param_matcher(p1)])
         _j = json.loads(test_scrape_response)
         del _j['cursor']
         _r = json.dumps(_j)

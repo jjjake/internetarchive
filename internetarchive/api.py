@@ -463,7 +463,7 @@ def search_items(
     params: Mapping | None = None,
     full_text_search: bool = False,
     dsl_fts: bool = False,
-    archive_session: session.ArchiveSession = None,
+    archive_session: session.ArchiveSession | None = None,
     config: Mapping | None = None,
     config_file: str | None = None,
     http_adapter_kwargs: MutableMapping | None = None,

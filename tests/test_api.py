@@ -278,18 +278,20 @@ def test_download(tmpdir):
 
 
 def test_search_items(session):
-    results_url = (f'{PROTOCOL}//archive.org/services/search/v1/scrape'
-                   '?q=identifier%3Anasa&count=10000')
-    count_url = (f'{PROTOCOL}//archive.org/services/search/v1/scrape'
-                 '?q=identifier%3Anasa&total_only=true'
-                 '&count=10000')
+    url = f'{PROTOCOL}//archive.org/services/search/v1/scrape'
+    p1 = {
+        'q': 'identifier:nasa',
+        'count': '10000',
+    }
+    p2 = p1.copy()
+    p2['total_only'] = 'true'
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
-        rsps.add(responses.POST, results_url,
+        rsps.add(responses.POST, url,
                  body=TEST_SCRAPE_RESPONSE,
-                 match_querystring=True)
-        rsps.add(responses.POST, count_url,
+                 match=[responses.matchers.query_param_matcher(p1)])
+        rsps.add(responses.POST, url,
                  body='{"items":[],"count":0,"total":1}',
-                 match_querystring=True,
+                 match=[responses.matchers.query_param_matcher(p2)],
                  content_type='application/json; charset=UTF-8')
         r = search_items('identifier:nasa', archive_session=session)
         expected_results = [{'identifier': 'nasa'}]
@@ -308,19 +310,24 @@ def test_search_items_with_fields(session):
         {'identifier': 'nasa', 'title': 'NASA Images'}
     ]
     search_response_str = json.dumps(_j)
-    results_url = (f'{PROTOCOL}//archive.org/services/search/v1/scrape'
-                   '?q=identifier%3Anasa&count=10000'
-                   '&fields=identifier%2Ctitle')
-    count_url = (f'{PROTOCOL}//archive.org/services/search/v1/scrape'
-                 '?q=identifier%3Anasa&total_only=true'
-                 '&count=10000')
+    url = f'{PROTOCOL}//archive.org/services/search/v1/scrape'
+    p1 = {
+        'q': 'identifier:nasa',
+        'count': '10000',
+        'fields': 'identifier,title',
+    }
+    p2 = {
+        'q': 'identifier:nasa',
+        'total_only': 'true',
+        'count': '10000',
+    }
     with IaRequestsMock() as rsps:
-        rsps.add(responses.POST, results_url,
-                 match_querystring=True,
+        rsps.add(responses.POST, url,
+                 match=[responses.matchers.query_param_matcher(p1)],
                  body=search_response_str)
-        rsps.add(responses.POST, count_url,
+        rsps.add(responses.POST, url,
                  body='{"items":[],"count":0,"total":1}',
-                 match_querystring=True,
+                 match=[responses.matchers.query_param_matcher(p2)],
                  content_type='application/json; charset=UTF-8')
         r = search_items('identifier:nasa', fields=['identifier', 'title'],
                          archive_session=session)
@@ -383,7 +390,6 @@ def test_page_row_specification(session):
         rsps.add(responses.POST,
                  f'{PROTOCOL}//archive.org/services/search/v1/scrape',
                  body='{"items":[],"count":0,"total":1}',
-                 match_querystring=False,
                  content_type='application/json; charset=UTF-8')
         r = search_items('identifier:nasa', params={'page': '1', 'rows': '1'},
                          archive_session=session)

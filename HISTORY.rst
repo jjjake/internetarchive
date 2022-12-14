@@ -278,7 +278,7 @@ Release History
 
 **Features and Improvements**
 
-- Documnetation updates.
+- Documentation updates.
 - Added support for write-many to modify_metadata.
 
 **Bugfixes**

@@ -2,6 +2,8 @@ import os
 import sys
 import time
 
+import pytest
+
 from tests.conftest import NASA_EXPECTED_FILES, call_cmd, files_downloaded
 
 
@@ -10,6 +12,7 @@ def test_no_args(tmpdir_ch):
     assert files_downloaded(path='nasa') == NASA_EXPECTED_FILES
 
 
+@pytest.mark.xfail("CI" in os.environ, reason="May timeout on continuous integration")
 def test_https(tmpdir_ch):
     call_cmd('ia download nasa')
     assert files_downloaded(path='nasa') == NASA_EXPECTED_FILES

@@ -67,6 +67,7 @@ import sys
 import webbrowser
 from copy import deepcopy
 from locale import getpreferredencoding
+from pathlib import Path
 from tempfile import TemporaryFile
 
 from docopt import docopt, printable_usage
@@ -87,6 +88,10 @@ from internetarchive.utils import (
 
 def _upload_files(item, files, upload_kwargs, prev_identifier=None, archive_session=None):
     """Helper function for calling :meth:`Item.upload`"""
+    # Check if the list has any element.
+    if not files:
+        raise FileNotFoundError("No valid file was found. Check your paths.")
+
     responses = []
     if (upload_kwargs['verbose']) and (prev_identifier != item.identifier):
         print(f'{item.identifier}:', file=sys.stderr)
@@ -141,8 +146,8 @@ def main(argv, session):  # noqa: C901
         '--header': Or(None, And(Use(get_args_dict), dict),
                        error='--header must be formatted as --header="key:value"'),
         '--retries': Use(lambda x: int(x[0]) if x else 0),
-        '--sleep': Use(lambda l: int(l[0]), error='--sleep value must be an integer.'),
-        '--size-hint': Or(Use(lambda l: str(l[0]) if l else None), int, None,
+        '--sleep': Use(lambda lst: int(lst[0]), error='--sleep value must be an integer.'),
+        '--size-hint': Or(Use(lambda lst: str(lst[0]) if lst else None), int, None,
                           error='--size-hint value must be an integer.'),
         '--status-check': bool,
     })

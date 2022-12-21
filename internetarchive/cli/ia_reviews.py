@@ -25,16 +25,20 @@ Reviews API documentation::
 
 usage:
     ia reviews <identifier>
-    ia reviews <identifier> --delete
+    ia reviews <identifier> --delete [--username=<username> | --screenname=<screenname>]
     ia reviews <identifier> --title=<title> --body=<body> [--stars=<stars>]
     ia reviews --help
 
 options:
     -h, --help
-    -t, --title=<title>    The title of your review.
-    -b, --body=<body>      The body of your review.
-    -s, --stars=<stars>    The number of stars for your review.
-    -d, --delete           Delete your review. [default: False]
+    -t, --title=<title>             The title of your review.
+    -b, --body=<body>               The body of your review.
+    -s, --stars=<stars>             The number of stars for your review.
+    -d, --delete                    Delete your review. [default: False]
+    -u, --username=<username>       Delete reviews for a specific user
+                                    given username (must be used with --delete).
+    -S, --screenname=<screenname>   Delete reviews for a specific user
+                                    given screenname (must be used with --delete).
 
 examples:
     ia reviews nasa
@@ -52,7 +56,8 @@ def main(argv, session: ArchiveSession) -> None:
 
     item = session.get_item(args['<identifier>'])
     if args['--delete']:
-        r = item.delete_review()
+        r = item.delete_review(username=args['--username'],
+                               screenname=args['--screenname'])
     elif not args['--body']:
         try:
             r = item.get_review()

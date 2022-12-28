@@ -199,8 +199,11 @@ class File(BaseFile):
         file_path = file_path or self.name
 
         if destdir:
-            if not os.path.exists(destdir) and return_responses is not True:
-                os.mkdir(destdir)
+            if return_responses is not True:
+                try:
+                    os.mkdir(destdir)
+                except FileExistsError:
+                    pass
             if os.path.isfile(destdir):
                 raise OSError(f'{destdir} is not a directory!')
             file_path = os.path.join(destdir, file_path)
@@ -233,12 +236,10 @@ class File(BaseFile):
                     return
 
         parent_dir = os.path.dirname(file_path)
-        if parent_dir != '' \
-                and not os.path.exists(parent_dir) \
-                and return_responses is not True:
-            os.makedirs(parent_dir)
-
         try:
+            if parent_dir != '' and return_responses is not True:
+                os.makedirs(parent_dir, exist_ok=True)
+
             response = self.item.session.get(self.url,
                                              stream=True,
                                              timeout=12,
@@ -272,8 +273,10 @@ class File(BaseFile):
         except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout) as exc:
             msg = f'error downloading file {file_path}, exception raised: {exc}'
             log.error(msg)
-            if os.path.exists(file_path):
+            try:
                 os.remove(file_path)
+            except OSError:
+                pass
             if verbose:
                 print(f' {msg}', file=sys.stderr)
             if ignore_errors:

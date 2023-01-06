@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+3.2.0 (2023-01-06)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Added support for admins to delete reviews via itemname.
+
 3.1.0 (2023-01-06)
 ++++++++++++++++++
 

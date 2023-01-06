@@ -174,13 +174,15 @@ class Search:
             'scroll': 'true',
         }
 
+        if 'scope' in self.params:
+            d['scope'] = self.params['scope']
+
         if 'size' in self.params:
             d['scroll'] = False
             d['size'] = self.params['size']
 
         while True:
             r = self.session.post(self.fts_url,
-                                  params=self.params,
                                   json=d,
                                   auth=self.auth,
                                   **self.request_kwargs)

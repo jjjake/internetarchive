@@ -493,7 +493,7 @@ class Item(BaseItem):
         r.raise_for_status()
         return r
 
-    def delete_review(self, username=None, screenname=None) -> Response:
+    def delete_review(self, username=None, screenname=None, itemname=None) -> Response:
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = {'identifier': self.identifier}
         d = None
@@ -501,6 +501,8 @@ class Item(BaseItem):
             d = {'username': username}
         elif screenname:
             d = {'screenname': screenname}
+        elif itemname:
+            d = {'itemname': itemname}
         a = S3Auth(self.session.access_key, self.session.secret_key)
         r = self.session.delete(u, params=p, data=d, auth=a)
         r.raise_for_status()

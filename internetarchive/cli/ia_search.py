@@ -101,7 +101,10 @@ def main(argv, session: ArchiveSession | None = None) -> None:
 
         for result in search:
             if args['--itemlist']:
-                print(result.get('identifier', ''))
+                if args['--fts'] or args['--dsl-fts']:
+                    print('\n'.join(result.get('fields', dict()).get('identifier')))
+                else:
+                    print(result.get('identifier', ''))
             else:
                 j = json.dumps(result)
                 print(j)

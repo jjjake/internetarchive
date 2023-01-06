@@ -102,7 +102,7 @@ def main(argv, session: ArchiveSession | None = None) -> None:
         for result in search:
             if args['--itemlist']:
                 if args['--fts'] or args['--dsl-fts']:
-                    print('\n'.join(result.get('fields', dict()).get('identifier')))
+                    print('\n'.join(result.get('fields', {}).get('identifier')))
                 else:
                     print(result.get('identifier', ''))
             else:

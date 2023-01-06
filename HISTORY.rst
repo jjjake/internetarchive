@@ -8,21 +8,21 @@ Release History
 
 **Bugfixes**
 
-- Fixed bug in `ia search --fts` where `--itemlist` was printing empyt lines.
-- Fixed bug in `ia search --fts` where `-p scope:all` was not working.
+- Fixed bug in ``ia search --fts`` where ``--itemlist`` was printing empyt lines.
+- Fixed bug in ``ia search --fts`` where ``-p scope:all`` was not working.
 - Fixed directory creation race conditions in download.
-- Fixed bug in `ia download --stdout` where nothing would be printed to stdout
+- Fixed bug in ``ia download --stdout`` where nothing would be printed to stdout
   if the specified file existed on disk.
 - Fixed bug where that made it impossible to upload to user items.
-- Fixed memoryview error when running `Item.upload` with `StringIO` input
-  and `verbose=True`.
+- Fixed memoryview error when running ``Item.upload`` with ``StringIO`` input
+  and ``verbose=True``.
 - Fixed bug in upload where a period was not being expanded properly to the
   contents of the current directory.
 
 **Features and Improvements**
 
 - Added support for admins to delete other users reviews
-- Added support for excluding files in `ia download` via the `--exclude` parameter.
+- Added support for excluding files in ``ia download`` via the ``--exclude`` parameter.
 - Various refactoring and code simplifications.
 
 3.0.2 (2022-06-15)

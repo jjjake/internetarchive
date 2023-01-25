@@ -350,7 +350,8 @@ def prepare_target_patch(metadata, source_metadata, append, target, append_list,
     return patch
 
 
-def prepare_files_patch(metadata, source_metadata, append, target, append_list):
+def prepare_files_patch(metadata, source_metadata, append, target, append_list,
+                        insert):
     filename = '/'.join(target.split('/')[1:])
     for f in source_metadata:
         if f.get('name') == filename:

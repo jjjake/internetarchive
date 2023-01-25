@@ -169,6 +169,7 @@ class MetadataRequest(requests.models.Request):
                  secret_key=None,
                  append=None,
                  append_list=None,
+                 insert=None,
                  **kwargs):
 
         super().__init__(**kwargs)
@@ -183,6 +184,7 @@ class MetadataRequest(requests.models.Request):
         self.priority = priority
         self.append = append
         self.append_list = append_list
+        self.insert = insert
 
     def prepare(self):
         p = MetadataPreparedRequest()
@@ -204,6 +206,7 @@ class MetadataRequest(requests.models.Request):
             target=self.target,
             append=self.append,
             append_list=self.append_list,
+            insert=self.insert,
         )
         return p
 
@@ -212,13 +215,13 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, metadata={},  # noqa: B006
                 source_metadata=None, target=None, priority=None, append=None,
-                append_list=None):
+                append_list=None, insert=None):
         self.prepare_method(method)
         self.prepare_url(url, params)
         self.prepare_headers(headers)
         self.prepare_cookies(cookies)
         self.prepare_body(metadata, source_metadata, target, priority, append,
-                          append_list)
+                          append_list, insert)
         self.prepare_auth(auth, url)
         # Note that prepare_auth must be last to enable authentication schemes
         # such as OAuth to work on a fully prepared request.
@@ -227,7 +230,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         self.prepare_hooks(hooks)
 
     def prepare_body(self, metadata, source_metadata, target, priority, append,
-                     append_list):
+                     append_list, insert):
         priority = priority or -5
 
         if not source_metadata:
@@ -252,7 +255,8 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                         patch = prepare_patch(metadata[key],
                                               source_metadata['metadata'],
                                               append,
-                                              append_list)
+                                              append_list,
+                                              insert)
                     except KeyError:
                         raise ItemLocateError
                 elif key.startswith('files'):
@@ -260,11 +264,12 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                                                 source_metadata['files'],
                                                 append,
                                                 key,
-                                                append_list)
+                                                append_list,
+                                                insert)
                 else:
                     key = key.split('/')[0]
                     patch = prepare_target_patch(metadata, source_metadata, append,
-                                                 target, append_list, key)
+                                                 target, append_list, key, insert)
                 changes.append({'target': key, 'patch': patch})
             self.data = {
                 '-changes': json.dumps(changes),
@@ -277,16 +282,16 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                 target = 'metadata'
                 try:
                     patch = prepare_patch(metadata, source_metadata['metadata'], append,
-                                          append_list)
+                                          append_list, insert)
                 except KeyError:
                     raise ItemLocateError
             elif 'files' in target:
                 patch = prepare_files_patch(metadata, source_metadata['files'], append,
-                                            target, append_list)
+                                            target, append_list, insert)
             else:
                 metadata = {target: metadata}
                 patch = prepare_target_patch(metadata, source_metadata, append,
-                                             target, append_list, target)
+                                             target, append_list, target, insert)
             self.data = {
                 '-patch': json.dumps(patch),
                 '-target': target,
@@ -296,7 +301,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         super().prepare_body(self.data, None)
 
 
-def prepare_patch(metadata, source_metadata, append, append_list=None):
+def prepare_patch(metadata, source_metadata, append, append_list=None, insert=None):
     destination_metadata = source_metadata.copy()
     if isinstance(metadata, list):
         prepared_metadata = metadata
@@ -304,7 +309,7 @@ def prepare_patch(metadata, source_metadata, append, append_list=None):
             destination_metadata = []
     else:
         prepared_metadata = prepare_metadata(metadata, source_metadata, append,
-                                             append_list)
+                                             append_list, insert)
     if isinstance(destination_metadata, dict):
         destination_metadata.update(prepared_metadata)
     elif isinstance(metadata, list) and not destination_metadata:
@@ -323,7 +328,8 @@ def prepare_patch(metadata, source_metadata, append, append_list=None):
     return patch
 
 
-def prepare_target_patch(metadata, source_metadata, append, target, append_list, key):
+def prepare_target_patch(metadata, source_metadata, append, target, append_list, key,
+                         insert):
 
     def dictify(lst, key=None, value=None):
         if not lst:
@@ -340,7 +346,7 @@ def prepare_target_patch(metadata, source_metadata, append, target, append_list,
             source_metadata = source_metadata.get(_k, {})
         else:
             source_metadata[_k] = source_metadata.get(_k, {}).get(_k, {})
-    patch = prepare_patch(metadata, source_metadata, append, append_list)
+    patch = prepare_patch(metadata, source_metadata, append, append_list, insert)
     return patch
 
 
@@ -350,11 +356,12 @@ def prepare_files_patch(metadata, source_metadata, append, target, append_list):
         if f.get('name') == filename:
             source_metadata = f
             break
-    patch = prepare_patch(metadata, source_metadata, append, append_list)
+    patch = prepare_patch(metadata, source_metadata, append, append_list, insert)
     return patch
 
 
-def prepare_metadata(metadata, source_metadata=None, append=False, append_list=False):
+def prepare_metadata(metadata, source_metadata=None, append=False, append_list=False,
+                     insert=False):
     """Prepare a metadata dict for an
     :class:`S3PreparedRequest <S3PreparedRequest>` or
     :class:`MetadataPreparedRequest <MetadataPreparedRequest>` object.
@@ -414,7 +421,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
     # Index all items which contain an index.
     for key in metadata:
         # Insert values from indexed keys into prepared_metadata dict.
-        if (rm_index(key) in indexed_keys):
+        if (rm_index(key) in indexed_keys) and not insert:
             try:
                 prepared_metadata[rm_index(key)][get_index(key)] = metadata[key]
             except IndexError:
@@ -437,6 +444,16 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
                 prepared_metadata[key].append(v)
         elif append and source_metadata.get(key):
             prepared_metadata[key] = f'{source_metadata[key]} {metadata[key]}'
+        elif insert and source_metadata.get(rm_index(key)):
+            index = get_index(key)
+            # If no index is provided, e.g. `collection[i]`, assume 0
+            if not index:
+                index = 0
+            _key = rm_index(key)
+            if not isinstance(source_metadata[_key], list):
+                source_metadata[_key] = [source_metadata[_key]]
+            source_metadata[_key].insert(index, metadata[key])
+            prepared_metadata[_key] = source_metadata[_key]
         else:
             prepared_metadata[key] = metadata[key]
 

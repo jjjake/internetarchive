@@ -739,6 +739,7 @@ class Item(BaseItem):
                         target: str | None = None,
                         append: bool = False,
                         append_list: bool = False,
+                        insert: bool = False,
                         priority: int = 0,
                         access_key: str | None = None,
                         secret_key: str | None = None,
@@ -797,7 +798,8 @@ class Item(BaseItem):
             access_key=access_key,
             secret_key=secret_key,
             append=append,
-            append_list=append_list)
+            append_list=append_list,
+            insert=insert)
         # Must use Session.prepare_request to make sure session settings
         # are used on request!
         prepared_request = request.prepare()

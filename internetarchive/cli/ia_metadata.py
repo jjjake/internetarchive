@@ -27,6 +27,8 @@ usage:
     ia metadata <identifier>... [--append=<key:value>... | --append-list=<key:value>...]
                                 [--priority=<priority>] [--target=<target>]
                                 [--header=<key:value>...]
+    ia metadata <identifier>... --insert=<key:value>... [--priority=<priority>]
+                                [--target=<target>] [--header=<key:value>...]
     ia metadata --spreadsheet=<metadata.csv> [--priority=<priority>]
                 [--modify=<key:value>...] [--header=<key:value>...]
     ia metadata --help
@@ -38,6 +40,8 @@ options:
     -t, --target=<target>               The metadata target to modify.
     -a, --append=<key:value>...         Append a string to a metadata element.
     -A, --append-list=<key:value>...    Append a field to a metadata element.
+    -i, --insert=<key:value>...      Insert a value into a multi-value field given
+                                        an index (e.g. `--insert=collection[0]:foo`).
     -s, --spreadsheet=<metadata.csv>    Modify metadata in bulk using a spreadsheet as
                                         input.
     -e, --exists                        Check if an item exists
@@ -73,10 +77,11 @@ from internetarchive.utils import json
 def modify_metadata(item: item.Item, metadata: Mapping, args: Mapping) -> Response:
     append = bool(args['--append'])
     append_list = bool(args['--append-list'])
+    insert = bool(args['--insert'])
     try:
         r = item.modify_metadata(metadata, target=args['--target'], append=append,
                                  priority=args['--priority'], append_list=append_list,
-                                 headers=args['--header'])
+                                 headers=args['--header'], insert=insert)
         assert isinstance(r, Response)  # mypy: modify_metadata() -> Request | Response
     except ItemLocateError as exc:
         print(f'{item.identifier} - error: {exc}', file=sys.stderr)
@@ -173,6 +178,7 @@ def main(argv: dict, session: session.ArchiveSession) -> None:
                error='--header must be formatted as --header="key:value"'),
         '--append': list,
         '--append-list': list,
+        '--insert': list,
         '--remove': list,
         '--spreadsheet': Or(None, And(lambda f: os.path.exists(f),
                             error='<file> should be a readable file or directory.')),
@@ -207,13 +213,15 @@ def main(argv: dict, session: session.ArchiveSession) -> None:
 
         # Modify metadata.
         elif (args['--modify'] or args['--append'] or args['--append-list']
-              or args['--remove']):
+              or args['--remove'] or args['--insert']):
             if args['--modify']:
                 metadata_args = args['--modify']
             elif args['--append']:
                 metadata_args = args['--append']
             elif args['--append-list']:
                 metadata_args = args['--append-list']
+            elif args['--insert']:
+                metadata_args = args['--insert']
             if args['--remove']:
                 metadata_args = args['--remove']
             try:
@@ -221,8 +229,9 @@ def main(argv: dict, session: session.ArchiveSession) -> None:
                 if any('/' in k for k in metadata):
                     metadata = get_args_dict_many_write(metadata)
             except ValueError:
-                print('error: The value of --modify, --remove, --append or --append-list '
-                      'is invalid. It must be formatted as: --modify=key:value',
+                print('error: The value of --modify, --remove, --append, --append-list '
+                      'or --insert is invalid. It must be formatted as: '
+                      '--modify=key:value',
                       file=sys.stderr)
                 sys.exit(1)
 

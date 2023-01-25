@@ -9,7 +9,7 @@ Release History
 **Features and Improvements**
 
 - Added support for inserting metadata into an existing multi-value metadata
-  field. It differes from ``ia metadata <id> --modify collection[0]:foo`` in
+  field. It differs from ``ia metadata <id> --modify collection[0]:foo`` in
   that it does not clobber. For example,
   ``ia metadata <id> --insert collection[0]:foo`` will insert ``foo`` as the
   first collection, it will not clobber.

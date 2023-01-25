@@ -150,6 +150,10 @@ class Search:
             j = r.json()
             if j.get('error'):
                 yield j
+            if j['total'] is None:
+                # Unexpected empty response when iterating on cursor
+                # Retry with same cursor:
+                continue
             num_found = int(j['total'])
             if not self._num_found:
                 self._num_found = num_found

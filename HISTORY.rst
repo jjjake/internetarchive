@@ -14,6 +14,12 @@ Release History
   ``ia metadata <id> --insert collection[0]:foo`` will insert ``foo`` as the
   first collection, it will not clobber.
 
+**Bugfixes**
+
+- Fixed bug in search where timeouts would always be returned on queries
+  submitted to the files index where more than 10,000 results would be
+  returned.
+
 3.2.0 (2023-01-06)
 ++++++++++++++++++
 

@@ -142,6 +142,8 @@ class Search:
             self.params['fields'] = ','.join(self.fields)
         if self.sorts:
             self.params['sorts'] = ','.join(self.sorts)
+        i = 0
+        num_found = None
         while True:
             r = self.session.post(self.scrape_url,
                                   params=self.params,
@@ -150,13 +152,13 @@ class Search:
             j = r.json()
             if j.get('error'):
                 yield j
-            num_found = int(j['total'])
+            if not num_found:
+                num_found = int(j['total'])
             if not self._num_found:
                 self._num_found = num_found
             self._handle_scrape_error(j)
 
             self.params['cursor'] = j.get('cursor')
-            i = 0
             for item in j['items']:
                 i += 1
                 yield item

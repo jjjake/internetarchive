@@ -13,17 +13,12 @@ def test_ia_search_itemlist(capsys):
             'q': 'collection:attentionkmartshoppers',
             'count': '10000'
         }
-        p2 = p1.copy()
-        p2['cursor'] = 'W3siaWRlbnRpZmllciI6IjE5NjEtTC0wNTkxNCJ9XQ=='
-        rsps.add(responses.POST, url,
-                 body=test_scrape_response,
-                 match=[responses.matchers.query_param_matcher(p1)])
         _j = json.loads(test_scrape_response)
         del _j['cursor']
         _r = json.dumps(_j)
         rsps.add(responses.POST, url,
                  body=_r,
-                 match=[responses.matchers.query_param_matcher(p2)])
+                 match=[responses.matchers.query_param_matcher(p1)])
         ia_call(['ia', 'search', 'collection:attentionkmartshoppers', '--itemlist'])
 
     out, err = capsys.readouterr()

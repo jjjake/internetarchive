@@ -264,7 +264,7 @@ class Item(BaseItem):
         params: Mapping | None = None,
         request_kwargs: Mapping | None = None,
     ) -> bool:
-        """Get a list of completed catalog tasks for the item.
+        """Check if there is any pending task for the item.
 
         :param params: Params to send with your request.
 

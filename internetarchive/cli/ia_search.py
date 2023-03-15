@@ -34,7 +34,7 @@ options:
     -n, --num-found                  Print the number of results to stdout.
     -F, --fts                        Beta support for querying the archive.org
                                      full text search API.
-    -D, --dsl-fts                    Sumbit --fts query in dsl [default: False].
+    -D, --dsl-fts                    Submit --fts query in dsl [default: False].
     -t, --timeout=<seconds>          Set the timeout in seconds [default: 300].
 
 examples:

@@ -61,6 +61,10 @@ options:
                                              the source material.
     -p, --parameters=<key:value>...          Parameters to send with your query (e.g. `cnt=0`).
     -a, --download-history                   Also download files from the history directory.
+    --source=<val>...                        Filter files based on their source value in files.xml
+                                             (i.e. `original`, `derivative`, `metadata`).
+    --exclude-source=<val>...                Filter files based on their source value in files.xml
+                                             (i.e. `original`, `derivative`, `metadata`).
 """
 from __future__ import annotations
 
@@ -102,6 +106,8 @@ def main(argv, session: ArchiveSession) -> None:
         '--no-change-timestamp': Use(bool),
         '--download-history': Use(bool),
         '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
+        '--source': list,
+        '--exclude-source': list,
     })
 
     try:
@@ -209,6 +215,8 @@ def main(argv, session: ArchiveSession) -> None:
             no_change_timestamp=args['--no-change-timestamp'],
             params=args['--parameters'],
             ignore_history_dir=ignore_history_dir,
+            source=args['--source'],
+            exclude_source=args['--exclude-source'],
         )
         if _errors:
             errors.append(_errors)

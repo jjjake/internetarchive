@@ -742,7 +742,7 @@ class Item(BaseItem):
                            retries, ignore_errors, fileobj, return_responses,
                            no_change_timestamp, params)
             if fileobj and fileobj.closed:
-                return responses
+                break
             if fileobj and fileobj.isatty():
                 fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
             if return_responses:

@@ -18,7 +18,7 @@ except NameError:
     FileNotFoundError = IOError
 
 try:
-    WindowsError
+    WindowsError  # type: ignore[used-before-def]
 except NameError:
     class WindowsError(Exception):
         pass

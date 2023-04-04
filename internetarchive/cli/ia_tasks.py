@@ -142,7 +142,7 @@ def main(argv, session: ArchiveSession) -> None:
     if args['--tab-output']:
         warn_msg = ('tab-delimited output will be removed in a future release. '
                     'Please switch to the default JSON output.')
-        warnings.warn(warn_msg)
+        warnings.warn(warn_msg, stacklevel=2)
     for t in session.get_tasks(params=params):
         # Legacy support for tab-delimted output.
         # Mypy is confused by CatalogTask members being created from kwargs

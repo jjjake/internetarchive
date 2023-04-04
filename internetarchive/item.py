@@ -598,6 +598,8 @@ class Item(BaseItem):
                  return_responses: bool = False,
                  no_change_timestamp: bool = False,
                  ignore_history_dir: bool = False,
+                 source: str | list[str] | None = None,
+                 exclude_source: str | list[str] | None = None,
                  params: Mapping | None = None) -> list[Request | Response]:
         """Download files from an item.
 
@@ -646,6 +648,12 @@ class Item(BaseItem):
                                     current time instead of changing it to that given in
                                     the original archive.
 
+        :param source: Filter files based on their source value in files.xml
+                       (i.e. `original`, `derivative`, `metadata`).
+
+        :param exclude_source: Filter files based on their source value in files.xml
+                               (i.e. `original`, `derivative`, `metadata`).
+
         :param params: URL parameters to send with
                        download request (e.g. `cnt=0`).
 
@@ -664,6 +672,12 @@ class Item(BaseItem):
         no_change_timestamp = bool(no_change_timestamp)
         ignore_history_dir = bool(ignore_history_dir)
         params = params or None
+        if source:
+            if not isinstance(source, list):
+                source = [source]
+        if exclude_source:
+            if not isinstance(exclude_source, list):
+                exclude_source = [exclude_source]
 
         if not dry_run:
             if item_index and verbose:
@@ -706,6 +720,10 @@ class Item(BaseItem):
             if ignore_history_dir is True:
                 if f.name.startswith('history/'):
                     continue
+            if source and not any(f.source == x for x in source):
+                continue
+            if exclude_source and any(f.source == x for x in exclude_source):
+                continue
             file_count += 1
             if no_directory:
                 path = f.name

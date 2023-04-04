@@ -740,7 +740,7 @@ class Item(BaseItem):
             if dry_run:
                 print(f.url)
                 continue
-            if file_count < len(files):  # type: ignore
+            if stdout and file_count < len(files):  # type: ignore
                 ors = True
             else:
                 ors = False

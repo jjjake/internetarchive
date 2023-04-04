@@ -717,7 +717,7 @@ class Item(BaseItem):
                 on_the_fly=on_the_fly
             )
         if stdout:
-            files = list(files)
+            files = list(files)  # type: ignore
 
         errors = []
         downloaded = 0
@@ -740,7 +740,7 @@ class Item(BaseItem):
             if dry_run:
                 print(f.url)
                 continue
-            if file_count < len(files):
+            if file_count < len(files):  # type: ignore
                 ors = True
             else:
                 ors = False

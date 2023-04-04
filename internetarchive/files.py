@@ -264,12 +264,19 @@ class File(BaseFile):
             if not fileobj:
                 fileobj = open(file_path.encode('utf-8'), 'wb')
 
-            with fileobj, progress_bar as bar:
+            # Support for writing multiple files to stdout -- do not
+            # close stdout.
+            if fileobj.isatty():
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:
                         size = fileobj.write(chunk)
-                        if bar is not None:
-                            bar.update(size)
+            else:
+                with fileobj, progress_bar as bar:
+                    for chunk in response.iter_content(chunk_size=chunk_size):
+                        if chunk:
+                            size = fileobj.write(chunk)
+                            if bar is not None:
+                                bar.update(size)
         except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout) as exc:
             msg = f'error downloading file {file_path}, exception raised: {exc}'
             log.error(msg)

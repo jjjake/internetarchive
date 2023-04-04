@@ -20,7 +20,6 @@
 
 usage:
     ia download <identifier> [<file>]... [options]...
-    ia download <identifier> <file> --stdout [options]...
     ia download --itemlist=<file> [options]...
     ia download --search=<query> [options]...
     ia download --help
@@ -162,19 +161,6 @@ def main(argv, session: ArchiveSession) -> None:
 
     errors = []
     for i, identifier in enumerate(ids):
-        if args['--stdout']:
-            item = session.get_item(identifier)
-            f = list(item.get_files(args['<file>']))
-            try:
-                assert len(f) == 1
-            except AssertionError:
-                print(f'error: {identifier}/{args["<file>"][0]} does not exist!', file=sys.stderr)
-                sys.exit(1)
-            stdout_buf = sys.stdout.buffer
-            f[0].download(retries=args['--retries'],
-                          fileobj=stdout_buf,
-                          params=args['--parameters'])
-            sys.exit(0)
         try:
             identifier = identifier.strip()
         except AttributeError:
@@ -217,6 +203,7 @@ def main(argv, session: ArchiveSession) -> None:
             ignore_history_dir=ignore_history_dir,
             source=args['--source'],
             exclude_source=args['--exclude-source'],
+            stdout=args['--stdout'],
         )
         if _errors:
             errors.append(_errors)

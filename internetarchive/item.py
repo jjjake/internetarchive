@@ -680,7 +680,7 @@ class Item(BaseItem):
             if not isinstance(exclude_source, list):
                 exclude_source = [exclude_source]
         if stdout:
-            fileobj = sys.stdout.buffer
+            fileobj = os.fdopen(sys.stdout.fileno(), "wb", closefd=False)
             verbose = False
         else:
             fileobj = None
@@ -716,6 +716,8 @@ class Item(BaseItem):
                 exclude_pattern=exclude_pattern,
                 on_the_fly=on_the_fly
             )
+        if stdout:
+            files = list(files)
 
         errors = []
         downloaded = 0
@@ -738,13 +740,13 @@ class Item(BaseItem):
             if dry_run:
                 print(f.url)
                 continue
+            if file_count < len(files):
+                ors = True
+            else:
+                ors = False
             r = f.download(path, verbose, ignore_existing, checksum, destdir,
                            retries, ignore_errors, fileobj, return_responses,
-                           no_change_timestamp, params)
-            if fileobj and fileobj.closed:
-                break
-            if fileobj and fileobj.isatty():
-                fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
+                           no_change_timestamp, params, None, stdout, ors)
             if return_responses:
                 responses.append(r)
 

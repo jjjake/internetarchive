@@ -139,7 +139,7 @@ class File(BaseFile):
     def download(self, file_path=None, verbose=None, ignore_existing=None,
                  checksum=None, destdir=None, retries=None, ignore_errors=None,
                  fileobj=None, return_responses=None, no_change_timestamp=None,
-                 params=None, chunk_size=None):
+                 params=None, chunk_size=None, stdout=None, ors=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -178,6 +178,14 @@ class File(BaseFile):
         :param no_change_timestamp: (optional) If True, leave the time stamp as the
                                     current time instead of changing it to that given in
                                     the original archive.
+
+        :type stdout: bool
+        :param stdout: (optional) Print contents of file to stdout instead of downloading
+                       to file.
+
+        :type ors: bool
+        :param ors: (optional) Append a newline or $ORS to the end of file.
+                    This is mainly intended to be used internally with `stdout`.
 
         :type params: dict
         :param params: (optional) URL parameters to send with
@@ -261,6 +269,8 @@ class File(BaseFile):
 
             if not chunk_size:
                 chunk_size = 1048576
+            if stdout:
+                fileobj = os.fdopen(sys.stdout.fileno(), "wb", closefd=False)
             if not fileobj:
                 fileobj = open(file_path.encode('utf-8'), 'wb')
 
@@ -270,6 +280,8 @@ class File(BaseFile):
                         size = fileobj.write(chunk)
                         if bar is not None:
                             bar.update(size)
+                if ors:
+                    fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
         except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout) as exc:
             msg = f'error downloading file {file_path}, exception raised: {exc}'
             log.error(msg)

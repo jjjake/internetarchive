@@ -600,6 +600,7 @@ class Item(BaseItem):
                  ignore_history_dir: bool = False,
                  source: str | list[str] | None = None,
                  exclude_source: str | list[str] | None = None,
+                 stdout: bool = False,
                  params: Mapping | None = None) -> list[Request | Response]:
         """Download files from an item.
 
@@ -678,6 +679,11 @@ class Item(BaseItem):
         if exclude_source:
             if not isinstance(exclude_source, list):
                 exclude_source = [exclude_source]
+        if stdout:
+            fileobj = os.fdopen(sys.stdout.fileno(), "wb", closefd=False)
+            verbose = False
+        else:
+            fileobj = None
 
         if not dry_run:
             if item_index and verbose:
@@ -710,6 +716,8 @@ class Item(BaseItem):
                 exclude_pattern=exclude_pattern,
                 on_the_fly=on_the_fly
             )
+        if stdout:
+            files = list(files)  # type: ignore
 
         errors = []
         downloaded = 0
@@ -732,9 +740,13 @@ class Item(BaseItem):
             if dry_run:
                 print(f.url)
                 continue
+            if stdout and file_count < len(files):  # type: ignore
+                ors = True
+            else:
+                ors = False
             r = f.download(path, verbose, ignore_existing, checksum, destdir,
-                           retries, ignore_errors, None, return_responses,
-                           no_change_timestamp, params)
+                           retries, ignore_errors, fileobj, return_responses,
+                           no_change_timestamp, params, None, stdout, ors)
             if return_responses:
                 responses.append(r)
 

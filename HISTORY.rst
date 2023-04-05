@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+3.4.0 (?)
++++++++++
+
+**Features and Improvements**
+
+- Added parameters for filtering files based on their source value in files.xml.
+- Added support for downloading multiple files to stdout.
+
 3.3.0 (2023-01-06)
 ++++++++++++++++++
 

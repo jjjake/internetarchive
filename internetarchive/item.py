@@ -601,7 +601,8 @@ class Item(BaseItem):
                  source: str | list[str] | None = None,
                  exclude_source: str | list[str] | None = None,
                  stdout: bool = False,
-                 params: Mapping | None = None) -> list[Request | Response]:
+                 params: Mapping | None = None,
+                 timeout: int | float | tuple | None = None) -> list[Request | Response]:
         """Download files from an item.
 
         :param files: Only download files matching given file names.
@@ -746,7 +747,7 @@ class Item(BaseItem):
                 ors = False
             r = f.download(path, verbose, ignore_existing, checksum, destdir,
                            retries, ignore_errors, fileobj, return_responses,
-                           no_change_timestamp, params, None, stdout, ors)
+                           no_change_timestamp, params, None, stdout, ors, timeout)
             if return_responses:
                 responses.append(r)
 

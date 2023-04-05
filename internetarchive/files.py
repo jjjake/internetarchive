@@ -139,7 +139,8 @@ class File(BaseFile):
     def download(self, file_path=None, verbose=None, ignore_existing=None,
                  checksum=None, destdir=None, retries=None, ignore_errors=None,
                  fileobj=None, return_responses=None, no_change_timestamp=None,
-                 params=None, chunk_size=None, stdout=None, ors=None):
+                 params=None, chunk_size=None, stdout=None, ors=None,
+                 timeout=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -202,6 +203,7 @@ class File(BaseFile):
         return_responses = return_responses or False
         no_change_timestamp = no_change_timestamp or False
         params = params or None
+        timeout = 12 if not timeout else timeout
 
         self.item.session.mount_http_adapter(max_retries=retries)
         file_path = file_path or self.name
@@ -250,7 +252,7 @@ class File(BaseFile):
 
             response = self.item.session.get(self.url,
                                              stream=True,
-                                             timeout=12,
+                                             timeout=timeout,
                                              auth=self.auth,
                                              params=params)
             response.raise_for_status()

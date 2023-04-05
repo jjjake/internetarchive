@@ -64,9 +64,12 @@ options:
                                              (i.e. `original`, `derivative`, `metadata`).
     --exclude-source=<val>...                Filter files based on their source value in files.xml
                                              (i.e. `original`, `derivative`, `metadata`).
+    -t, --timeout=<val>                      Set a timeout for download requests.
+                                             This sets both connect and read timeout.
 """
 from __future__ import annotations
 
+import ast
 import os
 import sys
 from os.path import exists as dir_exists
@@ -87,6 +90,7 @@ def main(argv, session: ArchiveSession) -> None:
     # Validation error messages.
     destdir_msg = '--destdir must be a valid path to a directory.'
     itemlist_msg = '--itemlist must be a valid path to an existing file.'
+    timeout_msg = '--timeout must be an int or float.'
 
     # Validate args.
     s = Schema({
@@ -107,6 +111,8 @@ def main(argv, session: ArchiveSession) -> None:
         '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
         '--source': list,
         '--exclude-source': list,
+        '--timeout': And(Use(lambda t: ast.literal_eval(t[0])), Or(int, float),
+                         error=timeout_msg)
     })
 
     try:
@@ -204,6 +210,7 @@ def main(argv, session: ArchiveSession) -> None:
             source=args['--source'],
             exclude_source=args['--exclude-source'],
             stdout=args['--stdout'],
+            timeout=args['--timeout'],
         )
         if _errors:
             errors.append(_errors)

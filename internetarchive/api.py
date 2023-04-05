@@ -313,6 +313,7 @@ def download(
     on_the_fly: bool = False,
     return_responses: bool = False,
     no_change_timestamp: bool = False,
+    timeout: int | float | tuple | None = None,
     **get_item_kwargs,
 ) -> list[requests.Request | requests.Response]:
     r"""Download files from an item.
@@ -375,6 +376,7 @@ def download(
         on_the_fly=on_the_fly,
         return_responses=return_responses,
         no_change_timestamp=no_change_timestamp,
+        timeout=timeout,
     )
     return r
 

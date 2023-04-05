@@ -602,7 +602,8 @@ class Item(BaseItem):
                  exclude_source: str | list[str] | None = None,
                  stdout: bool = False,
                  params: Mapping | None = None,
-                 timeout: int | float | tuple | None = None) -> list[Request | Response]:
+                 timeout: int | float | tuple[int, float] | None = None
+                 ) -> list[Request | Response]:
         """Download files from an item.
 
         :param files: Only download files matching given file names.

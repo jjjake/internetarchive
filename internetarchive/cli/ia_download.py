@@ -111,8 +111,8 @@ def main(argv, session: ArchiveSession) -> None:
         '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
         '--source': list,
         '--exclude-source': list,
-        '--timeout': And(Use(lambda t: ast.literal_eval(t[0])), Or(int, float),
-                         error=timeout_msg)
+        '--timeout': Or([], And(Use(lambda t: ast.literal_eval(t[0])), Or(int, float),
+                         error=timeout_msg))
     })
 
     try:

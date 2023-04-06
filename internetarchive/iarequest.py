@@ -234,7 +234,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         priority = priority or -5
 
         if not source_metadata:
-            r = requests.get(self.url)
+            r = requests.get(self.url, timeout=10)
             source_metadata = r.json()
 
         # Write to many targets

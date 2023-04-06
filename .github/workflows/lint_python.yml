@@ -12,7 +12,7 @@ jobs:
       - run: pip install --upgrade pip setuptools wheel
       - run: pip install .[all]
       - run: black --check --skip-string-normalization . || true
-      - run: ruff .  # See pyproject.toml for configuration
+      - run: ruff --format=github .  # See pyproject.toml for configuration
       - run: pip install -r pex-requirements.txt -r tests/requirements.txt
       - run: mypy .  # See setup.cfg for configuration
       - run: safety check || true  # Temporary fix for https://pyup.io/v/51457/f17

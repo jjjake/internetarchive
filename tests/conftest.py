@@ -101,20 +101,20 @@ class IaRequestsMock(RequestsMock):
             self.add(responses.GET, url, body=body)
 
 
-@pytest.fixture
+@pytest.fixture()
 def tmpdir_ch(tmpdir):
     tmpdir.chdir()
     return tmpdir
 
 
-@pytest.fixture
+@pytest.fixture()
 def nasa_mocker():
     with IaRequestsMock() as mocker:
         mocker.add_metadata_mock('nasa')
         yield mocker
 
 
-@pytest.fixture
+@pytest.fixture()
 def nasa_item():
     session = get_session()
     with IaRequestsMock() as mocker:
@@ -122,17 +122,17 @@ def nasa_item():
         yield session.get_item('nasa')
 
 
-@pytest.fixture
+@pytest.fixture()
 def session():
     return get_session(config={'s3': {'access': 'access', 'secret': 'secret'}})
 
 
-@pytest.fixture
+@pytest.fixture()
 def nasa_metadata():
     return json.loads(load_test_data_file('metadata/nasa.json'))
 
 
 # TODO: Why is this function defined twice in this file?  See issue #505
-@pytest.fixture  # type: ignore
+@pytest.fixture()  # type: ignore
 def nasa_item(nasa_mocker):
     return get_item('nasa')

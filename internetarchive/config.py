@@ -41,7 +41,7 @@ def get_auth_config(email: str, password: str, host: str = 'archive.org') -> dic
     u = f'https://{host}/services/xauthn/'
     p = {'op': 'login'}
     d = {'email': email, 'password': password}
-    r = requests.post(u, params=p, data=d)
+    r = requests.post(u, params=p, data=d, timeout=10)
     j = r.json()
     if not j.get('success'):
         try:

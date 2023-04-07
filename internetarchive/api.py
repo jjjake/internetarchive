@@ -33,9 +33,8 @@ from typing import Iterable, Mapping, MutableMapping
 import requests
 from urllib3 import Retry
 
-from internetarchive import auth, catalog
+from internetarchive import auth, catalog, files, item, search, session
 from internetarchive import config as config_module
-from internetarchive import files, item, search, session
 from internetarchive.exceptions import AuthenticationError
 
 

@@ -13,4 +13,4 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: pip install setuptools=="${{ matrix.setuptools-version }}"
-      - run: pip install .
+      - run: pip install --user .

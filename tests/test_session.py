@@ -44,9 +44,12 @@ def test_get_item(tmpdir):
         item_metadata = fh.read().strip()
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa',
-                 body=item_metadata,
-                 content_type='application/json')
+        rsps.add(
+            responses.GET,
+            f'{PROTOCOL}//archive.org/metadata/nasa',
+            body=item_metadata,
+            content_type='application/json',
+        )
 
         s = internetarchive.session.ArchiveSession()
         item = s.get_item('nasa')
@@ -54,10 +57,13 @@ def test_get_item(tmpdir):
         assert item.identifier == 'nasa'
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa',
-                 body=item_metadata,
-                 status=400,
-                 content_type='application/json')
+        rsps.add(
+            responses.GET,
+            f'{PROTOCOL}//archive.org/metadata/nasa',
+            body=item_metadata,
+            status=400,
+            content_type='application/json',
+        )
 
         s = internetarchive.session.ArchiveSession(CONFIG)
         try:
@@ -86,9 +92,12 @@ def test_s3_is_overloaded():
     }"""
 
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
-                 body=test_body,
-                 content_type='application/json')
+        rsps.add(
+            responses.GET,
+            f'{PROTOCOL}//s3.us.archive.org',
+            body=test_body,
+            content_type='application/json',
+        )
         s = internetarchive.session.ArchiveSession(CONFIG)
         r = s.s3_is_overloaded('nasa')
         assert r is False
@@ -111,9 +120,12 @@ def test_s3_is_overloaded():
     }"""
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
-                 body=test_body,
-                 content_type='application/json')
+        rsps.add(
+            responses.GET,
+            f'{PROTOCOL}//s3.us.archive.org',
+            body=test_body,
+            content_type='application/json',
+        )
         s = internetarchive.session.ArchiveSession(CONFIG)
         r = s.s3_is_overloaded('nasa')
         assert r is True

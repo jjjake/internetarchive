@@ -79,9 +79,15 @@ def modify_metadata(item: item.Item, metadata: Mapping, args: Mapping) -> Respon
     append_list = bool(args['--append-list'])
     insert = bool(args['--insert'])
     try:
-        r = item.modify_metadata(metadata, target=args['--target'], append=append,
-                                 priority=args['--priority'], append_list=append_list,
-                                 headers=args['--header'], insert=insert)
+        r = item.modify_metadata(
+            metadata,
+            target=args['--target'],
+            append=append,
+            priority=args['--priority'],
+            append_list=append_list,
+            headers=args['--header'],
+            insert=insert,
+        )
         assert isinstance(r, Response)  # mypy: modify_metadata() -> Request | Response
     except ItemLocateError as exc:
         print(f'{item.identifier} - error: {exc}', file=sys.stderr)
@@ -89,7 +95,10 @@ def modify_metadata(item: item.Item, metadata: Mapping, args: Mapping) -> Respon
     if not r.json()['success']:
         error_msg = r.json()['error']
         etype = 'warning' if 'no changes' in r.text else 'error'
-        print(f'{item.identifier} - {etype} ({r.status_code}): {error_msg}', file=sys.stderr)
+        print(
+            f'{item.identifier} - {etype} ({r.status_code}): {error_msg}',
+            file=sys.stderr,
+        )
         return r
     print(f'{item.identifier} - success: {r.json()["log"]}', file=sys.stderr)
     return r
@@ -100,7 +109,10 @@ def remove_metadata(item: item.Item, metadata: Mapping, args: Mapping) -> Respon
     for key in metadata:
         src_md = copy(item.metadata.get(key))
         if not src_md:
-            print(f'{item.identifier}/metadata/{key} does not exist, skipping.', file=sys.stderr)
+            print(
+                f'{item.identifier}/metadata/{key} does not exist, skipping.',
+                file=sys.stderr,
+            )
             continue
 
         if key == 'collection':
@@ -115,23 +127,33 @@ def remove_metadata(item: item.Item, metadata: Mapping, args: Mapping) -> Respon
                     r = item.remove_from_simplelist(c, 'holdings')
                     j = r.json()
                     if j.get('success'):
-                        print(f'{item.identifier} - success: {item.identifier} no longer in {c}',
-                              file=sys.stderr)
+                        print(
+                            f'{item.identifier} - success: {item.identifier} no longer in {c}',
+                            file=sys.stderr,
+                        )
                         sys.exit(0)
                     elif j.get('error', '').startswith('no row to delete for'):
-                        print(f'{item.identifier} - success: {item.identifier} no longer in {c}',
-                              file=sys.stderr)
+                        print(
+                            f'{item.identifier} - success: {item.identifier} no longer in {c}',
+                            file=sys.stderr,
+                        )
                         sys.exit(0)
                     else:
-                        print(f'{item.identifier} - error: {j.get("error")}', file=sys.stderr)
+                        print(
+                            f'{item.identifier} - error: {j.get("error")}',
+                            file=sys.stderr,
+                        )
                         sys.exit(1)
 
         if not isinstance(src_md, list):
             if key == 'subject':
                 src_md = src_md.split(';')
             elif key == 'collection':
-                print(f'{item.identifier} - error: all collections would be removed, '
-                      'not submitting task.', file=sys.stderr)
+                print(
+                    f'{item.identifier} - error: all collections would be removed, '
+                    'not submitting task.',
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
             if src_md == metadata[key]:
@@ -155,11 +177,16 @@ def remove_metadata(item: item.Item, metadata: Mapping, args: Mapping) -> Respon
             md[key] = 'REMOVE_TAG'
 
     if md.get('collection') == []:
-        print(f'{item.identifier} - error: all collections would be removed, not submitting task.',
-              file=sys.stderr)
+        print(
+            f'{item.identifier} - error: all collections would be removed, not submitting task.',
+            file=sys.stderr,
+        )
         sys.exit(1)
     elif not md:
-        print(f'{item.identifier} - warning: nothing needed to be removed.', file=sys.stderr)
+        print(
+            f'{item.identifier} - warning: nothing needed to be removed.',
+            file=sys.stderr,
+        )
         sys.exit(0)
 
     r = modify_metadata(item, md, args)
@@ -170,21 +197,31 @@ def main(argv: dict, session: session.ArchiveSession) -> None:
     args = docopt(__doc__, argv=argv)
 
     # Validate args.
-    s = Schema({
-        str: bool,
-        '<identifier>': list,
-        '--modify': list,
-        '--header': Or(None, And(Use(get_args_header_dict), dict),
-               error='--header must be formatted as --header="key:value"'),
-        '--append': list,
-        '--append-list': list,
-        '--insert': list,
-        '--remove': list,
-        '--spreadsheet': Or(None, And(lambda f: os.path.exists(f),
-                            error='<file> should be a readable file or directory.')),
-        '--target': Or(None, str),
-        '--priority': Or(None, Use(int, error='<priority> should be an integer.')),
-    })
+    s = Schema(
+        {
+            str: bool,
+            '<identifier>': list,
+            '--modify': list,
+            '--header': Or(
+                None,
+                And(Use(get_args_header_dict), dict),
+                error='--header must be formatted as --header="key:value"',
+            ),
+            '--append': list,
+            '--append-list': list,
+            '--insert': list,
+            '--remove': list,
+            '--spreadsheet': Or(
+                None,
+                And(
+                    lambda f: os.path.exists(f),
+                    error='<file> should be a readable file or directory.',
+                ),
+            ),
+            '--target': Or(None, str),
+            '--priority': Or(None, Use(int, error='<priority> should be an integer.')),
+        }
+    )
     try:
         args = s.validate(args)
     except SchemaError as exc:
@@ -212,8 +249,13 @@ def main(argv: dict, session: session.ArchiveSession) -> None:
                     sys.exit(1)
 
         # Modify metadata.
-        elif (args['--modify'] or args['--append'] or args['--append-list']
-              or args['--remove'] or args['--insert']):
+        elif (
+            args['--modify']
+            or args['--append']
+            or args['--append-list']
+            or args['--remove']
+            or args['--insert']
+        ):
             if args['--modify']:
                 metadata_args = args['--modify']
             elif args['--append']:
@@ -229,10 +271,12 @@ def main(argv: dict, session: session.ArchiveSession) -> None:
                 if any('/' in k for k in metadata):
                     metadata = get_args_dict_many_write(metadata)
             except ValueError:
-                print('error: The value of --modify, --remove, --append, --append-list '
-                      'or --insert is invalid. It must be formatted as: '
-                      '--modify=key:value',
-                      file=sys.stderr)
+                print(
+                    'error: The value of --modify, --remove, --append, --append-list '
+                    'or --insert is invalid. It must be formatted as: '
+                    '--modify=key:value',
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
             if args['--remove']:

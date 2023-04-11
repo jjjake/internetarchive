@@ -31,7 +31,9 @@ from typing import Mapping
 from urllib.parse import parse_qsl
 
 
-def get_args_dict(args: list[str], query_string: bool = False, header: bool = False) -> dict:
+def get_args_dict(
+    args: list[str], query_string: bool = False, header: bool = False
+) -> dict:
     args = args or []
     metadata: dict[str, list | str] = defaultdict(list)
     for md in args:

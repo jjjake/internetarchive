@@ -34,6 +34,7 @@ from internetarchive.exceptions import AuthenticationError
 
 class S3Auth(AuthBase):
     """Attaches S3 Basic Authentication to the given Request object."""
+
     def __init__(self, access_key: str | None = None, secret_key: str | None = None):
         self.access_key = access_key
         self.secret_key = secret_key
@@ -41,15 +42,18 @@ class S3Auth(AuthBase):
     def __call__(self, r):
         if not self.access_key:
             if self.secret_key:
-                raise AuthenticationError('No access_key set!'
-                                          ' Have you run `ia configure`?')
+                raise AuthenticationError(
+                    'No access_key set! Have you run `ia configure`?'
+                )
         if not self.secret_key:
             if self.access_key:
-                raise AuthenticationError('No secret_key set!'
-                                          ' Have you run `ia configure`?')
+                raise AuthenticationError(
+                    'No secret_key set! Have you run `ia configure`?'
+                )
             else:
-                raise AuthenticationError('No access_key or secret_key set!'
-                                          ' Have you run `ia configure`?')
+                raise AuthenticationError(
+                    'No access_key or secret_key set! Have you run `ia configure`?'
+                )
 
         auth_str = f'LOW {self.access_key}:{self.secret_key}'
         r.headers['Authorization'] = auth_str
@@ -58,6 +62,7 @@ class S3Auth(AuthBase):
 
 class S3PostAuth(AuthBase):
     """Attaches S3 Basic Authentication to the given Request object."""
+
     def __init__(self, access_key: str | None = None, secret_key: str | None = None):
         self.access_key = access_key
         self.secret_key = secret_key

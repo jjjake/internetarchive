@@ -118,21 +118,29 @@ class BaseItem:
         self.collection = IdentifierListAsItems(mc, self.session)  # type: ignore
 
     def __eq__(self, other) -> bool:
-        return (self.item_metadata == other.item_metadata
-                or (self.item_metadata.keys() == other.item_metadata.keys()
-                    and all(self.item_metadata[x] == other.item_metadata[x]
-                            for x in self.item_metadata
-                            if x not in self.EXCLUDED_ITEM_METADATA_KEYS)))
+        return self.item_metadata == other.item_metadata or (
+            self.item_metadata.keys() == other.item_metadata.keys()
+            and all(
+                self.item_metadata[x] == other.item_metadata[x]
+                for x in self.item_metadata
+                if x not in self.EXCLUDED_ITEM_METADATA_KEYS
+            )
+        )
 
     def __le__(self, other) -> bool:
         return self.identifier <= other.identifier
 
     def __hash__(self) -> int:
         without_excluded_keys = {
-            k: v for k, v in self.item_metadata.items()
-            if k not in self.EXCLUDED_ITEM_METADATA_KEYS}
-        return hash(json.dumps(without_excluded_keys,
-                               sort_keys=True, check_circular=False))  # type: ignore
+            k: v
+            for k, v in self.item_metadata.items()
+            if k not in self.EXCLUDED_ITEM_METADATA_KEYS
+        }
+        return hash(
+            json.dumps(
+                without_excluded_keys, sort_keys=True, check_circular=False
+            )  # type: ignore[call-arg]
+        )
 
 
 class Item(BaseItem):
@@ -197,7 +205,9 @@ class Item(BaseItem):
         if self.metadata.get('title'):
             # A copyable link to the item, in MediaWiki format
             details = self.urls.details  # type: ignore
-            self.wikilink = f'* [{details} {self.identifier}] -- {self.metadata["title"]}'
+            self.wikilink = (
+                f'* [{details} {self.identifier}] -- {self.metadata["title"]}'
+            )
 
     class URLs:
         def __init__(self, itm_obj):
@@ -218,8 +228,9 @@ class Item(BaseItem):
             """Make URLs for the separate tabs of Collections details page."""
             self._make_URL(tab, self.details + f'&tab={tab}')  # type: ignore
 
-        DEFAULT_URL_FORMAT = ('{0.session.protocol}//{0.session.host}'
-                              '/{path}/{0.identifier}')
+        DEFAULT_URL_FORMAT = (
+            '{0.session.protocol}//{0.session.host}/{path}/{0.identifier}'
+        )
 
         def _make_URL(self, path: str, url_format: str = DEFAULT_URL_FORMAT) -> None:
             setattr(self, path, url_format.format(self._itm_obj, path=path))
@@ -270,7 +281,9 @@ class Item(BaseItem):
 
         :returns: `True` if no tasks are pending, otherwise `False`.
         """
-        return all(x == 0 for x in self.get_task_summary(params, request_kwargs).values())
+        return all(
+            x == 0 for x in self.get_task_summary(params, request_kwargs).values()
+        )
 
     def get_all_item_tasks(
         self,
@@ -319,13 +332,15 @@ class Item(BaseItem):
         """
         return list(self.session.iter_catalog(self.identifier, params, request_kwargs))
 
-    def derive(self,
-               priority: int = 0,
-               remove_derived: str | None = None,
-               reduced_priority: bool = False,
-               data: MutableMapping | None = None,
-               headers: Mapping | None = None,
-               request_kwargs: Mapping | None = None) -> Response:
+    def derive(
+        self,
+        priority: int = 0,
+        remove_derived: str | None = None,
+        reduced_priority: bool = False,
+        data: MutableMapping | None = None,
+        headers: Mapping | None = None,
+        request_kwargs: Mapping | None = None,
+    ) -> Response:
         """Derive an item.
 
         :param priority: Task priority from 10 to -10 [default: 0]
@@ -356,23 +371,27 @@ class Item(BaseItem):
             else:
                 data['args'].update({'remove_derived': remove_derived})
 
-        r = self.session.submit_task(self.identifier,
-                                     'derive.php',
-                                     priority=priority,
-                                     data=data,
-                                     headers=headers,
-                                     reduced_priority=reduced_priority,
-                                     request_kwargs=request_kwargs)
+        r = self.session.submit_task(
+            self.identifier,
+            'derive.php',
+            priority=priority,
+            data=data,
+            headers=headers,
+            reduced_priority=reduced_priority,
+            request_kwargs=request_kwargs,
+        )
         r.raise_for_status()
         return r
 
-    def fixer(self,
-              ops: list | str | None = None,
-              priority: int | str | None = None,
-              reduced_priority: bool = False,
-              data: MutableMapping | None = None,
-              headers: Mapping | None = None,
-              request_kwargs: Mapping | None = None) -> Response:
+    def fixer(
+        self,
+        ops: list | str | None = None,
+        priority: int | str | None = None,
+        reduced_priority: bool = False,
+        data: MutableMapping | None = None,
+        headers: Mapping | None = None,
+        request_kwargs: Mapping | None = None,
+    ) -> Response:
         """Submit a fixer task on an item.
 
         :param ops: The fixer operation(s) to run on the item
@@ -402,22 +421,26 @@ class Item(BaseItem):
         for op in ops:
             data['args'][op] = '1'
 
-        r = self.session.submit_task(self.identifier,
-                                     'fixer.php',
-                                     priority=priority,
-                                     data=data,
-                                     headers=headers,
-                                     reduced_priority=reduced_priority,
-                                     request_kwargs=request_kwargs)
+        r = self.session.submit_task(
+            self.identifier,
+            'fixer.php',
+            priority=priority,
+            data=data,
+            headers=headers,
+            reduced_priority=reduced_priority,
+            request_kwargs=request_kwargs,
+        )
         r.raise_for_status()
         return r
 
-    def undark(self,
-               comment: str,
-               priority: int | str | None = None,
-               reduced_priority: bool = False,
-               data: Mapping | None = None,
-               request_kwargs: Mapping | None = None) -> Response:
+    def undark(
+        self,
+        comment: str,
+        priority: int | str | None = None,
+        reduced_priority: bool = False,
+        data: Mapping | None = None,
+        request_kwargs: Mapping | None = None,
+    ) -> Response:
         """Undark the item.
 
         :param comment: The curation comment explaining reason for
@@ -438,23 +461,27 @@ class Item(BaseItem):
 
         :returns: :class:`requests.Response`
         """
-        r = self.session.submit_task(self.identifier,
-                                     'make_undark.php',
-                                     comment=comment,
-                                     priority=priority,
-                                     data=data,
-                                     reduced_priority=reduced_priority,
-                                     request_kwargs=request_kwargs)
+        r = self.session.submit_task(
+            self.identifier,
+            'make_undark.php',
+            comment=comment,
+            priority=priority,
+            data=data,
+            reduced_priority=reduced_priority,
+            request_kwargs=request_kwargs,
+        )
         r.raise_for_status()
         return r
 
     # TODO: dark and undark have different order for data and reduced_pripoity
-    def dark(self,
-             comment: str,
-             priority: int | str | None = None,
-             data: Mapping | None = None,
-             reduced_priority: bool = False,
-             request_kwargs: Mapping | None = None) -> Response:
+    def dark(
+        self,
+        comment: str,
+        priority: int | str | None = None,
+        data: Mapping | None = None,
+        reduced_priority: bool = False,
+        request_kwargs: Mapping | None = None,
+    ) -> Response:
         """Dark the item.
 
         :param comment: The curation comment explaining reason for
@@ -475,13 +502,15 @@ class Item(BaseItem):
 
         :returns: :class:`requests.Response`
         """
-        r = self.session.submit_task(self.identifier,
-                                     'make_dark.php',
-                                     comment=comment,
-                                     priority=priority,
-                                     data=data,
-                                     reduced_priority=reduced_priority,
-                                     request_kwargs=request_kwargs)
+        r = self.session.submit_task(
+            self.identifier,
+            'make_dark.php',
+            comment=comment,
+            priority=priority,
+            data=data,
+            reduced_priority=reduced_priority,
+            request_kwargs=request_kwargs,
+        )
         r.raise_for_status()
         return r
 
@@ -529,12 +558,14 @@ class Item(BaseItem):
         """
         return File(self, file_name, file_metadata)
 
-    def get_files(self,
-                  files: File | list[File] | None = None,
-                  formats: str | list[str] | None = None,
-                  glob_pattern: str | None = None,
-                  exclude_pattern: str | None = None,
-                  on_the_fly: bool = False):
+    def get_files(
+        self,
+        files: File | list[File] | None = None,
+        formats: str | list[str] | None = None,
+        glob_pattern: str | None = None,
+        exclude_pattern: str | None = None,
+        on_the_fly: bool = False,
+    ):
         files = files or []
         formats = formats or []
         exclude_pattern = exclude_pattern or ''
@@ -577,33 +608,36 @@ class Item(BaseItem):
                     exclude_patterns = exclude_pattern
                 for p in patterns:
                     if fnmatch(f.get('name', ''), p):
-                        if not any(fnmatch(f.get('name', ''), e) for e in exclude_patterns):
+                        if not any(
+                            fnmatch(f.get('name', ''), e) for e in exclude_patterns
+                        ):
                             yield self.get_file(str(f.get('name')))
 
-    def download(self,
-                 files: File | list[File] | None = None,
-                 formats: str | list[str] | None = None,
-                 glob_pattern: str | None = None,
-                 exclude_pattern: str | None = None,
-                 dry_run: bool = False,
-                 verbose: bool = False,
-                 ignore_existing: bool = False,
-                 checksum: bool = False,
-                 destdir: str | None = None,
-                 no_directory: bool = False,
-                 retries: int | None = None,
-                 item_index: int | None = None,
-                 ignore_errors: bool = False,
-                 on_the_fly: bool = False,
-                 return_responses: bool = False,
-                 no_change_timestamp: bool = False,
-                 ignore_history_dir: bool = False,
-                 source: str | list[str] | None = None,
-                 exclude_source: str | list[str] | None = None,
-                 stdout: bool = False,
-                 params: Mapping | None = None,
-                 timeout: int | float | tuple[int, float] | None = None
-                 ) -> list[Request | Response]:
+    def download(
+        self,
+        files: File | list[File] | None = None,
+        formats: str | list[str] | None = None,
+        glob_pattern: str | None = None,
+        exclude_pattern: str | None = None,
+        dry_run: bool = False,
+        verbose: bool = False,
+        ignore_existing: bool = False,
+        checksum: bool = False,
+        destdir: str | None = None,
+        no_directory: bool = False,
+        retries: int | None = None,
+        item_index: int | None = None,
+        ignore_errors: bool = False,
+        on_the_fly: bool = False,
+        return_responses: bool = False,
+        no_change_timestamp: bool = False,
+        ignore_history_dir: bool = False,
+        source: str | list[str] | None = None,
+        exclude_source: str | list[str] | None = None,
+        stdout: bool = False,
+        params: Mapping | None = None,
+        timeout: int | float | tuple[int, float] | None = None,
+    ) -> list[Request | Response]:
         """Download files from an item.
 
         :param files: Only download files matching given file names.
@@ -716,7 +750,7 @@ class Item(BaseItem):
             files = self.get_files(
                 glob_pattern=glob_pattern,
                 exclude_pattern=exclude_pattern,
-                on_the_fly=on_the_fly
+                on_the_fly=on_the_fly,
             )
         if stdout:
             files = list(files)  # type: ignore
@@ -746,9 +780,23 @@ class Item(BaseItem):
                 ors = True
             else:
                 ors = False
-            r = f.download(path, verbose, ignore_existing, checksum, destdir,
-                           retries, ignore_errors, fileobj, return_responses,
-                           no_change_timestamp, params, None, stdout, ors, timeout)
+            r = f.download(
+                path,
+                verbose,
+                ignore_existing,
+                checksum,
+                destdir,
+                retries,
+                ignore_errors,
+                fileobj,
+                return_responses,
+                no_change_timestamp,
+                params,
+                None,
+                stdout,
+                ors,
+                timeout,
+            )
             if return_responses:
                 responses.append(r)
 
@@ -766,18 +814,20 @@ class Item(BaseItem):
 
         return responses if return_responses else errors
 
-    def modify_metadata(self,
-                        metadata: Mapping,
-                        target: str | None = None,
-                        append: bool = False,
-                        append_list: bool = False,
-                        insert: bool = False,
-                        priority: int = 0,
-                        access_key: str | None = None,
-                        secret_key: str | None = None,
-                        debug: bool = False,
-                        headers: Mapping | None = None,
-                        request_kwargs: Mapping | None = None) -> Request | Response:
+    def modify_metadata(
+        self,
+        metadata: Mapping,
+        target: str | None = None,
+        append: bool = False,
+        append_list: bool = False,
+        insert: bool = False,
+        priority: int = 0,
+        access_key: str | None = None,
+        secret_key: str | None = None,
+        debug: bool = False,
+        headers: Mapping | None = None,
+        request_kwargs: Mapping | None = None,
+    ) -> Request | Response:
         """Modify the metadata of an existing item on Archive.org.
 
         Note: The Metadata Write API does not yet comply with the
@@ -831,7 +881,8 @@ class Item(BaseItem):
             secret_key=secret_key,
             append=append,
             append_list=append_list,
-            insert=insert)
+            insert=insert,
+        )
         # Must use Session.prepare_request to make sure session settings
         # are used on request!
         prepared_request = request.prepare()
@@ -860,23 +911,26 @@ class Item(BaseItem):
         r = self.session.post(self.urls.metadata, data=data)  # type: ignore
         return r
 
-    def upload_file(self, body,
-                    key: str | None = None,
-                    metadata: Mapping | None = None,
-                    file_metadata: Mapping | None = None,
-                    headers: dict | None = None,
-                    access_key: str | None = None,
-                    secret_key: str | None = None,
-                    queue_derive: bool = False,
-                    verbose: bool = False,
-                    verify: bool = False,
-                    checksum: bool = False,
-                    delete: bool = False,
-                    retries: int | None = None,
-                    retries_sleep: int | None = None,
-                    debug: bool = False,
-                    validate_identifier: bool = False,
-                    request_kwargs: MutableMapping | None = None) -> Request | Response:
+    def upload_file(
+        self,
+        body,
+        key: str | None = None,
+        metadata: Mapping | None = None,
+        file_metadata: Mapping | None = None,
+        headers: dict | None = None,
+        access_key: str | None = None,
+        secret_key: str | None = None,
+        queue_derive: bool = False,
+        verbose: bool = False,
+        verify: bool = False,
+        checksum: bool = False,
+        delete: bool = False,
+        retries: int | None = None,
+        retries_sleep: int | None = None,
+        debug: bool = False,
+        validate_identifier: bool = False,
+        request_kwargs: MutableMapping | None = None,
+    ) -> Request | Response:
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -983,7 +1037,8 @@ class Item(BaseItem):
                     log.info(
                         f'{key} successfully uploaded to '
                         f'https://archive.org/download/{self.identifier}/{key} '
-                        'and verified, deleting local copy')
+                        'and verified, deleting local copy'
+                    )
                     body.close()
                     os.remove(filename)
                 # Return an empty response object if checksums match.
@@ -1009,11 +1064,13 @@ class Item(BaseItem):
                     chunk_size = 1048576
                     expected_size = math.ceil(size / chunk_size)
                     chunks = chunk_generator(body, chunk_size)
-                    progress_generator = tqdm(chunks,
-                                              desc=f' uploading {key}',
-                                              dynamic_ncols=True,
-                                              total=expected_size,
-                                              unit='MiB')
+                    progress_generator = tqdm(
+                        chunks,
+                        desc=f' uploading {key}',
+                        dynamic_ncols=True,
+                        total=expected_size,
+                        unit='MiB',
+                    )
                     data = None
                     # pre_encode is needed because http doesn't know that it
                     # needs to encode a TextIO object when it's wrapped
@@ -1022,7 +1079,7 @@ class Item(BaseItem):
                     data = IterableToFileAdapter(
                         progress_generator,
                         size,
-                        pre_encode=isinstance(body, io.TextIOBase)
+                        pre_encode=isinstance(body, io.TextIOBase),
                     )
                 except Exception:
                     print(f' uploading {key}', file=sys.stderr)
@@ -1031,15 +1088,17 @@ class Item(BaseItem):
                 data = body
 
             _headers.update(self.session.headers)
-            request = S3Request(method='PUT',
-                                url=url,
-                                headers=_headers,
-                                data=data,
-                                metadata=metadata,
-                                file_metadata=file_metadata,
-                                access_key=access_key,
-                                secret_key=secret_key,
-                                queue_derive=queue_derive)
+            request = S3Request(
+                method='PUT',
+                url=url,
+                headers=_headers,
+                data=data,
+                metadata=metadata,
+                file_metadata=file_metadata,
+                access_key=access_key,
+                secret_key=secret_key,
+                queue_derive=queue_derive,
+            )
             return request
 
         if debug:
@@ -1049,9 +1108,11 @@ class Item(BaseItem):
         else:
             try:
                 while True:
-                    error_msg = ('s3 is overloaded, sleeping for '
-                                 f'{retries_sleep} seconds and retrying. '
-                                 f'{retries} retries left.')
+                    error_msg = (
+                        's3 is overloaded, sleeping for '
+                        f'{retries_sleep} seconds and retrying. '
+                        f'{retries} retries left.'
+                    )
                     if retries > 0:
                         if self.session.s3_is_overloaded(access_key=access_key):
                             sleep(retries_sleep)
@@ -1069,9 +1130,9 @@ class Item(BaseItem):
                     if prepared_request.headers.get('transfer-encoding') == 'chunked':
                         del prepared_request.headers['transfer-encoding']
 
-                    response = self.session.send(prepared_request,
-                                                 stream=True,
-                                                 **request_kwargs)
+                    response = self.session.send(
+                        prepared_request, stream=True, **request_kwargs
+                    )
                     if (response.status_code == 503) and (retries > 0):
                         if b'appears to be spam' in response.content:
                             log.info('detected as spam, upload failed')
@@ -1092,7 +1153,8 @@ class Item(BaseItem):
                     log.info(
                         f'{key} successfully uploaded to '
                         f'https://archive.org/download/{self.identifier}/{key} and verified, '
-                        'deleting local copy')
+                        'deleting local copy'
+                    )
                     body.close()
                     os.remove(filename)
                 response.close()
@@ -1100,11 +1162,15 @@ class Item(BaseItem):
             except HTTPError as exc:
                 try:
                     msg = get_s3_xml_text(exc.response.content)
-                except ExpatError:  # probably HTTP 500 error and response is invalid XML
-                    msg = ('IA S3 returned invalid XML '
-                           f'(HTTP status code {exc.response.status_code}). '
-                           'This is a server side error which is either temporary, '
-                           'or requires the intervention of IA admins.')
+                except (
+                    ExpatError
+                ):  # probably HTTP 500 error and response is invalid XML
+                    msg = (
+                        'IA S3 returned invalid XML '
+                        f'(HTTP status code {exc.response.status_code}). '
+                        'This is a server side error which is either temporary, '
+                        'or requires the intervention of IA admins.'
+                    )
 
                 error_msg = f' error uploading {key} to {self.identifier}, {msg}'
                 log.error(error_msg)
@@ -1115,21 +1181,24 @@ class Item(BaseItem):
             finally:
                 body.close()
 
-    def upload(self, files,
-               metadata: Mapping | None = None,
-               headers: dict | None = None,
-               access_key: str | None = None,
-               secret_key: str | None = None,
-               queue_derive=None,  # TODO: True if None??
-               verbose: bool = False,
-               verify: bool = False,
-               checksum: bool = False,
-               delete: bool = False,
-               retries: int | None = None,
-               retries_sleep: int | None = None,
-               debug: bool = False,
-               validate_identifier: bool = False,
-               request_kwargs: dict | None = None) -> list[Request | Response]:
+    def upload(
+        self,
+        files,
+        metadata: Mapping | None = None,
+        headers: dict | None = None,
+        access_key: str | None = None,
+        secret_key: str | None = None,
+        queue_derive=None,  # TODO: True if None??
+        verbose: bool = False,
+        verify: bool = False,
+        checksum: bool = False,
+        delete: bool = False,
+        retries: int | None = None,
+        retries_sleep: int | None = None,
+        debug: bool = False,
+        validate_identifier: bool = False,
+        request_kwargs: dict | None = None,
+    ) -> list[Request | Response]:
         r"""Upload files to an item. The item will be created if it
         does not exist.
 
@@ -1198,8 +1267,9 @@ class Item(BaseItem):
                     file_metadata = f.copy()
                     del file_metadata['name']
                     f = f['name']
-            if ((isinstance(f, str) and is_dir(f))
-                    or (isinstance(f, tuple) and is_dir(f[-1]))):
+            if (isinstance(f, str) and is_dir(f)) or (
+                isinstance(f, tuple) and is_dir(f[-1])
+            ):
                 if isinstance(f, tuple):
                     remote_dir_name = f[0].strip('/')
                     f = f[-1]
@@ -1219,23 +1289,25 @@ class Item(BaseItem):
                     elif remote_dir_name:
                         key = f'{remote_dir_name}/{key}'
                     key = norm_filepath(key)
-                    resp = self.upload_file(filepath,
-                                            key=key,
-                                            metadata=metadata,
-                                            file_metadata=file_metadata,
-                                            headers=headers,
-                                            access_key=access_key,
-                                            secret_key=secret_key,
-                                            queue_derive=_queue_derive,
-                                            verbose=verbose,
-                                            verify=verify,
-                                            checksum=checksum,
-                                            delete=delete,
-                                            retries=retries,
-                                            retries_sleep=retries_sleep,
-                                            debug=debug,
-                                            validate_identifier=validate_identifier,
-                                            request_kwargs=request_kwargs)
+                    resp = self.upload_file(
+                        filepath,
+                        key=key,
+                        metadata=metadata,
+                        file_metadata=file_metadata,
+                        headers=headers,
+                        access_key=access_key,
+                        secret_key=secret_key,
+                        queue_derive=_queue_derive,
+                        verbose=verbose,
+                        verify=verify,
+                        checksum=checksum,
+                        delete=delete,
+                        retries=retries,
+                        retries_sleep=retries_sleep,
+                        debug=debug,
+                        validate_identifier=validate_identifier,
+                        request_kwargs=request_kwargs,
+                    )
                     responses.append(resp)
             else:
                 file_index += 1
@@ -1253,23 +1325,25 @@ class Item(BaseItem):
                     key, body = f
                 if key and not isinstance(key, str):
                     key = str(key)
-                resp = self.upload_file(body,
-                                        key=key,
-                                        metadata=metadata,
-                                        file_metadata=file_metadata,
-                                        headers=headers,
-                                        access_key=access_key,
-                                        secret_key=secret_key,
-                                        queue_derive=_queue_derive,
-                                        verbose=verbose,
-                                        verify=verify,
-                                        checksum=checksum,
-                                        delete=delete,
-                                        retries=retries,
-                                        retries_sleep=retries_sleep,
-                                        debug=debug,
-                                        validate_identifier=validate_identifier,
-                                        request_kwargs=request_kwargs)
+                resp = self.upload_file(
+                    body,
+                    key=key,
+                    metadata=metadata,
+                    file_metadata=file_metadata,
+                    headers=headers,
+                    access_key=access_key,
+                    secret_key=secret_key,
+                    queue_derive=_queue_derive,
+                    verbose=verbose,
+                    verify=verify,
+                    checksum=checksum,
+                    delete=delete,
+                    retries=retries,
+                    retries_sleep=retries_sleep,
+                    debug=debug,
+                    validate_identifier=validate_identifier,
+                    request_kwargs=request_kwargs,
+                )
                 responses.append(resp)
         return responses
 
@@ -1287,14 +1361,13 @@ class Collection(Item):
             raise ValueError('mediatype is not "collection"!')
 
         deflt_srh = f'collection:{self.identifier}'
-        self._make_search('contents',
-                          self.metadata.get('search_collection', deflt_srh))
-        self._make_search('subcollections',
-                          f'{deflt_srh} AND mediatype:collection')
+        self._make_search('contents', self.metadata.get('search_collection', deflt_srh))
+        self._make_search('subcollections', f'{deflt_srh} AND mediatype:collection')
 
     def _do_search(self, name: str, query: str):
         rtn = self.searches.setdefault(
-            name, self.session.search_items(query, fields=['identifier']))
+            name, self.session.search_items(query, fields=['identifier'])
+        )
         if not hasattr(self, f'{name}_count'):
             setattr(self, f'{name}_count', self.searches[name].num_found)
         return rtn.iter_as_items()

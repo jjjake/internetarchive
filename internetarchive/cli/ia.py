@@ -102,8 +102,7 @@ def load_ia_module(cmd: str):
                     return ep.load()
             raise ImportError
     except (ImportError, DistributionNotFound):
-        print(f"error: '{cmd}' is not an ia command! See 'ia help'",
-              file=sys.stderr)
+        print(f"error: '{cmd}' is not an ia command! See 'ia help'", file=sys.stderr)
         matches = '\t'.join(difflib.get_close_matches(cmd, cmd_aliases.values()))
         if matches:
             print(f'\nDid you mean one of these?\n\t{matches}', file=sys.stderr)
@@ -115,13 +114,15 @@ def main() -> None:
     args = docopt(__doc__, version=__version__, options_first=True)
 
     # Validate args.
-    s = Schema({
-        str: bool,
-        '--config-file': Or(None, str),
-        '--host': Or(None, str),
-        '<args>': list,
-        '<command>': Or(str, lambda _: 'help'),
-    })
+    s = Schema(
+        {
+            str: bool,
+            '--config-file': Or(None, str),
+            '--host': Or(None, str),
+            '<args>': list,
+            '<command>': Or(str, lambda _: 'help'),
+        }
+    )
     try:
         args = s.validate(args)
     except SchemaError as exc:
@@ -142,8 +143,10 @@ def main() -> None:
 
     if cmd != 'configure' and args['--config-file']:
         if not os.path.isfile(args['--config-file']):
-            print(f'--config-file should be a readable file.\n{printable_usage(__doc__)}',
-                  file=sys.stderr)
+            print(
+                f'--config-file should be a readable file.\n{printable_usage(__doc__)}',
+                file=sys.stderr,
+            )
             sys.exit(1)
 
     argv = [cmd] + args['<args>']
@@ -162,9 +165,9 @@ def main() -> None:
         else:
             config['general'] = {'host': args['--host']}
 
-    session = get_session(config_file=args['--config-file'],
-                          config=config,
-                          debug=args['--debug'])
+    session = get_session(
+        config_file=args['--config-file'], config=config, debug=args['--debug']
+    )
 
     ia_module = load_ia_module(cmd)
     try:

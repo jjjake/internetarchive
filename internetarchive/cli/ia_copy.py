@@ -69,30 +69,53 @@ def main(
     try:
         assert src_path != dest_path
     except AssertionError:
-        print('error: The source and destination files cannot be the same!',
-              file=sys.stderr)
+        print(
+            'error: The source and destination files cannot be the same!',
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     global SRC_ITEM
     SRC_ITEM = session.get_item(src_path.split('/')[0])  # type: ignore
 
     # Validate args.
-    s = Schema({
-        str: Use(bool),
-        '<src-identifier>/<src-file>': And(str, And(And(str, lambda x: '/' in x,
-            error='Destination not formatted correctly. See usage example.'),
-            assert_src_file_exists, error=(
-            f'https://{session.host}/download/{src_path} does not exist. '
-            'Please check the identifier and filepath and retry.'))),
-        '<dest-identifier>/<dest-file>': And(str, lambda x: '/' in x,
-            error='Destination not formatted correctly. See usage example.'),
-        '--metadata': Or(None, And(Use(get_args_dict), dict),
-                         error='--metadata must be formatted as --metadata="key:value"'),
-        '--replace-metadata': Use(bool),
-        '--header': Or(None, And(Use(get_args_dict), dict),
-                       error='--header must be formatted as --header="key:value"'),
-        '--ignore-file-metadata': Use(bool),
-    })
+    s = Schema(
+        {
+            str: Use(bool),
+            '<src-identifier>/<src-file>': And(
+                str,
+                And(
+                    And(
+                        str,
+                        lambda x: '/' in x,
+                        error='Destination not formatted correctly. See usage example.',
+                    ),
+                    assert_src_file_exists,
+                    error=(
+                        f'https://{session.host}/download/{src_path} does not exist. '
+                        'Please check the identifier and filepath and retry.'
+                    ),
+                ),
+            ),
+            '<dest-identifier>/<dest-file>': And(
+                str,
+                lambda x: '/' in x,
+                error='Destination not formatted correctly. See usage example.',
+            ),
+            '--metadata': Or(
+                None,
+                And(Use(get_args_dict), dict),
+                error='--metadata must be formatted as --metadata="key:value"',
+            ),
+            '--replace-metadata': Use(bool),
+            '--header': Or(
+                None,
+                And(Use(get_args_dict), dict),
+                error='--header must be formatted as --header="key:value"',
+            ),
+            '--ignore-file-metadata': Use(bool),
+        }
+    )
 
     try:
         args = s.validate(args)
@@ -113,26 +136,32 @@ def main(
 
     # New metadata takes precedence over old metadata.
     if not args['--replace-metadata']:
-        args['--metadata'] = merge_dictionaries(SRC_ITEM.metadata,  # type: ignore
-                                                args['--metadata'])
+        args['--metadata'] = merge_dictionaries(
+            SRC_ITEM.metadata, args['--metadata']  # type: ignore
+        )
 
     # File metadata is copied by default but can be dropped.
     file_metadata = None if args['--ignore-file-metadata'] else SRC_FILE.metadata  # type: ignore
 
     # Add keep-old-version by default.
-    if not args['--header'].get('x-archive-keep-old-version') and not args['--no-backup']:
+    if (
+        not args['--header'].get('x-archive-keep-old-version')
+        and not args['--no-backup']
+    ):
         args['--header']['x-archive-keep-old-version'] = '1'
 
     url = f'{session.protocol}//s3.us.archive.org/{quote(dest_path)}'
     queue_derive = True if args['--no-derive'] is False else False
-    req = ia.iarequest.S3Request(url=url,
-                                 method='PUT',
-                                 metadata=args['--metadata'],
-                                 file_metadata=file_metadata,
-                                 headers=args['--header'],
-                                 queue_derive=queue_derive,
-                                 access_key=session.access_key,
-                                 secret_key=session.secret_key)
+    req = ia.iarequest.S3Request(
+        url=url,
+        method='PUT',
+        metadata=args['--metadata'],
+        file_metadata=file_metadata,
+        headers=args['--header'],
+        queue_derive=queue_derive,
+        access_key=session.access_key,
+        secret_key=session.secret_key,
+    )
     p = req.prepare()
     r = session.send(p)
     if r.status_code != 200:
@@ -140,7 +169,10 @@ def main(
             msg = get_s3_xml_text(r.text)
         except Exception as e:
             msg = r.text
-        print(f'error: failed to {cmd} "{src_path}" to "{dest_path}" - {msg}', file=sys.stderr)
+        print(
+            f'error: failed to {cmd} "{src_path}" to "{dest_path}" - {msg}',
+            file=sys.stderr,
+        )
         sys.exit(1)
     elif cmd == 'copy':
         print(f'success: copied "{src_path}" to "{dest_path}".', file=sys.stderr)

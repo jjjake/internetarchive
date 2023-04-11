@@ -126,10 +126,9 @@ class Catalog:
 
         :returns: :class:`requests.Response`
         """
-        r = self.session.get(self.url,
-                             params=params,
-                             auth=self.auth,
-                             **self.request_kwargs)
+        r = self.session.get(
+            self.url, params=params, auth=self.auth, **self.request_kwargs
+        )
         try:
             r.raise_for_status()
         except HTTPError as exc:
@@ -177,7 +176,9 @@ class Catalog:
         j = json.loads(line)
         return j
 
-    def get_tasks(self, identifier: str = "", params: dict | None = None) -> list[CatalogTask]:
+    def get_tasks(
+        self, identifier: str = "", params: dict | None = None
+    ) -> list[CatalogTask]:
         """Get a list of all tasks meeting all criteria.
         The list is ordered by submission time.
 
@@ -216,11 +217,15 @@ class Catalog:
         all_tasks = sorted(tasks, key=sort_by_date, reverse=True)
         return all_tasks
 
-    def submit_task(self, identifier: str, cmd: str,
-                    comment: str | None = None,
-                    priority: int = 0,
-                    data: dict | None = None,
-                    headers: dict | None = None) -> Response:
+    def submit_task(
+        self,
+        identifier: str,
+        cmd: str,
+        comment: str | None = None,
+        priority: int = 0,
+        data: dict | None = None,
+        headers: dict | None = None,
+    ) -> Response:
         """Submit an archive.org task.
 
         :param identifier: Item identifier.
@@ -252,11 +257,9 @@ class Catalog:
                 data['args'] = {'comment': comment}
         if priority:
             data['priority'] = priority
-        r = self.session.post(self.url,
-                              json=data,
-                              auth=self.auth,
-                              headers=headers,
-                              **self.request_kwargs)
+        r = self.session.post(
+            self.url, json=data, auth=self.auth, headers=headers, **self.request_kwargs
+        )
         return r
 
 
@@ -264,6 +267,7 @@ class CatalogTask:
     """This class represents an Archive.org catalog task. It is primarily used by
     :class:`Catalog`, and should not be used directly.
     """
+
     def __init__(self, task_dict: Mapping, catalog_obj: Catalog):
         self.session = catalog_obj.session
         self.request_kwargs = catalog_obj.request_kwargs
@@ -274,11 +278,13 @@ class CatalogTask:
 
     def __repr__(self):
         color = self.task_dict.get('color', 'done')
-        return ('CatalogTask(identifier={identifier},'
-                ' task_id={task_id!r}, server={server!r},'
-                ' cmd={cmd!r},'
-                ' submitter={submitter!r},'
-                ' color={task_color!r})'.format(task_color=color, **self.task_dict))
+        return (
+            'CatalogTask(identifier={identifier},'
+            ' task_id={task_id!r}, server={server!r},'
+            ' cmd={cmd!r},'
+            ' submitter={submitter!r},'
+            ' color={task_color!r})'.format(task_color=color, **self.task_dict)
+        )
 
     def __getitem__(self, key: str):
         """Dict-like access provided as backward compatibility."""
@@ -302,7 +308,7 @@ class CatalogTask:
     def get_task_log(
         task_id: int | str | None,
         session: ia_session.ArchiveSession,
-        request_kwargs: Mapping | None = None
+        request_kwargs: Mapping | None = None,
     ) -> str:
         """Static method for getting a task log, given a task_id.
 

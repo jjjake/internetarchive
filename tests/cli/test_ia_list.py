@@ -12,7 +12,7 @@ NASA_FILES = {
     'nasa_reviews.xml',
     'nasa_meta.xml',
     'nasa_archive.torrent',
-    'nasa_files.xml'
+    'nasa_files.xml',
 }
 
 
@@ -50,15 +50,18 @@ def test_ia_list_location(capsys, nasa_mocker):
 def test_ia_list_columns(capsys):
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        ia_list.main(['list', '--columns', 'name,md5', '--glob', '*meta.xml', 'nasa'],
-                     SESSION)
+        ia_list.main(
+            ['list', '--columns', 'name,md5', '--glob', '*meta.xml', 'nasa'], SESSION
+        )
 
     out, err = capsys.readouterr()
     assert out == 'nasa_meta.xml\t0e339f4a29a8bc42303813cbec9243e5\n'
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        ia_list.main(['list', '--columns', 'md5', '--glob', '*meta.xml', 'nasa'], SESSION)
+        ia_list.main(
+            ['list', '--columns', 'md5', '--glob', '*meta.xml', 'nasa'], SESSION
+        )
 
     out, err = capsys.readouterr()
     assert out == '0e339f4a29a8bc42303813cbec9243e5\n'

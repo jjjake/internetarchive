@@ -43,6 +43,7 @@ try:
     JSONDecodeError = ValueError
 except ImportError:
     import json  # type: ignore
+
     JSONDecodeError = json.JSONDecodeError  # type: ignore
 
 
@@ -65,22 +66,27 @@ def validate_s3_identifier(string: str) -> bool:
     # periods, underscores, and dashes are legal, but may not be the first
     # character!
     if any(string.startswith(c) is True for c in ['.', '_', '-']):
-        raise InvalidIdentifierException('Identifier cannot begin with periods ".", underscores '
-                                        '"_", or dashes "-".')
+        raise InvalidIdentifierException(
+            'Identifier cannot begin with periods ".", underscores '
+            '"_", or dashes "-".'
+        )
 
     if len(string) > 100 or len(string) < 3:
-        raise InvalidIdentifierException('Identifier should be between 3 and 80 characters in '
-                                        'length.')
+        raise InvalidIdentifierException(
+            'Identifier should be between 3 and 80 characters in length.'
+        )
 
     # Support for uploading to user items, e.g. first character can be `@`.
     if string.startswith('@'):
         string = string[1:]
 
     if any(c not in legal_chars for c in string):
-        raise InvalidIdentifierException('Identifier can only contain alphanumeric characters, '
-                                        'periods ".", underscores "_", or dashes "-". However, '
-                                        'identifier cannot begin with periods, underscores, or '
-                                        'dashes.')
+        raise InvalidIdentifierException(
+            'Identifier can only contain alphanumeric characters, '
+            'periods ".", underscores "_", or dashes "-". However, '
+            'identifier cannot begin with periods, underscores, or '
+            'dashes.'
+        )
 
     return True
 
@@ -162,13 +168,14 @@ class IterableToFileAdapter:
 
 
 class IdentifierListAsItems:
-    """This class is a lazily-loaded list of Items, accessible by index or identifier.
-    """
+    """This class is a lazily-loaded list of Items, accessible by index or identifier."""
 
     def __init__(self, id_list_or_single_id, session):
-        self.ids = (id_list_or_single_id
-                    if isinstance(id_list_or_single_id, list)
-                    else [id_list_or_single_id])
+        self.ids = (
+            id_list_or_single_id
+            if isinstance(id_list_or_single_id, list)
+            else [id_list_or_single_id]
+        )
         self._items = [None] * len(self.ids)
         self.session = session
 
@@ -176,7 +183,7 @@ class IdentifierListAsItems:
         return len(self.ids)
 
     def __getitem__(self, idx):
-        for i in (range(*idx.indices(len(self))) if isinstance(idx, slice) else [idx]):
+        for i in range(*idx.indices(len(self))) if isinstance(idx, slice) else [idx]:
             if self._items[i] is None:
                 self._items[i] = self.session.get_item(self.ids[i])
         return self._items[idx]
@@ -349,8 +356,11 @@ def remove_none(obj):
         except (AttributeError, TypeError):
             return lst
     elif isinstance(obj, dict):
-        return type(obj)((remove_none(k), remove_none(v))
-                         for k, v in obj.items() if k is not None and v is not None)
+        return type(obj)(
+            (remove_none(k), remove_none(v))
+            for k, v in obj.items()
+            if k is not None and v is not None
+        )
     else:
         return obj
 
@@ -393,19 +403,19 @@ def merge_dictionaries(
 ) -> dict:
     """Merge two dictionaries.
 
-       Items in `dict0` can optionally be dropped before the merge.
+    Items in `dict0` can optionally be dropped before the merge.
 
-       If equal keys exist in both dictionaries,
-       entries in`dict0` are overwritten.
+    If equal keys exist in both dictionaries,
+    entries in`dict0` are overwritten.
 
-       :param dict0: A base dictionary with the bulk of the items.
+    :param dict0: A base dictionary with the bulk of the items.
 
-       :param dict1: Additional items which overwrite the items in `dict0`.
+    :param dict1: Additional items which overwrite the items in `dict0`.
 
-       :param keys_to_drop: An iterable of keys to drop from `dict0` before the merge.
+    :param keys_to_drop: An iterable of keys to drop from `dict0` before the merge.
 
-       :returns: A merged dictionary.
-       """
+    :returns: A merged dictionary.
+    """
     new_dict = dict0.copy()
     if keys_to_drop is not None:
         for key in keys_to_drop:

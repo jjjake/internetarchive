@@ -93,27 +93,39 @@ def main(argv, session: ArchiveSession) -> None:
     timeout_msg = '--timeout must be an int or float.'
 
     # Validate args.
-    s = Schema({
-        str: Use(bool),
-        '--destdir': Or([], And(Use(lambda d: d[0]), dir_exists), error=destdir_msg),
-        '--format': list,
-        '--glob': Use(lambda item: item[0] if item else None),
-        '--exclude': Use(lambda item: item[0] if item else None),
-        '<file>': list,
-        '--search': Or(str, None),
-        '--itemlist': Or(None, And(lambda f: os.path.isfile(f)), error=itemlist_msg),
-        '<identifier>': Or(str, None),
-        '--retries': Use(lambda x: x[0]),
-        '--search-parameters': Use(lambda x: get_args_dict(x, query_string=True)),
-        '--on-the-fly': Use(bool),
-        '--no-change-timestamp': Use(bool),
-        '--download-history': Use(bool),
-        '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
-        '--source': list,
-        '--exclude-source': list,
-        '--timeout': Or([], And(Use(lambda t: ast.literal_eval(t[0])), Or(int, float),
-                         error=timeout_msg))
-    })
+    s = Schema(
+        {
+            str: Use(bool),
+            '--destdir': Or(
+                [], And(Use(lambda d: d[0]), dir_exists), error=destdir_msg
+            ),
+            '--format': list,
+            '--glob': Use(lambda item: item[0] if item else None),
+            '--exclude': Use(lambda item: item[0] if item else None),
+            '<file>': list,
+            '--search': Or(str, None),
+            '--itemlist': Or(
+                None, And(lambda f: os.path.isfile(f)), error=itemlist_msg
+            ),
+            '<identifier>': Or(str, None),
+            '--retries': Use(lambda x: x[0]),
+            '--search-parameters': Use(lambda x: get_args_dict(x, query_string=True)),
+            '--on-the-fly': Use(bool),
+            '--no-change-timestamp': Use(bool),
+            '--download-history': Use(bool),
+            '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
+            '--source': list,
+            '--exclude-source': list,
+            '--timeout': Or(
+                [],
+                And(
+                    Use(lambda t: ast.literal_eval(t[0])),
+                    Or(int, float),
+                    error=timeout_msg,
+                ),
+            ),
+        }
+    )
 
     try:
         args = s.validate(args)
@@ -122,7 +134,9 @@ def main(argv, session: ArchiveSession) -> None:
         elif args['--exclude'] and args['--format']:
             raise SchemaError(None, '--exclude and --format cannot be used together.')
         elif args['--exclude'] and not args['--glob']:
-            raise SchemaError(None, '--exclude should only be used in conjunction with --glob.')
+            raise SchemaError(
+                None, '--exclude should only be used in conjunction with --glob.'
+            )
 
     except SchemaError as exc:
         print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
@@ -137,11 +151,15 @@ def main(argv, session: ArchiveSession) -> None:
         total_ids = len(ids)
     elif args['--search']:
         try:
-            _search = session.search_items(args['--search'],
-                                           params=args['--search-parameters'])
+            _search = session.search_items(
+                args['--search'], params=args['--search-parameters']
+            )
             total_ids = _search.num_found
             if total_ids == 0:
-                print(f'error: the query "{args["--search"]}" returned no results', file=sys.stderr)
+                print(
+                    f'error: the query "{args["--search"]}" returned no results',
+                    file=sys.stderr,
+                )
                 sys.exit(1)
             ids = _search
         except ValueError as e:
@@ -179,7 +197,10 @@ def main(argv, session: ArchiveSession) -> None:
         try:
             item = session.get_item(identifier)
         except Exception as exc:
-            print(f'{identifier}: failed to retrieve item metadata - errors', file=sys.stderr)
+            print(
+                f'{identifier}: failed to retrieve item metadata - errors',
+                file=sys.stderr,
+            )
             raise
             if 'You are attempting to make an HTTPS' in str(exc):
                 print(f'\n{exc}', file=sys.stderr)

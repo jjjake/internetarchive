@@ -777,7 +777,8 @@ class Item(BaseItem):
                         secret_key: str | None = None,
                         debug: bool = False,
                         headers: Mapping | None = None,
-                        request_kwargs: Mapping | None = None) -> Request | Response:
+                        request_kwargs: Mapping | None = None,
+                        timeout: int | float | None = None) -> Request | Response:
         """Modify the metadata of an existing item on Archive.org.
 
         Note: The Metadata Write API does not yet comply with the
@@ -811,6 +812,10 @@ class Item(BaseItem):
         debug = bool(debug)
         headers = headers or {}
         request_kwargs = request_kwargs or {}
+        if timeout:
+            request_kwargs["timeout"] = float(timeout)  # type: ignore
+        else:
+            request_kwargs["timeout"] = 60  # type: ignore
 
         _headers = self.session.headers.copy()
         _headers.update(headers)

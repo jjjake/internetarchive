@@ -22,15 +22,17 @@ usage:
     ia metadata <identifier>... [--exists | --formats] [--header=<key:value>...]
     ia metadata <identifier>... --modify=<key:value>... [--target=<target>]
                                 [--priority=<priority>] [--header=<key:value>...]
+                                [--timeout=<value>]
     ia metadata <identifier>... --remove=<key:value>... [--priority=<priority>]
-                                [--header=<key:value>...]
+                                [--header=<key:value>...] [--timeout=<value>]
     ia metadata <identifier>... [--append=<key:value>... | --append-list=<key:value>...]
                                 [--priority=<priority>] [--target=<target>]
-                                [--header=<key:value>...]
+                                [--header=<key:value>...] [--timeout=<value>]
     ia metadata <identifier>... --insert=<key:value>... [--priority=<priority>]
                                 [--target=<target>] [--header=<key:value>...]
+                                [--timeout=<value>]
     ia metadata --spreadsheet=<metadata.csv> [--priority=<priority>]
-                [--modify=<key:value>...] [--header=<key:value>...]
+                [--modify=<key:value>...] [--header=<key:value>...] [--timeout=<value>]
     ia metadata --help
 
 options:
@@ -50,6 +52,7 @@ options:
     -r, --remove=<key:value>...         Remove <key:value> from a metadata element.
                                         Works on both single and multi-field metadata
                                         elements.
+    --timeout=<value>                   Set a timeout for metadata writes.
 """
 from __future__ import annotations
 
@@ -81,7 +84,8 @@ def modify_metadata(item: item.Item, metadata: Mapping, args: Mapping) -> Respon
     try:
         r = item.modify_metadata(metadata, target=args['--target'], append=append,
                                  priority=args['--priority'], append_list=append_list,
-                                 headers=args['--header'], insert=insert)
+                                 headers=args['--header'], insert=insert,
+                                 timeout=args['--timeout'])
         assert isinstance(r, Response)  # mypy: modify_metadata() -> Request | Response
     except ItemLocateError as exc:
         print(f'{item.identifier} - error: {exc}', file=sys.stderr)
@@ -184,6 +188,7 @@ def main(argv: dict, session: session.ArchiveSession) -> None:
                             error='<file> should be a readable file or directory.')),
         '--target': Or(None, str),
         '--priority': Or(None, Use(int, error='<priority> should be an integer.')),
+        '--timeout': Or(None, str),
     })
     try:
         args = s.validate(args)

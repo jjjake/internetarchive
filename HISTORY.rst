@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+3.5.0 (?)
++++++++++
+
+**Features and Improvements**
+
+- Added timeout option for metadata writes. Set default to 60 seconds.
+
 3.4.0 (2023-04-05)
 ++++++++++++++++++
 

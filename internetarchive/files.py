@@ -269,21 +269,28 @@ class File(BaseFile):
             else:
                 progress_bar = nullcontext()
 
+            close_fileobj = False
             if not chunk_size:
                 chunk_size = 1048576
             if stdout:
                 fileobj = os.fdopen(sys.stdout.fileno(), "wb", closefd=False)
             if not fileobj:
                 fileobj = open(file_path.encode('utf-8'), 'wb')
+                close_fileobj = True
 
-            with fileobj, progress_bar as bar:
+            if stdout or close_fileobj is True:
+                with fileobj, progress_bar as bar:
+                    for chunk in response.iter_content(chunk_size=chunk_size):
+                        if chunk:
+                            size = fileobj.write(chunk)
+                            if bar is not None:
+                                bar.update(size)
+                    if ors:
+                        fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
+            else:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:
                         size = fileobj.write(chunk)
-                        if bar is not None:
-                            bar.update(size)
-                if ors:
-                    fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
         except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout) as exc:
             msg = f'error downloading file {file_path}, exception raised: {exc}'
             log.error(msg)

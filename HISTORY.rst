@@ -6,6 +6,11 @@ Release History
 3.5.0 (?)
 +++++++++
 
+**Bugfixes**
+
+- Fixed bug in ``ia metadata --insert`` where duplicate values were being added in
+  some cases
+
 **Features and Improvements**
 
 - Added timeout option for metadata writes. Set default to 60 seconds.

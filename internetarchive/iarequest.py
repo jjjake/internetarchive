@@ -454,7 +454,11 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
             if not isinstance(source_metadata[_key], list):
                 source_metadata[_key] = [source_metadata[_key]]
             source_metadata[_key].insert(index, metadata[key])
-            prepared_metadata[_key] = source_metadata[_key]
+            insert_md = []
+            for _v in source_metadata[_key]:
+                if _v not in insert_md and _v:
+                    insert_md.append(_v)
+            prepared_metadata[_key] = insert_md
         else:
             prepared_metadata[key] = metadata[key]
 

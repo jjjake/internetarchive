@@ -280,10 +280,9 @@ def test_download_verbose(tmpdir, capsys, nasa_item):
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='no dest dir',
-                 adding_headers={'content-length': '100'})
+                 adding_headers={'content-length': '11'})
         nasa_item.download(files='nasa_meta.xml', verbose=True)
         out, err = capsys.readouterr()
-        print(repr(err))
         assert 'downloading nasa_meta.xml' in err
 
 

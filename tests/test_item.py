@@ -407,7 +407,10 @@ def test_upload_503(capsys, nasa_item):
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         rsps.add(responses.GET, S3_URL_RE,
-                 body='{"over_limit": "1"}')
+                 body='{"over_limit": "1"}',
+                 adding_headers={'content-length': '19'}
+                 )
+        _expected_headers['content-length'] = '296'
         rsps.add(responses.PUT, S3_URL_RE,
                  body=body,
                  adding_headers=_expected_headers,

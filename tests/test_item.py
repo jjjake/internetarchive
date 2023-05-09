@@ -500,6 +500,7 @@ def test_upload_delete(tmpdir, nasa_item):
             '4133-a207-3141d4d74096</RequestId></Error>')
 
     _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
+    _expected_headers['content-length'] = '383'
     del _expected_headers['x-archive-meta00-scanner']
     tmpdir.chdir()
     test_file = os.path.join(str(tmpdir), 'test.txt')

@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import types
@@ -214,14 +215,15 @@ def test_download_checksum(tmpdir, caplog):
         assert load_file('nasa/nasa_meta.xml') == 'overwrite based on md5'
 
         # test no overwrite based on checksum.
-        rsps.reset()
-        rsps.add(responses.GET, DOWNLOAD_URL_RE,
-                 body=load_test_data_file('nasa_meta.xml'))
-        nasa_item.download(files='nasa_meta.xml', checksum=True)
-        nasa_item.download(files='nasa_meta.xml', checksum=True)
+        with caplog.at_level(logging.DEBUG):
+            rsps.reset()
+            rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                     body=load_test_data_file('nasa_meta.xml'))
+            nasa_item.download(files='nasa_meta.xml', checksum=True, verbose=True)
+            nasa_item.download(files='nasa_meta.xml', checksum=True, verbose=True)
 
-        assert 'skipping nasa' in caplog.text
-        assert 'nasa_meta.xml, file already exists based on checksum.' in caplog.text
+            assert 'skipping nasa' in caplog.text
+            assert 'nasa_meta.xml, file already exists based on checksum.' in caplog.text
 
 
 def test_download_destdir(tmpdir, nasa_item):

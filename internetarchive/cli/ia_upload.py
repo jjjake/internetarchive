@@ -60,6 +60,7 @@ options:
                                          [default: True].
     --keep-directories                   Keep directories in the supplied file paths for
                                          the remote filename. [default: False]
+    --no-scanner                         Do not set the scanner field in meta.xml.
 """
 import csv
 import os
@@ -192,6 +193,7 @@ def main(argv, session):  # noqa: C901
 
     queue_derive = True if args['--no-derive'] is False else False
     verbose = True if args['--quiet'] is False else False
+    set_scanner = False if args['--no-scanner'] is True else True
 
     if args['--file-metadata']:
         try:
@@ -208,6 +210,7 @@ def main(argv, session):  # noqa: C901
         'headers': args['--header'],
         'debug': args['--debug'],
         'queue_derive': queue_derive,
+        'set_scanner': set_scanner,
         'verbose': verbose,
         'verify': args['--verify'],
         'checksum': args['--checksum'],

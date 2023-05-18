@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+3.6.0 (?)
++++++++++
+
+**Features and Improvements**
+
+- Added ``set_scanner`` and ``--no-scanner`` options to upload to stop ia's default behavior
+  of setting the scanner field in meta.xml on initial upload.
+
 3.5.0 (2023-05-09)
 ++++++++++++++++++
 

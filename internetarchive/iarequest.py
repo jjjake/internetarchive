@@ -46,6 +46,7 @@ class S3Request(requests.models.Request):
                  queue_derive=True,
                  access_key=None,
                  secret_key=None,
+                 set_scanner=True,
                  **kwargs):
 
         super().__init__(**kwargs)
@@ -59,6 +60,7 @@ class S3Request(requests.models.Request):
         self.metadata = metadata
         self.file_metadata = file_metadata
         self.queue_derive = queue_derive
+        self.set_scanner = set_scanner
 
     def prepare(self):
         p = S3PreparedRequest()
@@ -77,6 +79,7 @@ class S3Request(requests.models.Request):
             metadata=self.metadata,
             file_metadata=self.file_metadata,
             queue_derive=self.queue_derive,
+            set_scanner=self.set_scanner,
         )
         return p
 
@@ -84,12 +87,13 @@ class S3Request(requests.models.Request):
 class S3PreparedRequest(requests.models.PreparedRequest):
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, queue_derive=None,
-                metadata=None, file_metadata=None):
+                metadata=None, file_metadata=None, set_scanner=None):
         self.prepare_method(method)
         self.prepare_url(url, params)
         self.prepare_headers(headers, metadata,
                              file_metadata=file_metadata,
-                             queue_derive=queue_derive)
+                             queue_derive=queue_derive,
+                             set_scanner=set_scanner)
         self.prepare_cookies(cookies)
         self.prepare_body(data, files)
         self.prepare_auth(auth, url)
@@ -99,7 +103,8 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         # This MUST go after prepare_auth. Authenticators could add a hook
         self.prepare_hooks(hooks)
 
-    def prepare_headers(self, headers, metadata, file_metadata=None, queue_derive=True):
+    def prepare_headers(self, headers, metadata, file_metadata=None, queue_derive=True,
+                        set_scanner=True):
         """Convert a dictionary of metadata into S3 compatible HTTP
         headers, and append headers to ``headers``.
 
@@ -114,7 +119,7 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         metadata = {} if metadata is None else metadata
         file_metadata = {} if file_metadata is None else file_metadata
 
-        if not metadata.get('scanner'):
+        if not metadata.get('scanner') and set_scanner is True:
             scanner = f'Internet Archive Python library {__version__}'
             metadata['scanner'] = scanner
         prepared_metadata = prepare_metadata(metadata)

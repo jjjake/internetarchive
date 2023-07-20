@@ -304,6 +304,7 @@ def download(
     verbose: bool = False,
     ignore_existing: bool = False,
     checksum: bool = False,
+    checksum_archive: bool = False,
     destdir: str | None = None,
     no_directory: bool = False,
     retries: int | None = None,
@@ -333,6 +334,10 @@ def download(
     :param ignore_existing: Skip files that already exist locally.
 
     :param checksum: Skip downloading file based on checksum.
+
+    :param checksum_archive: Skip downloading file based on checksum, and skip 
+                             checksum validation if it already succeeded
+                             (will create and use _checksum_archive.txt).
 
     :param destdir: The directory to download files to.
 
@@ -367,6 +372,7 @@ def download(
         verbose=verbose,
         ignore_existing=ignore_existing,
         checksum=checksum,
+        checksum_archive=checksum_archive,
         destdir=destdir,
         no_directory=no_directory,
         retries=retries,

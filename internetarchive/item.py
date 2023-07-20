@@ -589,6 +589,7 @@ class Item(BaseItem):
                  verbose: bool = False,
                  ignore_existing: bool = False,
                  checksum: bool = False,
+                 checksum_archive: bool = False,
                  destdir: str | None = None,
                  no_directory: bool = False,
                  retries: int | None = None,
@@ -626,6 +627,10 @@ class Item(BaseItem):
                                 locally.
 
         :param checksum: Skip downloading file based on checksum.
+
+        :param checksum_archive: Skip downloading file based on checksum, and skip
+                                 checksum validation if it already succeeded
+                                 (will create and use _checksum_archive.txt).
 
         :param destdir: The directory to download files to.
 
@@ -670,6 +675,7 @@ class Item(BaseItem):
         ignore_existing = bool(ignore_existing)
         ignore_errors = bool(ignore_errors)
         checksum = bool(checksum)
+        checksum_archive = bool(checksum_archive)
         no_directory = bool(no_directory)
         return_responses = bool(return_responses)
         no_change_timestamp = bool(no_change_timestamp)
@@ -746,8 +752,8 @@ class Item(BaseItem):
                 ors = True
             else:
                 ors = False
-            r = f.download(path, verbose, ignore_existing, checksum, destdir,
-                           retries, ignore_errors, fileobj, return_responses,
+            r = f.download(path, verbose, ignore_existing, checksum, checksum_archive, 
+                           destdir, retries, ignore_errors, fileobj, return_responses,
                            no_change_timestamp, params, None, stdout, ors, timeout)
             if return_responses:
                 responses.append(r)

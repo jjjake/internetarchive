@@ -48,6 +48,7 @@ options:
 
                                                  ia metadata --formats <identifier>
 
+    --checksum-archive                       Skip files based on _checksum_archive.txt [default: False].
     --on-the-fly                             Download on-the-fly files, as well as other matching
                                              files. on-the-fly files include derivative EPUB, MOBI
                                              and DAISY files [default: False].
@@ -198,6 +199,7 @@ def main(argv, session: ArchiveSession) -> None:
             verbose=not args['--quiet'],
             ignore_existing=args['--ignore-existing'],
             checksum=args['--checksum'],
+            checksum_archive=args['--checksum-archive'],
             destdir=args['--destdir'],
             no_directory=args['--no-directories'],
             retries=retries,

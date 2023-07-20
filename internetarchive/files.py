@@ -137,10 +137,10 @@ class File(BaseFile):
                 f'format={self.format!r})')
 
     def download(self, file_path=None, verbose=None, ignore_existing=None,
-                 checksum=None, destdir=None, retries=None, ignore_errors=None,
-                 fileobj=None, return_responses=None, no_change_timestamp=None,
-                 params=None, chunk_size=None, stdout=None, ors=None,
-                 timeout=None):
+                 checksum=None, checksum_archive=None, destdir=None, retries=None,
+                 ignore_errors=None, fileobj=None, return_responses=None,
+                 no_change_timestamp=None, params=None, chunk_size=None, stdout=None,
+                 ors=None, timeout=None):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -155,6 +155,11 @@ class File(BaseFile):
 
         :type checksum: bool
         :param checksum: (optional) Skip downloading file based on checksum.
+
+        :type checksum_archive: bool
+        :param checksum_archive: (optional) Skip downloading file based on checksum, and
+                                 skip checksum validation if it already succeeded
+                                 (will create and use _checksum_archive.txt).
 
         :type destdir: str
         :param destdir: (optional) The directory to download files to.
@@ -198,6 +203,7 @@ class File(BaseFile):
         verbose = False if verbose is None else verbose
         ignore_existing = False if ignore_existing is None else ignore_existing
         checksum = False if checksum is None else checksum
+        checksum_archive = False if checksum_archive is None else checksum_archive
         retries = retries or 2
         ignore_errors = ignore_errors or False
         return_responses = return_responses or False
@@ -209,6 +215,7 @@ class File(BaseFile):
         file_path = file_path or self.name
 
         if destdir:
+            print(f"destdir: {destdir}")
             if return_responses is not True:
                 try:
                     os.mkdir(destdir)
@@ -218,6 +225,20 @@ class File(BaseFile):
                 raise OSError(f'{destdir} is not a directory!')
             file_path = os.path.join(destdir, file_path)
 
+        if checksum_archive:
+            checksum_archive_filename = '_checksum_archive.txt'
+            if not os.path.exists(checksum_archive_filename):
+                with open(checksum_archive_filename, 'wt', encoding='utf-8') as f:
+                    pass
+            with open(checksum_archive_filename, 'rt', encoding='utf-8') as f:
+                checksum_archive_data = f.read().splitlines()
+            if file_path in checksum_archive_data:
+                msg = f'skipping {file_path}, file already exists based on checksum_archive.'
+                log.info(msg)
+                if verbose:
+                    print(f' {msg}', file=sys.stderr)
+                return
+
         if not return_responses and os.path.exists(file_path.encode('utf-8')):
             if ignore_existing:
                 msg = f'skipping {file_path}, file already exists.'
@@ -225,7 +246,7 @@ class File(BaseFile):
                 if verbose:
                     print(f' {msg}', file=sys.stderr)
                 return
-            elif checksum:
+            elif checksum or checksum_archive:
                 with open(file_path, 'rb') as fp:
                     md5_sum = utils.get_md5(fp)
 
@@ -234,6 +255,10 @@ class File(BaseFile):
                     log.info(msg)
                     if verbose:
                         print(f' {msg}', file=sys.stderr)
+                    if checksum_archive:
+                        # add file to checksum_archive to skip it next time
+                        with open(checksum_archive_filename, 'a', encoding='utf-8') as f:
+                            f.write(f'{file_path}\n')
                     return
             elif not fileobj:
                 st = os.stat(file_path.encode('utf-8'))

@@ -148,6 +148,7 @@ def test_download(tmpdir, nasa_item):
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content')
         nasa_item.download(files='nasa_meta.xml')
         assert len(tmpdir.listdir()) == 1
+    os.remove('nasa/nasa_meta.xml')
     with IaRequestsMock() as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='new test content')
         nasa_item.download(files='nasa_meta.xml')
@@ -188,6 +189,7 @@ def test_download_ignore_existing(tmpdir, nasa_item):
 
 
 def test_download_clobber(tmpdir, nasa_item):
+    # TODO: how can we test clobber with the new retry flow?
     tmpdir.chdir()
     with IaRequestsMock() as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content')

@@ -25,13 +25,12 @@ internetarchive.files
 """
 import logging
 import os
-import socket
 import sys
 from contextlib import nullcontext, suppress
+from time import sleep
 from urllib.parse import quote
 
 from requests.exceptions import (
-    ConnectionError,
     ConnectTimeout,
     HTTPError,
     ReadTimeout,
@@ -39,7 +38,7 @@ from requests.exceptions import (
 )
 from tqdm import tqdm
 
-from internetarchive import auth, iarequest, utils
+from internetarchive import auth, exceptions, iarequest, utils
 
 log = logging.getLogger(__name__)
 
@@ -49,14 +48,14 @@ class BaseFile:
     def __init__(self, item_metadata, name, file_metadata=None):
         if file_metadata is None:
             file_metadata = {}
-        name = name.strip('/')
+        name = name.strip("/")
         if not file_metadata:
-            for f in item_metadata.get('files', []):
-                if f.get('name') == name:
+            for f in item_metadata.get("files", []):
+                if f.get("name") == name:
                     file_metadata = f
                     break
 
-        self.identifier = item_metadata.get('metadata', {}).get('identifier')
+        self.identifier = item_metadata.get("metadata", {}).get("identifier")
         self.name = name
         self.size = None
         self.source = None
@@ -82,22 +81,22 @@ class File(BaseFile):
     can use this class to access the file metadata::
 
         >>> import internetarchive
-        >>> item = internetarchive.Item('stairs')
-        >>> file = internetarchive.File(item, 'stairs.avi')
+        >>> item = internetarchive.Item("stairs")
+        >>> file = internetarchive.File(item, "stairs.avi")
         >>> print(f.format, f.size)
-        ('Cinepack', '3786730')
+        ("Cinepack", "3786730")
 
     Or to download a file::
 
         >>> file.download()
-        >>> file.download('fabulous_movie_of_stairs.avi')
+        >>> file.download("fabulous_movie_of_stairs.avi")
 
     This class also uses IA's S3-like interface to delete a file
     from an item. You need to supply your IAS3 credentials in
     environment variables in order to delete::
 
-        >>> file.delete(access_key='Y6oUrAcCEs4sK8ey',
-        ...             secret_key='youRSECRETKEYzZzZ')
+        >>> file.delete(access_key="Y6oUrAcCEs4sK8ey",
+        ...             secret_key="youRSECRETKEYzZzZ")
 
     You can retrieve S3 keys here: `https://archive.org/account/s3.php
     <https://archive.org/account/s3.php>`__
@@ -118,12 +117,12 @@ class File(BaseFile):
         super().__init__(item.item_metadata, name, file_metadata)
         self.item = item
         url_parts = {
-            'protocol': item.session.protocol,
-            'id': self.identifier,
-            'name': quote(name.encode('utf-8')),
-            'host': item.session.host,
+            "protocol": item.session.protocol,
+            "id": self.identifier,
+            "name": quote(name.encode("utf-8")),
+            "host": item.session.host,
         }
-        self.url = '{protocol}//{host}/download/{id}/{name}'.format(**url_parts)
+        self.url = "{protocol}//{host}/download/{id}/{name}".format(**url_parts)
         if self.item.session.access_key and self.item.session.secret_key:
             self.auth = auth.S3Auth(self.item.session.access_key,
                                     self.item.session.secret_key)
@@ -131,12 +130,13 @@ class File(BaseFile):
             self.auth = None
 
     def __repr__(self):
-        return (f'File(identifier={self.identifier!r}, '
-                f'filename={self.name!r}, '
-                f'size={self.size!r}, '
-                f'format={self.format!r})')
+        return (f"File(identifier={self.identifier!r}, "
+                f"filename={self.name!r}, "
+                f"size={self.size!r}, "
+                f"format={self.format!r})")
 
-    def download(self, file_path=None, verbose=None, ignore_existing=None,
+    def download(# noqa: max-complexity=38
+                 self, file_path=None, verbose=None, ignore_existing=None,
                  checksum=None, destdir=None, retries=None, ignore_errors=None,
                  fileobj=None, return_responses=None, no_change_timestamp=None,
                  params=None, chunk_size=None, stdout=None, ors=None,
@@ -205,8 +205,9 @@ class File(BaseFile):
         params = params or None
         timeout = 12 if not timeout else timeout
         headers = {}
+        retries_sleep = 3  # TODO: exponential sleep
+        retrying = False  # for retry loop
 
-        self.item.session.mount_http_adapter(max_retries=retries)
         file_path = file_path or self.name
 
         if destdir:
@@ -216,102 +217,129 @@ class File(BaseFile):
                 except FileExistsError:
                     pass
             if os.path.isfile(destdir):
-                raise OSError(f'{destdir} is not a directory!')
+                raise OSError(f"{destdir} is not a directory!")
             file_path = os.path.join(destdir, file_path)
 
-        if not return_responses and os.path.exists(file_path.encode('utf-8')):
+        if not return_responses and os.path.exists(file_path.encode("utf-8")):
             if ignore_existing:
-                msg = f'skipping {file_path}, file already exists.'
+                msg = f"skipping {file_path}, file already exists."
                 log.info(msg)
                 if verbose:
-                    print(f' {msg}', file=sys.stderr)
+                    print(f" {msg}", file=sys.stderr)
                 return
             elif checksum:
-                with open(file_path, 'rb') as fp:
+                with open(file_path, "rb") as fp:
                     md5_sum = utils.get_md5(fp)
 
                 if md5_sum == self.md5:
-                    msg = f'skipping {file_path}, file already exists based on checksum.'
+                    msg = f"skipping {file_path}, file already exists based on checksum."
                     log.info(msg)
                     if verbose:
-                        print(f' {msg}', file=sys.stderr)
+                        print(f" {msg}", file=sys.stderr)
                     return
             elif not fileobj:
-                st = os.stat(file_path.encode('utf-8'))
+                st = os.stat(file_path.encode("utf-8"))
                 if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
-                        or self.name.endswith('_files.xml') and st.st_size != 0:
-                    msg = f'skipping {file_path}, file already exists based on length and date.'
+                        or self.name.endswith("_files.xml") and st.st_size != 0:
+                    msg = (f"skipping {file_path}, "
+                           "file already exists based on length and date.")
                     log.info(msg)
                     if verbose:
-                        print(f' {msg}', file=sys.stderr)
+                        print(f" {msg}", file=sys.stderr)
                     return
-                else:
+                elif st.st_size != self.size:
                     headers = {"Range": f"bytes={st.st_size}-{self.size}"}
 
         parent_dir = os.path.dirname(file_path)
-        try:
-            if parent_dir != '' and return_responses is not True:
-                os.makedirs(parent_dir, exist_ok=True)
 
-            response = self.item.session.get(self.url,
-                                             stream=True,
-                                             timeout=timeout,
-                                             auth=self.auth,
-                                             params=params,
-                                             headers=headers)
-            response.raise_for_status()
-            if return_responses:
-                return response
-
-            if verbose:
-                total = int(response.headers.get('content-length', 0)) or None
-                progress_bar = tqdm(desc=f' downloading {self.name}',
-                                    total=total,
-                                    unit='iB',
-                                    unit_scale=True,
-                                    unit_divisor=1024)
-            else:
-                progress_bar = nullcontext()
-
-            if not chunk_size:
-                chunk_size = 1048576
-            if stdout:
-                fileobj = os.fdopen(sys.stdout.fileno(), "wb", closefd=False)
-            if not fileobj:
-                if "Range" in headers:
-                    fileobj = open(file_path.encode('utf-8'), 'ab')
-                else:
-                    fileobj = open(file_path.encode('utf-8'), 'wb')
-
-            with fileobj, progress_bar as bar:
-                for chunk in response.iter_content(chunk_size=chunk_size):
-                    if chunk:
-                        size = fileobj.write(chunk)
-                        if bar is not None:
-                            bar.update(size)
-                if ors:
-                    fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
-        except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout) as exc:
-            msg = f'error downloading file {file_path}, exception raised: {exc}'
-            log.error(msg)
+        # Retry loop
+        while True:
             try:
-                os.remove(file_path)
-            except OSError:
-                pass
-            if verbose:
-                print(f' {msg}', file=sys.stderr)
-            if ignore_errors:
-                return False
-            else:
-                raise exc
+                if parent_dir != "" and return_responses is not True:
+                    os.makedirs(parent_dir, exist_ok=True)
+
+                response = self.item.session.get(self.url,
+                                                 stream=True,
+                                                 timeout=timeout,
+                                                 auth=self.auth,
+                                                 params=params,
+                                                 headers=headers)
+                response.raise_for_status()
+                if return_responses:
+                    return response
+
+                if verbose:
+                    total = int(response.headers.get("content-length", 0)) or None
+                    progress_bar = tqdm(desc=f" downloading {self.name}",
+                                        total=total,
+                                        unit="iB",
+                                        unit_scale=True,
+                                        unit_divisor=1024)
+                else:
+                    progress_bar = nullcontext()
+
+                if not chunk_size:
+                    chunk_size = 1048576
+                if stdout:
+                    fileobj = os.fdopen(sys.stdout.fileno(), "wb", closefd=False)
+                if not fileobj or retrying:
+                    if "Range" in headers:
+                        fileobj = open(file_path.encode("utf-8"), "ab")
+                    else:
+                        fileobj = open(file_path.encode("utf-8"), "wb")
+
+                with fileobj, progress_bar as bar:
+                    for chunk in response.iter_content(chunk_size=chunk_size):
+                        if chunk:
+                            size = fileobj.write(chunk)
+                            if bar is not None:
+                                bar.update(size)
+                    if ors:
+                        fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
+
+                if "Range" in headers:
+                    with open(file_path, "rb") as fh:
+                        local_checksum = utils.get_md5(fh)
+                    try:
+                        assert local_checksum == self.md5
+                    except AssertionError:
+                        msg = (f"\"{file_path}\" corrupt, "
+                               "checksums do not match. "
+                               "Remote file may have been modified, retry download.")
+                        raise exceptions.InvalidChecksumError(msg)
+                break
+
+            except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout,
+                    exceptions.InvalidChecksumError) as exc:
+                if retries > 0:
+                    retrying = True
+                    retries -= 1
+                    msg = ("download failed, sleeping for "
+                           f"{retries_sleep} seconds and retrying. "
+                           f"{retries} retries left.")
+                    log.warning(msg)
+                    sleep(retries_sleep)
+                    continue
+                msg = f"error downloading file {file_path}, exception raised: {exc}"
+                log.error(msg)
+                try:
+                    os.remove(file_path)
+                except OSError:
+                    pass
+                if verbose:
+                    print(f" {msg}", file=sys.stderr)
+                if ignore_errors:
+                    return False
+                else:
+                    raise exc
 
         # Set mtime with mtime from files.xml.
         if not no_change_timestamp:
             # If we want to set the timestamp to that of the original archive...
             with suppress(OSError):  # Probably file-like object, e.g. sys.stdout.
-                os.utime(file_path.encode('utf-8'), (0, self.mtime))
+                os.utime(file_path.encode("utf-8"), (0, self.mtime))
 
-        msg = f'downloaded {self.identifier}/{self.name} to {file_path}'
+        msg = f"downloaded {self.identifier}/{self.name} to {file_path}"
         log.info(msg)
         return True
 
@@ -340,7 +368,7 @@ class File(BaseFile):
                       without sending the delete request.
 
         """
-        cascade_delete = '0' if not cascade_delete else '1'
+        cascade_delete = "0" if not cascade_delete else "1"
         access_key = self.item.session.access_key if not access_key else access_key
         secret_key = self.item.session.secret_key if not secret_key else secret_key
         debug = debug or False
@@ -348,15 +376,15 @@ class File(BaseFile):
         max_retries = retries or 2
         headers = headers or {}
 
-        if 'x-archive-cascade-delete' not in headers:
-            headers['x-archive-cascade-delete'] = cascade_delete
+        if "x-archive-cascade-delete" not in headers:
+            headers["x-archive-cascade-delete"] = cascade_delete
 
-        url = f'{self.item.session.protocol}//s3.us.archive.org/{self.identifier}/{quote(self.name)}'
+        url = f"{self.item.session.protocol}//s3.us.archive.org/{self.identifier}/{quote(self.name)}"
         self.item.session.mount_http_adapter(max_retries=max_retries,
                                              status_forcelist=[503],
-                                             host='s3.us.archive.org')
+                                             host="s3.us.archive.org")
         request = iarequest.S3Request(
-            method='DELETE',
+            method="DELETE",
             url=url,
             headers=headers,
             access_key=access_key,
@@ -366,9 +394,9 @@ class File(BaseFile):
             return request
         else:
             if verbose:
-                msg = f' deleting: {self.name}'
+                msg = f" deleting: {self.name}"
                 if cascade_delete:
-                    msg += ' and all derivative files.'
+                    msg += " and all derivative files."
                 print(msg, file=sys.stderr)
             prepared_request = self.item.session.prepare_request(request)
 
@@ -377,7 +405,7 @@ class File(BaseFile):
                 resp.raise_for_status()
             except (RetryError, HTTPError, ConnectTimeout,
                     OSError, ReadTimeout) as exc:
-                error_msg = f'Error deleting {url}, {exc}'
+                error_msg = f"Error deleting {url}, {exc}"
                 log.error(error_msg)
                 raise
             else:
@@ -388,7 +416,7 @@ class File(BaseFile):
                 # mounted if and when the session object is used for an
                 # upload. This is important because we use custom retry
                 # handling for IA-S3 uploads.
-                url_prefix = f'{self.item.session.protocol}//s3.us.archive.org'
+                url_prefix = f"{self.item.session.protocol}//s3.us.archive.org"
                 del self.item.session.adapters[url_prefix]
 
 

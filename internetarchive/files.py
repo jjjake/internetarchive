@@ -204,6 +204,7 @@ class File(BaseFile):
         no_change_timestamp = no_change_timestamp or False
         params = params or None
         timeout = 12 if not timeout else timeout
+        headers = {}
 
         self.item.session.mount_http_adapter(max_retries=retries)
         file_path = file_path or self.name
@@ -244,6 +245,8 @@ class File(BaseFile):
                     if verbose:
                         print(f' {msg}', file=sys.stderr)
                     return
+                else:
+                    headers = {"Range": f"bytes={st.st_size}-{self.size}"}
 
         parent_dir = os.path.dirname(file_path)
         try:
@@ -254,7 +257,8 @@ class File(BaseFile):
                                              stream=True,
                                              timeout=timeout,
                                              auth=self.auth,
-                                             params=params)
+                                             params=params,
+                                             headers=headers)
             response.raise_for_status()
             if return_responses:
                 return response
@@ -274,7 +278,10 @@ class File(BaseFile):
             if stdout:
                 fileobj = os.fdopen(sys.stdout.fileno(), "wb", closefd=False)
             if not fileobj:
-                fileobj = open(file_path.encode('utf-8'), 'wb')
+                if "Range" in headers:
+                    fileobj = open(file_path.encode('utf-8'), 'ab')
+                else:
+                    fileobj = open(file_path.encode('utf-8'), 'wb')
 
             with fileobj, progress_bar as bar:
                 for chunk in response.iter_content(chunk_size=chunk_size):

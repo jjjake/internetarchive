@@ -19,3 +19,4 @@ Patches and Suggestions
 -----------------------
 
 - VM Brasseur
+- Russ Magee <rmagee@gmail.com>

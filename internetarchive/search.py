@@ -130,7 +130,7 @@ class Search:
                              auth=self.auth,
                              **self.request_kwargs)
         j = r.json()
-        num_found = int(j['response']['numFound'])
+        num_found = int(j.get('response', {}).get('numFound', 0))
         if not self._num_found:
             self._num_found = num_found
         if j.get('error'):

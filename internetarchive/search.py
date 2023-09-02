@@ -153,7 +153,7 @@ class Search:
             if j.get('error'):
                 yield j
             if not num_found:
-                num_found = int(j['total'])
+                num_found = int(j['total'] or 0)
             if not self._num_found:
                 self._num_found = num_found
             self._handle_scrape_error(j)

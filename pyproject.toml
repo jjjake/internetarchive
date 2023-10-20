@@ -80,11 +80,7 @@ max-statements = 124
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["E402"]
-"tests/*" = [
-  "PT017",
-  "S101",
-]
-"tests/conftest.py" = ["B018", "F811"]
+"tests/*" = ["PT017", "S101"]
 "tests/cli/test_ia_list.py" = ["E741"]
 "tests/test_api.py" = ["E712"]
 "tests/test_config.py" = ["PT011"]

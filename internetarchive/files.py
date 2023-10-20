@@ -27,6 +27,7 @@ import logging
 import os
 import sys
 from contextlib import nullcontext, suppress
+from datetime import datetime, timezone
 from time import sleep
 from urllib.parse import quote
 
@@ -333,11 +334,17 @@ class File(BaseFile):
                 else:
                     raise exc
 
+        # Get timestamp from Last-Modified header
+        time_str = response.headers["Last-Modified"]
+        last_updated_pattern = "%a, %d %b %Y %H:%M:%S %Z"
+        dt = datetime.strptime(time_str, last_updated_pattern).replace(tzinfo=timezone.utc)
+        last_modified = int(dt.timestamp())
+
         # Set mtime with mtime from files.xml.
         if not no_change_timestamp:
             # If we want to set the timestamp to that of the original archive...
             with suppress(OSError):  # Probably file-like object, e.g. sys.stdout.
-                os.utime(file_path.encode("utf-8"), (0, self.mtime))
+                os.utime(file_path.encode("utf-8"), (0, last_modified))
 
         msg = f"downloaded {self.identifier}/{self.name} to {file_path}"
         log.info(msg)

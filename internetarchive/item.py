@@ -1106,10 +1106,10 @@ class Item(BaseItem):
                 return response
             except HTTPError as exc:
                 try:
-                    msg = get_s3_xml_text(exc.response.content)
+                    msg = get_s3_xml_text(exc.response.content)  # type: ignore
                 except ExpatError:  # probably HTTP 500 error and response is invalid XML
                     msg = ('IA S3 returned invalid XML '
-                           f'(HTTP status code {exc.response.status_code}). '
+                           f'(HTTP status code {exc.response.status_code}). '  # type: ignore
                            'This is a server side error which is either temporary, '
                            'or requires the intervention of IA admins.')
 

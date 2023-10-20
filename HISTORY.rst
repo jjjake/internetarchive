@@ -10,6 +10,7 @@ Release History
 
 - Added ``set_scanner`` and ``--no-scanner`` options to upload to stop ia's default behavior
   of setting the scanner field in meta.xml on initial upload.
+- Use Last-Modified response header for setting mtime to support valid files.xml mtime's.
 
 3.5.0 (2023-05-09)
 ++++++++++++++++++

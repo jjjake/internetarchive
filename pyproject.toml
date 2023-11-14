@@ -76,7 +76,7 @@ max-complexity = 33
 [tool.ruff.pylint]
 max-args = 23
 max-branches = 33
-max-statements = 124
+max-statements = 125
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["E402"]

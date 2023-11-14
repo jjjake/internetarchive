@@ -1105,8 +1105,9 @@ class Item(BaseItem):
                 response.close()
                 return response
             except HTTPError as exc:
+                assert exc.response  # noqa: PT017 - Placate mypy
                 try:
-                    msg = get_s3_xml_text(exc.response.content)
+                    msg = get_s3_xml_text(exc.response.text)
                 except ExpatError:  # probably HTTP 500 error and response is invalid XML
                     msg = ('IA S3 returned invalid XML '
                            f'(HTTP status code {exc.response.status_code}). '

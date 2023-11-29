@@ -5,37 +5,25 @@ Installation
 
 
 System-Wide Installation
-------------------------
+-------------------------
 
 Installing the ``internetarchive`` library globally on your system can be done with `pip <http://www.pip-installer.org/>`_.
 This is the recommended method for installing ``internetarchive`` (`see below <installation.html#installing-pip>`_ for details on installing pip)::
 
-    $ sudo pip install internetarchive
+    $ sudo python3 -m pip install internetarchive
 
-or, with `easy_install <http://pypi.python.org/pypi/setuptools>`_::
+To update, you can run the following command::
 
-    $ sudo easy_install internetarchive
-
-Either of these commands will install the ``internetarchive`` Python library and ``ia`` command-line tool on your system.
-
-**Note**: Some versions of Mac OS X come with Python libraries that are required by ``internetarchive`` (e.g. the Python package ``six``).
-This can cause installation issues. If your installation is failing with a message that looks something like::
-
-    OSError: [Errno 1] Operation not permitted: '/var/folders/bk/3wx7qs8d0x79tqbmcdmsk1040000gp/T/pip-TGyjVo-uninstall/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/six-1.4.1-py2.7.egg-info'
-
-You can use the ``--ignore-installed`` parameter in ``pip`` to ignore the libraries that are already installed, and continue with the rest of the installation::
-
-    $ sudo pip install --ignore-installed internetarchive
-
-More details on this issue can be found here: https://github.com/pypa/pip/issues/3165
+    $  sudo python3 -m pip install --upgrade internetarchive
 
 Installing Pip
 ~~~~~~~~~~~~~~
 
-Pip can be `installed with the get-pip.py script <https://pip.pypa.io/en/stable/installing/>`_::
+If you are running Python 3.4+, you should already have ``pip`` installed.
+If it is not already installed, it can be `installed with the get-pip.py script <https://pip.pypa.io/en/stable/installing/>`_::
 
     $ curl -LOs https://bootstrap.pypa.io/get-pip.py
-    $ python get-pip.py
+    $ python3 get-pip.py
 
 
 virtualenv
@@ -45,11 +33,7 @@ If you don't want to, or can't, install the package system-wide you can use ``vi
 
 First, make sure ``virtualenv`` is installed on your system. If it's not, you can do so with pip::
 
-    $ sudo pip install virtualenv
-
-With ``easy_install``::
-
-    $ sudo easy_install virtualenv
+    $ sudo python3 -m pip install virtualenv
 
 Or your systems package manager, ``apt-get`` for example::
 
@@ -92,22 +76,13 @@ If you are on an older operating system that only has Python 2 installed, it's h
 
 You can install and use version v2.3.0 with pip::
 
-    $ pip install internetarchive==2.3.0
+    $ sudo python2 -m pip install internetarchive==2.3.0
 
 You can also download a binary of v2.3.0::
 
     $ curl -LOs https://archive.org/download/ia-pex/ia-py2
     $ chmod +x ia-py2
 
-
-Snap
-----
-
-You can install the latest ``ia`` `snap <https://snapcraft.io>`_, and help testing the most recent changes of the master branch in `all the supported Linux distros <https://snapcraft.io/docs/core/install>`_ with::
-
-    $ sudo snap install ia --edge
-
-Every time a new version of ``ia`` is pushed to the store, you will get it updated automatically.
 
 Get the Code
 ------------

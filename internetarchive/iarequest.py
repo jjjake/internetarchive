@@ -223,6 +223,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                 append_list=None, insert=None):
         self.prepare_method(method)
         self.prepare_url(url, params)
+        self.identifier = self.url.split("?")[0].split("/")[-1]
         self.prepare_headers(headers)
         self.prepare_cookies(cookies)
         self.prepare_body(metadata, source_metadata, target, priority, append,
@@ -263,7 +264,8 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                                               append_list,
                                               insert)
                     except KeyError:
-                        raise ItemLocateError
+                        raise ItemLocateError(f"{self.identifier} cannot be located "
+                                               "because it is dark or does not exist.")
                 elif key.startswith('files'):
                     patch = prepare_files_patch(metadata[key],
                                                 source_metadata['files'],
@@ -289,7 +291,8 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                     patch = prepare_patch(metadata, source_metadata['metadata'], append,
                                           append_list, insert)
                 except KeyError:
-                    raise ItemLocateError
+                    raise ItemLocateError(f"{self.identifier} cannot be located "
+                                           "because it is dark or does not exist.")
             elif 'files' in target:
                 patch = prepare_files_patch(metadata, source_metadata['files'], append,
                                             target, append_list, insert)

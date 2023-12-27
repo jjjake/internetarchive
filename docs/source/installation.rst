@@ -8,13 +8,34 @@ System-Wide Installation
 -------------------------
 
 Installing the ``internetarchive`` library globally on your system can be done with `pip <http://www.pip-installer.org/>`_.
-This is the recommended method for installing ``internetarchive`` (`see below <installation.html#installing-pip>`_ for details on installing pip)::
+This is the recommended method for installing ``internetarchive`` (`see below <installation.html#installing-pip>`_ for details on installing pip).
+If you are on Mac OS X, refer to the `Mac OS X section <installation.html#mac-os-x>`_ below before proceeding.
+Once you're ready to install, run the following command::
 
     $ sudo python3 -m pip install internetarchive
+
+Updating Your $PATH
+~~~~~~~~~~~~~~~~~~~
+
+Once you have successfully installed ``internetarchive``, you may need to update your ``$PATH`` (e.g. if running ``ia`` in your terminal returns an error).
+If you receive a command not found error, run the following command to update your ``$PATH``::
+
+    $ echo "$(python3 -m site --user-base)/bin" | sudo tee -a /etc/paths
+
+Updating ia
+~~~~~~~~~~~
 
 To update, you can run the following command::
 
     $  sudo python3 -m pip install --upgrade internetarchive
+
+Mac OS X
+~~~~~~~~
+
+While newer versions Mac OS X ship with Python 3 installed, it is recommended to install an updated version of Python 3.
+You can do so with `Homebrew <https://brew.sh/#install>`_::
+
+    $ brew install python3
 
 Installing Pip
 ~~~~~~~~~~~~~~

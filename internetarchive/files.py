@@ -37,7 +37,7 @@ from requests.exceptions import (
     ReadTimeout,
     RetryError,
 )
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from internetarchive import auth, iarequest, utils
 

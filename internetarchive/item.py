@@ -39,7 +39,7 @@ from urllib.parse import quote
 from xml.parsers.expat import ExpatError
 
 from requests import Request, Response
-from requests.exceptions import HTTPError
+from requests.exceptions import RequestException
 from tqdm import tqdm
 
 from internetarchive import catalog
@@ -1104,7 +1104,7 @@ class Item(BaseItem):
                     os.remove(filename)
                 response.close()
                 return response
-            except HTTPError as exc:
+            except RequestException as exc:
                 try:
                     msg = get_s3_xml_text(exc.response.content)  # type: ignore
                 except ExpatError:  # probably HTTP 500 error and response is invalid XML
@@ -1117,7 +1117,7 @@ class Item(BaseItem):
                 log.error(error_msg)
                 if verbose:
                     print(f' error uploading {key}: {msg}', file=sys.stderr)
-                # Raise HTTPError with error message.
+                # Raise RequestException with error message.
                 raise type(exc)(error_msg, response=exc.response, request=exc.request)
             finally:
                 body.close()

@@ -347,8 +347,8 @@ def prepare_patch(metadata, source_metadata, append, append_list=None, insert=No
             src_val = source_metadata.get(patch_parts[1], [])[index]
         p_test = {'op': 'test', 'path': p['path'], 'value': src_val}
         patch_tests.append(p_test)
+
     final_patch = patch_tests + patch
-    print(f"final patch being submitted to archive.org: {final_patch}")
 
     return final_patch
 

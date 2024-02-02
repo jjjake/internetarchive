@@ -333,7 +333,24 @@ def prepare_patch(metadata, source_metadata, append, append_list=None, insert=No
     # Delete metadata items where value is REMOVE_TAG.
     destination_metadata = delete_items_from_dict(destination_metadata, 'REMOVE_TAG')
     patch = make_patch(source_metadata, destination_metadata).patch
-    return patch
+
+    # Add test operations to patch.
+    patch_tests = []
+    for p in patch:
+        patch_parts = p['path'].split('/')
+        if not source_metadata.get(patch_parts[1]):
+            continue
+        if len(patch_parts) == 2:
+            src_val = source_metadata.get(patch_parts[-1])
+        else:
+            index = int(patch_parts[-1]) - 1
+            src_val = source_metadata.get(patch_parts[1], [])[index]
+        p_test = {'op': 'test', 'path': p['path'], 'value': src_val}
+        patch_tests.append(p_test)
+    final_patch = patch_tests + patch
+    print(f"final patch being submitted to archive.org: {final_patch}")
+
+    return final_patch
 
 
 def prepare_target_patch(metadata, source_metadata, append, target, append_list, key,

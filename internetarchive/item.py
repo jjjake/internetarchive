@@ -1054,73 +1054,75 @@ class Item(BaseItem):
             body.close()
             return prepared_request
         else:
-            try:
-                while True:
-                    error_msg = ('s3 is overloaded, sleeping for '
-                                 f'{retries_sleep} seconds and retrying. '
-                                 f'{retries} retries left.')
-                    if retries > 0:
-                        if self.session.s3_is_overloaded(access_key=access_key):
-                            sleep(retries_sleep)
-                            log.info(error_msg)
-                            if verbose:
-                                print(f' warning: {error_msg}', file=sys.stderr)
-                            retries -= 1
-                            continue
-                    request = _build_request()
-                    prepared_request = request.prepare()
-
-                    # chunked transfer-encoding is NOT supported by IA-S3.
-                    # It should NEVER be set. Requests adds it in certain
-                    # scenarios (e.g. if content-length is 0). Stop it.
-                    if prepared_request.headers.get('transfer-encoding') == 'chunked':
-                        del prepared_request.headers['transfer-encoding']
-
-                    response = self.session.send(prepared_request,
-                                                 stream=True,
-                                                 **request_kwargs)
-                    if (response.status_code == 503) and (retries > 0):
-                        if b'appears to be spam' in response.content:
-                            log.info('detected as spam, upload failed')
-                            break
+            while True:
+                error_msg = ('s3 is overloaded, sleeping for '
+                             f'{retries_sleep} seconds and retrying. '
+                             f'{retries} retries left.')
+                if retries > 0:
+                    if self.session.s3_is_overloaded(access_key=access_key):
+                        sleep(retries_sleep)
                         log.info(error_msg)
                         if verbose:
                             print(f' warning: {error_msg}', file=sys.stderr)
-                        sleep(retries_sleep)
                         retries -= 1
                         continue
-                    else:
-                        if response.status_code == 503:
-                            log.info('maximum retries exceeded, upload failed.')
-                        break
-                response.raise_for_status()
-                log.info(f'uploaded {key} to {url}')
-                if delete and response.status_code == 200:
-                    log.info(
-                        f'{key} successfully uploaded to '
-                        f'https://archive.org/download/{self.identifier}/{key} and verified, '
-                        'deleting local copy')
-                    body.close()
-                    os.remove(filename)
-                response.close()
-                return response
-            except RequestException as exc:
-                try:
-                    msg = get_s3_xml_text(exc.response.content)  # type: ignore
-                except ExpatError:  # probably HTTP 500 error and response is invalid XML
-                    msg = ('IA S3 returned invalid XML '  # type: ignore
-                           f'(HTTP status code {exc.response.status_code}). '
-                           'This is a server side error which is either temporary, '
-                           'or requires the intervention of IA admins.')
+                request = _build_request()
+                prepared_request = request.prepare()
 
-                error_msg = f' error uploading {key} to {self.identifier}, {msg}'
-                log.error(error_msg)
-                if verbose:
-                    print(f' error uploading {key}: {msg}', file=sys.stderr)
-                # Raise RequestException with error message.
-                raise type(exc)(error_msg, response=exc.response, request=exc.request)
-            finally:
+                # chunked transfer-encoding is NOT supported by IA-S3.
+                # It should NEVER be set. Requests adds it in certain
+                # scenarios (e.g. if content-length is 0). Stop it.
+                if prepared_request.headers.get('transfer-encoding') == 'chunked':
+                    del prepared_request.headers['transfer-encoding']
+
+                try:
+                    response = self.session.send(prepared_request,
+                                                 stream=True,
+                                                 **request_kwargs)
+                    response.raise_for_status()
+                except RequestException as exc:
+                    try:
+                        msg = get_s3_xml_text(exc.response.content)  # type: ignore
+                    except ExpatError:  # probably HTTP 500 error and response is invalid XML
+                        msg = ('IA S3 returned invalid XML '  # type: ignore
+                               f'(HTTP status code {exc.response.status_code}). '
+                               'This is a server side error which is either temporary, '
+                               'or requires the intervention of IA admins.')
+
+                    error_msg = f' error uploading {key} to {self.identifier}, {msg}'
+                    log.error(error_msg)
+                    if verbose:
+                        print(f' error uploading {key}: {msg}', file=sys.stderr)
+                    # Raise RequestException with error message.
+                    if retries <= 0:
+                        body.close()
+                        raise type(exc)(error_msg, response=exc.response, request=exc.request)
+
+                if (response.status_code == 503) and (retries > 0):
+                    if b'appears to be spam' in response.content:
+                        log.info('detected as spam, upload failed')
+                        break
+                    log.info(error_msg)
+                    if verbose:
+                        print(f' warning: {error_msg}', file=sys.stderr)
+                    sleep(retries_sleep)
+                    retries -= 1
+                    continue
+                else:
+                    if response.status_code == 503:
+                        log.info('maximum retries exceeded, upload failed.')
+                    break
+            log.info(f'uploaded {key} to {url}')
+            if delete and response.status_code == 200:
+                log.info(
+                    f'{key} successfully uploaded to '
+                    f'https://archive.org/download/{self.identifier}/{key} and verified, '
+                    'deleting local copy')
                 body.close()
+                os.remove(filename)
+            response.close()
+            body.close()
+            return response
 
     def upload(self, files,
                metadata: Mapping | None = None,

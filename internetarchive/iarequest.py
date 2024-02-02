@@ -337,14 +337,14 @@ def prepare_patch(metadata, source_metadata, append, append_list=None, insert=No
     # Add test operations to patch.
     patch_tests = []
     for p in patch:
-        patch_parts = p['path'].split('/')
-        if not source_metadata.get(patch_parts[1]):
+        path_parts = p['path'].split('/')
+        if not source_metadata.get(path_parts[1]):
             continue
-        if len(patch_parts) == 2:
-            src_val = source_metadata.get(patch_parts[-1])
+        if len(path_parts) == 2:
+            src_val = source_metadata.get(path_parts[-1])
         else:
-            index = int(patch_parts[-1]) - 1
-            src_val = source_metadata.get(patch_parts[1], [])[index]
+            index = int(path_parts[-1]) - 1
+            src_val = source_metadata.get(path_parts[1], [])[index]
         p_test = {'op': 'test', 'path': p['path'], 'value': src_val}
         patch_tests.append(p_test)
 

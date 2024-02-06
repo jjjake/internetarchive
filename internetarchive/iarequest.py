@@ -342,10 +342,10 @@ def prepare_patch(metadata, source_metadata, append, append_list=None, insert=No
             continue
         if len(path_parts) == 2:
             src_val = source_metadata.get(path_parts[-1])
+            p_test = {'op': 'test', 'path': p['path'], 'value': src_val}
         else:
-            index = int(path_parts[-1]) - 1
-            src_val = source_metadata.get(path_parts[1], [])[index]
-        p_test = {'op': 'test', 'path': p['path'], 'value': src_val}
+            src_val = source_metadata.get(path_parts[1], [])
+            p_test = {'op': 'test', 'path': '/' + path_parts[1], 'value': src_val}
         patch_tests.append(p_test)
 
     final_patch = patch_tests + patch

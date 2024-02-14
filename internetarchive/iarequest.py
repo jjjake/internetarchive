@@ -344,16 +344,17 @@ def prepare_patch(metadata, source_metadata, append,
 
     # Add test operations to patch.
     patch_tests = []
-    for key in expect:
+    for expect_key in expect:
         idx = None
-        if '[' in key:
-            idx = int(key.split('[')[1].strip(']'))
-            key = key.split('[')[0]
+        if '[' in expect_key:
+            idx = int(expect_key.split('[')[1].strip(']'))
+            key = expect_key.split('[')[0]
             path = f'/{key}/{idx}'
+            p_test = {'op': 'test', 'path': path, 'value': expect[expect_key]}
         else:
             path = f'/{key}'
+            p_test = {'op': 'test', 'path': path, 'value': expect[expect_key]}
 
-        p_test = {'op': 'test', 'path': path, 'value': expect[key]}
         patch_tests.append(p_test)
     final_patch = patch_tests + patch
 

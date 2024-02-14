@@ -770,6 +770,7 @@ class Item(BaseItem):
                         metadata: Mapping,
                         target: str | None = None,
                         append: bool = False,
+                        expect: Mapping | None = None,
                         append_list: bool = False,
                         insert: bool = False,
                         priority: int = 0,
@@ -794,6 +795,9 @@ class Item(BaseItem):
         :param append: Append value to an existing multi-value
                        metadata field.
 
+        :param expect: Provide a dict of expectations to be tested
+                       server-side before applying patch to item metadata.
+
         :param append_list: Append values to an existing multi-value
                             metadata field. No duplicate values will be added.
 
@@ -811,6 +815,7 @@ class Item(BaseItem):
         secret_key = secret_key or self.session.secret_key
         debug = bool(debug)
         headers = headers or {}
+        expect = expect or {}
         request_kwargs = request_kwargs or {}
         if timeout:
             request_kwargs["timeout"] = float(timeout)  # type: ignore
@@ -835,6 +840,7 @@ class Item(BaseItem):
             access_key=access_key,
             secret_key=secret_key,
             append=append,
+            expect=expect,
             append_list=append_list,
             insert=insert)
         # Must use Session.prepare_request to make sure session settings

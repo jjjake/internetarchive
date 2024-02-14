@@ -32,7 +32,7 @@ EXPECTED_S3_HEADERS = {
     'x-archive-auto-make-bucket': '1',
     'authorization': 'LOW a:b',
     'accept': '*/*',
-    'accept-encoding': 'gzip, deflate',
+    'accept-encoding': 'gzip, deflate, br',
     'connection': 'close',
 }
 

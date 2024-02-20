@@ -57,7 +57,7 @@ from internetarchive.utils import (
     iter_directory,
     json,
     norm_filepath,
-    recursive_file_count,
+    recursive_file_count_and_size,
     validate_s3_identifier,
 )
 
@@ -1194,11 +1194,13 @@ class Item(BaseItem):
 
         responses = []
         file_index = 0
-        if queue_derive and total_files is None:
-            if checksum:
-                total_files = recursive_file_count(files, item=self, checksum=True)
-            else:
-                total_files = recursive_file_count(files, item=self, checksum=False)
+        headers = headers or {}
+        if (queue_derive or not headers.get('x-archive-size-hint')) and total_files == 0:
+            total_files, total_size = recursive_file_count_and_size(files,
+                                                                    item=self,
+                                                                    checksum=checksum)
+            if not headers.get('x-archive-size-hint'):
+                headers['x-archive-size-hint'] = str(total_size)
         file_metadata = None
         for f in files:
             if isinstance(f, dict):

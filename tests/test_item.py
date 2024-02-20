@@ -580,6 +580,40 @@ def test_upload_checksum(tmpdir, nasa_item):
             assert r.status_code is None
 
 
+def test_upload_automatic_size_hint(tmpdir, nasa_item):
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
+        del _expected_headers['x-archive-size-hint']
+        _expected_headers['x-archive-size-hint'] = '15'
+        rsps.add(responses.PUT, S3_URL_RE,
+                 adding_headers=_expected_headers)
+
+        files = []
+        with open(os.path.join(tmpdir, 'file'), 'w') as fh:
+            fh.write('a')
+        files.append(os.path.join(tmpdir, 'file'))
+
+        os.mkdir(os.path.join(tmpdir, 'dir'))
+        with open(os.path.join(tmpdir, 'dir', 'file0'), 'w') as fh:
+            fh.write('bb')
+        with open(os.path.join(tmpdir, 'dir', 'file1'), 'w') as fh:
+            fh.write('cccc')
+        files.append(os.path.join(tmpdir, 'dir'))
+
+        with open(os.path.join(tmpdir, 'obj'), 'wb') as fh:
+            fh.write(b'dddddddd')
+            fh.seek(0, os.SEEK_SET)
+            files.append(fh)
+
+            _responses = nasa_item.upload(files,
+                                          access_key='a',
+                                          secret_key='b')
+        for r in _responses:
+            headers = {k.lower(): str(v) for k, v in r.headers.items()}
+            del headers['content-type']
+            assert headers == _expected_headers
+
+
 def test_modify_metadata(nasa_item, nasa_metadata):
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.POST, f'{PROTOCOL}//archive.org/metadata/nasa')

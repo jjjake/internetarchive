@@ -124,6 +124,27 @@ def test_ia_upload_size_hint(capsys, tmpdir_ch, nasa_mocker):
     assert 'Accept-Encoding:gzip, deflate' in err
 
 
+def test_ia_upload_automatic_size_hint_files(capsys, tmpdir_ch, nasa_mocker):
+    with open('foo', 'w') as fh:
+        fh.write('foo')
+    with open('bar', 'w') as fh:
+        fh.write('bar')
+
+    ia_call(['ia', 'upload', '--debug', 'nasa', 'foo', 'bar'])
+    out, err = capsys.readouterr()
+    assert 'x-archive-size-hint:6' in err
+
+def test_ia_upload_automatic_size_hint_dir(capsys, tmpdir_ch, nasa_mocker):
+    with open('foo', 'w') as fh:
+        fh.write('foo')
+    with open('bar', 'w') as fh:
+        fh.write('bar')
+
+    ia_call(['ia', 'upload', '--debug', 'nasa', '.'])
+    out, err = capsys.readouterr()
+    assert 'x-archive-size-hint:6' in err
+
+
 def test_ia_upload_unicode(tmpdir_ch, caplog):
     with open('தமிழ் - baz ∆.txt', 'w') as fh:
         fh.write('unicode foo')

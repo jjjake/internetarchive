@@ -214,7 +214,10 @@ class Search:
         self.params['page'] = '1'
         self.params['rows'] = '1'
         self.params['output'] = 'json'
-        r = self.session.get(self.search_url, params=self.params, **self.request_kwargs)
+        r = self.session.get(self.search_url,
+                             params=self.params,
+                             auth=self.auth,
+                             **self.request_kwargs)
         j = r.json()
         if j.get('error'):
             yield j

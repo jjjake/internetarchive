@@ -445,7 +445,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
                         continue
                 else:
                     if v in source_metadata[key]:
-                        continue
+                        source_metadata[key] = [x for x in source_metadata[key] if x != v]
                 if not isinstance(source_metadata[key], list):
                     prepared_metadata[key] = [source_metadata[key]]
                 else:

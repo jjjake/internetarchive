@@ -66,9 +66,9 @@ import sys
 from docopt import docopt, printable_usage
 
 if sys.version_info < (3, 10):
-  from importlib_metadata import entry_points
+    from importlib_metadata import entry_points  # type: ignore[import]
 else:
-  from importlib.metadata import entry_points
+    from importlib.metadata import entry_points
 from schema import Or, Schema, SchemaError  # type: ignore[import]
 
 from internetarchive import __version__

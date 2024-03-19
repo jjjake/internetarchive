@@ -352,7 +352,7 @@ def prepare_patch(metadata, source_metadata, append,
             path = f'/{key}/{idx}'
             p_test = {'op': 'test', 'path': path, 'value': expect[expect_key]}
         else:
-            path = f'/{key}'
+            path = f'/{expect_key}'
             p_test = {'op': 'test', 'path': path, 'value': expect[expect_key]}
 
         patch_tests.append(p_test)

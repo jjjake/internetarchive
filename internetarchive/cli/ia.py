@@ -64,6 +64,7 @@ import os
 import sys
 
 from docopt import docopt, printable_usage
+
 if sys.version_info < (3, 10):
   from importlib_metadata import entry_points
 else:

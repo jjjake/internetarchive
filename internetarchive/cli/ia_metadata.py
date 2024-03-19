@@ -22,17 +22,20 @@ usage:
     ia metadata <identifier>... [--exists | --formats] [--header=<key:value>...]
     ia metadata <identifier>... --modify=<key:value>... [--target=<target>]
                                 [--priority=<priority>] [--header=<key:value>...]
-                                [--timeout=<value>]
+                                [--timeout=<value>] [--expect=<key:value>...]
     ia metadata <identifier>... --remove=<key:value>... [--priority=<priority>]
                                 [--header=<key:value>...] [--timeout=<value>]
+                                [--expect=<key:value>...]
     ia metadata <identifier>... [--append=<key:value>... | --append-list=<key:value>...]
                                 [--priority=<priority>] [--target=<target>]
                                 [--header=<key:value>...] [--timeout=<value>]
+                                [--expect=<key:value>...]
     ia metadata <identifier>... --insert=<key:value>... [--priority=<priority>]
                                 [--target=<target>] [--header=<key:value>...]
-                                [--timeout=<value>]
+                                [--timeout=<value>] [--expect=<key:value>...]
     ia metadata --spreadsheet=<metadata.csv> [--priority=<priority>]
                 [--modify=<key:value>...] [--header=<key:value>...] [--timeout=<value>]
+                [--expect=<key:value>...]
     ia metadata --help
 
 options:
@@ -42,8 +45,10 @@ options:
     -t, --target=<target>               The metadata target to modify.
     -a, --append=<key:value>...         Append a string to a metadata element.
     -A, --append-list=<key:value>...    Append a field to a metadata element.
-    -i, --insert=<key:value>...      Insert a value into a multi-value field given
+    -i, --insert=<key:value>...         Insert a value into a multi-value field given
                                         an index (e.g. `--insert=collection[0]:foo`).
+    -E, --expect=<key:value>...         Test an expectation server-side before applying
+                                        patch to item metadata.
     -s, --spreadsheet=<metadata.csv>    Modify metadata in bulk using a spreadsheet as
                                         input.
     -e, --exists                        Check if an item exists
@@ -79,13 +84,14 @@ from internetarchive.utils import json
 
 def modify_metadata(item: item.Item, metadata: Mapping, args: Mapping) -> Response:
     append = bool(args['--append'])
+    expect = get_args_dict(args['--expect'])
     append_list = bool(args['--append-list'])
     insert = bool(args['--insert'])
     try:
         r = item.modify_metadata(metadata, target=args['--target'], append=append,
-                                 priority=args['--priority'], append_list=append_list,
-                                 headers=args['--header'], insert=insert,
-                                 timeout=args['--timeout'])
+                                 expect=expect, priority=args['--priority'],
+                                 append_list=append_list, headers=args['--header'],
+                                 insert=insert, timeout=args['--timeout'])
         assert isinstance(r, Response)  # mypy: modify_metadata() -> Request | Response
     except ItemLocateError as exc:
         print(f'{item.identifier} - error: {exc}', file=sys.stderr)
@@ -178,6 +184,7 @@ def main(argv: dict, session: session.ArchiveSession) -> None:
         str: bool,
         '<identifier>': list,
         '--modify': list,
+        '--expect': list,
         '--header': Or(None, And(Use(get_args_header_dict), dict),
                error='--header must be formatted as --header="key:value"'),
         '--append': list,

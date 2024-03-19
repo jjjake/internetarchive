@@ -173,6 +173,7 @@ class MetadataRequest(requests.models.Request):
                  access_key=None,
                  secret_key=None,
                  append=None,
+                 expect=None,
                  append_list=None,
                  insert=None,
                  **kwargs):
@@ -188,6 +189,7 @@ class MetadataRequest(requests.models.Request):
         self.target = target
         self.priority = priority
         self.append = append
+        self.expect = expect
         self.append_list = append_list
         self.insert = insert
 
@@ -210,6 +212,7 @@ class MetadataRequest(requests.models.Request):
             source_metadata=self.source_metadata,
             target=self.target,
             append=self.append,
+            expect=self.expect,
             append_list=self.append_list,
             insert=self.insert,
         )
@@ -220,14 +223,14 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, metadata={},  # noqa: B006
                 source_metadata=None, target=None, priority=None, append=None,
-                append_list=None, insert=None):
+                expect=None, append_list=None, insert=None):
         self.prepare_method(method)
         self.prepare_url(url, params)
         self.identifier = self.url.split("?")[0].split("/")[-1]
         self.prepare_headers(headers)
         self.prepare_cookies(cookies)
         self.prepare_body(metadata, source_metadata, target, priority, append,
-                          append_list, insert)
+                          append_list, insert, expect)
         self.prepare_auth(auth, url)
         # Note that prepare_auth must be last to enable authentication schemes
         # such as OAuth to work on a fully prepared request.
@@ -236,7 +239,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         self.prepare_hooks(hooks)
 
     def prepare_body(self, metadata, source_metadata, target, priority, append,
-                     append_list, insert):
+                     append_list, insert, expect):
         priority = priority or -5
 
         if not source_metadata:
@@ -261,22 +264,25 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                         patch = prepare_patch(metadata[key],
                                               source_metadata['metadata'],
                                               append,
+                                              expect,
                                               append_list,
                                               insert)
                     except KeyError:
                         raise ItemLocateError(f"{self.identifier} cannot be located "
-                                               "because it is dark or does not exist.")
+                                              "because it is dark or does not exist.")
                 elif key.startswith('files'):
                     patch = prepare_files_patch(metadata[key],
                                                 source_metadata['files'],
                                                 append,
                                                 key,
                                                 append_list,
-                                                insert)
+                                                insert,
+                                                expect)
                 else:
                     key = key.split('/')[0]
                     patch = prepare_target_patch(metadata, source_metadata, append,
-                                                 target, append_list, key, insert)
+                                                 target, append_list, key, insert,
+                                                 expect)
                 changes.append({'target': key, 'patch': patch})
             self.data = {
                 '-changes': json.dumps(changes),
@@ -289,17 +295,18 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                 target = 'metadata'
                 try:
                     patch = prepare_patch(metadata, source_metadata['metadata'], append,
-                                          append_list, insert)
+                                          expect, append_list, insert)
                 except KeyError:
                     raise ItemLocateError(f"{self.identifier} cannot be located "
-                                           "because it is dark or does not exist.")
+                                          "because it is dark or does not exist.")
             elif 'files' in target:
                 patch = prepare_files_patch(metadata, source_metadata['files'], append,
-                                            target, append_list, insert)
+                                            target, append_list, insert, expect)
             else:
                 metadata = {target: metadata}
                 patch = prepare_target_patch(metadata, source_metadata, append,
-                                             target, append_list, target, insert)
+                                             target, append_list, target, insert,
+                                             expect)
             self.data = {
                 '-patch': json.dumps(patch),
                 '-target': target,
@@ -309,7 +316,8 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         super().prepare_body(self.data, None)
 
 
-def prepare_patch(metadata, source_metadata, append, append_list=None, insert=None):
+def prepare_patch(metadata, source_metadata, append,
+                  expect=None, append_list=None, insert=None):
     destination_metadata = source_metadata.copy()
     if isinstance(metadata, list):
         prepared_metadata = metadata
@@ -333,11 +341,28 @@ def prepare_patch(metadata, source_metadata, append, append_list=None, insert=No
     # Delete metadata items where value is REMOVE_TAG.
     destination_metadata = delete_items_from_dict(destination_metadata, 'REMOVE_TAG')
     patch = make_patch(source_metadata, destination_metadata).patch
-    return patch
+
+    # Add test operations to patch.
+    patch_tests = []
+    for expect_key in expect:
+        idx = None
+        if '[' in expect_key:
+            idx = int(expect_key.split('[')[1].strip(']'))
+            key = expect_key.split('[')[0]
+            path = f'/{key}/{idx}'
+            p_test = {'op': 'test', 'path': path, 'value': expect[expect_key]}
+        else:
+            path = f'/{key}'
+            p_test = {'op': 'test', 'path': path, 'value': expect[expect_key]}
+
+        patch_tests.append(p_test)
+    final_patch = patch_tests + patch
+
+    return final_patch
 
 
 def prepare_target_patch(metadata, source_metadata, append, target, append_list, key,
-                         insert):
+                         insert, expect):
 
     def dictify(lst, key=None, value=None):
         if not lst:
@@ -354,18 +379,18 @@ def prepare_target_patch(metadata, source_metadata, append, target, append_list,
             source_metadata = source_metadata.get(_k, {})
         else:
             source_metadata[_k] = source_metadata.get(_k, {}).get(_k, {})
-    patch = prepare_patch(metadata, source_metadata, append, append_list, insert)
+    patch = prepare_patch(metadata, source_metadata, append, expect, append_list, insert)
     return patch
 
 
 def prepare_files_patch(metadata, source_metadata, append, target, append_list,
-                        insert):
+                        insert, expect):
     filename = '/'.join(target.split('/')[1:])
     for f in source_metadata:
         if f.get('name') == filename:
             source_metadata = f
             break
-    patch = prepare_patch(metadata, source_metadata, append, append_list, insert)
+    patch = prepare_patch(metadata, source_metadata, append, expect, append_list, insert)
     return patch
 
 

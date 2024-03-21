@@ -706,3 +706,7 @@ def test_modify_metadata(nasa_item, nasa_metadata):
                                   secret_key='b')
         # Test that item re-initializes
         assert nasa_item.metadata['title'] == 'new title'
+
+
+def test_hash_item(nasa_metadata, nasa_item, session):
+    assert hash(nasa_item)

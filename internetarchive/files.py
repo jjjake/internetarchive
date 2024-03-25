@@ -300,10 +300,13 @@ class File(BaseFile):
                 raise exc
 
         # Get timestamp from Last-Modified header
-        time_str = response.headers["Last-Modified"]
-        last_updated_pattern = "%a, %d %b %Y %H:%M:%S %Z"
-        dt = datetime.strptime(time_str, last_updated_pattern).replace(tzinfo=timezone.utc)
-        last_modified = int(dt.timestamp())
+        try:
+            time_str = response.headers["Last-Modified"]
+            last_updated_pattern = "%a, %d %b %Y %H:%M:%S %Z"
+            dt = datetime.strptime(time_str, last_updated_pattern).replace(tzinfo=timezone.utc)
+            last_modified = int(dt.timestamp())
+        except KeyError:
+            last_modified = 0
 
         # Set mtime with mtime from files.xml.
         if not no_change_timestamp:

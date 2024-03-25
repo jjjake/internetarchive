@@ -153,7 +153,7 @@ class Search:
             if j.get('error'):
                 yield j
             if not num_found:
-                num_found = int(j['total'])
+                num_found = int(j.get('total') or '0')
             if not self._num_found:
                 self._num_found = num_found
             self._handle_scrape_error(j)
@@ -214,7 +214,10 @@ class Search:
         self.params['page'] = '1'
         self.params['rows'] = '1'
         self.params['output'] = 'json'
-        r = self.session.get(self.search_url, params=self.params, **self.request_kwargs)
+        r = self.session.get(self.search_url,
+                             params=self.params,
+                             auth=self.auth,
+                             **self.request_kwargs)
         j = r.json()
         if j.get('error'):
             yield j

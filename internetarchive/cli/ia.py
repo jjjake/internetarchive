@@ -64,7 +64,11 @@ import os
 import sys
 
 from docopt import docopt, printable_usage
-from pkg_resources import DistributionNotFound, iter_entry_points
+
+if sys.version_info < (3, 10):
+    from importlib_metadata import entry_points  # type: ignore[import]
+else:
+    from importlib.metadata import entry_points
 from schema import Or, Schema, SchemaError  # type: ignore[import]
 
 from internetarchive import __version__
@@ -97,11 +101,11 @@ def load_ia_module(cmd: str):
             return __import__(_module, fromlist=['internetarchive.cli'])
         else:
             _module = f'ia_{cmd}'
-            for ep in iter_entry_points('internetarchive.cli.plugins'):
+            for ep in entry_points(group='internetarchive.cli.plugins'):
                 if ep.name == _module:
                     return ep.load()
             raise ImportError
-    except (ImportError, DistributionNotFound):
+    except (ImportError):
         print(f"error: '{cmd}' is not an ia command! See 'ia help'",
               file=sys.stderr)
         matches = '\t'.join(difflib.get_close_matches(cmd, cmd_aliases.values()))

@@ -3,13 +3,31 @@
 Release History
 ---------------
 
-3.6.0 (?)
-+++++++++
+3.7.0 (2024-03-19)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Added support for JSON Patch test operations, via the ``expect`` parameter.
+- Added support for moving values via --append-list
+  (Now, rather than ignoring any requests where the value is already present,
+  --append-list will move the value to the end of the list).
+- Switched to importlib-metadata to drop deprecated pkg_resources.
+
+**Bugfixes**
+
+- Fixed automatic size hint on uploads.
+- Fixed bug where auth wasn't being sent for searches with user_aggs params.
+
+3.6.0 (2023-12-27)
+++++++++++++++++++
 
 **Features and Improvements**
 
 - Added ``set_scanner`` and ``--no-scanner`` options to upload to stop ia's default behavior
   of setting the scanner field in meta.xml on initial upload.
+- ``0`` is now returned instead of an exception when search fails to retrieve the total number
+  of hits for a query.
 
 3.5.0 (2023-05-09)
 ++++++++++++++++++

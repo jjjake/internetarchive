@@ -68,7 +68,7 @@ def main(argv, session: ArchiveSession) -> None:
             print(r.text)
             sys.exit(0)
         except HTTPError as exc:
-            if exc.response.status_code == 404:
+            if exc.response.status_code == 404:  # type: ignore
                 sys.exit(0)
             else:
                 raise exc

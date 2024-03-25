@@ -30,7 +30,7 @@ You can install this module via pip:
 
 .. code:: bash
 
-    $ pip install internetarchive
+    $ python3 -m pip install internetarchive
 
 Binaries of the command-line tool are also available:
 

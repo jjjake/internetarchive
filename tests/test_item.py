@@ -148,6 +148,7 @@ def test_download(tmpdir, nasa_item):
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content')
         nasa_item.download(files='nasa_meta.xml')
         assert len(tmpdir.listdir()) == 1
+    os.remove('nasa/nasa_meta.xml')
     with IaRequestsMock() as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE, body='new test content')
         nasa_item.download(files='nasa_meta.xml')
@@ -185,18 +186,6 @@ def test_download_ignore_existing(tmpdir, nasa_item):
         nasa_item.download(files='nasa_meta.xml', ignore_existing=True)
         with open('nasa/nasa_meta.xml') as fh:
             assert fh.read() == 'test content'
-
-
-def test_download_clobber(tmpdir, nasa_item):
-    tmpdir.chdir()
-    with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content')
-        nasa_item.download(files='nasa_meta.xml')
-
-        rsps.reset()
-        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='new test content')
-        nasa_item.download(files='nasa_meta.xml')
-        assert load_file('nasa/nasa_meta.xml') == 'new test content'
 
 
 def test_download_checksum(tmpdir, caplog):

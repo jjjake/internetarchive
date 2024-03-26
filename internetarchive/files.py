@@ -27,7 +27,6 @@ import logging
 import os
 import socket
 import sys
-import time
 from contextlib import nullcontext, suppress
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -302,17 +301,20 @@ class File(BaseFile):
                 raise exc
 
         # Get timestamp from Last-Modified header
-        try:
-            dt = parsedate_to_datetime(response.headers['Last-Modified'])
-            last_modified = time.mktime(time.gmtime(dt.timestamp()))
-        except KeyError:
-            last_modified = 0
+        if self.name == f"{self.identifier}_files.xml":
+            try:
+                dt = parsedate_to_datetime(response.headers['Last-Modified'])
+                mtime = dt.timestamp()
+            except KeyError:
+                mtime = 0
+        else:
+            mtime = self.mtime
 
         # Set mtime with mtime from files.xml.
         if not no_change_timestamp:
             # If we want to set the timestamp to that of the original archive...
             with suppress(OSError):  # Probably file-like object, e.g. sys.stdout.
-                os.utime(file_path.encode('utf-8'), (0, last_modified))
+                os.utime(file_path.encode('utf-8'), (0, mtime))
 
         msg = f'downloaded {self.identifier}/{self.name} to {file_path}'
         log.info(msg)

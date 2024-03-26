@@ -27,8 +27,10 @@ import logging
 import os
 import socket
 import sys
+import time
 from contextlib import nullcontext, suppress
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from urllib.parse import quote
 
 from requests.exceptions import (
@@ -301,10 +303,8 @@ class File(BaseFile):
 
         # Get timestamp from Last-Modified header
         try:
-            time_str = response.headers["Last-Modified"]
-            last_updated_pattern = "%a, %d %b %Y %H:%M:%S %Z"
-            dt = datetime.strptime(time_str, last_updated_pattern).replace(tzinfo=timezone.utc)
-            last_modified = int(dt.timestamp())
+            dt = parsedate_to_datetime(response.headers['Last-Modified'])
+            last_modified = time.mktime(time.gmtime(dt.timestamp()))
         except KeyError:
             last_modified = 0
 

@@ -28,7 +28,6 @@ import os
 import socket
 import sys
 from contextlib import nullcontext, suppress
-from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from urllib.parse import quote
 

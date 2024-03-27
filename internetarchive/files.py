@@ -238,8 +238,7 @@ class File(BaseFile):
                     return
             elif not fileobj:
                 st = os.stat(file_path.encode('utf-8'))
-                if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
-                        or self.name.endswith('_files.xml') and st.st_size != 0:
+                if (st.st_mtime == self.mtime) and (st.st_size == self.size):
                     msg = f'skipping {file_path}, file already exists based on length and date.'
                     log.info(msg)
                     if verbose:
@@ -299,17 +298,12 @@ class File(BaseFile):
             else:
                 raise exc
 
-        # Get timestamp from Last-Modified header
-        if self.name == f"{self.identifier}_files.xml":
-            try:
-                dt = parsedate_to_datetime(response.headers['Last-Modified'])
-                mtime = dt.timestamp()
-            except KeyError:
-                mtime = 0
-        else:
-            mtime = self.mtime
-
-        # Set mtime with mtime from files.xml.
+        # Set mtime with timestamp from Last-Modified header
+        try:
+            dt = parsedate_to_datetime(response.headers['Last-Modified'])
+            mtime = dt.timestamp()
+        except KeyError:
+            mtime = 0
         if not no_change_timestamp:
             # If we want to set the timestamp to that of the original archive...
             with suppress(OSError):  # Probably file-like object, e.g. sys.stdout.

@@ -28,6 +28,7 @@ import os
 import socket
 import sys
 from contextlib import nullcontext, suppress
+from email.utils import parsedate_to_datetime
 from urllib.parse import quote
 
 from requests.exceptions import (
@@ -218,33 +219,6 @@ class File(BaseFile):
                 raise OSError(f'{destdir} is not a directory!')
             file_path = os.path.join(destdir, file_path)
 
-        if not return_responses and os.path.exists(file_path.encode('utf-8')):
-            if ignore_existing:
-                msg = f'skipping {file_path}, file already exists.'
-                log.info(msg)
-                if verbose:
-                    print(f' {msg}', file=sys.stderr)
-                return
-            elif checksum:
-                with open(file_path, 'rb') as fp:
-                    md5_sum = utils.get_md5(fp)
-
-                if md5_sum == self.md5:
-                    msg = f'skipping {file_path}, file already exists based on checksum.'
-                    log.info(msg)
-                    if verbose:
-                        print(f' {msg}', file=sys.stderr)
-                    return
-            elif not fileobj:
-                st = os.stat(file_path.encode('utf-8'))
-                if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
-                        or self.name.endswith('_files.xml') and st.st_size != 0:
-                    msg = f'skipping {file_path}, file already exists based on length and date.'
-                    log.info(msg)
-                    if verbose:
-                        print(f' {msg}', file=sys.stderr)
-                    return
-
         parent_dir = os.path.dirname(file_path)
         try:
             if parent_dir != '' and return_responses is not True:
@@ -255,8 +229,44 @@ class File(BaseFile):
                                              timeout=timeout,
                                              auth=self.auth,
                                              params=params)
+
+            # Get timestamp from Last-Modified header
+            dt = parsedate_to_datetime(response.headers['Last-Modified'])
+            last_mod_mtime = dt.timestamp()
+
             response.raise_for_status()
-            if return_responses:
+
+            # Check if we should skip...
+            if not return_responses and os.path.exists(file_path.encode('utf-8')):
+                if ignore_existing:
+                    msg = f'skipping {file_path}, file already exists.'
+                    log.info(msg)
+                    if verbose:
+                        print(f' {msg}', file=sys.stderr)
+                    return
+                elif checksum:
+                    with open(file_path, 'rb') as fp:
+                        md5_sum = utils.get_md5(fp)
+
+                    if md5_sum == self.md5:
+                        msg = f'skipping {file_path}, file already exists based on checksum.'
+                        log.info(msg)
+                        if verbose:
+                            print(f' {msg}', file=sys.stderr)
+                        return
+                elif not fileobj:
+                    st = os.stat(file_path.encode('utf-8'))
+                    if st.st_mtime == last_mod_mtime:
+                        if self.name == f'{self.identifier}_files.xml' \
+                            or (st.st_size == self.size):
+                            msg = (f'skipping {file_path}, file already exists based on '
+                                    'length and date.')
+                            log.info(msg)
+                            if verbose:
+                                print(f' {msg}', file=sys.stderr)
+                            return
+
+            elif return_responses:
                 return response
 
             if verbose:
@@ -298,11 +308,11 @@ class File(BaseFile):
             else:
                 raise exc
 
-        # Set mtime with mtime from files.xml.
+        # Set mtime with timestamp from Last-Modified header
         if not no_change_timestamp:
             # If we want to set the timestamp to that of the original archive...
             with suppress(OSError):  # Probably file-like object, e.g. sys.stdout.
-                os.utime(file_path.encode('utf-8'), (0, self.mtime))
+                os.utime(file_path.encode('utf-8'), (0,last_mod_mtime))
 
         msg = f'downloaded {self.identifier}/{self.name} to {file_path}'
         log.info(msg)

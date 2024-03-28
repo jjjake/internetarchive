@@ -266,10 +266,12 @@ def test_upload_validate_identifier():
 
 def test_download(tmpdir):
     tmpdir.chdir()
+    last_mod_header = {"Last-Modified": "Tue, 14 Nov 2023 20:25:48 GMT"}
     with IaRequestsMock() as rsps:
         rsps.add(responses.GET,
                  f'{PROTOCOL}//archive.org/download/nasa/nasa_meta.xml',
-                 body='test content')
+                 body='test content',
+                 adding_headers=last_mod_header)
         rsps.add_metadata_mock('nasa')
         download('nasa', 'nasa_meta.xml')
         p = os.path.join(str(tmpdir), 'nasa')

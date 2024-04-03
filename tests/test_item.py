@@ -24,6 +24,7 @@ S3_URL = f'{PROTOCOL}//s3.us.archive.org/'
 DOWNLOAD_URL_RE = re.compile(f'{PROTOCOL}//archive.org/download/.*')
 S3_URL_RE = re.compile(r'.*s3.us.archive.org/.*')
 
+EXPECTED_LAST_MOD_HEADER = {"Last-Modified": "Tue, 14 Nov 2023 20:25:48 GMT"}
 EXPECTED_S3_HEADERS = {
     'content-length': '7557',
     'x-archive-queue-derive': '1',
@@ -145,12 +146,16 @@ def test_get_files_no_matches(nasa_item):
 def test_download(tmpdir, nasa_item):
     tmpdir.chdir()
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='test content',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
         nasa_item.download(files='nasa_meta.xml')
         assert len(tmpdir.listdir()) == 1
     os.remove('nasa/nasa_meta.xml')
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='new test content')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='new test content',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
         nasa_item.download(files='nasa_meta.xml')
         with open('nasa/nasa_meta.xml') as fh:
             assert fh.read() == 'new test content'
@@ -159,7 +164,9 @@ def test_download(tmpdir, nasa_item):
 def test_download_io_error(tmpdir, nasa_item):
     tmpdir.chdir()
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='test content',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
         nasa_item.download(files='nasa_meta.xml')
         rsps.reset()
         with pytest.raises(ConnectionError):
@@ -168,7 +175,9 @@ def test_download_io_error(tmpdir, nasa_item):
 
 def test_download_ignore_errors(tmpdir, nasa_item):
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='test content',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
         nasa_item.download(files='nasa_meta.xml')
         nasa_item.download(files='nasa_meta.xml', ignore_errors=True)
 
@@ -178,14 +187,32 @@ def test_download_ignore_existing(tmpdir, nasa_item):
     with IaRequestsMock(
             assert_all_requests_are_fired=False) as rsps:
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
-                 body='test content')
+                 body='test content',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
         nasa_item.download(files='nasa_meta.xml', ignore_existing=True)
 
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
-                 body='new test content')
+                 body='new test content',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
         nasa_item.download(files='nasa_meta.xml', ignore_existing=True)
         with open('nasa/nasa_meta.xml') as fh:
             assert fh.read() == 'test content'
+
+
+def test_download_clobber(tmpdir, nasa_item):
+    tmpdir.chdir()
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='test content',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
+        nasa_item.download(files='nasa_meta.xml')
+
+        rsps.reset()
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='new test content',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
+        nasa_item.download(files='nasa_meta.xml')
+        assert load_file('nasa/nasa_meta.xml') == 'new test content'
 
 
 def test_download_checksum(tmpdir, caplog):
@@ -194,8 +221,12 @@ def test_download_checksum(tmpdir, caplog):
     # test overwrite based on checksum.
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content')
-        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='overwrite based on md5')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='test content',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='overwrite based on md5',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
 
         nasa_item = get_item('nasa')
         nasa_item.download(files='nasa_meta.xml')
@@ -207,7 +238,8 @@ def test_download_checksum(tmpdir, caplog):
         with caplog.at_level(logging.DEBUG):
             rsps.reset()
             rsps.add(responses.GET, DOWNLOAD_URL_RE,
-                     body=load_test_data_file('nasa_meta.xml'))
+                     body=load_test_data_file('nasa_meta.xml'),
+                     adding_headers=EXPECTED_LAST_MOD_HEADER)
             nasa_item.download(files='nasa_meta.xml', checksum=True, verbose=True)
             nasa_item.download(files='nasa_meta.xml', checksum=True, verbose=True)
 
@@ -218,7 +250,9 @@ def test_download_checksum(tmpdir, caplog):
 def test_download_destdir(tmpdir, nasa_item):
     tmpdir.chdir()
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='new destdir')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='new destdir',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
         dest = os.path.join(str(tmpdir), 'new destdir')
         nasa_item.download(files='nasa_meta.xml', destdir=dest)
         assert 'nasa' in os.listdir(dest)
@@ -230,7 +264,9 @@ def test_download_no_directory(tmpdir, nasa_item):
     url_re = re.compile(f'{PROTOCOL}//archive.org/download/.*')
     tmpdir.chdir()
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, url_re, body='no dest dir')
+        rsps.add(responses.GET, url_re,
+                 body='no dest dir',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
         nasa_item.download(files='nasa_meta.xml', no_directory=True)
         with open(os.path.join(str(tmpdir), 'nasa_meta.xml')) as fh:
             assert fh.read() == 'no dest dir'
@@ -267,9 +303,11 @@ def test_download_dry_run_on_the_fly_formats(tmpdir, capsys, nasa_item):
 def test_download_verbose(tmpdir, capsys, nasa_item):
     tmpdir.chdir()
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        headers = {'content-length': '11'}
+        headers.update(EXPECTED_LAST_MOD_HEADER)
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
                  body='no dest dir',
-                 adding_headers={'content-length': '11'})
+                 adding_headers=headers)
         nasa_item.download(files='nasa_meta.xml', verbose=True)
         out, err = capsys.readouterr()
         assert 'downloading nasa_meta.xml' in err

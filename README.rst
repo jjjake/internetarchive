@@ -41,6 +41,9 @@ Binaries of the command-line tool are also available:
     $ ./ia help
 
 
+See package name for your system package manager at [Repology](https://repology.org/project/python:internetarchive/versions).
+
+
 Documentation
 -------------
 

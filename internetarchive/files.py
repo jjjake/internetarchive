@@ -234,9 +234,10 @@ class File(BaseFile):
 
                 if not return_responses \
                         and not ignore_existing \
+                        and self.name != f'{self.identifier}_files.xml' \
                         and os.path.exists(file_path.encode('utf-8')):
                     st = os.stat(file_path.encode('utf-8'))
-                    if st.st_size != self.size and not ignore_existing:
+                    if st.st_size != self.size and not checksum:
                         headers = {"Range": f"bytes={st.st_size}-{self.size}"}
 
                 response = self.item.session.get(self.url,
@@ -275,6 +276,7 @@ class File(BaseFile):
                                 print(f' {msg}', file=sys.stderr)
                             return
                     elif not fileobj:
+                        st = os.stat(file_path.encode('utf-8'))
                         if st.st_mtime == last_mod_mtime:
                             if self.name == f'{self.identifier}_files.xml' \
                                 or (st.st_size == self.size):
@@ -327,7 +329,9 @@ class File(BaseFile):
                         except AssertionError:
                             msg = (f"\"{file_path}\" corrupt, "
                                    "checksums do not match. "
-                                   "Remote file may have been modified, retry download.")
+                                   "Remote file may have been modified, "
+                                   "retry download.")
+                            os.remove(file_path.encode('utf-8'))
                             raise exceptions.InvalidChecksumError(msg)
                     break
             except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout,

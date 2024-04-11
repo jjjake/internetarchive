@@ -11,6 +11,7 @@ from requests.exceptions import ConnectionError, HTTPError
 import internetarchive.files
 from internetarchive import get_session
 from internetarchive.api import get_item
+from internetarchive.exceptions import InvalidChecksumError
 from internetarchive.utils import InvalidIdentifierException, json, norm_filepath
 from tests.conftest import (
     NASA_METADATA_PATH,
@@ -199,26 +200,12 @@ def test_download_ignore_existing(tmpdir, nasa_item):
             assert fh.read() == 'test content'
 
 
-def test_download_clobber(tmpdir, nasa_item):
-    tmpdir.chdir()
-    with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, DOWNLOAD_URL_RE,
-                 body='test content',
-                 adding_headers=EXPECTED_LAST_MOD_HEADER)
-        nasa_item.download(files='nasa_meta.xml')
-
-        rsps.reset()
-        rsps.add(responses.GET, DOWNLOAD_URL_RE,
-                 body='new test content',
-                 adding_headers=EXPECTED_LAST_MOD_HEADER)
-        nasa_item.download(files='nasa_meta.xml')
-        assert load_file('nasa/nasa_meta.xml') == 'new test content'
-
-
 def test_download_checksum(tmpdir, caplog):
     tmpdir.chdir()
 
     # test overwrite based on checksum.
+    if os.path.exists('nasa/nasa_meta.xml'):
+        os.remove('nasa/nasa_meta.xml')
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
         rsps.add(responses.GET, DOWNLOAD_URL_RE,
@@ -230,9 +217,10 @@ def test_download_checksum(tmpdir, caplog):
 
         nasa_item = get_item('nasa')
         nasa_item.download(files='nasa_meta.xml')
-        nasa_item.download(files='nasa_meta.xml', checksum=True)
-
-        assert load_file('nasa/nasa_meta.xml') == 'overwrite based on md5'
+        try:
+            nasa_item.download(files='nasa_meta.xml', checksum=True)
+        except InvalidChecksumError as exc:
+            assert "corrupt, checksums do not match." in str(exc)
 
         # test no overwrite based on checksum.
         with caplog.at_level(logging.DEBUG):

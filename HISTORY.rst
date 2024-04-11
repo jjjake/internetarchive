@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+4.0.0 (2024-04-12)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Partially downloaded files will now automatically resume where they left off when retried.
+- Use ``Last-Modified`` header to set all mtimes (this includes files.xml now).
+
 3.7.0 (2024-03-19)
 ++++++++++++++++++
 

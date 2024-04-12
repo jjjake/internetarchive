@@ -238,7 +238,7 @@ class File(BaseFile):
                         and os.path.exists(file_path.encode('utf-8')):
                     st = os.stat(file_path.encode('utf-8'))
                     if st.st_size != self.size and not checksum:
-                        headers = {"Range": f"bytes={st.st_size}-{self.size}"}
+                        headers = {"Range": f"bytes={st.st_size}-"}
 
                 response = self.item.session.get(self.url,
                                                  stream=True,
@@ -246,7 +246,6 @@ class File(BaseFile):
                                                  auth=self.auth,
                                                  params=params,
                                                  headers=headers)
-
                 # Get timestamp from Last-Modified header
                 last_mod_header = response.headers.get('Last-Modified')
                 if last_mod_header:
@@ -308,18 +307,22 @@ class File(BaseFile):
                     fileobj = os.fdopen(sys.stdout.fileno(), 'wb', closefd=False)
                 if not fileobj or retrying:
                     if 'Range' in headers:
-                        fileobj = open(file_path.encode('utf-8'), 'ab')
+                        fileobj = open(file_path.encode('utf-8'), 'rb+')
                     else:
                         fileobj = open(file_path.encode('utf-8'), 'wb')
 
                 with fileobj, progress_bar as bar:
+                    if 'Range' in headers:
+                        fileobj.seek(st.st_size)
                     for chunk in response.iter_content(chunk_size=chunk_size):
                         if chunk:
                             size = fileobj.write(chunk)
+                            fileobj.flush()
                             if bar is not None:
                                 bar.update(size)
                     if ors:
                         fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
+                        fileobj.flush()
 
                     if 'Range' in headers:
                         with open(file_path, 'rb') as fh:

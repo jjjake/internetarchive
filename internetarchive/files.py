@@ -289,8 +289,6 @@ class File(BaseFile):
                 elif return_responses:
                     return response
 
-
-
                 if verbose:
                     total = int(response.headers.get('content-length', 0)) or None
                     progress_bar = tqdm(desc=f' downloading {self.name}',
@@ -317,26 +315,24 @@ class File(BaseFile):
                     for chunk in response.iter_content(chunk_size=chunk_size):
                         if chunk:
                             size = fileobj.write(chunk)
-                            fileobj.flush()
                             if bar is not None:
                                 bar.update(size)
                     if ors:
                         fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
-                        fileobj.flush()
 
-                    if 'Range' in headers:
-                        with open(file_path, 'rb') as fh:
-                            local_checksum = utils.get_md5(fh)
-                        try:
-                            assert local_checksum == self.md5
-                        except AssertionError:
-                            msg = (f"\"{file_path}\" corrupt, "
-                                   "checksums do not match. "
-                                   "Remote file may have been modified, "
-                                   "retry download.")
-                            os.remove(file_path.encode('utf-8'))
-                            raise exceptions.InvalidChecksumError(msg)
-                    break
+                if 'Range' in headers:
+                    with open(file_path, 'rb') as fh:
+                        local_checksum = utils.get_md5(fh)
+                    try:
+                        assert local_checksum == self.md5
+                    except AssertionError:
+                        msg = (f"\"{file_path}\" corrupt, "
+                               "checksums do not match. "
+                               "Remote file may have been modified, "
+                               "retry download.")
+                        os.remove(file_path.encode('utf-8'))
+                        raise exceptions.InvalidChecksumError(msg)
+                break
             except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout,
                     exceptions.InvalidChecksumError) as exc:
                 if retries > 0:

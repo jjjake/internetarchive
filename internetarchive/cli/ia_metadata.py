@@ -91,7 +91,7 @@ def modify_metadata(item: item.Item, metadata: Mapping, args: Mapping) -> Respon
         r = item.modify_metadata(metadata, target=args['--target'], append=append,
                                  expect=expect, priority=args['--priority'],
                                  append_list=append_list, headers=args['--header'],
-                                 insert=insert, timeout=args['--timeout'])
+                                 insert=insert, timeout=args['--timeout'], refresh=False)
         assert isinstance(r, Response)  # mypy: modify_metadata() -> Request | Response
     except ItemLocateError as exc:
         print(f'{item.identifier} - error: {exc}', file=sys.stderr)

@@ -32,9 +32,8 @@ def test_ia_metadata_modify(capsys):
     md_rsp = ('{"success":true,"task_id":447613301,'
               '"log":"https://catalogd.archive.org/log/447613301"}')
     with IaRequestsMock() as rsps:
-        rsps.add_metadata_mock('nasa')
+        rsps.add_metadata_mock('nasa', method=responses.GET)
         rsps.add_metadata_mock('nasa', body=md_rsp, method=responses.POST)
-        rsps.add_metadata_mock('nasa')
         valid_key = f'foo-{int(time())}'
         ia_call(['ia', 'metadata', '--modify', f'{valid_key}:test_value', 'nasa'])
         out, err = capsys.readouterr()

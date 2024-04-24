@@ -284,12 +284,15 @@ class File(BaseFile):
                     if checksum_archive:
                         checksum_archive_filename = '_checksum_archive.txt'
                         if not os.path.exists(checksum_archive_filename):
-                            with open(checksum_archive_filename, 'wt', encoding='utf-8') as f:
+                            with open(checksum_archive_filename, 'w', encoding='utf-8') as f:
                                 pass
-                        with open(checksum_archive_filename, 'rt', encoding='utf-8') as f:
+                        with open(checksum_archive_filename, encoding='utf-8') as f:
                             checksum_archive_data = f.read().splitlines()
                         if file_path in checksum_archive_data:
-                            msg = f'skipping {file_path}, file already exists based on checksum_archive.'
+                            msg = (
+                                f'skipping {file_path}, '
+                                f'file already exists based on checksum_archive.'
+                            )
                             log.info(msg)
                             if verbose:
                                 print(f' {msg}', file=sys.stderr)

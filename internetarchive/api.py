@@ -336,7 +336,7 @@ def download(
 
     :param checksum: Skip downloading file based on checksum.
 
-    :param checksum_archive: Skip downloading file based on checksum, and skip 
+    :param checksum_archive: Skip downloading file based on checksum, and skip
                              checksum validation if it already succeeded
                              (will create and use _checksum_archive.txt).
 

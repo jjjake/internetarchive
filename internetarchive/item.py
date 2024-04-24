@@ -752,7 +752,7 @@ class Item(BaseItem):
                 ors = True
             else:
                 ors = False
-            r = f.download(path, verbose, ignore_existing, checksum, checksum_archive, 
+            r = f.download(path, verbose, ignore_existing, checksum, checksum_archive,
                            destdir, retries, ignore_errors, fileobj, return_responses,
                            no_change_timestamp, params, None, stdout, ors, timeout)
             if return_responses:

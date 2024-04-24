@@ -281,14 +281,8 @@ class File(BaseFile):
 
                 # Check if we should skip...
                 if not return_responses and os.path.exists(file_path.encode('utf-8')):
-                    if ignore_existing:
-                        msg = f'skipping {file_path}, file already exists.'
-                        log.info(msg)
-                        if verbose:
-                            print(f' {msg}', file=sys.stderr)
-                        return
-                    elif checksum_archive:
-                        checksum_archive_filename = '_checksum_archive.txt'  # TODO Define this at a better place
+                    if checksum_archive:
+                        checksum_archive_filename = '_checksum_archive.txt'
                         if not os.path.exists(checksum_archive_filename):
                             with open(checksum_archive_filename, 'wt', encoding='utf-8') as f:
                                 pass
@@ -300,6 +294,12 @@ class File(BaseFile):
                             if verbose:
                                 print(f' {msg}', file=sys.stderr)
                             return
+                    if ignore_existing:
+                        msg = f'skipping {file_path}, file already exists.'
+                        log.info(msg)
+                        if verbose:
+                            print(f' {msg}', file=sys.stderr)
+                        return
                     elif checksum or checksum_archive:
                         with open(file_path, 'rb') as fp:
                             md5_sum = utils.get_md5(fp)

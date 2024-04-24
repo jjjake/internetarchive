@@ -57,7 +57,7 @@ from internetarchive.utils import (
     iter_directory,
     json,
     norm_filepath,
-    recursive_file_count,
+    recursive_file_count_and_size,
     validate_s3_identifier,
 )
 
@@ -776,6 +776,7 @@ class Item(BaseItem):
                         metadata: Mapping,
                         target: str | None = None,
                         append: bool = False,
+                        expect: Mapping | None = None,
                         append_list: bool = False,
                         insert: bool = False,
                         priority: int = 0,
@@ -784,7 +785,8 @@ class Item(BaseItem):
                         debug: bool = False,
                         headers: Mapping | None = None,
                         request_kwargs: Mapping | None = None,
-                        timeout: int | float | None = None) -> Request | Response:
+                        timeout: int | float | None = None,
+                        refresh: bool = True) -> Request | Response:
         """Modify the metadata of an existing item on Archive.org.
 
         Note: The Metadata Write API does not yet comply with the
@@ -800,8 +802,13 @@ class Item(BaseItem):
         :param append: Append value to an existing multi-value
                        metadata field.
 
+        :param expect: Provide a dict of expectations to be tested
+                       server-side before applying patch to item metadata.
+
         :param append_list: Append values to an existing multi-value
                             metadata field. No duplicate values will be added.
+
+        :param refresh: Refresh the item metadata after the request.
 
         :returns: A Request if debug else a Response.
 
@@ -817,6 +824,7 @@ class Item(BaseItem):
         secret_key = secret_key or self.session.secret_key
         debug = bool(debug)
         headers = headers or {}
+        expect = expect or {}
         request_kwargs = request_kwargs or {}
         if timeout:
             request_kwargs["timeout"] = float(timeout)  # type: ignore
@@ -841,6 +849,7 @@ class Item(BaseItem):
             access_key=access_key,
             secret_key=secret_key,
             append=append,
+            expect=expect,
             append_list=append_list,
             insert=insert)
         # Must use Session.prepare_request to make sure session settings
@@ -850,7 +859,8 @@ class Item(BaseItem):
             return prepared_request
         resp = self.session.send(prepared_request, **request_kwargs)
         # Re-initialize the Item object with the updated metadata.
-        self.refresh()
+        if refresh:
+            self.refresh()
         return resp
 
     # TODO: `list` parameter name shadows the Python builtin
@@ -1112,9 +1122,9 @@ class Item(BaseItem):
                 return response
             except HTTPError as exc:
                 try:
-                    msg = get_s3_xml_text(exc.response.content)
+                    msg = get_s3_xml_text(exc.response.content)  # type: ignore
                 except ExpatError:  # probably HTTP 500 error and response is invalid XML
-                    msg = ('IA S3 returned invalid XML '
+                    msg = ('IA S3 returned invalid XML '  # type: ignore
                            f'(HTTP status code {exc.response.status_code}). '
                            'This is a server side error which is either temporary, '
                            'or requires the intervention of IA admins.')
@@ -1200,11 +1210,13 @@ class Item(BaseItem):
 
         responses = []
         file_index = 0
-        if queue_derive and total_files is None:
-            if checksum:
-                total_files = recursive_file_count(files, item=self, checksum=True)
-            else:
-                total_files = recursive_file_count(files, item=self, checksum=False)
+        headers = headers or {}
+        if (queue_derive or not headers.get('x-archive-size-hint')) and total_files == 0:
+            total_files, total_size = recursive_file_count_and_size(files,
+                                                                    item=self,
+                                                                    checksum=checksum)
+            if not headers.get('x-archive-size-hint'):
+                headers['x-archive-size-hint'] = str(total_size)
         file_metadata = None
         for f in files:
             if isinstance(f, dict):

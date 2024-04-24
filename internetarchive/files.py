@@ -28,6 +28,8 @@ import os
 import socket
 import sys
 from contextlib import nullcontext, suppress
+from email.utils import parsedate_to_datetime
+from time import sleep
 from urllib.parse import quote
 
 from requests.exceptions import (
@@ -39,7 +41,7 @@ from requests.exceptions import (
 )
 from tqdm import tqdm
 
-from internetarchive import auth, iarequest, utils
+from internetarchive import auth, exceptions, iarequest, utils
 
 log = logging.getLogger(__name__)
 
@@ -136,11 +138,25 @@ class File(BaseFile):
                 f'size={self.size!r}, '
                 f'format={self.format!r})')
 
-    def download(self, file_path=None, verbose=None, ignore_existing=None,
-                 checksum=None, checksum_archive=None, destdir=None, retries=None,
-                 ignore_errors=None, fileobj=None, return_responses=None,
-                 no_change_timestamp=None, params=None, chunk_size=None, stdout=None,
-                 ors=None, timeout=None):
+    def download(  # noqa: max-complexity=38
+        self,
+        file_path=None,
+        verbose=None,
+        ignore_existing=None,
+        checksum=None,
+        checksum_archive=None,
+        destdir=None,
+        retries=None,
+        ignore_errors=None,
+        fileobj=None,
+        return_responses=None,
+        no_change_timestamp=None,
+        params=None,
+        chunk_size=None,
+        stdout=None,
+        ors=None,
+        timeout=None,
+    ):
         """Download the file into the current working directory.
 
         :type file_path: str
@@ -210,12 +226,16 @@ class File(BaseFile):
         no_change_timestamp = no_change_timestamp or False
         params = params or None
         timeout = 12 if not timeout else timeout
+        headers = {}
+        retries_sleep = 3  # TODO: exponential sleep
+        retrying = False  # for retry loop
 
         self.item.session.mount_http_adapter(max_retries=retries)
         file_path = file_path or self.name
 
         if destdir:
-            print(f"destdir: {destdir}")
+            if verbose:
+                print(f"destdir: {destdir}")
             if return_responses is not True:
                 try:
                     os.mkdir(destdir)
@@ -225,109 +245,163 @@ class File(BaseFile):
                 raise OSError(f'{destdir} is not a directory!')
             file_path = os.path.join(destdir, file_path)
 
-        if checksum_archive:
-            checksum_archive_filename = '_checksum_archive.txt'
-            if not os.path.exists(checksum_archive_filename):
-                with open(checksum_archive_filename, 'wt', encoding='utf-8') as f:
-                    pass
-            with open(checksum_archive_filename, 'rt', encoding='utf-8') as f:
-                checksum_archive_data = f.read().splitlines()
-            if file_path in checksum_archive_data:
-                msg = f'skipping {file_path}, file already exists based on checksum_archive.'
-                log.info(msg)
-                if verbose:
-                    print(f' {msg}', file=sys.stderr)
-                return
-
-        if not return_responses and os.path.exists(file_path.encode('utf-8')):
-            if ignore_existing:
-                msg = f'skipping {file_path}, file already exists.'
-                log.info(msg)
-                if verbose:
-                    print(f' {msg}', file=sys.stderr)
-                return
-            elif checksum or checksum_archive:
-                with open(file_path, 'rb') as fp:
-                    md5_sum = utils.get_md5(fp)
-
-                if md5_sum == self.md5:
-                    msg = f'skipping {file_path}, file already exists based on checksum.'
-                    log.info(msg)
-                    if verbose:
-                        print(f' {msg}', file=sys.stderr)
-                    if checksum_archive:
-                        # add file to checksum_archive to skip it next time
-                        with open(checksum_archive_filename, 'a', encoding='utf-8') as f:
-                            f.write(f'{file_path}\n')
-                    return
-            elif not fileobj:
-                st = os.stat(file_path.encode('utf-8'))
-                if (st.st_mtime == self.mtime) and (st.st_size == self.size) \
-                        or self.name.endswith('_files.xml') and st.st_size != 0:
-                    msg = f'skipping {file_path}, file already exists based on length and date.'
-                    log.info(msg)
-                    if verbose:
-                        print(f' {msg}', file=sys.stderr)
-                    return
-
         parent_dir = os.path.dirname(file_path)
-        try:
-            if parent_dir != '' and return_responses is not True:
-                os.makedirs(parent_dir, exist_ok=True)
 
-            response = self.item.session.get(self.url,
-                                             stream=True,
-                                             timeout=timeout,
-                                             auth=self.auth,
-                                             params=params)
-            response.raise_for_status()
-            if return_responses:
-                return response
-
-            if verbose:
-                total = int(response.headers.get('content-length', 0)) or None
-                progress_bar = tqdm(desc=f' downloading {self.name}',
-                                    total=total,
-                                    unit='iB',
-                                    unit_scale=True,
-                                    unit_divisor=1024)
-            else:
-                progress_bar = nullcontext()
-
-            if not chunk_size:
-                chunk_size = 1048576
-            if stdout:
-                fileobj = os.fdopen(sys.stdout.fileno(), "wb", closefd=False)
-            if not fileobj:
-                fileobj = open(file_path.encode('utf-8'), 'wb')
-
-            with fileobj, progress_bar as bar:
-                for chunk in response.iter_content(chunk_size=chunk_size):
-                    if chunk:
-                        size = fileobj.write(chunk)
-                        if bar is not None:
-                            bar.update(size)
-                if ors:
-                    fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
-        except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout) as exc:
-            msg = f'error downloading file {file_path}, exception raised: {exc}'
-            log.error(msg)
+        # Retry loop
+        while True:
             try:
-                os.remove(file_path)
-            except OSError:
-                pass
-            if verbose:
-                print(f' {msg}', file=sys.stderr)
-            if ignore_errors:
-                return False
-            else:
-                raise exc
+                if parent_dir != '' and return_responses is not True:
+                    os.makedirs(parent_dir, exist_ok=True)
 
-        # Set mtime with mtime from files.xml.
+                if not return_responses \
+                        and not ignore_existing \
+                        and self.name != f'{self.identifier}_files.xml' \
+                        and os.path.exists(file_path.encode('utf-8')):
+                    st = os.stat(file_path.encode('utf-8'))
+                    if st.st_size != self.size and not (checksum or checksum_archive):
+                        headers = {"Range": f"bytes={st.st_size}-"}
+
+                response = self.item.session.get(
+                    self.url,
+                    stream=True,
+                    timeout=timeout,
+                    auth=self.auth,
+                    params=params,
+                    headers=headers,
+                )
+                # Get timestamp from Last-Modified header
+                last_mod_header = response.headers.get('Last-Modified')
+                if last_mod_header:
+                    dt = parsedate_to_datetime(last_mod_header)
+                    last_mod_mtime = dt.timestamp()
+                else:
+                    last_mod_mtime = 0
+
+                response.raise_for_status()
+
+                # Check if we should skip...
+                if not return_responses and os.path.exists(file_path.encode('utf-8')):
+                    if ignore_existing:
+                        msg = f'skipping {file_path}, file already exists.'
+                        log.info(msg)
+                        if verbose:
+                            print(f' {msg}', file=sys.stderr)
+                        return
+                    elif checksum_archive:
+                        checksum_archive_filename = '_checksum_archive.txt'  # TODO Define this at a better place
+                        if not os.path.exists(checksum_archive_filename):
+                            with open(checksum_archive_filename, 'wt', encoding='utf-8') as f:
+                                pass
+                        with open(checksum_archive_filename, 'rt', encoding='utf-8') as f:
+                            checksum_archive_data = f.read().splitlines()
+                        if file_path in checksum_archive_data:
+                            msg = f'skipping {file_path}, file already exists based on checksum_archive.'
+                            log.info(msg)
+                            if verbose:
+                                print(f' {msg}', file=sys.stderr)
+                            return
+                    elif checksum or checksum_archive:
+                        with open(file_path, 'rb') as fp:
+                            md5_sum = utils.get_md5(fp)
+
+                        if md5_sum == self.md5:
+                            msg = f'skipping {file_path}, file already exists based on checksum.'
+                            log.info(msg)
+                            if verbose:
+                                print(f' {msg}', file=sys.stderr)
+                            if checksum_archive:
+                                # add file to checksum_archive to skip it next time
+                                with open(checksum_archive_filename, 'a', encoding='utf-8') as f:
+                                    f.write(f'{file_path}\n')
+                            return
+                    elif not fileobj:
+                        st = os.stat(file_path.encode('utf-8'))
+                        if st.st_mtime == last_mod_mtime:
+                            if self.name == f'{self.identifier}_files.xml' \
+                                or (st.st_size == self.size):
+                                msg = (f'skipping {file_path}, file already exists based on '
+                                        'length and date.')
+                                log.info(msg)
+                                if verbose:
+                                    print(f' {msg}', file=sys.stderr)
+                                return
+
+                elif return_responses:
+                    return response
+
+                if verbose:
+                    total = int(response.headers.get('content-length', 0)) or None
+                    progress_bar = tqdm(desc=f' downloading {self.name}',
+                                        total=total,
+                                        unit='iB',
+                                        unit_scale=True,
+                                        unit_divisor=1024)
+                else:
+                    progress_bar = nullcontext()
+
+                if not chunk_size:
+                    chunk_size = 1048576
+                if stdout:
+                    fileobj = os.fdopen(sys.stdout.fileno(), 'wb', closefd=False)
+                if not fileobj or retrying:
+                    if 'Range' in headers:
+                        fileobj = open(file_path.encode('utf-8'), 'rb+')
+                    else:
+                        fileobj = open(file_path.encode('utf-8'), 'wb')
+
+                with fileobj, progress_bar as bar:
+                    if 'Range' in headers:
+                        fileobj.seek(st.st_size)
+                    for chunk in response.iter_content(chunk_size=chunk_size):
+                        if chunk:
+                            size = fileobj.write(chunk)
+                            if bar is not None:
+                                bar.update(size)
+                    if ors:
+                        fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
+
+                if 'Range' in headers:
+                    with open(file_path, 'rb') as fh:
+                        local_checksum = utils.get_md5(fh)
+                    try:
+                        assert local_checksum == self.md5
+                    except AssertionError:
+                        msg = (f"\"{file_path}\" corrupt, "
+                               "checksums do not match. "
+                               "Remote file may have been modified, "
+                               "retry download.")
+                        os.remove(file_path.encode('utf-8'))
+                        raise exceptions.InvalidChecksumError(msg)
+                break
+            except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout,
+                    exceptions.InvalidChecksumError) as exc:
+                if retries > 0:
+                    retrying = True
+                    retries -= 1
+                    msg = ('download failed, sleeping for '
+                           f'{retries_sleep} seconds and retrying. '
+                           f'{retries} retries left.')
+                    log.warning(msg)
+                    sleep(retries_sleep)
+                    continue
+                msg = f'error downloading file {file_path}, exception raised: {exc}'
+                log.error(msg)
+                try:
+                    os.remove(file_path)
+                except OSError:
+                    pass
+                if verbose:
+                    print(f' {msg}', file=sys.stderr)
+                if ignore_errors:
+                    return False
+                else:
+                    raise exc
+
+        # Set mtime with timestamp from Last-Modified header
         if not no_change_timestamp:
             # If we want to set the timestamp to that of the original archive...
             with suppress(OSError):  # Probably file-like object, e.g. sys.stdout.
-                os.utime(file_path.encode('utf-8'), (0, self.mtime))
+                os.utime(file_path.encode('utf-8'), (0,last_mod_mtime))
 
         msg = f'downloaded {self.identifier}/{self.name} to {file_path}'
         log.info(msg)

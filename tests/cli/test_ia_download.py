@@ -73,8 +73,9 @@ def test_clobber(tmpdir_ch):
 
     stdout, stderr = call_cmd(cmd)
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
-    expected_stderr = ('nasa:\n'
-                       ' skipping nasa/nasa_meta.xml, file already exists based on length and date.')
+    prefix = 'nasa:\n'.replace('\n', os.linesep)
+    filepath = os.path.join('nasa', 'nasa_meta.xml')
+    expected_stderr = f'{prefix} skipping {filepath}, file already exists based on length and date.'
     assert expected_stderr == stderr
 
 
@@ -84,7 +85,31 @@ def test_checksum(tmpdir_ch):
 
     stdout, stderr = call_cmd('ia --insecure download --checksum nasa nasa_meta.xml')
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
-    assert 'nasa:\n skipping nasa/nasa_meta.xml, file already exists based on checksum.' == stderr
+    prefix = 'nasa:\n'.replace('\n', os.linesep)
+    filepath = os.path.join('nasa', 'nasa_meta.xml')
+    assert f'{prefix} skipping {filepath}, file already exists based on checksum.' == stderr
+
+
+def test_checksum_archive(tmpdir_ch):
+    call_cmd('ia --insecure download nasa nasa_meta.xml')
+    assert files_downloaded('nasa') == {'nasa_meta.xml'}
+
+    stdout, stderr = call_cmd('ia --insecure download --checksum-archive nasa nasa_meta.xml')
+    assert files_downloaded('nasa') == {'nasa_meta.xml'}
+    prefix = 'nasa:\n'.replace('\n', os.linesep)
+    filepath = os.path.join('nasa', 'nasa_meta.xml')
+    assert f'{prefix} skipping {filepath}, file already exists based on checksum.' == stderr
+
+    assert '_checksum_archive.txt' in files_downloaded('.')
+    with open(os.path.join('.', '_checksum_archive.txt'), encoding='utf-8') as f:
+        filepath = os.path.join('nasa', 'nasa_meta.xml')
+        assert f.read() == f'{filepath}\n'
+
+    stdout, stderr = call_cmd('ia --insecure download --checksum-archive nasa nasa_meta.xml')
+    assert files_downloaded('nasa') == {'nasa_meta.xml'}
+    prefix = 'nasa:\n'.replace('\n', os.linesep)
+    filepath = os.path.join('nasa', 'nasa_meta.xml')
+    assert f'{prefix} skipping {filepath}, file already exists based on checksum_archive.' == stderr
 
 
 def test_no_directories(tmpdir_ch):

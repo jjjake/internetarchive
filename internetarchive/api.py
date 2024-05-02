@@ -209,6 +209,7 @@ def modify_metadata(
         secret_key=secret_key,
         debug=debug,
         request_kwargs=request_kwargs,
+        refresh=False
     )
 
 

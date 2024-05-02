@@ -779,7 +779,8 @@ class Item(BaseItem):
                         debug: bool = False,
                         headers: Mapping | None = None,
                         request_kwargs: Mapping | None = None,
-                        timeout: int | float | None = None) -> Request | Response:
+                        timeout: int | float | None = None,
+                        refresh: bool = True) -> Request | Response:
         """Modify the metadata of an existing item on Archive.org.
 
         Note: The Metadata Write API does not yet comply with the
@@ -800,6 +801,8 @@ class Item(BaseItem):
 
         :param append_list: Append values to an existing multi-value
                             metadata field. No duplicate values will be added.
+
+        :param refresh: Refresh the item metadata after the request.
 
         :returns: A Request if debug else a Response.
 
@@ -850,7 +853,8 @@ class Item(BaseItem):
             return prepared_request
         resp = self.session.send(prepared_request, **request_kwargs)
         # Re-initialize the Item object with the updated metadata.
-        self.refresh()
+        if refresh:
+            self.refresh()
         return resp
 
     # TODO: `list` parameter name shadows the Python builtin

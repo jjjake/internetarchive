@@ -1,7 +1,10 @@
-#
-# The internetarchive module is a Python/CLI interface to Archive.org.
-#
-# Copyright (C) 2012-2021 Internet Archive
+"""
+ia_copy.py
+
+'ia' subcommand for copying files on archive.org
+"""
+
+# Copyright (C) 2012-2024 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -16,132 +19,144 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Copy files in archive.org items.
-
-usage:
-    ia copy <src-identifier>/<src-file> <dest-identifier>/<dest-file> [options]...
-    ia copy --help
-
-options:
-    -h, --help
-    -m, --metadata=<key:value>...  Metadata to add to your new item, if you are moving
-                                   the file to a new item.
-    --replace-metadata             Only use metadata specified as argument,
-                                   do not copy any from the source item.
-    -H, --header=<key:value>...    S3 HTTP headers to send with your request.
-    --ignore-file-metadata         Do not copy file metadata.
-    -n, --no-derive                Do not derive uploaded files.
-    --no-backup                    Turn off archive.org backups. Clobbered files
-                                   will not be saved to history/files/$key.~N~
-                                   [default: True].
-"""
 from __future__ import annotations
 
+import argparse
 import sys
+from typing import Optional
 from urllib.parse import quote
 
-from docopt import docopt, printable_usage
 from requests import Response
-from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
 
 import internetarchive as ia
-from internetarchive.cli.argparser import get_args_dict
+from internetarchive.cli.cli_utils import prepare_args_dict
 from internetarchive.utils import get_s3_xml_text, merge_dictionaries
 
 
+def setup(subparsers):
+    """
+    Setup args for copy command.
+
+    Args:
+        subparsers: subparser object passed from ia.py
+    """
+    parser = subparsers.add_parser("copy",
+                                   aliases=["cp"],
+                                   help="Copy files from archive.org items")
+    # Positional arguments
+    parser.add_argument("source",
+                        metavar="SOURCE",
+                        help="Source file formatted as: identifier/file")
+    parser.add_argument("destination",
+                        metavar="DESTINATION",
+                        help="Destination file formatted as: identifier/file")
+
+    # Options
+    parser.add_argument("-m", "--metadata",
+                        metavar="KEY:VALUE",
+                        action="append",
+                        help=("Metadata to add to your new item, if you are moving the "
+                              "file to a new item"))
+    parser.add_argument("--replace-metadata",
+                        action="store_true",
+                        help=("Only use metadata specified as argument, do not copy any "
+                              "from the source item"))
+    parser.add_argument("-H", "--header",
+                        metavar="KEY:VALUE",
+                        action="append",
+                        help="S3 HTTP headers to send with your request")
+    parser.add_argument("--ignore-file-metadata",
+                        action="store_true",
+                        help="Do not copy file metadata")
+    parser.add_argument("-n", "--no-derive",
+                        action="store_true",
+                        help="Do not derive uploaded files")
+    parser.add_argument("--no-backup",
+                        action="store_true",
+                        help=("Turn off archive.org backups, "
+                              "clobbered files will not be saved to "
+                              "'history/files/$key.~N~'"))
+
+    parser.set_defaults(func=lambda args: main(args, "copy", parser))
+
+
 def assert_src_file_exists(src_location: str) -> bool:
+    """
+    Assert that the source file exists on archive.org.
+    """
     assert SRC_ITEM.exists  # type: ignore
     global SRC_FILE
-    src_filename = src_location.split('/', 1)[-1]
+    src_filename = src_location.split("/", 1)[-1]
     SRC_FILE = SRC_ITEM.get_file(src_filename)  # type: ignore
     assert SRC_FILE.exists  # type: ignore
     return True
 
 
-def main(
-    argv: list[str] | None, session: ia.session.ArchiveSession, cmd: str = 'copy'
-) -> tuple[Response, ia.files.File]:
-    args = docopt(__doc__, argv=argv)
-    src_path = args['<src-identifier>/<src-file>']
-    dest_path = args['<dest-identifier>/<dest-file>']
+def main(args: argparse.Namespace,
+         cmd: str,
+         parser: argparse.ArgumentParser) -> tuple[Response, ia.files.File | None]:
+    """
+    Main entry point for 'ia copy'.
+    """
+    SRC_FILE = None
 
-    # If src == dest, file gets deleted!
-    try:
-        assert src_path != dest_path
-    except AssertionError:
-        print('error: The source and destination files cannot be the same!',
-              file=sys.stderr)
-        sys.exit(1)
+    args.header = prepare_args_dict(args.header, parser=parser, arg_type='header')
+    args.metadata = prepare_args_dict(args.metadata, parser=parser, arg_type='metadata')
+
+    if args.source == args.destination:
+        parser.error("error: The source and destination files cannot be the same!")
 
     global SRC_ITEM
-    SRC_ITEM = session.get_item(src_path.split('/')[0])  # type: ignore
-
-    # Validate args.
-    s = Schema({
-        str: Use(bool),
-        '<src-identifier>/<src-file>': And(str, And(And(str, lambda x: '/' in x,
-            error='Destination not formatted correctly. See usage example.'),
-            assert_src_file_exists, error=(
-            f'https://{session.host}/download/{src_path} does not exist. '
-            'Please check the identifier and filepath and retry.'))),
-        '<dest-identifier>/<dest-file>': And(str, lambda x: '/' in x,
-            error='Destination not formatted correctly. See usage example.'),
-        '--metadata': Or(None, And(Use(get_args_dict), dict),
-                         error='--metadata must be formatted as --metadata="key:value"'),
-        '--replace-metadata': Use(bool),
-        '--header': Or(None, And(Use(get_args_dict), dict),
-                       error='--header must be formatted as --header="key:value"'),
-        '--ignore-file-metadata': Use(bool),
-    })
+    SRC_ITEM = args.session.get_item(args.source.split("/")[0])  # type: ignore
 
     try:
-        args = s.validate(args)
-    except SchemaError as exc:
-        # This module is sometimes called by other modules.
-        # Replace references to 'ia copy' in ___doc__ to 'ia {cmd}' for clarity.
-        usage = printable_usage(__doc__.replace('ia copy', f'ia {cmd}'))
-        print(f'{exc}\n{usage}', file=sys.stderr)
-        sys.exit(1)
+        assert_src_file_exists(args.source)
+    except AssertionError:
+        parser.error(f"error: https://{args.session.host}/download/{args.source} "
+                      "does not exist. Please check the "
+                      "identifier and filepath and retry.")
 
-    args['--header']['x-amz-copy-source'] = f'/{quote(src_path)}'
+    args.header['x-amz-copy-source'] = f'/{quote(args.source)}'
     # Copy the old metadata verbatim if no additional metadata is supplied,
     # else combine the old and the new metadata in a sensible manner.
-    if args['--metadata'] or args['--replace-metadata']:
-        args['--header']['x-amz-metadata-directive'] = 'REPLACE'
+    if args.metadata or args.replace_metadata:
+        args.header['x-amz-metadata-directive'] = 'REPLACE'
     else:
-        args['--header']['x-amz-metadata-directive'] = 'COPY'
+        args.header['x-amz-metadata-directive'] = 'COPY'
 
     # New metadata takes precedence over old metadata.
-    if not args['--replace-metadata']:
-        args['--metadata'] = merge_dictionaries(SRC_ITEM.metadata,  # type: ignore
-                                                args['--metadata'])
+    if not args.replace_metadata:
+        args.metadata = merge_dictionaries(SRC_ITEM.metadata,  # type: ignore
+                                                args.metadata)
 
     # File metadata is copied by default but can be dropped.
-    file_metadata = None if args['--ignore-file-metadata'] else SRC_FILE.metadata  # type: ignore
+    file_metadata = None if args.ignore_file_metadata else SRC_FILE.metadata  # type: ignore
 
     # Add keep-old-version by default.
-    if not args['--header'].get('x-archive-keep-old-version') and not args['--no-backup']:
-        args['--header']['x-archive-keep-old-version'] = '1'
+    if not args.header.get('x-archive-keep-old-version') and not args.no_backup:
+        args.header['x-archive-keep-old-version'] = '1'
 
-    url = f'{session.protocol}//s3.us.archive.org/{quote(dest_path)}'
-    queue_derive = True if args['--no-derive'] is False else False
+    url = f'{args.session.protocol}//s3.us.archive.org/{quote(args.destination)}'
+    queue_derive = not args.no_derive
     req = ia.iarequest.S3Request(url=url,
                                  method='PUT',
-                                 metadata=args['--metadata'],
+                                 metadata=args.metadata,
                                  file_metadata=file_metadata,
-                                 headers=args['--header'],
+                                 headers=args.header,
                                  queue_derive=queue_derive,
-                                 access_key=session.access_key,
-                                 secret_key=session.secret_key)
+                                 access_key=args.session.access_key,
+                                 secret_key=args.session.secret_key)
     p = req.prepare()
-    r = session.send(p)
+    r = args.session.send(p)
     if r.status_code != 200:
         try:
             msg = get_s3_xml_text(r.text)
         except Exception as e:
             msg = r.text
-        print(f'error: failed to {cmd} "{src_path}" to "{dest_path}" - {msg}', file=sys.stderr)
+        print(f'error: failed to {cmd} "{args.source}" to "{args.destination}" - {msg}',
+              file=sys.stderr)
         sys.exit(1)
     elif cmd == 'copy':
-        print(f'success: copied "{src_path}" to "{dest_path}".', file=sys.stderr)
-    return (r, SRC_FILE)  # type: ignore
+        print(f'success: copied "{args.source}" to "{args.destination}".',
+              file=sys.stderr)
+    return (r, SRC_FILE)

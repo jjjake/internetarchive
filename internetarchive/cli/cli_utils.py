@@ -1,7 +1,9 @@
-#
-# The internetarchive module is a Python/CLI interface to Archive.org.
-#
-# Copyright (C) 2012-2019 Internet Archive
+"""
+interneratchive.cli.cli_utils
+
+"""
+
+# Copyright (C) 2012-2024 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -16,33 +18,34 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-internetarchive.cli.argparser
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-:copyright: (C) 2012-2019 by Internet Archive.
-:license: AGPL 3, see LICENSE for more details.
-"""
 from __future__ import annotations
 
+import argparse
+import os
 import sys
 from collections import defaultdict
 from typing import Mapping
 from urllib.parse import parse_qsl
 
+from internetarchive.utils import InvalidIdentifierException, validate_s3_identifier
 
-def get_args_dict(args: list[str], query_string: bool = False, header: bool = False) -> dict:
+
+def get_args_dict(args: list[str],
+                  query_string: bool = False,
+                  header: bool = False) -> dict:
     args = args or []
+    if not isinstance(args, list):
+        args = [args]
     metadata: dict[str, list | str] = defaultdict(list)
     for md in args:
         if query_string:
-            if (':' in md) and ('=' not in md):
-                md = md.replace(':', '=').replace(';', '&')
+            if (":" in md) and ("=" not in md):
+                md = md.replace(":", "=").replace(";", "&")
             for key, value in parse_qsl(md):
                 assert value
                 metadata[key] = value
         else:
-            key, value = md.split(':', 1)
+            key, value = md.split(":", 1)
             assert value
             if value not in metadata[key]:
                 metadata[key].append(value)  # type: ignore
@@ -63,8 +66,8 @@ def get_args_header_dict(args: list[str]) -> dict:
 def get_args_dict_many_write(metadata: Mapping):
     changes: dict[str, dict] = defaultdict(dict)
     for key, value in metadata.items():
-        target = '/'.join(key.split('/')[:-1])
-        field = key.split('/')[-1]
+        target = "/".join(key.split("/")[:-1])
+        field = key.split("/")[-1]
         if not changes[target]:
             changes[target] = {field: value}
         else:
@@ -75,3 +78,45 @@ def get_args_dict_many_write(metadata: Mapping):
 def convert_str_list_to_unicode(str_list: list[bytes]):
     encoding = sys.getfilesystemencoding()
     return [b.decode(encoding) for b in str_list]
+
+
+def validate_identifier(identifier):
+    try:
+        validate_s3_identifier(identifier)
+    except InvalidIdentifierException as e:
+        raise argparse.ArgumentTypeError(str(e))
+    return identifier
+
+
+def prepare_args_dict(args, parser, arg_type="metadata", many=False):
+    if not args:
+        return {}
+    try:
+        if many:
+            return get_args_dict_many_write([item for sublist in args for item in sublist])
+        else:
+            if isinstance(args[0], list):
+                return get_args_dict([item for sublist in args for item in sublist])
+            else:
+                return get_args_dict(args)
+    except ValueError as e:
+        parser.error(f"--{arg_type} must be formatted as --{arg_type}='key:value'")
+
+
+def validate_dir_path(path):
+    """
+    Check if the given path is a directory that exists.
+
+    Args:
+        path (str): The path to check.
+
+    Returns:
+        str: The validated directory path.
+
+    Raises:
+        argparse.ArgumentTypeError: If the path is not a valid directory.
+    """
+    if os.path.isdir(path):
+        return path
+    else:
+        raise argparse.ArgumentTypeError(f"'{path}' is not a valid directory")

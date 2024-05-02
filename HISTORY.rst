@@ -3,6 +3,15 @@
 Release History
 ---------------
 
+5.0.0 (?)
++++++++++
+
+**Features and Improvements**
+
+- Updated the CLI's command-line argument parsing by replacing the obsolete ``docopt``
+  with the native ``argparse`` library, ensuring continued functionality
+  and future compatibility.
+
 4.0.1 (2024-04-15)
 ++++++++++++++++++
 

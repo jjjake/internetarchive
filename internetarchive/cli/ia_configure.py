@@ -1,7 +1,10 @@
-#
-# The internetarchive module is a Python/CLI interface to Archive.org.
-#
-# Copyright (C) 2012-2019 Internet Archive
+"""
+ia_configure.py
+
+'ia' subcommand for configuring 'ia' with your archive.org credentials.
+"""
+
+# Copyright (C) 2012-2024 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -16,84 +19,95 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Configure 'ia' with your Archive.org credentials.
-
-usage:
-    ia configure
-    ia configure --username=<username> --password=<password>
-    ia configure --print-cookies
-    ia configure --netrc
-    ia configure [--help]
-
-options:
-    -h, --help
-    -u, --username=<username>  Provide username as an option rather than
-                               providing it interactively.
-    -p, --password=<password>  Provide password as an option rather than
-                               providing it interactively.
-    -n, --netrc                Use netrc file for login.
-    -c, --print-cookies        Print archive.org logged-in-* cookies.
-"""
 from __future__ import annotations
 
+import argparse
 import netrc
 import sys
 
-from docopt import docopt
-
-from internetarchive import ArchiveSession, configure
+from internetarchive import configure
 from internetarchive.exceptions import AuthenticationError
 
 
-def main(argv: list[str], session: ArchiveSession) -> None:
-    args = docopt(__doc__, argv=argv)
-    if args['--print-cookies']:
-        user = session.config.get('cookies', {}).get('logged-in-user')
-        sig = session.config.get('cookies', {}).get('logged-in-sig')
+def setup(subparsers):
+    """
+    Setup args for configure command.
+
+    Args:
+        subparsers: subparser object passed from ia.py
+    """
+    parser = subparsers.add_parser("configure",
+                                   aliases=["co"],
+                                   help=("configure 'ia' with your "
+                                         "archive.org credentials"))
+    parser.add_argument("--username", "-u",
+                        help=("provide username as an option rather than "
+                              "providing it interactively"))
+    parser.add_argument("--password", "-p",
+                        help=("provide password as an option rather than "
+                              "providing it interactively"))
+    parser.add_argument("--netrc", "-n",
+                        action="store_true",
+                        help="use netrc file for login")
+    parser.add_argument("--print-cookies", "-c",
+                        action="store_true",
+                        help="print archive.org logged-in-* cookies")
+
+    parser.set_defaults(func=main)
+
+
+def main(args: argparse.Namespace) -> None:
+    """
+    Main entrypoint for 'ia configure'.
+    """
+    if args.print_cookies:
+        user = args.session.config.get("cookies", {}).get("logged-in-user")
+        sig = args.session.config.get("cookies", {}).get("logged-in-sig")
         if not user or not sig:
             if not user and not sig:
-                print('error: "logged-in-user" and "logged-in-sig" cookies '
-                      'not found in config file, try reconfiguring.', file=sys.stderr)
+                print("error: 'logged-in-user' and 'logged-in-sig' cookies "
+                      "not found in config file, try reconfiguring.", file=sys.stderr)
             elif not user:
-                print('error: "logged-in-user" cookie not found in config file, '
-                      'try reconfiguring.', file=sys.stderr)
+                print("error: 'logged-in-user' cookie not found in config file, "
+                      "try reconfiguring.", file=sys.stderr)
             elif not sig:
-                print('error: "logged-in-sig" cookie not found in config file, '
-                      'try reconfiguring.', file=sys.stderr)
+                print("error: 'logged-in-sig' cookie not found in config file, "
+                      "try reconfiguring.", file=sys.stderr)
             sys.exit(1)
-        print(f'logged-in-user={user}; logged-in-sig={sig}')
+        print(f"logged-in-user={user}; logged-in-sig={sig}")
         sys.exit()
     try:
-        # CLI params.
-        if args['--username'] and args['--password']:
-            config_file_path = configure(args['--username'],
-                                         args['--password'],
-                                         config_file=session.config_file,
-                                         host=session.host)
-            print(f'Config saved to: {config_file_path}', file=sys.stderr)
-
         # Netrc
-        elif args['--netrc']:
+        if args.netrc:
             print("Configuring 'ia' with netrc file...", file=sys.stderr)
             try:
                 n = netrc.netrc()
-            except netrc.NetrcParseError as exc:
-                print('error: netrc.netrc() cannot parse your .netrc file.', file=sys.stderr)
+            except netrc.NetrcParseError:
+                print("error: netrc.netrc() cannot parse your .netrc file.",
+                      file=sys.stderr)
                 sys.exit(1)
-            username, _, password = n.hosts['archive.org']
+            except FileNotFoundError:
+                print("error: .netrc file not found.", file=sys.stderr)
+                sys.exit(1)
+            username, _, password = n.hosts["archive.org"]
             config_file_path = configure(username,
                                          password or "",
-                                         config_file=session.config_file,
-                                         host=session.host)
-            print(f'Config saved to: {config_file_path}', file=sys.stderr)
-
+                                         config_file=args.session.config_file,
+                                         host=args.session.host)
+            print(f"Config saved to: {config_file_path}", file=sys.stderr)
         # Interactive input.
         else:
-            print("Enter your Archive.org credentials below to configure 'ia'.\n")
-            config_file_path = configure(config_file=session.config_file,
-                                         host=session.host)
-            print(f'\nConfig saved to: {config_file_path}')
+            if not (args.username and args.password):
+                print("Enter your Archive.org credentials below to configure 'ia'.\n")
+            config_file_path = configure(args.username,
+                                         args.password,
+                                         config_file=args.session.config_file,
+                                         host=args.session.host)
+            saved_msg = f"Config saved to: {config_file_path}"
+            if not all([args.username, args.password]):
+                saved_msg = f"\n{saved_msg}"
+            print(saved_msg)
 
     except AuthenticationError as exc:
-        print(f'\nerror: {exc}', file=sys.stderr)
+        print(f"\nerror: {exc}", file=sys.stderr)
         sys.exit(1)

@@ -1,7 +1,10 @@
-#
-# The internetarchive module is a Python/CLI interface to Archive.org.
-#
-# Copyright (C) 2012-2019 Internet Archive
+"""
+ia_move.py
+
+'ia' subcommand for moving files on archive.org
+"""
+
+# Copyright (C) 2012-2024 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -16,66 +19,79 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Move and rename files in archive.org items.
-
-usage:
-    ia move <src-identifier>/<src-file> <dest-identifier>/<dest-file> [options]...
-    ia move --help
-
-options:
-    -h, --help
-    -m, --metadata=<key:value>...  Metadata to add to your new item, if you are moving
-                                   the file to a new item.
-    -H, --header=<key:value>...    S3 HTTP headers to send with your request.
-    -n, --no-derive                Do not derive uploaded files.
-    --no-backup                    Turn off archive.org backups. Clobbered files
-                                   will not be saved to history/files/$key.~N~
-                                   [default: True].
-"""
+import argparse
 import sys
 
-from docopt import docopt, printable_usage
-from schema import And, Or, Schema, SchemaError, Use  # type: ignore[import]
-
-from internetarchive import ArchiveSession
 from internetarchive.cli import ia_copy
-from internetarchive.cli.argparser import get_args_dict
+from internetarchive.cli.cli_utils import prepare_args_dict
 
 
-def main(argv, session: ArchiveSession) -> None:
-    args = docopt(__doc__, argv=argv)
-    src_path = args['<src-identifier>/<src-file>']
-    dest_path = args['<dest-identifier>/<dest-file>']
+def setup(subparsers):
+    """
+    Setup args for move command.
 
-    # Validate args.
-    s = Schema({
-        str: Use(bool),
-        '--metadata': list,
-        '--header': Or(None, And(Use(get_args_dict), dict),
-            error='--header must be formatted as --header="key:value"'),
-        '<src-identifier>/<src-file>': And(str, lambda x: '/' in x,
-            error='Source not formatted correctly. See usage example.'),
-        '<dest-identifier>/<dest-file>': And(str, lambda x: '/' in x,
-            error='Destination not formatted correctly. See usage example.'),
-    })
-    try:
-        args = s.validate(args)
-    except SchemaError as exc:
-        print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
-        sys.exit(1)
+    Args:
+        subparsers: subparser object passed from ia.py
+    """
+    parser = subparsers.add_parser("move",
+                                   aliases=["mv"],
+                                   help="Move and rename files in archive.org items")
+
+    # Positional arguments
+    parser.add_argument('source',
+                        metavar='SOURCE',
+                        help="Source file formatted as: identifier/file")
+    parser.add_argument('destination',
+                        metavar='DESTINATION',
+                        help="Destination file formatted as: identifier/file")
+
+    # Options
+    parser.add_argument('-m', '--metadata',
+                        metavar='KEY:VALUE',
+                        action='append',
+                        help=("Metadata to add to your new item, "
+                              "if you are moving the file to a new item"))
+    parser.add_argument('-H', '--header',
+                        metavar='KEY:VALUE',
+                        action='append',
+                        help="S3 HTTP headers to send with your request")
+    parser.add_argument("--replace-metadata",
+                        action="store_true",
+                        help=("Only use metadata specified as argument, do not copy any "
+                              "from the source item"))
+    parser.add_argument("--ignore-file-metadata",
+                        action="store_true",
+                        help="Do not copy file metadata")
+    parser.add_argument('-n', '--no-derive',
+                        action='store_true',
+                        help="Do not derive uploaded files")
+    parser.add_argument('--no-backup',
+                        action='store_true',
+                        help=("Turn off archive.org backups, "
+                              'clobbered files will not be saved to "history/files/$key.~N~"'))
+
+    parser.set_defaults(func=lambda args: main(args, parser))
+
+
+def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    """
+    Main entry point for ia move command.
+    """
+    args.header = prepare_args_dict(args.header, parser=parser, arg_type='header')
+    args.metadata = prepare_args_dict(args.metadata, parser=parser, arg_type='metadata')
 
     # Add keep-old-version by default.
-    if not args['--header'].get('x-archive-keep-old-version') and not args['--no-backup']:
-        args['--header']['x-archive-keep-old-version'] = '1'
-
-    # First we use ia_copy, prep argv for ia_copy.
-    argv.pop(0)
-    argv = ['copy'] + argv
+    if not args.header.get('x-archive-keep-old-version') and not args.no_backup:
+        args.header['x-archive-keep-old-version'] = '1'
 
     # Call ia_copy.
-    r, src_file = ia_copy.main(argv, session, cmd='move')
-    dr = src_file.delete(headers=args['--header'], cascade_delete=True)
+    _, src_file = ia_copy.main(args, cmd='move', parser=parser)
+    if src_file:
+        dr = src_file.delete(headers=args.header, cascade_delete=True)
+    else:
+        print(f'error: {src_file} does not exist', file=sys.stderr)
+        sys.exit(1)
     if dr.status_code == 204:
-        print(f'success: moved {src_path} to {dest_path}', file=sys.stderr)
+        print(f'success: moved {args.source} to {args.destination}', file=sys.stderr)
         sys.exit(0)
     print(f'error: {dr.content}', file=sys.stderr)

@@ -100,8 +100,8 @@ def main(args: argparse.Namespace,
     """
     SRC_FILE = None
 
-    args.header = prepare_args_dict(args.header, parser=parser, arg_type='header')
-    args.metadata = prepare_args_dict(args.metadata, parser=parser, arg_type='metadata')
+    args.header = prepare_args_dict(args.header, parser=parser, arg_type="header")
+    args.metadata = prepare_args_dict(args.metadata, parser=parser, arg_type="metadata")
 
     if args.source == args.destination:
         parser.error("error: The source and destination files cannot be the same!")
@@ -116,13 +116,13 @@ def main(args: argparse.Namespace,
                       "does not exist. Please check the "
                       "identifier and filepath and retry.")
 
-    args.header['x-amz-copy-source'] = f'/{quote(args.source)}'
+    args.header["x-amz-copy-source"] = f"/{quote(args.source)}"
     # Copy the old metadata verbatim if no additional metadata is supplied,
     # else combine the old and the new metadata in a sensible manner.
     if args.metadata or args.replace_metadata:
-        args.header['x-amz-metadata-directive'] = 'REPLACE'
+        args.header["x-amz-metadata-directive"] = "REPLACE"
     else:
-        args.header['x-amz-metadata-directive'] = 'COPY'
+        args.header["x-amz-metadata-directive"] = "COPY"
 
     # New metadata takes precedence over old metadata.
     if not args.replace_metadata:
@@ -133,13 +133,13 @@ def main(args: argparse.Namespace,
     file_metadata = None if args.ignore_file_metadata else SRC_FILE.metadata  # type: ignore
 
     # Add keep-old-version by default.
-    if not args.header.get('x-archive-keep-old-version') and not args.no_backup:
-        args.header['x-archive-keep-old-version'] = '1'
+    if not args.header.get("x-archive-keep-old-version") and not args.no_backup:
+        args.header["x-archive-keep-old-version"] = "1"
 
-    url = f'{args.session.protocol}//s3.us.archive.org/{quote(args.destination)}'
+    url = f"{args.session.protocol}//s3.us.archive.org/{quote(args.destination)}"
     queue_derive = not args.no_derive
     req = ia.iarequest.S3Request(url=url,
-                                 method='PUT',
+                                 method="PUT",
                                  metadata=args.metadata,
                                  file_metadata=file_metadata,
                                  headers=args.header,
@@ -153,10 +153,10 @@ def main(args: argparse.Namespace,
             msg = get_s3_xml_text(r.text)
         except Exception as e:
             msg = r.text
-        print(f'error: failed to {cmd} "{args.source}" to "{args.destination}" - {msg}',
+        print(f"error: failed to {cmd} '{args.source}' to '{args.destination}' - {msg}",
               file=sys.stderr)
         sys.exit(1)
-    elif cmd == 'copy':
-        print(f'success: copied "{args.source}" to "{args.destination}".',
+    elif cmd == "copy":
+        print(f"success: copied '{args.source}' to '{args.destination}'.",
               file=sys.stderr)
     return (r, SRC_FILE)

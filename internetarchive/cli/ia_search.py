@@ -119,9 +119,9 @@ def handle_search_results(args, search):
     for result in search:
         if args.itemlist:
             if args.fts or args.dsl_fts:
-                print('\n'.join(result.get('fields', {}).get('identifier')))
+                print("\n".join(result.get("fields", {}).get("identifier")))
             else:
-                print(result.get('identifier', ''))
+                print(result.get("identifier", ""))
         else:
             print(json.dumps(result))
             if result.get("error"):

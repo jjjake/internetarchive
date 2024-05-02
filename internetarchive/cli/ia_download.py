@@ -155,24 +155,24 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
                                                 params=args.search_parameters)
             total_ids = _search.num_found
             if total_ids == 0:
-                print(f'error: the query "{args.search}" returned no results', file=sys.stderr)
+                print(f"error: the query '{args.search}' returned no results", file=sys.stderr)
                 sys.exit(1)
             ids = _search
         except ValueError as e:
-            print(f'error: {e}', file=sys.stderr)
+            print(f"error: {e}", file=sys.stderr)
             sys.exit(1)
 
     # Download specific files.
-    if args.identifier and args.identifier != '-':
-        if '/' in args.identifier:
-            identifier = args.identifier.split('/')[0]
-            files = ['/'.join(args.identifier.split('/')[1:])]
+    if args.identifier and args.identifier != "-":
+        if "/" in args.identifier:
+            identifier = args.identifier.split("/")[0]
+            files = ["/".join(args.identifier.split("/")[1:])]
         else:
             identifier = args.identifier
             files = args.file
         total_ids = 1
         ids = [identifier]
-    elif args.identifier == '-':
+    elif args.identifier == "-":
         total_ids = 1
         ids = sys.stdin
         files = None
@@ -184,18 +184,18 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         try:
             identifier = identifier.strip()
         except AttributeError:
-            identifier = identifier.get('identifier')
+            identifier = identifier.get("identifier")
         if total_ids > 1:
-            item_index = f'{i + 1}/{total_ids}'
+            item_index = f"{i + 1}/{total_ids}"
         else:
             item_index = None
 
         try:
             item = args.session.get_item(identifier)
         except Exception as exc:
-            print(f'{identifier}: failed to retrieve item metadata - errors', file=sys.stderr)
-            if 'You are attempting to make an HTTPS' in str(exc):
-                print(f'\n{exc}', file=sys.stderr)
+            print(f"{identifier}: failed to retrieve item metadata - errors", file=sys.stderr)
+            if "You are attempting to make an HTTPS" in str(exc):
+                print(f"\n{exc}", file=sys.stderr)
                 sys.exit(1)
             else:
                 continue

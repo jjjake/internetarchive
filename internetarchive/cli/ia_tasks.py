@@ -39,17 +39,17 @@ def setup(subparsers):
                                    help="Retrieve information about your archive.org catalog tasks")
 
     parser.add_argument("-t", "--task",
-                        nargs='*',
+                        nargs="*",
                         help="Return information about the given task.")
     parser.add_argument("-G", "--get-task-log",
                         help="Return the given tasks task log.")
     parser.add_argument("-p", "--parameter",
                         nargs="+",
                         metavar="KEY:VALUE",
-                        action='append',
+                        action="append",
                         help="URL parameters passed to catalog.php.")
     parser.add_argument("-T", "--tab-output",
-                        action='store_true',
+                        action="store_true",
                         help="Output task info in tab-delimited columns.")
     parser.add_argument("-c", "--cmd",
                         type=str,
@@ -60,22 +60,22 @@ def setup(subparsers):
     parser.add_argument("-a", "--task-args",
                         nargs="+",
                         metavar="KEY:VALUE",
-                        action='append',
+                        action="append",
                         help="Args to submit to the Tasks API.")
     parser.add_argument("-d", "--data",
                         nargs="+",
                         metavar="KEY:VALUE",
-                        action='append',
+                        action="append",
                         help="Additional data to send when submitting a task.")
     parser.add_argument("-r", "--reduced-priority",
-                        action='store_true',
+                        action="store_true",
                         help="Submit task at a reduced priority.")
     parser.add_argument("-l", "--get-rate-limit",
-                        action='store_true',
+                        action="store_true",
                         help="Get rate limit info.")
     parser.add_argument("identifier",
                         type=str,
-                        nargs='?',
+                        nargs="?",
                         help="Identifier for tasks specific operations.")
 
     parser.set_defaults(func=lambda args: main(args, parser))
@@ -85,14 +85,14 @@ def handle_task_submission_result(result, cmd):
     """
     Handle the result of a task submission.
     """
-    if result.get('success'):
-        task_log_url = result.get('value', {}).get('log')
-        print(f'success: {task_log_url}', file=sys.stderr)
-    elif 'already queued/running' in result.get('error', ''):
-        print(f'success: {cmd} task already queued/running', file=sys.stderr)
+    if result.get("success"):
+        task_log_url = result.get("value", {}).get("log")
+        print(f"success: {task_log_url}", file=sys.stderr)
+    elif "already queued/running" in result.get("error", ""):
+        print(f"success: {cmd} task already queued/running", file=sys.stderr)
     else:
-        print(f'error: {result.get("error")}', file=sys.stderr)
-    sys.exit(0 if result.get('success') else 1)
+        print(f"error: {result.get('error')}", file=sys.stderr)
+    sys.exit(0 if result.get("success") else 1)
 
 
 def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
@@ -110,11 +110,11 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             r = args.session.get_tasks_api_rate_limit(args.cmd)
             print(json.dumps(r))
             sys.exit(0)
-        args.data['args'] = args.task_args
+        args.data["args"] = args.task_args
         r = args.session.submit_task(args.identifier,
                                      args.cmd,
                                      comment=args.comment,
-                                     priority=int(args.data.get('priority', 0)),
+                                     priority=int(args.data.get("priority", 0)),
                                      reduced_priority=args.reduced_priority,
                                      data=args.data)
         handle_task_submission_result(r.json(), args.cmd)
@@ -122,49 +122,49 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
 
     # Tasks read API.
     if args.identifier:
-        _params = {'identifier': args.identifier, 'catalog': 1, 'history': 1}
+        _params = {"identifier": args.identifier, "catalog": 1, "history": 1}
         _params.update(args.parameter)
         args.parameter = _params
     elif args.get_task_log:
         log = args.session.get_task_log(args.get_task_log, **args.parameter)
-        print(log.encode('utf-8', errors='surrogateescape')
-                 .decode('utf-8', errors='replace'))
+        print(log.encode("utf-8", errors="surrogateescape")
+                 .decode("utf-8", errors="replace"))
         sys.exit(0)
 
     queryable_params = [
-        'identifier',
-        'task_id',
-        'server',
-        'cmd',
-        'args',
-        'submitter',
-        'priority',
-        'wait_admin',
-        'submittime',
+        "identifier",
+        "task_id",
+        "server",
+        "cmd",
+        "args",
+        "submitter",
+        "priority",
+        "wait_admin",
+        "submittime",
     ]
 
     if not (args.identifier
-            or args.parameter.get('task_id')):
-        _params = {'catalog': 1, 'history': 0}
+            or args.parameter.get("task_id")):
+        _params = {"catalog": 1, "history": 0}
         _params.update(args.parameter)
         args.parameter = _params
 
     if not any(x in args.parameter for x in queryable_params):
-        _params = {'submitter': args.session.user_email, 'catalog': 1, 'history': 0, 'summary': 0}
+        _params = {"submitter": args.session.user_email, "catalog": 1, "history": 0, "summary": 0}
         _params.update(args.parameter)
         args.parameter = _params
 
     if args.tab_output:
-        warn_msg = ('tab-delimited output will be removed in a future release. '
-                    'Please switch to the default JSON output.')
+        warn_msg = ("tab-delimited output will be removed in a future release. "
+                    "Please switch to the default JSON output.")
         warnings.warn(warn_msg, stacklevel=2)
     for t in args.session.get_tasks(params=args.parameter):
         # Legacy support for tab-delimited output.
         # Mypy is confused by CatalogTask members being created from kwargs
         if args.tab_output:
-            color = t.color if t.color else 'done'
-            task_args = '\t'.join([f'{k}={v}' for k, v in t.args.items()])  # type: ignore
-            output = '\t'.join([str(x) for x in [
+            color = t.color if t.color else "done"
+            task_args = "\t".join([f"{k}={v}" for k, v in t.args.items()])  # type: ignore
+            output = "\t".join([str(x) for x in [
                 t.identifier,
                 t.task_id,
                 t.server,

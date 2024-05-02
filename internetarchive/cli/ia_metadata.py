@@ -130,14 +130,14 @@ def modify_metadata(item: item.Item,
                                  insert=insert, timeout=args.timeout)
         assert isinstance(r, Response)  # mypy: modify_metadata() -> Request | Response
     except ItemLocateError as exc:
-        print(f'{item.identifier} - error: {exc}', file=sys.stderr)
+        print(f"{item.identifier} - error: {exc}", file=sys.stderr)
         sys.exit(1)
-    if not r.json()['success']:
-        error_msg = r.json()['error']
-        etype = 'warning' if 'no changes' in r.text else 'error'
-        print(f'{item.identifier} - {etype} ({r.status_code}): {error_msg}', file=sys.stderr)
+    if not r.json()["success"]:
+        error_msg = r.json()["error"]
+        etype = "warning" if "no changes" in r.text else "error"
+        print(f"{item.identifier} - {etype} ({r.status_code}): {error_msg}", file=sys.stderr)
         return r
-    print(f'{item.identifier} - success: {r.json()["log"]}', file=sys.stderr)
+    print(f"{item.identifier} - success: {r.json()['log']}", file=sys.stderr)
     return r
 
 
@@ -154,7 +154,7 @@ def remove_metadata(item: item.Item,
         if not src_md:
             continue
 
-        if key == 'collection':
+        if key == "collection":
             _col = copy(metadata[key])
             _src_md = copy(src_md)
             if not isinstance(_col, list):
@@ -163,30 +163,30 @@ def remove_metadata(item: item.Item,
                 _src_md = [_src_md]
             for c in _col:
                 if c not in _src_md:
-                    r = item.remove_from_simplelist(c, 'holdings')
+                    r = item.remove_from_simplelist(c, "holdings")
                     j = r.json()
-                    if j.get('success'):
-                        print(f'{item.identifier} - success: {item.identifier} no longer in {c}',
+                    if j.get("success"):
+                        print(f"{item.identifier} - success: {item.identifier} no longer in {c}",
                               file=sys.stderr)
                         sys.exit(0)
-                    elif j.get('error', '').startswith('no row to delete for'):
-                        print(f'{item.identifier} - success: {item.identifier} no longer in {c}',
+                    elif j.get("error", "").startswith("no row to delete for"):
+                        print(f"{item.identifier} - success: {item.identifier} no longer in {c}",
                               file=sys.stderr)
                         sys.exit(0)
                     else:
-                        print(f'{item.identifier} - error: {j.get("error")}', file=sys.stderr)
+                        print(f"{item.identifier} - error: {j.get('error')}", file=sys.stderr)
                         sys.exit(1)
 
         if not isinstance(src_md, list):
-            if key == 'subject':
-                src_md = src_md.split(';')
-            elif key == 'collection':
-                print(f'{item.identifier} - error: all collections would be removed, '
-                      'not submitting task.', file=sys.stderr)
+            if key == "subject":
+                src_md = src_md.split(";")
+            elif key == "collection":
+                print(f"{item.identifier} - error: all collections would be removed, "
+                      "not submitting task.", file=sys.stderr)
                 sys.exit(1)
 
             if src_md == metadata[key]:
-                md[key] = 'REMOVE_TAG'
+                md[key] = "REMOVE_TAG"
                 continue
 
         for x in src_md:
@@ -200,12 +200,12 @@ def remove_metadata(item: item.Item,
         if len(md[key]) == len(src_md):
             del md[key]
 
-    if md.get('collection') == []:
-        print(f'{item.identifier} - error: all collections would be removed, not submitting task.',
+    if md.get("collection") == []:
+        print(f"{item.identifier} - error: all collections would be removed, not submitting task.",
               file=sys.stderr)
         sys.exit(1)
     elif not md:
-        print(f'{item.identifier} - warning: nothing needed to be removed.', file=sys.stderr)
+        print(f"{item.identifier} - warning: nothing needed to be removed.", file=sys.stderr)
         sys.exit(0)
 
     r = modify_metadata(item, md, args, parser)
@@ -226,10 +226,10 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         if args.exists:
             if item.exists:
                 responses.append(True)
-                print(f'{identifier} exists', file=sys.stderr)
+                print(f"{identifier} exists", file=sys.stderr)
             else:
                 responses.append(False)
-                print(f'{identifier} does not exist', file=sys.stderr)
+                print(f"{identifier} does not exist", file=sys.stderr)
             if (i + 1) == len(args.identifier):
                 if all(r is True for r in responses):
                     sys.exit(0)
@@ -259,7 +259,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
                 metadata = prepare_args_dict(args.remove,
                                              parser=parser,
                                              arg_type="remove")
-            if any('/' in k for k in metadata):
+            if any("/" in k for k in metadata):
                 metadata = get_args_dict_many_write(metadata)
 
             if args.remove:
@@ -276,7 +276,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
                             continue
                         # We still want to exit 0 if the non-200 is a
                         # "no changes to xml" error.
-                        elif 'no changes' in r.text:
+                        elif "no changes" in r.text:
                             continue
                         else:
                             sys.exit(1)
@@ -286,7 +286,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             for f in item.get_files():
                 formats.add(f.format)
             if (i + 1) == len(args.identifier):
-                print('\n'.join(formats))
+                print("\n".join(formats))
 
         # Dump JSON to stdout.
         else:
@@ -297,15 +297,15 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     if args.spreadsheet:
         if not args.priority:
             args.priority = -5
-        with open(args.spreadsheet, newline='', encoding='utf-8') as csvfp:
+        with open(args.spreadsheet, newline="", encoding="utf-8") as csvfp:
             spreadsheet = csv.DictReader(csvfp)
             responses = []
             for row in spreadsheet:
-                if not row['identifier']:
+                if not row["identifier"]:
                     continue
-                item = args.session.get_item(row['identifier'])
-                if row.get('file'):
-                    del row['file']
+                item = args.session.get_item(row["identifier"])
+                if row.get("file"):
+                    del row["file"]
                 metadata = {k.lower(): v for k, v in row.items() if v}
                 responses.append(modify_metadata(item, metadata, args, parser))
 
@@ -318,7 +318,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
                         continue
                     # We still want to exit 0 if the non-200 is a
                     # "no changes to xml" error.
-                    elif 'no changes' in r.text:
+                    elif "no changes" in r.text:
                         continue
                     else:
                         sys.exit(1)

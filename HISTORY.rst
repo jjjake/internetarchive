@@ -12,6 +12,13 @@ Release History
   with the native ``argparse`` library, ensuring continued functionality
   and future compatibility.
 
+4.1.0 (2024-05-07)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Use mtime from files.xml if no Last-Modified header is available (e.g. VTT files).
+
 4.0.1 (2024-04-15)
 ++++++++++++++++++
 

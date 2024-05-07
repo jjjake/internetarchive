@@ -252,7 +252,7 @@ class File(BaseFile):
                     dt = parsedate_to_datetime(last_mod_header)
                     last_mod_mtime = dt.timestamp()
                 else:
-                    last_mod_mtime = 0
+                    last_mod_mtime = self.mtime
 
                 response.raise_for_status()
 

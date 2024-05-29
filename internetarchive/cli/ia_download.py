@@ -33,6 +33,8 @@ options:
     -R, --retries=<retries>                  Set number of retries to <retries> [default: 5].
     -I, --itemlist=<file>                    Download items from a specified file. Itemlists should
                                              be a plain text file with one identifier per line.
+    -n, --start-idx=<n>                      Start immediately at item <n>
+    -m, --end-idx=<m>                        End download after item <m>
     -S, --search=<query>                     Download items returned from a specified search query.
     -P, --search-parameters=<key:value>...   Download items returned from a specified search query.
     -g, --glob=<pattern>                     Only download files whose filename matches the
@@ -110,6 +112,8 @@ def main(argv, session: ArchiveSession) -> None:
         '--download-history': Use(bool),
         '--parameters': Use(lambda x: get_args_dict(x, query_string=True)),
         '--source': list,
+        '--start-idx': Use(lambda item: item[0] if item else None),
+        '--end-idx': Use(lambda item: item[0] if item else None),
         '--exclude-source': list,
         '--timeout': Or([], And(Use(lambda t: ast.literal_eval(t[0])), Or(int, float),
                          error=timeout_msg))
@@ -127,6 +131,18 @@ def main(argv, session: ArchiveSession) -> None:
     except SchemaError as exc:
         print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
         sys.exit(1)
+
+    if args['--start-idx']:
+      start_idx = int(args['--start-idx'])-1
+      print(f'Starting download at collection item {start_idx+1}')
+    else:
+      start_idx = 0
+
+    if args['--end-idx']:
+      end_idx = int(args['--end-idx'])
+      print(f'Ending download at specified item {end_idx}.')
+    else:
+      end_idx = None
 
     retries = int(args['--retries'])
     ids: list[File | str] | Search | TextIO
@@ -167,53 +183,59 @@ def main(argv, session: ArchiveSession) -> None:
 
     errors = []
     for i, identifier in enumerate(ids):
-        try:
-            identifier = identifier.strip()
-        except AttributeError:
-            identifier = identifier.get('identifier')
-        if total_ids > 1:
-            item_index = f'{i + 1}/{total_ids}'
+        if end_idx != None and end_idx == i:
+          break
+        if start_idx != None and i < start_idx:
+          pass
         else:
-            item_index = None
+          try:
+              identifier = identifier.strip()
+          except AttributeError:
+              identifier = identifier.get('identifier')
+          if total_ids > 1:
+              item_index = f'{i + 1}/{total_ids}'
+          else:
+              item_index = None
 
-        try:
-            item = session.get_item(identifier)
-        except Exception as exc:
-            print(f'{identifier}: failed to retrieve item metadata - errors', file=sys.stderr)
-            raise
-            if 'You are attempting to make an HTTPS' in str(exc):
-                print(f'\n{exc}', file=sys.stderr)
-                sys.exit(1)
-            else:
-                continue
+          try:
+              item = session.get_item(identifier)
+          except Exception as exc:
+              print(f'{identifier}: failed to retrieve item metadata - errors', file=sys.stderr)
+              raise
+              if 'You are attempting to make an HTTPS' in str(exc):
+                  print(f'\n{exc}', file=sys.stderr)
+                  sys.exit(1)
+              else:
+                  continue
 
-        # Otherwise, download the entire item.
-        ignore_history_dir = True if not args['--download-history'] else False
-        _errors = item.download(
-            files=files,
-            formats=args['--format'],
-            glob_pattern=args['--glob'],
-            exclude_pattern=args['--exclude'],
-            dry_run=args['--dry-run'],
-            verbose=not args['--quiet'],
-            ignore_existing=args['--ignore-existing'],
-            checksum=args['--checksum'],
-            destdir=args['--destdir'],
-            no_directory=args['--no-directories'],
-            retries=retries,
-            item_index=item_index,
-            ignore_errors=True,
-            on_the_fly=args['--on-the-fly'],
-            no_change_timestamp=args['--no-change-timestamp'],
-            params=args['--parameters'],
-            ignore_history_dir=ignore_history_dir,
-            source=args['--source'],
-            exclude_source=args['--exclude-source'],
-            stdout=args['--stdout'],
-            timeout=args['--timeout'],
-        )
-        if _errors:
-            errors.append(_errors)
+          # Otherwise, download the entire item.
+          ignore_history_dir = True if not args['--download-history'] else False
+          _errors = item.download(
+              files=files,
+              formats=args['--format'],
+              glob_pattern=args['--glob'],
+              exclude_pattern=args['--exclude'],
+              dry_run=args['--dry-run'],
+              verbose=not args['--quiet'],
+              ignore_existing=args['--ignore-existing'],
+              checksum=args['--checksum'],
+              destdir=args['--destdir'],
+              no_directory=args['--no-directories'],
+              retries=retries,
+              item_index=item_index,
+              ignore_errors=True,
+              on_the_fly=args['--on-the-fly'],
+              no_change_timestamp=args['--no-change-timestamp'],
+              params=args['--parameters'],
+              ignore_history_dir=ignore_history_dir,
+              source=args['--source'],
+              exclude_source=args['--exclude-source'],
+              stdout=args['--stdout'],
+              timeout=args['--timeout'],
+          )
+          if _errors:
+              errors.append(_errors)
+        ##endif (start_idx)
     if errors:
         # TODO: add option for a summary/report.
         sys.exit(1)

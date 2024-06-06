@@ -226,6 +226,25 @@ class File(BaseFile):
 
         parent_dir = os.path.dirname(file_path)
 
+        # Check if we should skip...
+        if not return_responses and os.path.exists(file_path.encode('utf-8')):
+            if ignore_existing:
+                msg = f'skipping {file_path}, file already exists.'
+                log.info(msg)
+                if verbose:
+                    print(f' {msg}', file=sys.stderr)
+                return
+            elif checksum:
+                with open(file_path, 'rb') as fp:
+                    md5_sum = utils.get_md5(fp)
+
+                if md5_sum == self.md5:
+                    msg = f'skipping {file_path}, file already exists based on checksum.'
+                    log.info(msg)
+                    if verbose:
+                        print(f' {msg}', file=sys.stderr)
+                    return
+
         # Retry loop
         while True:
             try:
@@ -256,35 +275,17 @@ class File(BaseFile):
 
                 response.raise_for_status()
 
-                # Check if we should skip...
-                if not return_responses and os.path.exists(file_path.encode('utf-8')):
-                    if ignore_existing:
-                        msg = f'skipping {file_path}, file already exists.'
-                        log.info(msg)
-                        if verbose:
-                            print(f' {msg}', file=sys.stderr)
-                        return
-                    elif checksum:
-                        with open(file_path, 'rb') as fp:
-                            md5_sum = utils.get_md5(fp)
-
-                        if md5_sum == self.md5:
-                            msg = f'skipping {file_path}, file already exists based on checksum.'
+                # Check if we should skip based on last modified time...
+                if not fileobj and not return_responses and os.path.exists(file_path.encode('utf-8')):
+                    st = os.stat(file_path.encode('utf-8'))
+                    if st.st_mtime == last_mod_mtime:
+                        if self.name == f'{self.identifier}_files.xml' or (st.st_size == self.size):
+                            msg = (f'skipping {file_path}, file already exists based on '
+                                    'length and date.')
                             log.info(msg)
                             if verbose:
                                 print(f' {msg}', file=sys.stderr)
                             return
-                    elif not fileobj:
-                        st = os.stat(file_path.encode('utf-8'))
-                        if st.st_mtime == last_mod_mtime:
-                            if self.name == f'{self.identifier}_files.xml' \
-                                or (st.st_size == self.size):
-                                msg = (f'skipping {file_path}, file already exists based on '
-                                        'length and date.')
-                                log.info(msg)
-                                if verbose:
-                                    print(f' {msg}', file=sys.stderr)
-                                return
 
                 elif return_responses:
                     return response

@@ -21,6 +21,7 @@ The internetarchive module is a Python/CLI interface to Archive.org.
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import signal
 import sys
 
 from internetarchive import __version__, get_session
@@ -37,6 +38,11 @@ from internetarchive.cli import (
     ia_tasks,
     ia_upload,
 )
+from internetarchive.cli.cli_utils import exit_on_signal
+
+# Handle <Ctrl-C> and broken pipe
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+signal.signal(signal.SIGINT, exit_on_signal)
 
 
 def validate_config_path(path):

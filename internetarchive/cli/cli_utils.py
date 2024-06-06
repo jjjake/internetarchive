@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import signal
 import sys
 from collections import defaultdict
 from typing import Mapping
@@ -120,3 +121,16 @@ def validate_dir_path(path):
         return path
     else:
         raise argparse.ArgumentTypeError(f"'{path}' is not a valid directory")
+
+
+def exit_on_signal(sig, frame):
+    """
+    Exit the program cleanly upon receiving a specified signal.
+
+    This function is designed to be used as a signal handler. When a signal
+    (such as SIGINT or SIGPIPE) is received, it exits the program with an
+    exit code of 128 plus the signal number. This convention helps to
+    distinguish between regular exit codes and those caused by signals.
+    """
+    exit_code = 128 + sig
+    sys.exit(exit_code)

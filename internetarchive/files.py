@@ -247,6 +247,45 @@ class File(BaseFile):
 
         parent_dir = os.path.dirname(file_path)
 
+        # Check if we should skip...
+        if not return_responses and os.path.exists(file_path.encode('utf-8')):
+            if checksum_archive:
+                checksum_archive_filename = '_checksum_archive.txt'
+                if not os.path.exists(checksum_archive_filename):
+                    with open(checksum_archive_filename, 'w', encoding='utf-8') as f:
+                        pass
+                with open(checksum_archive_filename, encoding='utf-8') as f:
+                    checksum_archive_data = f.read().splitlines()
+                if file_path in checksum_archive_data:
+                    msg = (
+                        f'skipping {file_path}, '
+                        f'file already exists based on checksum_archive.'
+                    )
+                    log.info(msg)
+                    if verbose:
+                        print(f' {msg}', file=sys.stderr)
+                    return
+            if ignore_existing:
+                msg = f'skipping {file_path}, file already exists.'
+                log.info(msg)
+                if verbose:
+                    print(f' {msg}', file=sys.stderr)
+                return
+            elif checksum or checksum_archive:
+                with open(file_path, 'rb') as fp:
+                    md5_sum = utils.get_md5(fp)
+
+                if md5_sum == self.md5:
+                    msg = f'skipping {file_path}, file already exists based on checksum.'
+                    log.info(msg)
+                    if verbose:
+                        print(f' {msg}', file=sys.stderr)
+                    if checksum_archive:
+                        # add file to checksum_archive to skip it next time
+                        with open(checksum_archive_filename, 'a', encoding='utf-8') as f:
+                            f.write(f'{file_path}\n')
+                    return
+
         # Retry loop
         while True:
             try:
@@ -275,59 +314,21 @@ class File(BaseFile):
                     dt = parsedate_to_datetime(last_mod_header)
                     last_mod_mtime = dt.timestamp()
                 else:
-                    last_mod_mtime = 0
+                    last_mod_mtime = self.mtime
 
                 response.raise_for_status()
 
-                # Check if we should skip...
-                if not return_responses and os.path.exists(file_path.encode('utf-8')):
-                    if checksum_archive:
-                        checksum_archive_filename = '_checksum_archive.txt'
-                        if not os.path.exists(checksum_archive_filename):
-                            with open(checksum_archive_filename, 'w', encoding='utf-8') as f:
-                                pass
-                        with open(checksum_archive_filename, encoding='utf-8') as f:
-                            checksum_archive_data = f.read().splitlines()
-                        if file_path in checksum_archive_data:
-                            msg = (
-                                f'skipping {file_path}, '
-                                f'file already exists based on checksum_archive.'
-                            )
+                # Check if we should skip based on last modified time...
+                if not fileobj and not return_responses and os.path.exists(file_path.encode('utf-8')):
+                    st = os.stat(file_path.encode('utf-8'))
+                    if st.st_mtime == last_mod_mtime:
+                        if self.name == f'{self.identifier}_files.xml' or (st.st_size == self.size):
+                            msg = (f'skipping {file_path}, file already exists based on '
+                                    'length and date.')
                             log.info(msg)
                             if verbose:
                                 print(f' {msg}', file=sys.stderr)
                             return
-                    if ignore_existing:
-                        msg = f'skipping {file_path}, file already exists.'
-                        log.info(msg)
-                        if verbose:
-                            print(f' {msg}', file=sys.stderr)
-                        return
-                    elif checksum or checksum_archive:
-                        with open(file_path, 'rb') as fp:
-                            md5_sum = utils.get_md5(fp)
-
-                        if md5_sum == self.md5:
-                            msg = f'skipping {file_path}, file already exists based on checksum.'
-                            log.info(msg)
-                            if verbose:
-                                print(f' {msg}', file=sys.stderr)
-                            if checksum_archive:
-                                # add file to checksum_archive to skip it next time
-                                with open(checksum_archive_filename, 'a', encoding='utf-8') as f:
-                                    f.write(f'{file_path}\n')
-                            return
-                    elif not fileobj:
-                        st = os.stat(file_path.encode('utf-8'))
-                        if st.st_mtime == last_mod_mtime:
-                            if self.name == f'{self.identifier}_files.xml' \
-                                or (st.st_size == self.size):
-                                msg = (f'skipping {file_path}, file already exists based on '
-                                        'length and date.')
-                                log.info(msg)
-                                if verbose:
-                                    print(f' {msg}', file=sys.stderr)
-                                return
 
                 elif return_responses:
                     return response

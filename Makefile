@@ -20,8 +20,7 @@ publish:
 	git tag -a v$(VERSION) -m 'version $(VERSION)'
 	git push --tags origin master
 	python -m build
-	twine upload --repository pypi dist/internetarchive-$(VERSION)-py3-none-any.whl
-	twine upload --repository pypi dist/internetarchive-$(VERSION).tar.gz
+	twine upload --repository pypi ./dist/*
 
 docs-init:
 	pip install -r docs/requirements.txt

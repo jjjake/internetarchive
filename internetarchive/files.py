@@ -234,8 +234,6 @@ class File(BaseFile):
         file_path = file_path or self.name
 
         if destdir:
-            if verbose:
-                print(f"destdir: {destdir}")
             if return_responses is not True:
                 try:
                     os.mkdir(destdir)

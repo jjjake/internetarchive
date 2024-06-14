@@ -179,6 +179,20 @@ Alternatively, you can skip files based on md5 checksums. This is will take long
      skipping nasa/nasa_meta.xml, file already exists based on checksum.
      skipping nasa/nasa_reviews.xml, file already exists based on checksum.
 
+Furthermore, you can skip files based on md5 checksums and user a checksum_archive file. This is will be faster than checksum alone because checksums will only need to be calculated once for every file already downloaded. Once calculated successfully, the item/file will be written to the checksum_archive file and succeeding runs will skip the checksum validation::
+
+    >>> download('nasa', verbose=True, checksum_archive=True)
+    nasa:
+     skipping nasa/__ia_thumb.jpg, file already exists based on checksum_archive.
+     skipping nasa/globe_west_540.jpg, file already exists based on checksum_archive.
+     skipping nasa/globe_west_540_thumb.jpg, file already exists based on checksum_archive.
+     skipping nasa/nasa_archive.torrent, file already exists based on checksum_archive.
+     skipping nasa_files.xml: 2.56kiB [00:00, 5.76MiB/s]
+     skipping nasa/nasa_itemimage.jpg, file already exists based on checksum_archive.
+     skipping nasa/nasa_meta.sqlite, file already exists based on checksum.
+     skipping nasa/nasa_meta.xml, file already exists based on checksum.
+     downloading nasa/nasa_reviews.xml, file already exists based on checksum.
+
 By default, the :func:`download <internetarchive.download>` function will download all of the files in an item. However, there are a couple parameters that can be used to download only specific files. Files can be filtered using the ``glob_pattern`` parameter::
 
     >>> download('nasa', verbose=True, glob_pattern='*xml')

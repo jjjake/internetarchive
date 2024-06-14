@@ -63,6 +63,9 @@ def setup(subparsers):
     parser.add_argument("-C", "--checksum",
                         action="store_true",
                         help="Skip files based on checksum [default: False]")
+    parser.add_argument("--checksum-archive",
+                        action="store_true",
+                        help="Skip files based on _checksum_archive.txt file")
     parser.add_argument("-R", "--retries",
                         type=int,
                         default=5,
@@ -211,6 +214,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             verbose=not args.quiet,
             ignore_existing=args.ignore_existing,
             checksum=args.checksum,
+            checksum_archive=args.checksum_archive,
             destdir=args.destdir,
             no_directory=args.no_directories,
             retries=args.retries,

@@ -74,7 +74,7 @@ line-length = 102
 max-complexity = 33
 
 [tool.ruff.pylint]
-max-args = 23
+max-args = 24
 max-branches = 33
 max-statements = 124
 

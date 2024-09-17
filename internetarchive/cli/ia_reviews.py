@@ -1,7 +1,10 @@
-#
-# The internetarchive module is a Python/CLI interface to Archive.org.
-#
-# Copyright (C) 2012-2019 Internet Archive
+"""
+ia_reviews.py
+
+'ia' subcommand for listing, submitting, and deleting reviews for archive.org items.
+"""
+
+# Copyright (C) 2012-2024 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -16,53 +19,71 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Submit and modify reviews for archive.org items.
-
-For more information on how to use this command, refer to the
-Reviews API documentation::
-
-    https://archive.org/services/docs/api/reviews.html
-
-usage:
-    ia reviews <identifier>
-    ia reviews <identifier> --delete [--username=<username> | --screenname=<screenname>
-                                      | --itemname=<itemname>]
-    ia reviews <identifier> --title=<title> --body=<body> [--stars=<stars>]
-    ia reviews --help
-
-options:
-    -h, --help
-    -t, --title=<title>             The title of your review.
-    -b, --body=<body>               The body of your review.
-    -s, --stars=<stars>             The number of stars for your review.
-    -d, --delete                    Delete your review. [default: False]
-    -u, --username=<username>       Delete reviews for a specific user
-                                    given username (must be used with --delete).
-    -S, --screenname=<screenname>   Delete reviews for a specific user
-                                    given screenname (must be used with --delete).
-    -I, --itemname=<itemname>       Delete reviews for a specific user
-                                    given itemname (must be used with --delete).
-
-examples:
-    ia reviews nasa
-"""
+import argparse
 import sys
 
-from docopt import docopt
 from requests.exceptions import HTTPError
 
-from internetarchive import ArchiveSession
+from internetarchive.cli.cli_utils import validate_identifier
 
 
-def main(argv, session: ArchiveSession) -> None:
-    args = docopt(__doc__, argv=argv)
+def setup(subparsers):
+    """
+    Setup args for list command.
 
-    item = session.get_item(args['<identifier>'])
-    if args['--delete']:
-        r = item.delete_review(username=args['--username'],
-                               screenname=args['--screenname'],
-                               itemname=args['--itemname'])
-    elif not args['--body']:
+    Args:
+        subparsers: subparser object passed from ia.py
+    """
+    parser = subparsers.add_parser("reviews",
+                                   aliases=["re"],
+                                   help="submit and modify reviews for archive.org items")
+
+    # Positional arguments
+    parser.add_argument("identifier",
+                        type=validate_identifier,
+                        help="identifier of the item")
+
+    # Options
+    parser.add_argument("-d", "--delete",
+                        action="store_true",
+                        help="delete your review")
+    parser.add_argument("-t", "--title",
+                        type=str,
+                        help="the title of your review")
+    parser.add_argument("-b", "--body",
+                        type=str,
+                        help="the body of your review")
+    parser.add_argument("-s", "--stars",
+                        type=int,
+                        help="the number of stars for your review")
+
+    # Conditional arguments that require --delete
+    delete_group = parser.add_argument_group("delete options",
+                                             ("these options are used with "
+                                              "the --delete flag"))
+    delete_group.add_argument("-u", "--username",
+                              type=str,
+                              help="delete reviews for a specific user given USERNAME")
+    delete_group.add_argument("-S", "--screenname",
+                              type=str,
+                              help="delete reviews for a specific user given SCREENNAME")
+    delete_group.add_argument("-I", "--itemname",
+                              type=str,
+                              help="delete reviews for a specific user given ITEMNAME")
+
+    parser.set_defaults(func=lambda args: main(args, parser))
+
+
+def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    """
+    Main entry point for 'ia reviews'.
+    """
+    item = args.session.get_item(args.identifier)
+    if args.delete:
+        r = item.delete_review(username=args.username,
+                               screenname=args.screenname,
+                               itemname=args.itemname)
+    elif not args.body and not args.title:
         try:
             r = item.get_review()
             print(r.text)
@@ -73,16 +94,19 @@ def main(argv, session: ArchiveSession) -> None:
             else:
                 raise exc
     else:
-        r = item.review(args['--title'], args['--body'], args['--stars'])
+        if (args.title and not args.body) or (args.body and not args.title):
+            parser.error("both --title and --body must be provided")
+        r = item.review(args.title, args.body, args.stars)
     j = r.json()
-    if j.get('success') or 'no change detected' in j.get('error', '').lower():
-        task_id = j.get('value', {}).get('task_id')
+    if j.get("success") or "no change detected" in j.get("error", "").lower():
+        task_id = j.get("value", {}).get("task_id")
         if task_id:
-            print(f'{item.identifier} - success: https://catalogd.archive.org/log/{task_id}',
+            print((f"{item.identifier} - success: "
+                   f"https://catalogd.archive.org/log/{task_id}"),
                   file=sys.stderr)
         else:
-            print(f'{item.identifier} - warning: no changes detected!', file=sys.stderr)
+            print(f"{item.identifier} - warning: no changes detected!", file=sys.stderr)
         sys.exit(0)
     else:
-        print(f'{item.identifier} - error: {j.get("error")}', file=sys.stderr)
+        print(f"{item.identifier} - error: {j.get('error')}", file=sys.stderr)
         sys.exit(1)

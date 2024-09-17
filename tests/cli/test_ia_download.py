@@ -119,9 +119,9 @@ def test_no_directories(tmpdir_ch):
 
 def test_destdir(tmpdir_ch):
     cmd = 'ia --insecure download --destdir=thisdirdoesnotexist/ nasa nasa_meta.xml'
-    stdout, stderr = call_cmd(cmd, expected_exit_code=1)
+    stdout, stderr = call_cmd(cmd, expected_exit_code=2)
 
-    assert '--destdir must be a valid path to a directory.' in stderr
+    assert "--destdir: 'thisdirdoesnotexist/' is not a valid directory" in stderr
 
     tmpdir_ch.mkdir('thisdirdoesnotexist/')
     call_cmd(cmd)

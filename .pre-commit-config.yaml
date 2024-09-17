@@ -47,7 +47,6 @@ repos:
       - id: mypy
         additional_dependencies:
           - tqdm-stubs
-          - types-docopt
           - types-jsonpatch
           - types-requests
           - types-setuptools

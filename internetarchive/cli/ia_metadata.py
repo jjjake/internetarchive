@@ -297,7 +297,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     if args.spreadsheet:
         if not args.priority:
             args.priority = -5
-        with open(args.spreadsheet, newline="", encoding="utf-8") as csvfp:
+        with open(args.spreadsheet, newline="", encoding="utf-8-sig") as csvfp:
             spreadsheet = csv.DictReader(csvfp)
             responses = []
             for row in spreadsheet:

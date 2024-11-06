@@ -162,8 +162,13 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     try:
         # Validate args.
-        args.parameters = prepare_args_dict(args.parameters, parser=parser)
-        args.header = prepare_args_dict(args.header, parser=parser)
+        args.parameters = prepare_args_dict(args.parameters,
+                                            parser=parser,
+                                            arg_type='parameters',
+                                            query_string=True)
+        args.header = prepare_args_dict(args.header,
+                                        parser=parser,
+                                        arg_type='header')
 
         # Prepare fields and sorts.
         fields = prepare_values(args.field)

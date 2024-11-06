@@ -89,7 +89,7 @@ def validate_identifier(identifier):
     return identifier
 
 
-def prepare_args_dict(args, parser, arg_type="metadata", many=False):
+def prepare_args_dict(args, parser, arg_type="metadata", many=False, query_string=False):
     if not args:
         return {}
     try:
@@ -97,9 +97,10 @@ def prepare_args_dict(args, parser, arg_type="metadata", many=False):
             return get_args_dict_many_write([item for sublist in args for item in sublist])
         else:
             if isinstance(args[0], list):
-                return get_args_dict([item for sublist in args for item in sublist])
+                return get_args_dict([item for sublist in args for item in sublist],
+                                     query_string=True)
             else:
-                return get_args_dict(args)
+                return get_args_dict(args, query_string=True)
     except ValueError as e:
         parser.error(f"--{arg_type} must be formatted as --{arg_type}='key:value'")
 

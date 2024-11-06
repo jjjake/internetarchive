@@ -211,6 +211,7 @@ class Search:
     def _user_aggs(self):
         """Experimental support for user aggregations.
         """
+        del self.params['count']  # advanced search will error if this param is present!
         self.params['page'] = '1'
         self.params['rows'] = '1'
         self.params['output'] = 'json'

@@ -66,7 +66,7 @@ def main():
             description="A command line interface to Archive.org.",
             epilog=("Documentation for 'ia' is available at:\n\n\t"
                     "https://archive.org/developers/internetarchive/cli.html\n\n"
-                    "See 'ia {subcommand} --help' for help on a specific subcommand."),
+                    "See 'ia {command} --help' for help on a specific command."),
             formatter_class=argparse.RawTextHelpFormatter)  # support for \n in epilog
 
     parser.add_argument("-v", "--version",
@@ -92,9 +92,9 @@ def main():
                         help=("host to connect to "
                               "(doesn't work for requests made to s3.us.archive.org)"))
 
-    subparsers = parser.add_subparsers(title="subcommands",
-                                       dest="subcommand",
-                                       metavar="{subcommand}")
+    subparsers = parser.add_subparsers(title="commands",
+                                       dest="command",
+                                       metavar="{command}")
 
     # Add subcommand parsers
     ia_configure.setup(subparsers)

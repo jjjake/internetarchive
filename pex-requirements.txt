@@ -1,5 +1,4 @@
 charset-normalizer==2.1.1
-docopt>=0.6.0,<0.7.0
 jsonpatch>=0.4
 requests>=2.25.0,<3.0.0
 schema>=0.4.0

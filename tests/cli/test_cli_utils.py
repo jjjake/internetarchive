@@ -1,4 +1,4 @@
-from internetarchive.cli.argparser import get_args_dict
+from internetarchive.cli.cli_utils import get_args_dict
 
 
 def test_get_args_dict():

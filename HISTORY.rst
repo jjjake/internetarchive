@@ -3,6 +3,16 @@
 Release History
 ---------------
 
+5.0.0 (2024-11-07)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Updated the CLI's command-line argument parsing by replacing the obsolete ``docopt``
+  with the native ``argparse`` library, ensuring continued functionality
+  and future compatibility.
+  ***Note: While the CLI functionality hasn't changed, some commands may need to be formatted slightly differently. If you encounter any issues, refer to ``ia --help`` and ``ia {command} --help`` if you run into any issues.***
+
 4.1.0 (2024-05-07)
 ++++++++++++++++++
 

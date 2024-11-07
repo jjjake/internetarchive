@@ -1,8 +1,11 @@
 #!/usr/bin/env python
-#
-# The internetarchive module is a Python/CLI interface to Archive.org.
-#
-# Copyright (C) 2012-2019 Internet Archive
+"""
+ia.py
+
+The internetarchive module is a Python/CLI interface to Archive.org.
+"""
+
+# Copyright (C) 2012-2024 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -17,171 +20,123 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""A command line interface to Archive.org.
-
-usage:
-    ia [--help | --version]
-    ia [--config-file FILE] [--log | --debug]
-       [--insecure] [--host HOST] <command> [<args>]...
-
-options:
-    -h, --help
-    -v, --version
-    -c, --config-file FILE  Use FILE as config file. (Can also be set with the
-                            IA_CONFIG_FILE environment variable. The option takes
-                            precedence when both are used.)
-    -l, --log               Turn on logging [default: False].
-    -d, --debug             Turn on verbose logging [default: False].
-    -i, --insecure          Use HTTP for all requests instead of HTTPS [default: false]
-    -H, --host HOST         Host to use for requests (doesn't work for requests made to
-                            s3.us.archive.org) [default: archive.org]
-
-commands:
-    help      Retrieve help for subcommands.
-    configure Configure `ia`.
-    metadata  Retrieve and modify metadata for items on Archive.org.
-    upload    Upload items to Archive.org.
-    download  Download files from Archive.org.
-    delete    Delete files from Archive.org.
-    search    Search Archive.org.
-    tasks     Retrieve information about your Archive.org catalog tasks.
-    list      List files in a given item.
-    copy      Copy files in archive.org items.
-    move      Move/rename files in archive.org items.
-    reviews   Submit/modify reviews for archive.org items.
-
-Documentation for 'ia' is available at:
-
-    https://archive.org/services/docs/api/internetarchive/cli.html
-
-See 'ia help <command>' for help on a specific command.
-"""
-from __future__ import annotations
-
-import difflib
-import errno
-import os
+import argparse
+import signal
 import sys
 
-from docopt import docopt, printable_usage
+from internetarchive import __version__, get_session
+from internetarchive.cli import (
+    ia_configure,
+    ia_copy,
+    ia_delete,
+    ia_download,
+    ia_list,
+    ia_metadata,
+    ia_move,
+    ia_reviews,
+    ia_search,
+    ia_tasks,
+    ia_upload,
+)
+from internetarchive.cli.cli_utils import exit_on_signal
 
-if sys.version_info < (3, 10):
-    from importlib_metadata import entry_points  # type: ignore[import]
-else:
-    from importlib.metadata import entry_points
-from schema import Or, Schema, SchemaError  # type: ignore[import]
-
-from internetarchive import __version__
-from internetarchive.api import get_session
-from internetarchive.utils import suppress_keyboard_interrupt_message
-
-suppress_keyboard_interrupt_message()
-
-
-cmd_aliases = {
-    'co': 'configure',
-    'md': 'metadata',
-    'up': 'upload',
-    'do': 'download',
-    'rm': 'delete',
-    'se': 'search',
-    'ta': 'tasks',
-    'ls': 'list',
-    'cp': 'copy',
-    'mv': 'move',
-    're': 'reviews',
-}
+# Handle <Ctrl-C> and broken pipe
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+signal.signal(signal.SIGINT, exit_on_signal)
 
 
-def load_ia_module(cmd: str):
-    """Dynamically import ia module."""
-    try:
-        if cmd in list(cmd_aliases.keys()) + list(cmd_aliases.values()):
-            _module = f'internetarchive.cli.ia_{cmd}'
-            return __import__(_module, fromlist=['internetarchive.cli'])
-        else:
-            _module = f'ia_{cmd}'
-            for ep in entry_points(group='internetarchive.cli.plugins'):
-                if ep.name == _module:
-                    return ep.load()
-            raise ImportError
-    except (ImportError):
-        print(f"error: '{cmd}' is not an ia command! See 'ia help'",
-              file=sys.stderr)
-        matches = '\t'.join(difflib.get_close_matches(cmd, cmd_aliases.values()))
-        if matches:
-            print(f'\nDid you mean one of these?\n\t{matches}', file=sys.stderr)
-        sys.exit(127)
+def validate_config_path(path):
+    """
+    Validate the path to the configuration file.
+
+    Returns:
+        str: Validated path to the configuration file.
+    """
+    if "configure" not in sys.argv:  # Support for adding config to specific file
+        file_check = argparse.FileType("r")
+        file_check(path)
+    return path
 
 
-def main() -> None:
-    """This is the CLI driver for ia-wrapper."""
-    args = docopt(__doc__, version=__version__, options_first=True)
+def main():
+    """
+    Main entry point for the CLI.
+    """
+    parser = argparse.ArgumentParser(
+            description="A command line interface to Archive.org.",
+            epilog=("Documentation for 'ia' is available at:\n\n\t"
+                    "https://archive.org/developers/internetarchive/cli.html\n\n"
+                    "See 'ia {command} --help' for help on a specific command."),
+            formatter_class=argparse.RawTextHelpFormatter)  # support for \n in epilog
 
-    # Validate args.
-    s = Schema({
-        str: bool,
-        '--config-file': Or(None, str),
-        '--host': Or(None, str),
-        '<args>': list,
-        '<command>': Or(str, lambda _: 'help'),
-    })
-    try:
-        args = s.validate(args)
-    except SchemaError as exc:
-        print(f'{exc}\n{printable_usage(__doc__)}', file=sys.stderr)
-        sys.exit(1)
+    parser.add_argument("-v", "--version",
+                        action="version",
+                        version=__version__)
+    parser.add_argument("-c", "--config-file",
+                        action="store",
+                        type=validate_config_path,
+                        metavar="FILE",
+                        help="path to configuration file")
+    parser.add_argument("-l", "--log",
+                        action="store_true",
+                        default=False,
+                        help="enable logging")
+    parser.add_argument("-d", "--debug",
+                        action="store_true",
+                        help="enable debugging")
+    parser.add_argument("-i", "--insecure",
+                        action="store_true",
+                        help="allow insecure connections")
+    parser.add_argument("-H", "--host",
+                        action="store",
+                        help=("host to connect to "
+                              "(doesn't work for requests made to s3.us.archive.org)"))
 
-    # Get subcommand.
-    cmd = args['<command>']
-    if cmd in cmd_aliases:
-        cmd = cmd_aliases[cmd]
+    subparsers = parser.add_subparsers(title="commands",
+                                       dest="command",
+                                       metavar="{command}")
 
-    if (cmd == 'help') or (not cmd):
-        if not args['<args>']:
-            sys.exit(print(__doc__.strip(), file=sys.stderr))
-        else:
-            ia_module = load_ia_module(args['<args>'][0])
-            sys.exit(print(ia_module.__doc__.strip(), file=sys.stderr))
+    # Add subcommand parsers
+    ia_configure.setup(subparsers)
+    ia_copy.setup(subparsers)
+    ia_delete.setup(subparsers)
+    ia_download.setup(subparsers)
+    ia_list.setup(subparsers)
+    ia_metadata.setup(subparsers)
+    ia_move.setup(subparsers)
+    ia_reviews.setup(subparsers)
+    ia_search.setup(subparsers)
+    ia_tasks.setup(subparsers)
+    ia_upload.setup(subparsers)
 
-    if cmd != 'configure' and args['--config-file']:
-        if not os.path.isfile(args['--config-file']):
-            print(f'--config-file should be a readable file.\n{printable_usage(__doc__)}',
-                  file=sys.stderr)
-            sys.exit(1)
-
-    argv = [cmd] + args['<args>']
+    # Suppress help for alias subcommands
+    args = parser.parse_args()
 
     config: dict[str, dict] = {}
-    if args['--log']:
-        config['logging'] = {'level': 'INFO'}
-    elif args['--debug']:
-        config['logging'] = {'level': 'DEBUG'}
+    if args.log:
+        config["logging"] = {"level": "INFO"}
+    elif args.debug:
+        config["logging"] = {"level": "DEBUG"}
 
-    if args['--insecure']:
-        config['general'] = {'secure': False}
-    if args['--host']:
-        if config.get('general'):
-            config['general']['host'] = args['--host']
+    if args.insecure:
+        config["general"] = {"secure": False}
+    if args.host:
+        if config.get("general"):
+            config["general"]["host"] = args["--host"]
         else:
-            config['general'] = {'host': args['--host']}
+            config["general"] = {"host": args["--host"]}
 
-    session = get_session(config_file=args['--config-file'],
-                          config=config,
-                          debug=args['--debug'])
+    args.session = get_session(config_file=args.config_file,
+                               config=config,
+                               debug=args.debug)
 
-    ia_module = load_ia_module(cmd)
-    try:
-        sys.exit(ia_module.main(argv, session))
-    except OSError as e:
-        # Handle Broken Pipe errors.
-        if e.errno == errno.EPIPE:
-            sys.stderr.close()
-            sys.stdout.close()
-            sys.exit(0)
-        else:
-            raise
+    # Check if any arguments were provided
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
+    args.func(args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

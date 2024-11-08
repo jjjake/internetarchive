@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+5.0.1 (?)
++++++++++
+
+**Bugfixes**
+
+- Fix bug where the use of signal.SIGPIPE causes the CLI to crash on Windows (SIGPIPE is not available on Windows).
+
 5.0.0 (2024-11-07)
 ++++++++++++++++++
 

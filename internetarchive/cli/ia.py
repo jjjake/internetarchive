@@ -40,8 +40,14 @@ from internetarchive.cli import (
 )
 from internetarchive.cli.cli_utils import exit_on_signal
 
-# Handle <Ctrl-C> and broken pipe
-signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+# Handle broken pipe
+try:
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+except AttributeError:
+    # Non-unix support
+    pass
+
+# Handle <Ctrl-C>
 signal.signal(signal.SIGINT, exit_on_signal)
 
 

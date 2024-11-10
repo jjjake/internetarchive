@@ -125,6 +125,8 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                 metadata['scanner'] = [metadata['scanner'], scanner]
             else:
                 metadata['scanner'] = scanner
+            if (isinstance(metadata['scanner'], list)):
+                metadata['scanner'] = ', '.join(metadata['scanner'])
         prepared_metadata = prepare_metadata(metadata)
         prepared_file_metadata = prepare_metadata(file_metadata)
 

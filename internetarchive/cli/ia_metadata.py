@@ -52,7 +52,7 @@ def setup(subparsers):
                                    help="Retrieve and modify archive.org item metadata")
 
     parser.add_argument("identifier",
-                        nargs="+",
+                        nargs="?",
                         type=validate_identifier,
                         help="Identifier for the upload")
 
@@ -219,82 +219,73 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     formats = set()
     responses: list[bool | Response] = []
 
-    for i, identifier in enumerate(args.identifier):
-        item = args.session.get_item(identifier)
+    item = args.session.get_item(args.identifier)
 
-        # Check existence of item.
-        if args.exists:
-            if item.exists:
-                responses.append(True)
-                print(f"{identifier} exists", file=sys.stderr)
-            else:
-                responses.append(False)
-                print(f"{identifier} does not exist", file=sys.stderr)
-            if (i + 1) == len(args.identifier):
-                if all(r is True for r in responses):
-                    sys.exit(0)
+    # Check existence of item.
+    if args.exists:
+        if item.exists:
+            responses.append(True)
+            print(f"{args.identifier} exists", file=sys.stderr)
+        else:
+            responses.append(False)
+            print(f"{args.identifier} does not exist", file=sys.stderr)
+        if all(r is True for r in responses):
+            sys.exit(0)
+        else:
+            sys.exit(1)
+
+    # Modify metadata.
+    elif (args.modify or args.append or args.append_list
+          or args.remove or args.insert):
+        if args.modify:
+            metadata = prepare_args_dict(args.modify,
+                                         parser=parser,
+                                         arg_type="modify")
+        elif args.append:
+            metadata = prepare_args_dict(args.append,
+                                         parser=parser,
+                                         arg_type="append")
+        elif args.append_list:
+            metadata = prepare_args_dict(args.append_list,
+                                         parser=parser,
+                                         arg_type="append-list")
+        elif args.insert:
+            metadata = prepare_args_dict(args.insert,
+                                         parser=parser,
+                                         arg_type="insert")
+        if args.remove:
+            metadata = prepare_args_dict(args.remove,
+                                         parser=parser,
+                                         arg_type="remove")
+        if any("/" in k for k in metadata):
+            metadata = get_args_dict_many_write(metadata)
+
+        if args.remove:
+            responses.append(remove_metadata(item, metadata, args, parser))
+        else:
+            responses.append(modify_metadata(item, metadata, args, parser))
+        if all(r.status_code == 200 for r in responses):  # type: ignore
+            sys.exit(0)
+        else:
+            for r in responses:
+                assert isinstance(r, Response)
+                if r.status_code == 200:
+                    continue
+                # We still want to exit 0 if the non-200 is a
+                # "no changes to xml" error.
+                elif "no changes" in r.text:
+                    continue
                 else:
                     sys.exit(1)
 
-        # Modify metadata.
-        elif (args.modify or args.append or args.append_list
-              or args.remove or args.insert):
-            if args.modify:
-                metadata = prepare_args_dict(args.modify,
-                                             parser=parser,
-                                             arg_type="modify")
-            elif args.append:
-                metadata = prepare_args_dict(args.append,
-                                             parser=parser,
-                                             arg_type="append")
-            elif args.append_list:
-                metadata = prepare_args_dict(args.append_list,
-                                             parser=parser,
-                                             arg_type="append-list")
-            elif args.insert:
-                metadata = prepare_args_dict(args.insert,
-                                             parser=parser,
-                                             arg_type="insert")
-            if args.remove:
-                metadata = prepare_args_dict(args.remove,
-                                             parser=parser,
-                                             arg_type="remove")
-            if any("/" in k for k in metadata):
-                metadata = get_args_dict_many_write(metadata)
-
-            if args.remove:
-                responses.append(remove_metadata(item, metadata, args, parser))
-            else:
-                responses.append(modify_metadata(item, metadata, args, parser))
-            if (i + 1) == len(args.identifier):
-                if all(r.status_code == 200 for r in responses):  # type: ignore
-                    sys.exit(0)
-                else:
-                    for r in responses:
-                        assert isinstance(r, Response)
-                        if r.status_code == 200:
-                            continue
-                        # We still want to exit 0 if the non-200 is a
-                        # "no changes to xml" error.
-                        elif "no changes" in r.text:
-                            continue
-                        else:
-                            sys.exit(1)
-
-        # Get metadata.
-        elif args.formats:
-            for f in item.get_files():
-                formats.add(f.format)
-            if (i + 1) == len(args.identifier):
-                print("\n".join(formats))
-
-        # Dump JSON to stdout.
-        else:
-            metadata_str = json.dumps(item.item_metadata)
-            print(metadata_str)
+    # Get metadata.
+    elif args.formats:
+        for f in item.get_files():
+            formats.add(f.format)
+        print("\n".join(formats))
 
     # Edit metadata for items in bulk, using a spreadsheet as input.
-    if args.spreadsheet:
+    elif args.spreadsheet:
         if not args.priority:
             args.priority = -5
         with open(args.spreadsheet, newline="", encoding="utf-8-sig") as csvfp:
@@ -322,3 +313,8 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
                         continue
                     else:
                         sys.exit(1)
+
+    # Dump JSON to stdout.
+    else:
+        metadata_str = json.dumps(item.item_metadata)
+        print(metadata_str)

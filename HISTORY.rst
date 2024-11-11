@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+5.0.2 (2024-11-11)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed bug where ``ia metadata --spreadsheet`` would fail and return
+  ``ia metadata: error: the following arguments are required: identifier``.
+
 5.0.1 (2024-11-08)
 ++++++++++++++++++
 

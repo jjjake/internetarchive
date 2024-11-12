@@ -122,7 +122,10 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         if set_scanner is True:
             scanner = f'Internet Archive Python library {__version__}'
             if metadata.get('scanner'):
-                metadata['scanner'] = [metadata['scanner'], scanner]
+                custom_scanner = metadata['scanner']
+                if not isinstance(custom_scanner, list):
+                    custom_scanner = [custom_scanner]
+                metadata['scanner'] = custom_scanner + [scanner]
             else:
                 metadata['scanner'] = scanner
         prepared_metadata = prepare_metadata(metadata)

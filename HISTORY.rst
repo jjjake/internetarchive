@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+5.0.3 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug in CLI where some multi-arguments were being treated as single arguments.
+- Fixed bug where InvalidHeader was being raised when a custom scanner was provided in some cases.
+
 5.0.2 (2024-11-11)
 ++++++++++++++++++
 

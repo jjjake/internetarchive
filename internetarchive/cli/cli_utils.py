@@ -98,9 +98,9 @@ def prepare_args_dict(args, parser, arg_type="metadata", many=False, query_strin
         else:
             if isinstance(args[0], list):
                 return get_args_dict([item for sublist in args for item in sublist],
-                                     query_string=True)
+                                     query_string=query_string)
             else:
-                return get_args_dict(args, query_string=True)
+                return get_args_dict(args, query_string=query_string)
     except ValueError as e:
         parser.error(f"--{arg_type} must be formatted as --{arg_type}='key:value'")
 

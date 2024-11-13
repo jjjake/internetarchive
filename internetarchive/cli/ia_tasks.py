@@ -100,9 +100,9 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     Main entry point for 'ia tasks'.
     """
     # Prepare arg dicts.
-    args.parameter = prepare_args_dict(args.parameter, parser)
-    args.task_args = prepare_args_dict(args.task_args, parser)
-    args.data = prepare_args_dict(args.data, parser)
+    args.parameter = prepare_args_dict(args.parameter, parser, arg_type="parameter")
+    args.task_args = prepare_args_dict(args.task_args, parser, arg_type="task-args")
+    args.data = prepare_args_dict(args.data, parser, arg_type="data")
 
     # Tasks write API.
     if args.cmd:

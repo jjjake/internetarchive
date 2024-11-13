@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+5.0.4 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug where some error messages mentioned the wrong arg in the message.
+
 5.0.3 (2024-11-12)
 ++++++++++++++++++
 

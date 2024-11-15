@@ -9,6 +9,8 @@ Release History
 **Bugfixes**
 
 - Fixed bug where some error messages mentioned the wrong arg in the message.
+- Fixed bug where Scrape API was being used for num-found,
+  even if Advanced Search was triggered via page/rows params.
 
 5.0.3 (2024-11-12)
 ++++++++++++++++++

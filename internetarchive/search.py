@@ -228,7 +228,18 @@ class Search:
     @property
     def num_found(self):
         if not self._num_found:
-            if not self.fts:
+            if not self.fts and 'page' in self.params:
+                p = self.params.copy()
+                p['output'] = 'json'
+                r = self.session.get(self.search_url,
+                                     params=p,
+                                     auth=self.auth,
+                                     **self.request_kwargs)
+                j = r.json()
+                num_found = int(j.get('response', {}).get('numFound', 0))
+                if not self._num_found:
+                    self._num_found = num_found
+            elif not self.fts:
                 p = self.params.copy()
                 p['total_only'] = 'true'
                 r = self.session.post(self.scrape_url,

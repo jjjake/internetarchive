@@ -8,6 +8,9 @@ jobs:
       max-parallel: 1  # Avoid timeout errors
       matrix:
         python: ['3.8', '3.9', '3.10', '3.11', '3.12', 'pypy-3.9', 'pypy-3.10']
+        envname: ['py']  # To allow testing more special configurations below
+        include:
+          - { python: '3.12', envname: 'py312ujson' }  # With optional ujson dependency
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -15,4 +18,4 @@ jobs:
           python-version: ${{ matrix.python }}
           cache: pip
       - run: pip install tox
-      - run: tox -e py
+      - run: tox -e ${{ matrix.envname }}

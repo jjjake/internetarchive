@@ -81,7 +81,7 @@ def setup(subparsers):
                         default=2,
                         help="Number of retries on S3 503 SlowDown error.")
     parser.add_argument("--no-backup",
-                        action="store_false",
+                        action="store_true",
                         help="Turn off archive.org backups. Clobbered files will not be saved.")
 
     parser.set_defaults(func=lambda args: main(args, parser))

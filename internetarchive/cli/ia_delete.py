@@ -47,7 +47,7 @@ def setup(subparsers):
                         help="Identifier for the item from which files are to be deleted.")
     parser.add_argument("file",
                         type=str,
-                        nargs="+",
+                        nargs="*",
                         help="Specific file(s) to delete.")
 
     # Optional arguments
@@ -74,7 +74,7 @@ def setup(subparsers):
                         help="Only delete files matching the given pattern.")
     parser.add_argument("-f", "--format",
                         type=str,
-                        nargs="*",
+                        action="append",
                         help="Only delete files matching the specified formats.")
     parser.add_argument("-R", "--retries",
                         type=int,

@@ -3,6 +3,15 @@
 Release History
 ---------------
 
+5.0.4 (2024-12-10)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed bug where ``ia delete --no-backup`` was not turning off backups.
+- Fixed bug where ``ia delete`` required you specify a file.
+- Fixed bug where ``ia delete`` did not work correctly with multiple ``--format`` args.
+
 5.0.4 (2024-11-15)
 ++++++++++++++++++
 

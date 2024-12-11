@@ -25,6 +25,7 @@ import sys
 import requests.exceptions
 
 from internetarchive.cli.cli_utils import (
+    FlattenListAction,
     prepare_args_dict,
     validate_identifier,
 )
@@ -74,7 +75,8 @@ def setup(subparsers):
                         help="Only delete files matching the given pattern.")
     parser.add_argument("-f", "--format",
                         type=str,
-                        action="append",
+                        nargs="+",
+                        action=FlattenListAction,
                         help="Only delete files matching the specified formats.")
     parser.add_argument("-R", "--retries",
                         type=int,

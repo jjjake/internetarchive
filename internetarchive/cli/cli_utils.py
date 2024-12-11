@@ -25,6 +25,7 @@ import os
 import signal
 import sys
 from collections import defaultdict
+from collections.abc import Iterable
 from typing import Mapping
 from urllib.parse import parse_qsl
 
@@ -87,6 +88,29 @@ def validate_identifier(identifier):
     except InvalidIdentifierException as e:
         raise argparse.ArgumentTypeError(str(e))
     return identifier
+
+
+def flatten_list(lst):
+    """Flatten a list if it contains lists."""
+    result = []
+    for item in lst:
+        if isinstance(item, Iterable) and not isinstance(item, str):
+            result.extend(flatten_list(item))  # Recursively flatten
+        else:
+            result.append(item)  # Just append the item if it's not a list
+    return result
+
+
+# Custom argparse.Action to flatten list
+class FlattenListAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        # Flatten the list of values (if nested)
+        flattened = flatten_list(values)
+        # Initialize the attribute if it doesn't exist yet
+        if getattr(namespace, self.dest, None) is None:
+            setattr(namespace, self.dest, [])
+        # Append the flattened list to the existing attribute
+        getattr(namespace, self.dest).extend(flattened)
 
 
 def prepare_args_dict(args, parser, arg_type="metadata", many=False, query_string=False):

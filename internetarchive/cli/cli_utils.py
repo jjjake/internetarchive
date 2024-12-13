@@ -164,7 +164,10 @@ class MetadataAction(argparse.Action):
         for sublist in values:
             if ":" not in sublist and "=" in sublist:
                 sublist = sublist.replace("=", ":", 1)
-            key, value = sublist.split(":", 1)
+            try:
+                key, value = sublist.split(":", 1)
+            except ValueError:
+                parser.error(f"{option_string} must be formatted as 'KEY:VALUE'")
 
             current_dict = getattr(namespace, self.dest)
             if key in current_dict:

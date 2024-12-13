@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+5.1.0 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bugs for URL parameter options in CLI.
+- Fixed various bugs and simplified CLI options with KEY:VALUE values.
+
 5.0.4 (2024-12-10)
 ++++++++++++++++++
 

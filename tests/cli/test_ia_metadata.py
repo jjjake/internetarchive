@@ -35,6 +35,6 @@ def test_ia_metadata_modify(capsys):
         rsps.add_metadata_mock('nasa', method=responses.GET)
         rsps.add_metadata_mock('nasa', body=md_rsp, method=responses.POST)
         valid_key = f'foo-{int(time())}'
-        ia_call(['ia', 'metadata', '--modify', f'{valid_key}:test_value', 'nasa'])
+        ia_call(['ia', 'metadata', 'nasa', '--modify', f'{valid_key}:test_value'])
         out, err = capsys.readouterr()
         assert err == 'nasa - success: https://catalogd.archive.org/log/447613301\n'

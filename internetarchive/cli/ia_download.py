@@ -25,7 +25,11 @@ import argparse
 import sys
 from typing import TextIO
 
-from internetarchive.cli.cli_utils import prepare_args_dict, validate_dir_path, validate_identifier
+from internetarchive.cli.cli_utils import (
+    QueryStringAction,
+    validate_dir_path,
+    validate_identifier,
+)
 from internetarchive.files import File
 from internetarchive.search import Search
 
@@ -79,7 +83,9 @@ def setup(subparsers):
                         help="Download items returned from a specified search query")
     parser.add_argument("-P", "--search-parameters",
                         nargs="+",
-                        help="Download items returned from a specified search query")
+                        action=QueryStringAction,
+                        metavar="KEY:VALUE",
+                        help="Parameters to send with your --search query")
     parser.add_argument("-g", "--glob",
                         help=("Only download files whose filename matches "
                              "the given glob pattern"))
@@ -115,7 +121,9 @@ def setup(subparsers):
                              "the source material"))
     parser.add_argument("-p", "--parameters",
                         nargs="+",
-                        help="Parameters to send with your query (e.g. `cnt=0`)")
+                        action=QueryStringAction,
+                        metavar="KEY:VALUE",
+                        help="Parameters to send with your download request (e.g. `cnt=0`)")
     parser.add_argument("-a", "--download-history",
                         action="store_true",
                         help="Also download files from the history directory")
@@ -139,13 +147,6 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for 'ia download'.
     """
-    args.parameters = prepare_args_dict(args.parameters,
-                                        parser=parser,
-                                        arg_type="parameters")
-    args.search_parameters = prepare_args_dict(args.search_parameters,
-                                               parser=parser,
-                                               arg_type="search-parameters")
-
     ids: list[File | str] | Search | TextIO
 
     if args.itemlist:

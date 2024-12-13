@@ -21,6 +21,7 @@ interneratchive.cli.cli_utils
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import signal
 import sys
@@ -60,23 +61,6 @@ def get_args_dict(args: list[str],
     return metadata
 
 
-def get_args_header_dict(args: list[str]) -> dict:
-    h = get_args_dict(args)
-    return {k: v.strip() for k, v in h.items()}
-
-
-def get_args_dict_many_write(metadata: Mapping):
-    changes: dict[str, dict] = defaultdict(dict)
-    for key, value in metadata.items():
-        target = "/".join(key.split("/")[:-1])
-        field = key.split("/")[-1]
-        if not changes[target]:
-            changes[target] = {field: value}
-        else:
-            changes[target][field] = value
-    return changes
-
-
 def convert_str_list_to_unicode(str_list: list[bytes]):
     encoding = sys.getfilesystemencoding()
     return [b.decode(encoding) for b in str_list]
@@ -101,7 +85,6 @@ def flatten_list(lst):
     return result
 
 
-# Custom argparse.Action to flatten list
 class FlattenListAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # Flatten the list of values (if nested)
@@ -113,20 +96,83 @@ class FlattenListAction(argparse.Action):
         getattr(namespace, self.dest).extend(flattened)
 
 
-def prepare_args_dict(args, parser, arg_type="metadata", many=False, query_string=False):
-    if not args:
-        return {}
-    try:
-        if many:
-            return get_args_dict_many_write([item for sublist in args for item in sublist])
-        else:
-            if isinstance(args[0], list):
-                return get_args_dict([item for sublist in args for item in sublist],
-                                     query_string=query_string)
+class PostDataAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        current_value = getattr(namespace, self.dest, None)
+
+        # Split values into individual JSON objects (if needed) and parse them
+        all_values = []
+        for value in values:
+            try:
+                obj = json.loads(value)
+                all_values.append(obj)
+            except json.JSONDecodeError as e:
+                parser.error(f"Invalid JSON format for post data: {value}")
+
+        # If there is no current value (first argument), initialize it as an object or list
+        if current_value is None:
+            # If there's only one value, don't wrap it in a list
+            if len(all_values) == 1:
+                post_data = all_values[0]
             else:
-                return get_args_dict(args, query_string=query_string)
-    except ValueError as e:
-        parser.error(f"--{arg_type} must be formatted as --{arg_type}='key:value'")
+                post_data = all_values
+        elif isinstance(current_value, list):
+            # If it's already a list, append the new values to it
+            post_data = current_value + all_values
+        else:
+            # If it's a single object (first argument), convert it into a list and append new data
+            post_data = [current_value] + all_values
+
+        # Set the final value back to the namespace
+        setattr(namespace, self.dest, post_data)
+
+
+class QueryStringAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        # Initialize the destination as an empty dictionary if it doesn't exist
+        if getattr(namespace, self.dest, None) is None:
+            setattr(namespace, self.dest, {})
+
+        for sublist in values:
+            if "=" not in sublist and ":" in sublist:
+                sublist = sublist.replace(":", "=", 1)
+            key_value_pairs = parse_qsl(sublist)
+
+            if sublist and not key_value_pairs:
+                parser.error(f"{option_string} must be formatted as 'key=value' "
+                              "or 'key:value'")
+
+            for key, value in key_value_pairs:
+                current_dict = getattr(namespace, self.dest)
+                if key in current_dict:
+                    current_dict[key].append(value)
+                else:
+                    current_dict[key] = [value]
+
+        current_dict = getattr(namespace, self.dest)
+        for key, value in current_dict.items():
+            if len(value) == 1:
+                current_dict[key] = value[0]
+
+
+class MetadataAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        # Initialize the destination as an empty dictionary if it doesn't exist
+        if getattr(namespace, self.dest, None) is None:
+            setattr(namespace, self.dest, {})
+
+        for sublist in values:
+            if ":" not in sublist and "=" in sublist:
+                sublist = sublist.replace("=", ":", 1)
+            key, value = sublist.split(":", 1)
+
+            current_dict = getattr(namespace, self.dest)
+            if key in current_dict:
+                if not isinstance(current_dict[key], list):
+                    current_dict[key] = [current_dict[key]]
+                current_dict[key].append(value)
+            else:
+                current_dict[key] = value
 
 
 def validate_dir_path(path):

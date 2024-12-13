@@ -23,7 +23,7 @@ import argparse
 import sys
 
 from internetarchive.cli import ia_copy
-from internetarchive.cli.cli_utils import prepare_args_dict
+from internetarchive.cli.cli_utils import MetadataAction, QueryStringAction
 
 
 def setup(subparsers):
@@ -48,12 +48,14 @@ def setup(subparsers):
     # Options
     parser.add_argument("-m", "--metadata",
                         metavar="KEY:VALUE",
-                        action="append",
+                        nargs="+",
+                        action=MetadataAction,
                         help=("Metadata to add to your new item, "
                               "if you are moving the file to a new item"))
     parser.add_argument("-H", "--header",
                         metavar="KEY:VALUE",
-                        action="append",
+                        nargs="+",
+                        action=QueryStringAction,
                         help="S3 HTTP headers to send with your request")
     parser.add_argument("--replace-metadata",
                         action="store_true",
@@ -77,9 +79,6 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for ia move command.
     """
-    args.header = prepare_args_dict(args.header, parser=parser, arg_type="header")
-    args.metadata = prepare_args_dict(args.metadata, parser=parser, arg_type="metadata")
-
     # Add keep-old-version by default.
     if not args.header.get("x-archive-keep-old-version") and not args.no_backup:
         args.header["x-archive-keep-old-version"] = "1"

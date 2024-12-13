@@ -31,11 +31,7 @@ from typing import Mapping
 from requests import Response
 
 from internetarchive import item
-from internetarchive.cli.cli_utils import (
-    get_args_dict_many_write,
-    prepare_args_dict,
-    validate_identifier,
-)
+from internetarchive.cli.cli_utils import MetadataAction, QueryStringAction, validate_identifier
 from internetarchive.exceptions import ItemLocateError
 from internetarchive.utils import json
 
@@ -59,36 +55,43 @@ def setup(subparsers):
     # Mutually exclusive group for metadata modification options
     modify_group = parser.add_mutually_exclusive_group()
     modify_group.add_argument("-m", "--modify",
-                              action="append",
-                              metavar="key:value",
+                              nargs="+",
+                              action=MetadataAction,
+                              metavar="KEY:VALUE",
                               help="Modify the metadata of an item")
     modify_group.add_argument("-r", "--remove",
-                              action="append",
-                              metavar="key:value",
-                              help="Remove key:value from a metadata element")
+                              nargs="+",
+                              action=MetadataAction,
+                              metavar="KEY:VALUE",
+                              help="Remove KEY:VALUE from a metadata element")
     modify_group.add_argument("-a", "--append",
-                              action="append",
-                              metavar="key:value",
+                              nargs="+",
+                              action=MetadataAction,
+                              metavar="KEY:VALUE",
                               help="Append a string to a metadata element")
     modify_group.add_argument("-A", "--append-list",
-                              action="append",
-                              metavar="key:value",
+                              nargs="+",
+                              action=MetadataAction,
+                              metavar="KEY:VALUE",
                               help="Append a field to a metadata element")
     modify_group.add_argument("-i", "--insert",
-                              action="append",
-                              metavar="key:value",
+                              nargs="+",
+                              action=MetadataAction,
+                              metavar="KEY:VALUE",
                               help=("Insert a value into a multi-value field given "
                                     "an index (e.g. `--insert=collection[0]:foo`)"))
 
     # Additional options
     parser.add_argument("-E", "--expect",
-                        action="append",
-                        metavar="key:value",
+                        nargs="+",
+                        action=MetadataAction,
+                        metavar="KEY:VALUE",
                         help=("Test an expectation server-side before applying patch "
                               "to item metadata"))
     parser.add_argument("-H", "--header",
-                        action="append",
-                        metavar="key:value",
+                        nargs="+",
+                        action=QueryStringAction,
+                        metavar="KEY:VALUE",
                         help="S3 HTTP headers to send with your request")
     parser.add_argument("-t", "--target",
                         metavar="target",
@@ -120,12 +123,11 @@ def modify_metadata(item: item.Item,
     Modify metadata helper function.
     """
     append = bool(args.append)
-    expect = prepare_args_dict(args.expect, parser=parser, arg_type="expect")
     append_list = bool(args.append_list)
     insert = bool(args.insert)
     try:
         r = item.modify_metadata(metadata, target=args.target, append=append,
-                                 expect=expect, priority=args.priority,
+                                 expect=args.expect, priority=args.priority,
                                  append_list=append_list, headers=args.header,
                                  insert=insert, timeout=args.timeout)
         assert isinstance(r, Response)  # mypy: modify_metadata() -> Request | Response
@@ -237,28 +239,17 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     # Modify metadata.
     elif (args.modify or args.append or args.append_list
           or args.remove or args.insert):
+        # TODO: Find a better way to handle this.
         if args.modify:
-            metadata = prepare_args_dict(args.modify,
-                                         parser=parser,
-                                         arg_type="modify")
+            metadata = args.modify
         elif args.append:
-            metadata = prepare_args_dict(args.append,
-                                         parser=parser,
-                                         arg_type="append")
+            metadata = args.append
         elif args.append_list:
-            metadata = prepare_args_dict(args.append_list,
-                                         parser=parser,
-                                         arg_type="append-list")
+            metadata = args.append_list
         elif args.insert:
-            metadata = prepare_args_dict(args.insert,
-                                         parser=parser,
-                                         arg_type="insert")
+            metadata = args.insert
         if args.remove:
-            metadata = prepare_args_dict(args.remove,
-                                         parser=parser,
-                                         arg_type="remove")
-        if any("/" in k for k in metadata):
-            metadata = get_args_dict_many_write(metadata)
+            metadata = args.remove
 
         if args.remove:
             responses.append(remove_metadata(item, metadata, args, parser))

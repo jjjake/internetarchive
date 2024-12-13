@@ -23,7 +23,7 @@ import argparse
 import sys
 import warnings
 
-from internetarchive.cli.cli_utils import prepare_args_dict
+from internetarchive.cli.cli_utils import PostDataAction, QueryStringAction
 from internetarchive.utils import json
 
 
@@ -45,8 +45,8 @@ def setup(subparsers):
                         help="Return the given tasks task log.")
     parser.add_argument("-p", "--parameter",
                         nargs="+",
+                        action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        action="append",
                         help="URL parameters passed to catalog.php.")
     parser.add_argument("-T", "--tab-output",
                         action="store_true",
@@ -59,13 +59,13 @@ def setup(subparsers):
                         help="A reasonable explanation for why a task is being submitted.")
     parser.add_argument("-a", "--task-args",
                         nargs="+",
+                        action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        action="append",
                         help="Args to submit to the Tasks API.")
     parser.add_argument("-d", "--data",
                         nargs="+",
+                        action=PostDataAction,
                         metavar="KEY:VALUE",
-                        action="append",
                         help="Additional data to send when submitting a task.")
     parser.add_argument("-r", "--reduced-priority",
                         action="store_true",
@@ -99,11 +99,6 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for 'ia tasks'.
     """
-    # Prepare arg dicts.
-    args.parameter = prepare_args_dict(args.parameter, parser, arg_type="parameter")
-    args.task_args = prepare_args_dict(args.task_args, parser, arg_type="task-args")
-    args.data = prepare_args_dict(args.data, parser, arg_type="data")
-
     # Tasks write API.
     if args.cmd:
         if args.get_rate_limit:

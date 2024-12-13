@@ -32,8 +32,9 @@ from typing import Union
 from requests.exceptions import HTTPError
 
 from internetarchive.cli.cli_utils import (
+    MetadataAction,
+    QueryStringAction,
     get_args_dict,
-    prepare_args_dict,
     validate_identifier,
 )
 from internetarchive.utils import (
@@ -78,8 +79,10 @@ def setup(subparsers):
                         help=("When uploading data from stdin, "
                              "this option sets the remote filename"))
     parser.add_argument("-m", "--metadata",
+                        nargs="+",
+                        action=MetadataAction,
                         metavar="KEY:VALUE",
-                        action="append",
+                        default={},
                         help="Metadata to add to your item")
     parser.add_argument("--spreadsheet",
                         type=argparse.FileType("r", encoding="utf-8-sig"),
@@ -88,7 +91,9 @@ def setup(subparsers):
                         type=argparse.FileType("r"),
                         help="Upload files with file-level metadata via a file_md.jsonl file")
     parser.add_argument("-H", "--header",
-                        action="append",
+                        nargs="+",
+                        action=QueryStringAction,
+                        default={},
                         help="S3 HTTP headers to send with your request")
     parser.add_argument("-c", "--checksum",
                         action="store_true",
@@ -197,16 +202,11 @@ def main(args, parser): # noqa: PLR0912,C901
     """
     Main entry point for 'ia upload'.
     """
-
     check_if_file_arg_required(args, parser)
 
     if uploading_from_stdin(args) and not args.remote_name:
         parser.error("When uploading from stdin, "
                      "you must specify a remote filename with --remote-name")
-
-    # Prepare args key:val dicts
-    args.metadata = prepare_args_dict(args.metadata, parser, arg_type="metadata")
-    args.header = prepare_args_dict(args.header, parser, arg_type="header")
 
     if args.status_check:  # TODO: support for checking if a specific bucket is overloaded
         if args.session.s3_is_overloaded():

@@ -26,7 +26,8 @@ import requests.exceptions
 
 from internetarchive.cli.cli_utils import (
     FlattenListAction,
-    prepare_args_dict,
+    MetadataAction,
+    QueryStringAction,
     validate_identifier,
 )
 from internetarchive.utils import get_s3_xml_text
@@ -60,8 +61,8 @@ def setup(subparsers):
                         help="Delete all associated files including derivatives and the original.")
     parser.add_argument("-H", "--header",
                         nargs="+",
+                        action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        action="append",
                         help="S3 HTTP headers to send with your request.")
     parser.add_argument("-a", "--all",
                         action="store_true",
@@ -155,8 +156,6 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser):
     """
     Main entry point for 'ia delete'.
     """
-    args.header = prepare_args_dict(args.header, parser, arg_type="header")
-
     verbose = not args.quiet
     item = args.session.get_item(args.identifier)
     if not item.exists:

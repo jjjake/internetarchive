@@ -29,7 +29,7 @@ from urllib.parse import quote
 from requests import Response
 
 import internetarchive as ia
-from internetarchive.cli.cli_utils import prepare_args_dict
+from internetarchive.cli.cli_utils import MetadataAction, QueryStringAction
 from internetarchive.utils import get_s3_xml_text, merge_dictionaries
 
 
@@ -54,7 +54,8 @@ def setup(subparsers):
     # Options
     parser.add_argument("-m", "--metadata",
                         metavar="KEY:VALUE",
-                        action="append",
+                        nargs="+",
+                        action=MetadataAction,
                         help=("Metadata to add to your new item, if you are moving the "
                               "file to a new item"))
     parser.add_argument("--replace-metadata",
@@ -63,7 +64,8 @@ def setup(subparsers):
                               "from the source item"))
     parser.add_argument("-H", "--header",
                         metavar="KEY:VALUE",
-                        action="append",
+                        nargs="+",
+                        action=QueryStringAction,
                         help="S3 HTTP headers to send with your request")
     parser.add_argument("--ignore-file-metadata",
                         action="store_true",
@@ -99,9 +101,6 @@ def main(args: argparse.Namespace,
     Main entry point for 'ia copy'.
     """
     SRC_FILE = None
-
-    args.header = prepare_args_dict(args.header, parser=parser, arg_type="header")
-    args.metadata = prepare_args_dict(args.metadata, parser=parser, arg_type="metadata")
 
     if args.source == args.destination:
         parser.error("error: The source and destination files cannot be the same!")

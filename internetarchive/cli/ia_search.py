@@ -27,7 +27,7 @@ from itertools import chain
 
 from requests.exceptions import ConnectTimeout, ReadTimeout
 
-from internetarchive.cli.cli_utils import prepare_args_dict
+from internetarchive.cli.cli_utils import FlattenListAction, QueryStringAction
 from internetarchive.exceptions import AuthenticationError
 from internetarchive.utils import json
 
@@ -51,13 +51,13 @@ def setup(subparsers):
     # Optional arguments
     parser.add_argument("-p", "--parameters",
                         nargs="+",
+                        action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        action="append",
                         help="Parameters to send with your query.")
     parser.add_argument("-H", "--header",
                         nargs="+",
+                        action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        action="append",
                         help="Add custom headers to your search request.")
     parser.add_argument("-s", "--sort",
                         action="append",
@@ -66,7 +66,8 @@ def setup(subparsers):
                         action="store_true",
                         help="Output identifiers only.")
     parser.add_argument("-f", "--field",
-                        action="append",
+                        nargs="+",
+                        action=FlattenListAction,
                         help="Metadata fields to return.")
     parser.add_argument("-n", "--num-found",
                         action="store_true",
@@ -161,15 +162,6 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     Main entry point for 'ia search'.
     """
     try:
-        # Validate args.
-        args.parameters = prepare_args_dict(args.parameters,
-                                            parser=parser,
-                                            arg_type='parameters',
-                                            query_string=True)
-        args.header = prepare_args_dict(args.header,
-                                        parser=parser,
-                                        arg_type='header')
-
         # Prepare fields and sorts.
         fields = prepare_values(args.field)
         sorts = prepare_values(args.sort)

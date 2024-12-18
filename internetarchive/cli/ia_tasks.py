@@ -60,12 +60,14 @@ def setup(subparsers):
     parser.add_argument("-a", "--task-args",
                         nargs="+",
                         action=QueryStringAction,
+                        default={},
                         metavar="KEY:VALUE",
                         help="Args to submit to the Tasks API.")
     parser.add_argument("-d", "--data",
                         nargs="+",
                         action=PostDataAction,
                         metavar="KEY:VALUE",
+                        default={},
                         help="Additional data to send when submitting a task.")
     parser.add_argument("-r", "--reduced-priority",
                         action="store_true",

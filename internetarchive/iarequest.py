@@ -445,7 +445,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False, append_list=F
         indexed_keys[rm_index(key)] = count
 
     # Initialize the values for all indexed_keys.
-    for key in indexed_keys:
+    for key in indexed_keys:  # noqa: PLC0206
         # Increment the counter so we know how many values the final
         # value in prepared_metadata should have.
         indexed_keys[key] += len(source_metadata.get(key, []))

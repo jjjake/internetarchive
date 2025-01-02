@@ -53,7 +53,7 @@ def get_args_dict(args: list[str],
             if value not in metadata[key]:
                 metadata[key].append(value)  # type: ignore
 
-    for key in metadata:
+    for key in metadata:  # noqa: PLC0206
         # Flatten single item lists.
         if len(metadata[key]) <= 1:
             metadata[key] = metadata[key][0]

@@ -138,7 +138,7 @@ class File(BaseFile):
                 f'size={self.size!r}, '
                 f'format={self.format!r})')
 
-    def download(  # noqa: max-complexity=38
+    def download(  # noqa: C901,PLR0911,PLR0912,PLR0915
         self,
         file_path=None,
         verbose=None,

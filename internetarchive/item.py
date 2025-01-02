@@ -603,7 +603,7 @@ class Item(BaseItem):
                  exclude_source: str | list[str] | None = None,
                  stdout: bool = False,
                  params: Mapping | None = None,
-                 timeout: int | float | tuple[int, float] | None = None
+                 timeout: float | tuple[int, float] | None = None
                  ) -> list[Request | Response]:
         """Download files from an item.
 
@@ -785,7 +785,7 @@ class Item(BaseItem):
                         debug: bool = False,
                         headers: Mapping | None = None,
                         request_kwargs: Mapping | None = None,
-                        timeout: int | float | None = None,
+                        timeout: float | None = None,
                         refresh: bool = True) -> Request | Response:
         """Modify the metadata of an existing item on Archive.org.
 

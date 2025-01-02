@@ -60,27 +60,25 @@ from internetarchive.search import Search
 from internetarchive.session import ArchiveSession
 
 __all__ = [
-    '__version__',
-
     # Classes.
     'ArchiveSession',
-    'Item',
-    'File',
-    'Search',
     'Catalog',
-
+    'File',
+    'Item',
+    'Search',
+    '__version__',
+    'configure',
+    'delete',
+    'download',
+    'get_files',
     # API.
     'get_item',
-    'get_files',
-    'modify_metadata',
-    'upload',
-    'download',
-    'delete',
-    'get_tasks',
-    'search_items',
     'get_session',
-    'configure',
+    'get_tasks',
     'get_username',
+    'modify_metadata',
+    'search_items',
+    'upload',
 ]
 
 

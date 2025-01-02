@@ -9,7 +9,7 @@ For example, it can be installed via `homebrew <https://brew.sh/>`_ on Mac OS::
 
     brew install parallel
 
-Refer to the `GNU Parallel homepage <https://www.gnu.org/software/parallel/>`_ for more details on available packaes, source code, installation, and other documentation and tutorials.
+Refer to the `GNU Parallel homepage <https://www.gnu.org/software/parallel/>`_ for more details on available packages, source code, installation, and other documentation and tutorials.
 
 
 Basic Usage

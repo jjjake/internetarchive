@@ -61,7 +61,10 @@ def setup(subparsers):
                         help="Add custom headers to your search request.")
     parser.add_argument("-s", "--sort",
                         action="append",
-                        help="Sort search results by specified fields.")
+                        help=("Sort search results by specified fields. "
+                              "See https://archive.org/advancedsearch.php "
+                              "for full list of sort values"
+                              " (e.g. --sort 'date desc', --sort 'date asc', etc.)."))
     parser.add_argument("-i", "--itemlist",
                         action="store_true",
                         help="Output identifiers only.")

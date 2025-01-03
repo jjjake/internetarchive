@@ -92,20 +92,29 @@ class Account:
         Raises:
             ValueError: If required fields are missing in the JSON data.
         """
-        required_fields = ["email", "canonical_email", "itemname", "screenname"]
+        required_fields = [
+            "canonical_email",
+            "email",
+            "has_disability_access",
+            "itemname",
+            "locked",
+            "notifications",
+            "screenname",
+            "verified"
+        ]
         for field in required_fields:
             if field not in json_data:
                 raise ValueError(f"Missing required field in JSON data: {field}")
 
         return cls(
-            locked=json_data.get("locked", False),
-            verified=json_data.get("verified", False),
+            locked=json_data["locked"],
+            verified=json_data["verified"],
             email=json_data["email"],
             canonical_email=json_data["canonical_email"],
             itemname=json_data["itemname"],
             screenname=json_data["screenname"],
-            notifications=json_data.get("notifications", []),
-            has_disability_access=json_data.get("has_disability_access", False),
+            notifications=json_data["notifications"],
+            has_disability_access=json_data["has_disability_access"],
         )
 
     def __iter__(self):

@@ -39,14 +39,22 @@ def setup(subparsers):
                                    aliases=["ac"],
                                    help=("Manage an archive.org account. "
                                          "Note: requires admin privileges"))
+
+    group = parser.add_mutually_exclusive_group()
     parser.add_argument("user",
                         help="Email address or screenname for an archive.org account")
-    parser.add_argument("--get-email", "-g",
+    group.add_argument("--get-email", "-g",
                         action="store_true",
                         help="Print the email address associated with the user and exit")
-    parser.add_argument("--get-screenname", "-s",
+    group.add_argument("--get-screenname", "-s",
                         action="store_true",
                         help="Print the screenname associated with the user and exit")
+    group.add_argument("--get-itemname", "-i",
+                        action="store_true",
+                        help="Print the itemname associated with the user and exit")
+    group.add_argument("--is-locked", "-l",
+                        action="store_true",
+                        help="Check if an account is locked")
 
     parser.set_defaults(func=main)
 
@@ -68,6 +76,10 @@ def main(args: argparse.Namespace) -> None:
         print(account.canonical_email)
     elif args.get_screenname:
         print(account.screenname)
+    elif args.get_itemname:
+        print(account.itemname)
+    elif args.is_locked:
+        print(account.locked)
     else:
         account_data = dict(account)
         print(json.dumps(account_data))

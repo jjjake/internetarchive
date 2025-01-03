@@ -28,6 +28,7 @@ from __future__ import annotations
 import os
 from collections import defaultdict
 from configparser import RawConfigParser
+from time import sleep
 from typing import Mapping
 
 import requests
@@ -42,6 +43,7 @@ def get_auth_config(email: str, password: str, host: str = 'archive.org') -> dic
     p = {'op': 'login'}
     d = {'email': email, 'password': password}
     r = requests.post(u, params=p, data=d, timeout=10)
+    sleep(2)
     j = r.json()
     if not j.get('success'):
         try:

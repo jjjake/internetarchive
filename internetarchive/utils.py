@@ -129,10 +129,9 @@ def suppress_keyboard_interrupt_message() -> None:
     old_excepthook = sys.excepthook
 
     def new_hook(type, value, traceback):
-        if type != KeyboardInterrupt:
-            old_excepthook(type, value, traceback)
-        else:
+        if type is KeyboardInterrupt:
             sys.exit(130)
+        old_excepthook(type, value, traceback)
 
     sys.excepthook = new_hook
 
@@ -358,7 +357,7 @@ def reraise_modify(
         else:
             arg_list += [last_arg, append_msg]
     caught_exc.args = tuple(arg_list)
-    raise
+    raise  # noqa: PLE0704
 
 
 def remove_none(obj):

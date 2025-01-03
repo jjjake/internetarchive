@@ -314,7 +314,7 @@ def download(
     on_the_fly: bool = False,
     return_responses: bool = False,
     no_change_timestamp: bool = False,
-    timeout: int | float | tuple[int, float] | None = None,
+    timeout: float | tuple[int, float] | None = None,
     **get_item_kwargs,
 ) -> list[requests.Request | requests.Response]:
     r"""Download files from an item.

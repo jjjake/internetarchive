@@ -68,7 +68,7 @@ class ArchiveSession(requests.sessions.Session):
         Collection(identifier='nasa', exists=True)
     """
 
-    ITEM_MEDIATYPE_TABLE = {
+    ITEM_MEDIATYPE_TABLE = {  # noqa: RUF012
         'collection': Collection,
     }
 
@@ -264,7 +264,7 @@ class ArchiveSession(requests.sessions.Session):
 
         :param identifier: Globally unique Archive.org identifier.
 
-        :returns: Metadat API response.
+        :returns: Metadata API response.
         """
         request_kwargs = request_kwargs or {}
         url = f'{self.protocol}//{self.host}/metadata/{identifier}'

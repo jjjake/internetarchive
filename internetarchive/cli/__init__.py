@@ -40,8 +40,8 @@ from internetarchive.cli import (
 )
 
 __all__ = [
-    "ia",
     "cli_utils",
+    "ia",
     "ia_configure",
     "ia_copy",
     "ia_delete",

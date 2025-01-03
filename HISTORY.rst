@@ -358,7 +358,7 @@ Release History
 
 **Features and Improvements**
 
-- Added support for remvoing items from simplelists as if they were collections.
+- Added support for removing items from simplelists as if they were collections.
 - Added ``Item.derive()`` method for deriving items.
 - Added ``Item.fixer()`` method for submitting fixer tasks.
 - Added ``--task-args`` to ``ia tasks`` for submitting task args to the Tasks API.

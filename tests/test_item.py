@@ -61,7 +61,7 @@ def test_get_item(nasa_metadata, nasa_item, session):
 
 def test_get_file(nasa_item):
     file = nasa_item.get_file('nasa_meta.xml')
-    assert type(file) == internetarchive.files.File
+    assert type(file) is internetarchive.files.File
     assert file.name == 'nasa_meta.xml'
 
 

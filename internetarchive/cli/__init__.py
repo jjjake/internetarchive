@@ -26,6 +26,7 @@ internetarchive.cli
 from internetarchive.cli import (
     cli_utils,
     ia,
+    ia_account,
     ia_configure,
     ia_copy,
     ia_delete,
@@ -42,6 +43,7 @@ from internetarchive.cli import (
 __all__ = [
     "cli_utils",
     "ia",
+    "ia_account",
     "ia_configure",
     "ia_copy",
     "ia_delete",

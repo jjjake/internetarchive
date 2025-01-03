@@ -46,6 +46,7 @@ def setup(subparsers):
     parser.add_argument("-p", "--parameter",
                         nargs="+",
                         action=QueryStringAction,
+                        default={},
                         metavar="KEY:VALUE",
                         help="URL parameters passed to catalog.php.")
     parser.add_argument("-T", "--tab-output",
@@ -123,6 +124,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         _params.update(args.parameter)
         args.parameter = _params
     elif args.get_task_log:
+        print(args.parameter)
         log = args.session.get_task_log(args.get_task_log, **args.parameter)
         print(log.encode("utf-8", errors="surrogateescape")
                  .decode("utf-8", errors="replace"))

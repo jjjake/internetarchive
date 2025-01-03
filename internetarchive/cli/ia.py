@@ -26,6 +26,7 @@ import sys
 
 from internetarchive import __version__, get_session
 from internetarchive.cli import (
+    ia_account,
     ia_configure,
     ia_copy,
     ia_delete,
@@ -103,6 +104,7 @@ def main():
                                        metavar="{command}")
 
     # Add subcommand parsers
+    ia_account.setup(subparsers)
     ia_configure.setup(subparsers)
     ia_copy.setup(subparsers)
     ia_delete.setup(subparsers)

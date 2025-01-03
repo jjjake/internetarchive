@@ -55,6 +55,7 @@ def setup(subparsers):
     parser.add_argument("-m", "--metadata",
                         metavar="KEY:VALUE",
                         nargs="+",
+                        default={},
                         action=MetadataAction,
                         help=("Metadata to add to your new item, if you are moving the "
                               "file to a new item"))
@@ -65,6 +66,7 @@ def setup(subparsers):
     parser.add_argument("-H", "--header",
                         metavar="KEY:VALUE",
                         nargs="+",
+                        default={},
                         action=QueryStringAction,
                         help="S3 HTTP headers to send with your request")
     parser.add_argument("--ignore-file-metadata",

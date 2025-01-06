@@ -130,9 +130,9 @@ def main():
         config["general"] = {"secure": False}
     if args.host:
         if config.get("general"):
-            config["general"]["host"] = args["--host"]
+            config["general"]["host"] = args.host
         else:
-            config["general"] = {"host": args["--host"]}
+            config["general"] = {"host": args.host}
 
     args.session = get_session(config_file=args.config_file,
                                config=config,

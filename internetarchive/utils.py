@@ -450,3 +450,10 @@ def parse_dict_cookies(value: str) -> dict[str, str | None]:
     if 'path' not in result:
         result['path'] = '/'
     return result
+
+
+def is_valid_email(email):
+    # Regular expression pattern for a valid email address
+    # Ensures the TLD has at least 2 characters
+    pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None

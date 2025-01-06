@@ -26,6 +26,7 @@ import sys
 from internetarchive import configure
 from internetarchive.account import Account
 from internetarchive.exceptions import AccountAPIError
+from internetarchive.utils import is_valid_email
 
 
 def setup(subparsers):
@@ -42,7 +43,8 @@ def setup(subparsers):
 
     group = parser.add_mutually_exclusive_group()
     parser.add_argument("user",
-                        help="Email address or screenname for an archive.org account")
+                        help="Email address, screenname, or itemname "
+                             "for an archive.org account")
     group.add_argument("--get-email", "-g",
                         action="store_true",
                         help="Print the email address associated with the user and exit")
@@ -55,16 +57,28 @@ def setup(subparsers):
     group.add_argument("--is-locked", "-l",
                         action="store_true",
                         help="Check if an account is locked")
+    group.add_argument("--lock", "-L",
+                        action="store_true",
+                        help="Lock an account")
+    group.add_argument("--unlock", "-u",
+                        action="store_true",
+                        help="Unlock an account")
+
+    parser.add_argument("--comment", "-c",
+                        type=str,
+                        help="Comment to include with lock/unlock action")
 
     parser.set_defaults(func=main)
 
 
 def main(args: argparse.Namespace) -> None:
     """
-    Main entrypoint for 'ia accounts'.
+    Main entrypoint for 'ia account'.
     """
     try:
-        if args.user.startswith('@') or '@' not in args.user:
+        if args.user.startswith('@'):
+            account = Account.from_itemname(args.user)
+        elif not is_valid_email(args.user):
             account = Account.from_screenname(args.user.lstrip('@'))
         else:
             account = Account.from_email(args.user)
@@ -80,6 +94,12 @@ def main(args: argparse.Namespace) -> None:
         print(account.itemname)
     elif args.is_locked:
         print(account.locked)
+    elif args.lock:
+        r = account.lock("test lock", session=args.session)
+        print(r.text)
+    elif args.unlock:
+        r = account.unlock("test unlock", session=args.session)
+        print(r.text)
     else:
         account_data = dict(account)
         print(json.dumps(account_data))

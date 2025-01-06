@@ -182,6 +182,7 @@ class MetadataRequest(requests.models.Request):
                  expect=None,
                  append_list=None,
                  insert=None,
+                 reduced_priority=None,
                  **kwargs):
 
         super().__init__(**kwargs)
@@ -198,6 +199,7 @@ class MetadataRequest(requests.models.Request):
         self.expect = expect
         self.append_list = append_list
         self.insert = insert
+        self.reduced_priority = reduced_priority
 
     def prepare(self):
         p = MetadataPreparedRequest()
@@ -221,6 +223,7 @@ class MetadataRequest(requests.models.Request):
             expect=self.expect,
             append_list=self.append_list,
             insert=self.insert,
+            reduced_priority=self.reduced_priority,
         )
         return p
 
@@ -229,10 +232,12 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, metadata={},  # noqa: B006
                 source_metadata=None, target=None, priority=None, append=None,
-                expect=None, append_list=None, insert=None):
+                expect=None, append_list=None, insert=None, reduced_priority=None):
         self.prepare_method(method)
         self.prepare_url(url, params)
         self.identifier = self.url.split("?")[0].split("/")[-1]
+        if reduced_priority:
+            headers['X-Accept-Reduced-Priority'] = '1'
         self.prepare_headers(headers)
         self.prepare_cookies(cookies)
         self.prepare_body(metadata, source_metadata, target, priority, append,

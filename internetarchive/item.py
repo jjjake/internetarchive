@@ -784,6 +784,7 @@ class Item(BaseItem):
                         secret_key: str | None = None,
                         debug: bool = False,
                         headers: Mapping | None = None,
+                        reduced_priority: bool = False,
                         request_kwargs: Mapping | None = None,
                         timeout: float | None = None,
                         refresh: bool = True) -> Request | Response:
@@ -809,6 +810,12 @@ class Item(BaseItem):
                             metadata field. No duplicate values will be added.
 
         :param refresh: Refresh the item metadata after the request.
+
+        :param reduced_priority: Submit your task at a lower priority.
+                                 This option is helpful to get around rate-limiting.
+                                 Your task will more likely be accepted, but it might
+                                 not run for a long time. Note that you still may be
+                                 subject to rate-limiting.
 
         :returns: A Request if debug else a Response.
 
@@ -851,7 +858,8 @@ class Item(BaseItem):
             append=append,
             expect=expect,
             append_list=append_list,
-            insert=insert)
+            insert=insert,
+            reduced_priority=reduced_priority)
         # Must use Session.prepare_request to make sure session settings
         # are used on request!
         prepared_request = request.prepare()

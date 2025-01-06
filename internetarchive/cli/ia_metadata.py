@@ -111,6 +111,9 @@ def setup(subparsers):
     parser.add_argument("--timeout",
                         metavar="value",
                         help="Set a timeout for metadata writes")
+    parser.add_argument("-R", "--reduced-priority",
+                        action="store_true",
+                        help="Submit task at a reduced priority.")
 
     parser.set_defaults(func=lambda args: main(args, parser))
 
@@ -129,7 +132,8 @@ def modify_metadata(item: item.Item,
         r = item.modify_metadata(metadata, target=args.target, append=append,
                                  expect=args.expect, priority=args.priority,
                                  append_list=append_list, headers=args.header,
-                                 insert=insert, timeout=args.timeout)
+                                 insert=insert, reduced_priority=args.reduced_priority,
+                                 timeout=args.timeout)
         assert isinstance(r, Response)  # mypy: modify_metadata() -> Request | Response
     except ItemLocateError as exc:
         print(f"{item.identifier} - error: {exc}", file=sys.stderr)

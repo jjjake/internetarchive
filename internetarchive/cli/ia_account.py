@@ -77,11 +77,11 @@ def main(args: argparse.Namespace) -> None:
     """
     try:
         if args.user.startswith('@'):
-            account = Account.from_itemname(args.user)
+            account = Account.from_account_lookup('itemname', args.user)
         elif not is_valid_email(args.user):
-            account = Account.from_screenname(args.user.lstrip('@'))
+            account = Account.from_account_lookup('screenname', args.user)
         else:
-            account = Account.from_email(args.user)
+            account = Account.from_account_lookup('email', args.user)
     except AccountAPIError as exc:
         print(json.dumps(exc.error_data))
         sys.exit(1)

@@ -67,27 +67,24 @@ class Account:
         return response
 
     @classmethod
-    def from_email(cls,
-                   email: str,
-                   session: Optional[requests.Session] = None) -> "Account":
-        """Factory method to initialize an Account using an email."""
-        json_data = cls._fetch_account_data_from_api('email', email, session)
-        return cls.from_json(json_data, session)
+    def from_account_lookup(
+        cls,
+        identifier_type: str,
+        identifier: str,
+        session: Optional[requests.Session] = None
+    ) -> "Account":
+        """
+        Factory method to initialize an Account using an identifier type and value.
 
-    @classmethod
-    def from_screenname(cls,
-                        screenname: str,
-                        session: Optional[requests.Session] = None) -> "Account":
-        """Factory method to initialize an Account using a screenname."""
-        json_data = cls._fetch_account_data_from_api('screenname', screenname, session)
-        return cls.from_json(json_data, session)
+        Args:
+            identifier_type: The type of identifier (e.g., 'email', 'screenname').
+            identifier: The value of the identifier (e.g., 'foo@example.com').
+            session: Optional session to use for the request.
 
-    @classmethod
-    def from_itemname(cls,
-                      itemname: str,
-                      session: Optional[requests.Session] = None) -> "Account":
-        """Factory method to initialize an Account using an itemname."""
-        json_data = cls._fetch_account_data_from_api('itemname', itemname, session)
+        Returns:
+            An instance of Account.
+        """
+        json_data = cls._fetch_account_data_from_api(identifier_type, identifier, session)
         return cls.from_json(json_data, session)
 
     @classmethod

@@ -8,9 +8,37 @@ from internetarchive import get_session
 from internetarchive.exceptions import AccountAPIError
 from internetarchive.session import ArchiveSession
 
+"""
+internetarchive.account
+~~~~~~~~~~~~~~~~~~~~~~~
+
+:copyright: (C) 2012-2025 by Internet Archive.
+:license: AGPL 3, see LICENSE for more details.
+
+This module provides the `Account` class for interacting with user accounts on the
+Internet Archive. It requires administrative privileges.
+"""
+
 
 @dataclass
 class Account:
+    """
+    A class for interacting with user accounts on the Internet Archive.
+
+    Note:
+        This class requires administrative privileges.
+
+    This class provides methods to:
+    - Fetch account details using various identifiers (e.g., email, screenname, itemname).
+    - Lock and unlock accounts.
+    - Convert account data to a dictionary for serialization.
+
+    Example Usage:
+        >>> from internetarchive.account import Account
+        >>> account = Account.from_account_lookup('email', 'foo@example.com')
+        >>> account.lock(comment="Locked spam account")
+        >>> print(account.to_dict())
+    """
     locked: bool
     verified: bool
     email: str

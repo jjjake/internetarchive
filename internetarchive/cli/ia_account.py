@@ -38,6 +38,11 @@ def setup(subparsers):
     """
     parser = subparsers.add_parser("account",
                                    aliases=["ac"],
+                                   description=(
+                                       "Manage an archive.org account.\n\n"
+                                       "Note: This command requires administrative "
+                                       "privileges. "
+                                   ),
                                    help=("Manage an archive.org account. "
                                          "Note: requires admin privileges"))
 
@@ -45,26 +50,26 @@ def setup(subparsers):
     parser.add_argument("user",
                         help="Email address, screenname, or itemname "
                              "for an archive.org account")
-    group.add_argument("--get-email", "-g",
+    group.add_argument("-g", "--get-email",
                         action="store_true",
                         help="Print the email address associated with the user and exit")
-    group.add_argument("--get-screenname", "-s",
+    group.add_argument("-s", "--get-screenname",
                         action="store_true",
                         help="Print the screenname associated with the user and exit")
-    group.add_argument("--get-itemname", "-i",
+    group.add_argument("-i", "--get-itemname",
                         action="store_true",
                         help="Print the itemname associated with the user and exit")
-    group.add_argument("--is-locked", "-l",
+    group.add_argument("-l", "--is-locked",
                         action="store_true",
                         help="Check if an account is locked")
-    group.add_argument("--lock", "-L",
+    group.add_argument("-L", "--lock",
                         action="store_true",
                         help="Lock an account")
-    group.add_argument("--unlock", "-u",
+    group.add_argument("-u", "--unlock",
                         action="store_true",
                         help="Unlock an account")
 
-    parser.add_argument("--comment", "-c",
+    parser.add_argument("-c", "--comment",
                         type=str,
                         help="Comment to include with lock/unlock action")
 

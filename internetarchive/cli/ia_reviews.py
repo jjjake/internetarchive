@@ -24,8 +24,6 @@ import sys
 
 from requests.exceptions import HTTPError
 
-from internetarchive.cli.cli_utils import validate_identifier
-
 
 def setup(subparsers):
     """
@@ -40,7 +38,7 @@ def setup(subparsers):
 
     # Positional arguments
     parser.add_argument("identifier",
-                        type=validate_identifier,
+                        type=str,
                         help="identifier of the item")
 
     # Options

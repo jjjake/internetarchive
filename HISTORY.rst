@@ -11,6 +11,7 @@ Release History
 - Fixed bugs for URL parameter options in CLI.
 - Fixed various bugs and simplified CLI options with KEY:VALUE values.
 - Fixed bug in ``ia --host <cmd>`` where the host was not being set correctly.
+- Removed identifier validation in ``ia reviews``.
 
 5.0.4 (2024-12-10)
 ++++++++++++++++++

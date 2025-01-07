@@ -101,5 +101,5 @@ def main(args: argparse.Namespace) -> None:
         r = account.unlock("test unlock", session=args.session)
         print(r.text)
     else:
-        account_data = dict(account)
+        account_data = account.to_dict()
         print(json.dumps(account_data))

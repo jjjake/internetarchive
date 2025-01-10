@@ -47,6 +47,8 @@ class Account:
     screenname: str
     notifications: List[str]
     has_disability_access: bool
+    lastlogin: str
+    createdate: str
     session: ArchiveSession = field(default_factory=get_session)
 
     API_BASE_URL: str = '/services/xauthn/'
@@ -172,7 +174,9 @@ class Account:
             "locked",
             "notifications",
             "screenname",
-            "verified"
+            "verified",
+            "lastlogin",
+            "createdate",
         ]
         for requried_field in required_fields:
             if requried_field not in json_data:
@@ -193,6 +197,8 @@ class Account:
             screenname=json_data["screenname"],
             notifications=json_data["notifications"],
             has_disability_access=json_data["has_disability_access"],
+            lastlogin=json_data["lastlogin"],
+            createdate=json_data["createdate"],
             session=session
         )
 
@@ -258,4 +264,6 @@ class Account:
             "screenname": self.screenname,
             "notifications": self.notifications,
             "has_disability_access": self.has_disability_access,
+            "lastlogin": self.lastlogin,
+            "createdate": self.createdate,
         }

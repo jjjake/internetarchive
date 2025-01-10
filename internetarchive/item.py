@@ -889,7 +889,7 @@ class Item(BaseItem):
         r = self.session.post(self.urls.metadata, data=data)  # type: ignore
         return r
 
-    def upload_file(self, body,
+    def upload_file(self, body,  # noqa: PLR0915; TODO: Refactor this method to reduce complexity
                     key: str | None = None,
                     metadata: Mapping | None = None,
                     file_metadata: Mapping | None = None,

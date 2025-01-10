@@ -26,11 +26,11 @@ Please report all bugs and issues on `Github <https://github.com/jjjake/internet
 Installation
 ------------
 
-You can install this module via pip:
+You can install this module via `pipx <https://pipx.pypa.io/stable/>`_:
 
 .. code:: bash
 
-    $ python3 -m pip install internetarchive
+    $ pipx install internetarchive
 
 Binaries of the command-line tool are also available:
 
@@ -38,7 +38,7 @@ Binaries of the command-line tool are also available:
 
     $ curl -LO https://archive.org/download/ia-pex/ia
     $ chmod +x ia
-    $ ./ia help
+    $ ./ia --help
 
 
 Documentation

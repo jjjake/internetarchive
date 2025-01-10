@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+5.2.0 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug where failed requests to IA-S3 check_limit API would be treated as a 503 slowdown error.
+
 5.1.0 (2025-01-07)
 ++++++++++++++++++
 

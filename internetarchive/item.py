@@ -889,7 +889,7 @@ class Item(BaseItem):
         r = self.session.post(self.urls.metadata, data=data)  # type: ignore
         return r
 
-    def upload_file(self, body,
+    def upload_file(self, body,  # noqa: PLR0915; TODO: Refactor this method to reduce complexity
                     key: str | None = None,
                     metadata: Mapping | None = None,
                     file_metadata: Mapping | None = None,
@@ -1079,12 +1079,23 @@ class Item(BaseItem):
             return prepared_request
         else:
             try:
+                first_try = True
                 while True:
                     error_msg = ('s3 is overloaded, sleeping for '
                                  f'{retries_sleep} seconds and retrying. '
                                  f'{retries} retries left.')
-                    if retries > 0:
-                        if self.session.s3_is_overloaded(access_key=access_key):
+                    if retries > 0 and not first_try:
+                        try:
+                            overloaded = self.session.s3_is_overloaded(
+                                    access_key=access_key)
+                        except Exception as e:
+                            error_msg = ('error checking if s3 is overloaded via '
+                                         's3.us.archive.org?check_limit=1, '
+                                         f'exception raised: "{e}". '
+                                         f'sleeping for {retries_sleep} seconds and '
+                                         f'retrying. {retries} retries left.')
+                            overloaded = True
+                        if overloaded:
                             sleep(retries_sleep)
                             log.info(error_msg)
                             if verbose:
@@ -1112,6 +1123,7 @@ class Item(BaseItem):
                             print(f' warning: {error_msg}', file=sys.stderr)
                         sleep(retries_sleep)
                         retries -= 1
+                        first_try = False
                         continue
                     else:
                         if response.status_code == 503:

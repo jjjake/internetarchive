@@ -333,10 +333,7 @@ class ArchiveSession(requests.sessions.Session):
             'accesskey': access_key,
             'bucket': identifier,
         }
-        try:
-            r = self.get(u, params=p, **request_kwargs)
-        except Exception:
-            return True
+        r = self.get(u, params=p, **request_kwargs)
         try:
             j = r.json()
         except ValueError:

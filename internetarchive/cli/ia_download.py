@@ -150,8 +150,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     ids: list[File | str] | Search | TextIO
 
     if args.itemlist:
-        with open(args.itemlist) as fp:
-            ids = [x.strip() for x in fp]
+        ids = [x.strip() for x in args.itemlist]
         total_ids = len(ids)
     elif args.search:
         try:

@@ -12,34 +12,41 @@ The easiest way to start using ``ia`` is downloading a binary. The only requirem
 
     $ curl -LOs https://archive.org/download/ia-pex/ia
     $ chmod +x ia
-    $ ./ia help
-    A command line interface to archive.org.
+    $ ./ia --help
+    usage: ia [-h] [-v] [-c FILE] [-l] [-d] [-i] [-H HOST] {command} ...
 
-    usage:
-        ia [--help | --version]
-        ia [--config-file FILE] [--log | --debug] [--insecure] <command> [<args>]...
+    A command line interface to Archive.org.
 
-    options:
-        -h, --help
-        -v, --version
-        -c, --config-file FILE  Use FILE as config file.
-        -l, --log               Turn on logging [default: False].
-        -d, --debug             Turn on verbose logging [default: False].
-        -i, --insecure          Use HTTP for all requests instead of HTTPS [default: false]
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v, --version         show program's version number and exit
+      -c FILE, --config-file FILE
+                            path to configuration file
+      -l, --log             enable logging
+      -d, --debug           enable debugging
+      -i, --insecure        allow insecure connections
+      -H HOST, --host HOST  host to connect to (doesn't work for requests made to s3.us.archive.org)
 
     commands:
-        help      Retrieve help for subcommands.
-        configure Configure `ia`.
-        metadata  Retrieve and modify metadata for items on archive.org.
-        upload    Upload items to archive.org.
-        download  Download files from archive.org.
-        delete    Delete files from archive.org.
-        search    Search archive.org.
-        tasks     Retrieve information about your archive.org catalog tasks.
-        list      List files in a given item.
+      {command}
+        account (ac)        Manage an archive.org account. Note: requires admin privileges
+        configure (co)      configure 'ia' with your archive.org credentials
+        copy (cp)           Copy files from archive.org items
+        delete (rm)         Delete files from archive.org items
+        download (do)       Retrieve and modify archive.org item metadata
+        list (ls)           list files from archive.org items
+        metadata (md)       Retrieve and modify archive.org item metadata
+        move (mv)           Move and rename files in archive.org items
+        reviews (re)        submit and modify reviews for archive.org items
+        search (se)         Search items on archive.org
+        tasks (ta)          Retrieve information about your archive.org catalog tasks
+        upload (up)         Upload files to archive.org
 
-    See 'ia help <command>' for more information on a specific command.
+    Documentation for 'ia' is available at:
 
+        https://archive.org/developers/internetarchive/cli.html
+
+    See 'ia {command} --help' for help on a specific command.
 
 Metadata
 --------

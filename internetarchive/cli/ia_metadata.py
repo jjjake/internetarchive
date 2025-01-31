@@ -31,7 +31,7 @@ from typing import Mapping
 from requests import Response
 
 from internetarchive import item
-from internetarchive.cli.cli_utils import MetadataAction, QueryStringAction, validate_identifier
+from internetarchive.cli.cli_utils import MetadataAction, QueryStringAction
 from internetarchive.exceptions import ItemLocateError
 from internetarchive.utils import json
 
@@ -49,7 +49,7 @@ def setup(subparsers):
 
     parser.add_argument("identifier",
                         nargs="?",
-                        type=validate_identifier,
+                        type=str,
                         help="Identifier for the upload")
 
     # Mutually exclusive group for metadata modification options

@@ -95,6 +95,7 @@ def setup(subparsers):
                         help="S3 HTTP headers to send with your request")
     parser.add_argument("-t", "--target",
                         metavar="target",
+                        default="metadata",
                         help="The metadata target to modify")
     parser.add_argument("-s", "--spreadsheet",
                         metavar="metadata.csv",
@@ -156,7 +157,14 @@ def remove_metadata(item: item.Item,
     """
     md: dict[str, list | str] = defaultdict(list)
     for key in metadata:
-        src_md = copy(item.metadata.get(key))
+        src_md = {}
+        if args.target.startswith("files/"):
+            for f in item.get_files():
+                if f.name == "/".join(args.target.split("/")[1:]):
+                    src_md = f.__dict__.get(key, {})
+                    break
+        else:
+            src_md = copy(item.metadata.get(key, {}))
         if not src_md:
             continue
 
@@ -166,7 +174,7 @@ def remove_metadata(item: item.Item,
             if not isinstance(_col, list):
                 _col = [_col]
             if not isinstance(_src_md, list):
-                _src_md = [_src_md]
+                _src_md = [_src_md]  # type: ignore
             for c in _col:
                 if c not in _src_md:
                     r = item.remove_from_simplelist(c, "holdings")
@@ -185,7 +193,8 @@ def remove_metadata(item: item.Item,
 
         if not isinstance(src_md, list):
             if key == "subject":
-                src_md = src_md.split(";")
+                if isinstance(src_md, str):
+                    src_md = src_md.split(";")
             elif key == "collection":
                 print(f"{item.identifier} - error: all collections would be removed, "
                       "not submitting task.", file=sys.stderr)

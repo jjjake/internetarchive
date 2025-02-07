@@ -22,6 +22,7 @@ ia_configure.py
 from __future__ import annotations
 
 import argparse
+import json
 import netrc
 import sys
 
@@ -49,6 +50,10 @@ def setup(subparsers):
     parser.add_argument("--netrc", "-n",
                         action="store_true",
                         help="use netrc file for login")
+    parser.add_argument("--show", "-s",
+                        action="store_true",
+                        help=("print the current configuration in JSON format, "
+                              "redacting secrets and cookies"))
     parser.add_argument("--print-cookies", "-c",
                         action="store_true",
                         help="print archive.org logged-in-* cookies")
@@ -76,6 +81,25 @@ def main(args: argparse.Namespace) -> None:
             sys.exit(1)
         print(f"logged-in-user={user}; logged-in-sig={sig}")
         sys.exit()
+
+    if args.show:
+        config = args.session.config.copy()
+        # Redact S3 secret
+        if 's3' in config:
+            s3_config = config['s3'].copy()
+            if 'secret' in s3_config:
+                s3_config['secret'] = 'REDACTED'
+            config['s3'] = s3_config
+        # Redact logged-in-secret cookie
+        if 'cookies' in config:
+            cookies = config['cookies'].copy()
+            if 'logged-in-sig' in cookies:
+                cookies['logged-in-sig'] = 'REDACTED'
+            config['cookies'] = cookies
+        # Print JSON
+        print(json.dumps(config, indent=2))
+        sys.exit()
+
     try:
         # Netrc
         if args.netrc:

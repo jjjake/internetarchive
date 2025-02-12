@@ -62,6 +62,7 @@ def setup(subparsers):
     parser.add_argument("-H", "--header",
                         nargs="+",
                         action=QueryStringAction,
+                        default={},
                         metavar="KEY:VALUE",
                         help="S3 HTTP headers to send with your request.")
     parser.add_argument("-a", "--all",

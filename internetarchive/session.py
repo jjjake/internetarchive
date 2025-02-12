@@ -37,6 +37,7 @@ import warnings
 from typing import Iterable, Mapping, MutableMapping
 from urllib.parse import unquote, urlparse
 
+import requests
 import requests.sessions
 from requests import Response
 from requests.adapters import HTTPAdapter
@@ -230,6 +231,22 @@ class ArchiveSession(requests.sessions.Session):
         fh.setFormatter(formatter)
 
         _log.addHandler(fh)
+
+    def whoami(self) -> str:
+        """Return the logged-in user email address.
+
+        :returns: The logged-in user email address.
+        """
+        u = 'https://archive.org/services/user.php'
+        p = {'op': 'whoami'}
+
+        # Do not use self/Session.get() here,
+        # to make sure S3 keys are used for validation -- not cookies.
+        r = requests.get(u, params=p,
+                            auth=auth.S3Auth(self.access_key, self.secret_key),
+                            timeout=12)
+
+        return r.json()
 
     def get_item(self,
                  identifier: str,

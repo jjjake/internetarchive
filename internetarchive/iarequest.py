@@ -20,7 +20,7 @@
 internetarchive.iarequest
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:copyright: (C) 2012-2024 by Internet Archive.
+:copyright: (C) 2012-2025 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
 import copy
@@ -51,14 +51,9 @@ class S3Request(requests.models.Request):
 
         super().__init__(**kwargs)
 
-        if not self.auth:
-            self.auth = auth.S3Auth(access_key, secret_key)
-
-        # Default empty dicts for dict params.
-        metadata = {} if metadata is None else metadata
-
-        self.metadata = metadata
-        self.file_metadata = file_metadata
+        self.auth = self.auth or auth.S3Auth(access_key, secret_key)
+        self.metadata = metadata or {}
+        self.file_metadata = file_metadata or {}
         self.queue_derive = queue_derive
         self.set_scanner = set_scanner
 
@@ -90,10 +85,7 @@ class S3PreparedRequest(requests.models.PreparedRequest):
                 metadata=None, file_metadata=None, set_scanner=None):
         self.prepare_method(method)
         self.prepare_url(url, params)
-        self.prepare_headers(headers, metadata,
-                             file_metadata=file_metadata,
-                             queue_derive=queue_derive,
-                             set_scanner=set_scanner)
+        self.prepare_headers(headers, metadata, file_metadata, queue_derive, set_scanner)
         self.prepare_cookies(cookies)
         self.prepare_body(data, files)
         self.prepare_auth(auth, url)
@@ -103,71 +95,41 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         # This MUST go after prepare_auth. Authenticators could add a hook
         self.prepare_hooks(hooks)
 
-    def prepare_headers(self, headers, metadata, file_metadata=None, queue_derive=True,
-                        set_scanner=True):
-        """Convert a dictionary of metadata into S3 compatible HTTP
-        headers, and append headers to ``headers``.
+    def prepare_headers(self, headers, metadata, file_metadata, queue_derive,
+                        set_scanner):
+        headers = headers.copy() if headers else {}
+        metadata = metadata.copy() if metadata else {}
+        file_metadata = file_metadata.copy() if file_metadata else {}
 
-        :type metadata: dict
-        :param metadata: Metadata to be converted into S3 HTTP Headers
-                         and appended to ``headers``.
-
-        :type headers: dict
-        :param headers: (optional) S3 compatible HTTP headers.
-
-        """
-        metadata = {} if metadata is None else metadata
-        file_metadata = {} if file_metadata is None else file_metadata
-
-        if set_scanner is True:
-            scanner = f'Internet Archive Python library {__version__}'
-            if metadata.get('scanner'):
-                custom_scanner = metadata['scanner']
-                if not isinstance(custom_scanner, list):
-                    custom_scanner = [custom_scanner]
-                metadata['scanner'] = custom_scanner + [scanner]
-            else:
-                metadata['scanner'] = scanner
+        if set_scanner:
+            scanner_value = f'Internet Archive Python library {__version__}'
+            existing_scanner = metadata.get('scanner', [])
+            if not isinstance(existing_scanner, list):
+                existing_scanner = [existing_scanner]
+            existing_scanner.append(scanner_value)
+            metadata['scanner'] = existing_scanner
         prepared_metadata = prepare_metadata(metadata)
         prepared_file_metadata = prepare_metadata(file_metadata)
 
-        headers['x-archive-auto-make-bucket'] = '1'
-        if 'x-archive-queue-derive' not in headers:
-            if queue_derive is False:
-                headers['x-archive-queue-derive'] = '0'
-            else:
-                headers['x-archive-queue-derive'] = '1'
+        headers.setdefault('x-archive-auto-make-bucket', '1')
+        headers['x-archive-queue-derive'] = '0' if queue_derive is False else '1'
 
-        def _prepare_metadata_headers(prepared_metadata, meta_type='meta'):
-            for meta_key, meta_value in prepared_metadata.items():
-                # Encode arrays into JSON strings because Archive.org does not
-                # yet support complex metadata structures in
-                # <identifier>_meta.xml.
-                if isinstance(meta_value, dict):
-                    meta_value = json.dumps(meta_value)
-                # Convert the metadata value into a list if it is not already
-                # iterable.
-                if (isinstance(meta_value, str) or not hasattr(meta_value, '__iter__')):
-                    meta_value = [meta_value]
-                # Convert metadata items into HTTP headers and add to
-                # ``headers`` dict.
-                for i, value in enumerate(meta_value):
-                    if not value:
-                        continue
-                    header_key = f'x-archive-{meta_type}{i:02d}-{meta_key}'
-                    if (isinstance(value, str) and needs_quote(value)):
-                        value = f'uri({quote(value)})'
-                    # because rfc822 http headers disallow _ in names, IA-S3 will
-                    # translate two hyphens in a row (--) into an underscore (_).
-                    header_key = header_key.replace('_', '--')
-                    headers[header_key] = value
-
-        # Parse the prepared metadata into HTTP headers,
-        # and add them to the ``headers`` dict.
-        _prepare_metadata_headers(prepared_metadata)
-        _prepare_metadata_headers(prepared_file_metadata, meta_type='filemeta')
+        self._add_metadata_headers(headers, prepared_metadata, 'meta')
+        self._add_metadata_headers(headers, prepared_file_metadata, 'filemeta')
 
         super().prepare_headers(headers)
+
+    def _add_metadata_headers(self, headers, prepared_metadata, meta_type):
+        for key, values in prepared_metadata.items():
+            if not isinstance(values, list):
+                values = [values]
+            for idx, value in enumerate(values):
+                if not value:
+                    continue
+                header_key = f'x-archive-{meta_type}{idx:02d}-{key}'.replace('_', '--')
+                if isinstance(value, str) and needs_quote(value):
+                    value = f'uri({quote(value)})'
+                headers[header_key] = value
 
 
 class MetadataRequest(requests.models.Request):
@@ -187,16 +149,13 @@ class MetadataRequest(requests.models.Request):
 
         super().__init__(**kwargs)
 
-        if not self.auth:
-            self.auth = auth.S3PostAuth(access_key, secret_key)
-        metadata = metadata or {}
-
-        self.metadata = metadata
+        self.auth = self.auth or auth.S3PostAuth(access_key, secret_key)
+        self.metadata = metadata or {}
         self.source_metadata = source_metadata
         self.target = target
         self.priority = priority
         self.append = append
-        self.expect = expect
+        self.expect = expect or {}
         self.append_list = append_list
         self.insert = insert
         self.reduced_priority = reduced_priority
@@ -230,18 +189,39 @@ class MetadataRequest(requests.models.Request):
 
 class MetadataPreparedRequest(requests.models.PreparedRequest):
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
-                params=None, auth=None, cookies=None, hooks=None, metadata={},  # noqa: B006
+                params=None, auth=None, cookies=None, hooks=None, metadata=None,
                 source_metadata=None, target=None, priority=None, append=None,
                 expect=None, append_list=None, insert=None, reduced_priority=None):
-        self.prepare_method(method)
-        self.prepare_url(url, params)
-        self.identifier = self.url.split("?")[0].split("/")[-1]
+        # First handle our custom headers
         if reduced_priority:
+            headers = headers.copy() if headers else {}
             headers['X-Accept-Reduced-Priority'] = '1'
-        self.prepare_headers(headers)
-        self.prepare_cookies(cookies)
-        self.prepare_body(metadata, source_metadata, target, priority, append,
-                          append_list, insert, expect)
+
+        # Now run full parent preparation
+        super().prepare(
+            method=method,
+            url=url,
+            headers=headers,
+            files=files,
+            data=data,
+            params=params,
+            auth=auth,
+            cookies=cookies,
+            hooks=hooks,
+        )
+
+        # Now add our custom handling
+        self.identifier = self.url.split('?')[0].split('/')[-1]
+        self._prepare_request_body(
+            metadata,
+            source_metadata,
+            target,
+            priority,
+            append,
+            append_list,
+            insert,
+            expect,
+        )
         self.prepare_auth(auth, url)
         # Note that prepare_auth must be last to enable authentication schemes
         # such as OAuth to work on a fully prepared request.
@@ -249,285 +229,273 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         # This MUST go after prepare_auth. Authenticators could add a hook
         self.prepare_hooks(hooks)
 
-    def prepare_body(self, metadata, source_metadata, target, priority, append,
-                     append_list, insert, expect):
-        priority = priority or -5
-
+    def _prepare_request_body(self, metadata, source_metadata, target, priority,
+                              append, append_list, insert, expect):
         if not source_metadata:
             r = requests.get(self.url, timeout=10)
             source_metadata = r.json()
 
-        # Write to many targets
-        if (isinstance(metadata, list)
-                or any('/' in k for k in metadata)
-                or all(isinstance(k, dict) for k in metadata.values())):
-            changes = []
-
-            if any(not k for k in metadata):
-                raise ValueError('Invalid metadata provided, '
-                                 'check your input and try again')
-
-            if target:
-                metadata = {target: metadata}
-            for key in metadata:
-                if key == 'metadata':
-                    try:
-                        patch = prepare_patch(metadata[key],
-                                              source_metadata['metadata'],
-                                              append,
-                                              expect,
-                                              append_list,
-                                              insert)
-                    except KeyError:
-                        raise ItemLocateError(f"{self.identifier} cannot be located "
-                                              "because it is dark or does not exist.")
-                elif key.startswith('files'):
-                    patch = prepare_files_patch(metadata[key],
-                                                source_metadata['files'],
-                                                append,
-                                                key,
-                                                append_list,
-                                                insert,
-                                                expect)
-                else:
-                    key = key.split('/')[0]
-                    patch = prepare_target_patch(metadata, source_metadata, append,
-                                                 target, append_list, key, insert,
-                                                 expect)
-                changes.append({'target': key, 'patch': patch})
-            self.data = {
-                '-changes': json.dumps(changes),
-                'priority': priority,
-            }
-            logger.debug(f'submitting metadata request: {self.data}')
-        # Write to single target
+        if self._is_multi_target(metadata):
+            changes = self._prepare_multi_target_changes(
+                metadata,
+                source_metadata,
+                target,
+                append,
+                expect,
+                append_list,
+                insert,
+            )
+            self.data = {'-changes': json.dumps(changes), 'priority': priority or -5}
         else:
-            if not target or 'metadata' in target:
-                target = 'metadata'
-                try:
-                    patch = prepare_patch(metadata, source_metadata['metadata'], append,
-                                          expect, append_list, insert)
-                except KeyError:
-                    raise ItemLocateError(f"{self.identifier} cannot be located "
-                                          "because it is dark or does not exist.")
-            elif 'files' in target:
-                patch = prepare_files_patch(metadata, source_metadata['files'], append,
-                                            target, append_list, insert, expect)
-            else:
-                metadata = {target: metadata}
-                patch = prepare_target_patch(metadata, source_metadata, append,
-                                             target, append_list, target, insert,
-                                             expect)
-            self.data = {
-                '-patch': json.dumps(patch),
-                '-target': target,
-                'priority': priority,
-            }
-            logger.debug(f'submitting metadata request: {self.data}')
+            self._prepare_single_target_body(
+                metadata,
+                source_metadata,
+                target,
+                append,
+                append_list,
+                insert,
+                expect,
+                priority,
+            )
+
+        logger.debug(f'submitting metadata request: {self.data}')
         super().prepare_body(self.data, None)
 
+    def _is_multi_target(self, metadata):
+        return (
+            isinstance(metadata, list)
+            or any('/' in k for k in metadata)
+            or all(isinstance(v, dict) for v in metadata.values())
+        )
 
-def prepare_patch(metadata, source_metadata, append,
-                  expect=None, append_list=None, insert=None):
-    destination_metadata = source_metadata.copy()
+    def _prepare_multi_target_changes(self, metadata, source_metadata, target,
+                                      append, expect, append_list, insert):
+        changes = []
+        if target:
+            metadata = {target: metadata}
+        for key in metadata:
+            patch = self._get_patch_for_target(
+                key,
+                metadata[key],
+                source_metadata,
+                append,
+                expect,
+                append_list,
+                insert,
+            )
+            changes.append({'target': key, 'patch': patch})
+        return changes
+
+    def _prepare_single_target_body(self, metadata, source_metadata, target, append,
+                                    append_list, insert, expect, priority):
+        target = target or 'metadata'
+        if target == 'metadata':
+            try:
+                patch = prepare_patch(
+                    metadata,
+                    source_metadata['metadata'],
+                    append,
+                    expect,
+                    append_list,
+                    insert,
+                )
+            except KeyError:
+                raise ItemLocateError(
+                    f'{self.identifier} cannot be located '
+                    'because it is dark or does not exist.'
+                )
+        elif target.startswith('files/'):
+            patch = prepare_files_patch(
+                metadata,
+                source_metadata['files'],
+                target,
+                append,
+                append_list,
+                insert,
+                expect,
+            )
+        else:
+            patch = prepare_target_patch(
+                {target: metadata},
+                source_metadata,
+                append,
+                target,
+                append_list,
+                target,
+                insert,
+                expect,
+            )
+        self.data = {
+            '-patch': json.dumps(patch),
+            '-target': target,
+            'priority': priority or -5,
+        }
+
+
+def prepare_patch(metadata, source_metadata, append, expect=None,
+                  append_list=None, insert=None):
+    destination = source_metadata.copy()
     if isinstance(metadata, list):
         prepared_metadata = metadata
-        if not destination_metadata:
-            destination_metadata = []
+        if not destination:
+            destination = []
     else:
-        prepared_metadata = prepare_metadata(metadata, source_metadata, append,
-                                             append_list, insert)
-    if isinstance(destination_metadata, dict):
-        destination_metadata.update(prepared_metadata)
-    elif isinstance(metadata, list) and not destination_metadata:
-        destination_metadata = metadata
+        prepared_metadata = prepare_metadata(
+            metadata,
+            source_metadata,
+            append,
+            append_list,
+            insert,
+        )
+    if isinstance(destination, dict):
+        destination.update(prepared_metadata)
+    elif isinstance(metadata, list):
+        destination = prepared_metadata if not destination else prepared_metadata
     else:
         if isinstance(prepared_metadata, list):
-            if append_list:
-                destination_metadata += prepared_metadata
-            else:
-                destination_metadata = prepared_metadata
+            destination = prepared_metadata
         else:
-            destination_metadata.append(prepared_metadata)
-    # Delete metadata items where value is REMOVE_TAG.
-    destination_metadata = delete_items_from_dict(destination_metadata, 'REMOVE_TAG')
-    patch = make_patch(source_metadata, destination_metadata).patch
+            destination = [prepared_metadata]
 
-    # Add test operations to patch.
-    patch_tests = []
-    for expect_key in expect:
-        idx = None
-        if '[' in expect_key:
-            idx = int(expect_key.split('[')[1].strip(']'))
-            key = expect_key.split('[')[0]
-            path = f'/{key}/{idx}'
-            p_test = {'op': 'test', 'path': path, 'value': expect[expect_key]}
+    destination = delete_items_from_dict(destination, 'REMOVE_TAG')
+    patch = make_patch(source_metadata, destination).patch
+    patch_tests = _create_patch_tests(expect)
+    return patch_tests + patch
+
+
+def _create_patch_tests(expect):
+    tests = []
+    for key, value in (expect or {}).items():
+        if '[' in key:
+            parts = key.split('[')
+            idx = int(parts[1].strip(']'))
+            path = f'/{parts[0]}/{idx}'
         else:
-            path = f'/{expect_key}'
-            p_test = {'op': 'test', 'path': path, 'value': expect[expect_key]}
-
-        patch_tests.append(p_test)
-    final_patch = patch_tests + patch
-
-    return final_patch
+            path = f'/{key}'
+        tests.append({'op': 'test', 'path': path, 'value': value})
+    return tests
 
 
-def prepare_target_patch(metadata, source_metadata, append, target, append_list, key,
-                         insert, expect):
-
-    def dictify(lst, key=None, value=None):
-        if not lst:
-            return value
-        sub_dict = dictify(lst[1:], key, value)
-        for v in lst:
-            md = {v: copy.deepcopy(sub_dict)}
-            return md
-
-    for _k in metadata:
-        metadata = dictify(_k.split('/')[1:], _k.split('/')[-1], metadata[_k])
-    for i, _k in enumerate(key.split('/')):
-        if i == 0:
-            source_metadata = source_metadata.get(_k, {})
-        else:
-            source_metadata[_k] = source_metadata.get(_k, {}).get(_k, {})
-    patch = prepare_patch(metadata, source_metadata, append, expect, append_list, insert)
+def prepare_target_patch(metadata, source_metadata, append, target,
+                         append_list, key, insert, expect):
+    nested_dict = _create_nested_dict(metadata)
+    current = source_metadata
+    for part in key.split('/'):
+        current = current.get(part, {})
+    patch = prepare_patch(nested_dict, current, append, expect, append_list, insert)
     return patch
 
 
-def prepare_files_patch(metadata, source_metadata, append, target, append_list,
-                        insert, expect):
-    filename = '/'.join(target.split('/')[1:])
-    for f in source_metadata:
-        if f.get('name') == filename:
-            source_metadata = f
-            break
-    patch = prepare_patch(metadata, source_metadata, append, expect, append_list, insert)
-    return patch
+def _create_nested_dict(metadata):
+    nested = {}
+    for key_path, value in metadata.items():
+        parts = key_path.split('/')
+        current = nested
+        for part in parts[:-1]:
+            current = current.setdefault(part, {})
+        current[parts[-1]] = value
+    return nested
 
 
-def prepare_metadata(metadata, source_metadata=None, append=False, append_list=False,
-                     insert=False):
-    """Prepare a metadata dict for an
-    :class:`S3PreparedRequest <S3PreparedRequest>` or
-    :class:`MetadataPreparedRequest <MetadataPreparedRequest>` object.
+def prepare_files_patch(metadata, files_metadata, target, append,
+                        append_list, insert, expect):
+    filename = target.split('/')[1]
+    for file_meta in files_metadata:
+        if file_meta.get('name') == filename:
+            return prepare_patch(
+                metadata,
+                file_meta,
+                append,
+                expect,
+                append_list,
+                insert,
+            )
+    return []
 
-    :type metadata: dict
-    :param metadata: The metadata dict to be prepared.
 
-    :type source_metadata: dict
-    :param source_metadata: (optional) The source metadata for the item
-                            being modified.
+def prepare_metadata(metadata, source_metadata=None, append=False,
+                     append_list=False, insert=False):
+    source = copy.deepcopy(source_metadata) if source_metadata else {}
+    prepared = {}
 
-    :rtype: dict
-    :returns: A filtered metadata dict to be used for generating IA
-              S3 and Metadata API requests.
+    indexed_keys = _process_indexed_keys(metadata, source, prepared)
+    _process_non_indexed_keys(metadata, source, prepared, append, append_list, insert)
+    _cleanup_indexed_keys(prepared, indexed_keys, metadata)
 
-    """
-    # Make a deepcopy of source_metadata if it exists. A deepcopy is
-    # necessary to avoid modifying the original dict.
-    source_metadata = {} if not source_metadata else copy.deepcopy(source_metadata)
-    prepared_metadata = {}
+    return prepared
 
-    # Functions for dealing with metadata keys containing indexes.
-    def get_index(key):
-        match = re.search(r'(?<=\[)\d+(?=\])', key)
-        if match is not None:
-            return int(match.group())
 
-    def rm_index(key):
-        return key.split('[')[0]
+def _process_non_indexed_keys(metadata, source, prepared, append, append_list, insert):
+    for key, value in metadata.items():
+        current_key = key
 
-    # Create indexed_keys counter dict. i.e.: {'subject': 3} -- subject
-    # (with the index removed) appears 3 times in the metadata dict.
+        if isinstance(value, (int, float, complex)) and not isinstance(value, bool):
+            value = str(value)
+
+        if append_list and source.get(current_key):
+            existing = source[current_key]
+            if not isinstance(existing, list):
+                existing = [existing]
+            prepared[current_key] = existing + [value]
+        elif append and source.get(current_key):
+            prepared[current_key] = f'{source[current_key]} {value}'
+        elif insert and source.get(current_key):
+            existing = source[current_key]
+            if not isinstance(existing, list):
+                existing = [existing]
+            existing.insert(0, value)
+            prepared[current_key] = [v for v in existing if v]
+        else:
+            prepared[current_key] = value
+
+
+def _cleanup_indexed_keys(prepared, indexed_keys, metadata):
+    for base in indexed_keys:
+        if base in prepared:
+            prepared[base] = [v for v in prepared[base] if v is not None]
+            indexes = [
+                i for i, k in enumerate(metadata)
+                if _get_base_key(k) == base and metadata[k] == 'REMOVE_TAG'
+            ]
+            for i in reversed(indexes):
+                if i < len(prepared[base]):
+                    del prepared[base][i]
+
+
+def _process_indexed_keys(metadata, source, prepared):
     indexed_keys = {}
-    for key in metadata:
-        # Convert number values to strings!
-        if isinstance(metadata[key], (int, float, complex)):
-            metadata[key] = str(metadata[key])
-        if get_index(key) is None:
-            continue
-        count = len([x for x in metadata if rm_index(x) == rm_index(key)])
-        indexed_keys[rm_index(key)] = count
+    for key in list(metadata.keys()):
+        if _is_indexed_key(key):
+            base = _get_base_key(key)
+            idx = _get_index(key)
 
-    # Initialize the values for all indexed_keys.
-    for key in indexed_keys:  # noqa: PLC0206
-        # Increment the counter so we know how many values the final
-        # value in prepared_metadata should have.
-        indexed_keys[key] += len(source_metadata.get(key, []))
-        # Initialize the value in the prepared_metadata dict.
-        prepared_metadata[key] = source_metadata.get(key, [])
-        if not isinstance(prepared_metadata[key], list):
-            prepared_metadata[key] = [prepared_metadata[key]]
-        # Fill the value of the prepared_metadata key with None values
-        # so all indexed items can be indexed in order.
-        while len(prepared_metadata[key]) < indexed_keys[key]:
-            prepared_metadata[key].append(None)
+            if base not in indexed_keys:
+                source_list = source.get(base, [])
+                if not isinstance(source_list, list):
+                    source_list = [source_list]
+                indexed_keys[base] = len(source_list)
 
-    # Index all items which contain an index.
-    for key in metadata:
-        # Insert values from indexed keys into prepared_metadata dict.
-        if (rm_index(key) in indexed_keys) and not insert:
-            try:
-                prepared_metadata[rm_index(key)][get_index(key)] = metadata[key]
-            except IndexError:
-                prepared_metadata[rm_index(key)].append(metadata[key])
-        # If append is True, append value to source_metadata value.
-        elif append_list and source_metadata.get(key):
-            if not isinstance(metadata[key], list):
-                metadata[key] = [metadata[key]]
-            for v in metadata[key]:
-                if not isinstance(source_metadata[key], list):
-                    if v in [source_metadata[key]]:
-                        continue
-                else:
-                    if v in source_metadata[key]:
-                        source_metadata[key] = [x for x in source_metadata[key] if x != v]
-                if not isinstance(source_metadata[key], list):
-                    prepared_metadata[key] = [source_metadata[key]]
-                else:
-                    prepared_metadata[key] = source_metadata[key]
-                prepared_metadata[key].append(v)
-        elif append and source_metadata.get(key):
-            prepared_metadata[key] = f'{source_metadata[key]} {metadata[key]}'
-        elif insert and source_metadata.get(rm_index(key)):
-            index = get_index(key)
-            # If no index is provided, e.g. `collection[i]`, assume 0
-            if not index:
-                index = 0
-            _key = rm_index(key)
-            if not isinstance(source_metadata[_key], list):
-                source_metadata[_key] = [source_metadata[_key]]
-            source_metadata[_key].insert(index, metadata[key])
-            insert_md = []
-            for _v in source_metadata[_key]:
-                if _v not in insert_md and _v:
-                    insert_md.append(_v)
-            prepared_metadata[_key] = insert_md
-        else:
-            prepared_metadata[key] = metadata[key]
+                current_metadata_length = len(metadata)
+                prepared[base] = source_list + [None] * (
+                    current_metadata_length - len(source_list)
+                )
 
-    # Remove values from metadata if value is REMOVE_TAG.
-    _done = []
-    for key in indexed_keys:
-        # Filter None values from items with arrays as values
-        prepared_metadata[key] = [v for v in prepared_metadata[key] if v]
-        # Only filter the given indexed key if it has not already been
-        # filtered.
-        if key not in _done:
-            indexes = []
-            for k in metadata:
-                if not get_index(k):
-                    continue
-                elif rm_index(k) != key:
-                    continue
-                elif metadata[k] != 'REMOVE_TAG':
-                    continue
-                else:
-                    indexes.append(get_index(k))
-            # Delete indexed values in reverse to not throw off the
-            # subsequent indexes.
-            for i in sorted(indexes, reverse=True):
-                del prepared_metadata[key][i]
-            _done.append(key)
+            while len(prepared[base]) <= idx:
+                prepared[base].append(None)
 
-    return prepared_metadata
+            prepared[base][idx] = metadata[key]
+            del metadata[key]
+    return indexed_keys
+
+
+def _get_base_key(key):
+    return key.split('[')[0]
+
+
+def _is_indexed_key(key):
+    return '[' in key and ']' in key
+
+
+def _get_index(key):
+    match = re.search(r'(?<=\[)\d+(?=\])', key)
+    return int(match.group()) if match else None

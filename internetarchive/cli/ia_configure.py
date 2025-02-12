@@ -41,6 +41,8 @@ def setup(subparsers):
                                    aliases=["co"],
                                    help=("configure 'ia' with your "
                                          "archive.org credentials"))
+    config_action_group = parser.add_mutually_exclusive_group()
+
     parser.add_argument("--username", "-u",
                         help=("provide username as an option rather than "
                               "providing it interactively"))
@@ -50,10 +52,13 @@ def setup(subparsers):
     parser.add_argument("--netrc", "-n",
                         action="store_true",
                         help="use netrc file for login")
-    parser.add_argument("--show", "-s",
-                        action="store_true",
-                        help=("print the current configuration in JSON format, "
-                              "redacting secrets and cookies"))
+    config_action_group.add_argument("--show", "-s",
+                                     action="store_true",
+                                     help=("print the current configuration in JSON format, "
+                                           "redacting secrets and cookies"))
+    config_action_group.add_argument("--check", "-C",
+                                     action="store_true",
+                                     help="validate IA-S3 keys (exits 0 if valid, 1 otherwise)")
     parser.add_argument("--print-cookies", "-c",
                         action="store_true",
                         help="print archive.org logged-in-* cookies")
@@ -99,6 +104,16 @@ def main(args: argparse.Namespace) -> None:
         # Print JSON
         print(json.dumps(config, indent=2))
         sys.exit()
+
+    if args.check:
+        whoami_info = args.session.whoami()
+        if whoami_info.get('success') is True:
+            user = whoami_info['value']['username']
+            print(f'The credentials for "{user}" are valid')
+            sys.exit(0)
+        else:
+            print('Your credentials are invalid, check your configuration and try again')
+            sys.exit(1)
 
     try:
         # Netrc

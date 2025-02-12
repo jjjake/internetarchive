@@ -59,6 +59,11 @@ def setup(subparsers):
     config_action_group.add_argument("--check", "-C",
                                      action="store_true",
                                      help="validate IA-S3 keys (exits 0 if valid, 1 otherwise)")
+    config_action_group.add_argument("--whoami", "-w",
+                                     action="store_true",
+                                     help=("uses your IA-S3 keys to retrieve account "
+                                          "information from archive.org "
+                                          "about the associated account"))
     parser.add_argument("--print-cookies", "-c",
                         action="store_true",
                         help="print archive.org logged-in-* cookies")
@@ -101,8 +106,12 @@ def main(args: argparse.Namespace) -> None:
             if 'logged-in-sig' in cookies:
                 cookies['logged-in-sig'] = 'REDACTED'
             config['cookies'] = cookies
-        # Print JSON
-        print(json.dumps(config, indent=2))
+        print(json.dumps(config))
+        sys.exit()
+
+    if args.whoami:
+        whoami_info = args.session.whoami()
+        print(json.dumps(whoami_info))
         sys.exit()
 
     if args.check:

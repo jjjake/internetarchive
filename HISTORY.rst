@@ -3,6 +3,15 @@
 Release History
 ---------------
 
+5.2.1 (2025-02-12)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed TypeError bug in ``ia delete`` that was causing all `ia delete` commands to fail.
+- Fixed bug in ``ia metadata`` where IDs were being validated needlessly and making it impossible to modify some items.
+- Fixed bug where bulk download was failing with TypeError.
+
 5.2.0 (2025-01-10)
 ++++++++++++++++++
 

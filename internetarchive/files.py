@@ -430,7 +430,7 @@ class File(BaseFile):
         :param verbose: (optional) Print actions to stdout.
 
         :type debug: bool
-        :param debug: (optional) Set to True to print headers to stdout and exit exit
+        :param debug: (optional) Set to True to print headers to stdout and exit
                       without sending the delete request.
 
         """

@@ -532,8 +532,8 @@ class Item(BaseItem):
     def get_files(self,
                   files: File | list[File] | None = None,
                   formats: str | list[str] | None = None,
-                  glob_pattern: str | None = None,
-                  exclude_pattern: str | None = None,
+                  glob_pattern: str | list[str] | None = None,
+                  exclude_pattern: str | list[str] | None = None,
                   on_the_fly: bool = False):
         files = files or []
         formats = formats or []

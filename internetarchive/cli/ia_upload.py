@@ -308,7 +308,13 @@ def main(args, parser): # noqa: PLR0912,C901
         for _r in _upload_files(item, files, upload_kwargs):
             if args.debug:
                 break
-            if (not _r.status_code) or (not _r.ok):
+
+            # Check if Response is empty first (i.e. --checksum)
+            # TODO: Should upload return something other than an empty Response
+            # object if checksum is set and the file is already in the item?
+            if _r.status_code is None:
+                pass
+            elif not _r.ok:
                 errors = True
             else:
                 if args.open_after_upload:

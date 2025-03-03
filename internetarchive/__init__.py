@@ -50,6 +50,7 @@ from internetarchive.api import (
     get_user_info,
     get_username,
     modify_metadata,
+    rerun_task,
     search_items,
     upload,
 )

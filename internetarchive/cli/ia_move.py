@@ -56,6 +56,7 @@ def setup(subparsers):
                         metavar="KEY:VALUE",
                         nargs="+",
                         action=QueryStringAction,
+                        default={},
                         help="S3 HTTP headers to send with your request")
     parser.add_argument("--replace-metadata",
                         action="store_true",

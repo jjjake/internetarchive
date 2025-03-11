@@ -406,8 +406,8 @@ def is_valid_metadata_key(name: str) -> bool:
 
 
 def merge_dictionaries(
-    dict0: dict,
-    dict1: dict,
+    dict0: dict | None,
+    dict1: dict | None,
     keys_to_drop: Iterable | None = None,
 ) -> dict:
     """Merge two dictionaries.
@@ -425,12 +425,19 @@ def merge_dictionaries(
 
        :returns: A merged dictionary.
        """
-    new_dict = dict0.copy()
+    if dict0 is not None:
+        new_dict = dict0.copy()
+    else:
+        new_dict = {}
+
     if keys_to_drop is not None:
         for key in keys_to_drop:
             new_dict.pop(key, None)
+
     # Items from `dict1` take precedence over items from `dict0`.
-    new_dict.update(dict1)
+    if dict1 is not None:
+        new_dict.update(dict1)
+
     return new_dict
 
 

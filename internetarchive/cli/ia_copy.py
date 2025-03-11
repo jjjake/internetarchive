@@ -109,6 +109,7 @@ def main(args: argparse.Namespace,
 
     global SRC_ITEM
     SRC_ITEM = args.session.get_item(args.source.split("/")[0])  # type: ignore
+    SRC_FILE = SRC_ITEM.get_file(args.source.split("/")[-1])  # type: ignore
 
     try:
         assert_src_file_exists(args.source)
@@ -128,7 +129,7 @@ def main(args: argparse.Namespace,
     # New metadata takes precedence over old metadata.
     if not args.replace_metadata:
         args.metadata = merge_dictionaries(SRC_ITEM.metadata,  # type: ignore
-                                                args.metadata)
+                                           args.metadata)
 
     # File metadata is copied by default but can be dropped.
     file_metadata = None if args.ignore_file_metadata else SRC_FILE.metadata  # type: ignore

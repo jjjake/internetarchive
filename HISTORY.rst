@@ -6,6 +6,11 @@ Release History
 5.3.0 (?)
 +++++++++
 
+**Bugfixes**
+
+- Fixed bugs in ``ia copy`` and ``ia move`` where an ``AttributeError`` was being raised.
+
+
 5.2.1 (2025-02-12)
 ++++++++++++++++++
 

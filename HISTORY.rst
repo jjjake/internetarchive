@@ -9,6 +9,7 @@ Release History
 **Features and Improvements**
 
 - Added ``ia simplelists`` command for managing simplelists.
+- Added ``ia flag`` command for managing flags.
 
 **Bugfixes**
 

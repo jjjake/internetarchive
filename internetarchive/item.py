@@ -34,7 +34,7 @@ from fnmatch import fnmatch
 from functools import total_ordering
 from logging import getLogger
 from time import sleep
-from typing import Mapping, MutableMapping
+from typing import Mapping, MutableMapping, Optional
 from urllib.parse import quote
 from xml.parsers.expat import ExpatError
 
@@ -870,6 +870,39 @@ class Item(BaseItem):
         if refresh:
             self.refresh()
         return resp
+
+    def delete_flag(
+            self,
+            category: str,
+            user: Optional[str] = None,  # noqa: UP007
+    ) -> Response:
+        if user is None:
+            user = f"@{self.session.config.get('general', {}).get('screenname')}"
+        url = f'{self.session.protocol}//{self.session.host}/services/flags/admin.php'
+        headers = {'Accept': 'text/json'}  # must be text/json specifically
+        params = {'identifier': self.identifier, 'category': category, 'user': user}
+        r = self.session.delete(url, headers=headers, params=params)
+        return r
+
+    def add_flag(
+            self,
+            category: str,
+            user: Optional[str] = None,  # noqa: UP007
+    ) -> Response:
+        if user is None:
+            user = f"@{self.session.config.get('general', {}).get('screenname')}"
+        url = f'{self.session.protocol}//{self.session.host}/services/flags/admin.php'
+        headers = {'Accept': 'text/json'}  # must be text/json specifically
+        params = {'identifier': self.identifier, 'category': category, 'user': user}
+        r = self.session.put(url, headers=headers, params=params)
+        return r
+
+    def get_flags(self) -> Response:
+        url = f'{self.session.protocol}//{self.session.host}/services/flags/admin.php'
+        headers = {'Accept': 'text/json'}  # must be text/json specifically
+        params = {'identifier': self.identifier}
+        r = self.session.get(url, headers=headers, params=params)
+        return r
 
     # TODO: `list` parameter name shadows the Python builtin
     def remove_from_simplelist(self, parent, list) -> Response:

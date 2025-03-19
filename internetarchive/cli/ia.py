@@ -31,6 +31,7 @@ from internetarchive.cli import (
     ia_copy,
     ia_delete,
     ia_download,
+    ia_flag,
     ia_list,
     ia_metadata,
     ia_move,
@@ -110,6 +111,7 @@ def main():
     ia_copy.setup(subparsers)
     ia_delete.setup(subparsers)
     ia_download.setup(subparsers)
+    ia_flag.setup(subparsers)
     ia_list.setup(subparsers)
     ia_metadata.setup(subparsers)
     ia_move.setup(subparsers)

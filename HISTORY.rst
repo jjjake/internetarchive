@@ -6,6 +6,10 @@ Release History
 5.3.0 (?)
 +++++++++
 
+**Features and Improvements**
+
+- Added ``ia simplelists`` command for managing simplelists.
+
 **Bugfixes**
 
 - Fixed bugs in ``ia copy`` and ``ia move`` where an ``AttributeError`` was being raised.

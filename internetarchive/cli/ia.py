@@ -36,6 +36,7 @@ from internetarchive.cli import (
     ia_move,
     ia_reviews,
     ia_search,
+    ia_simplelists,
     ia_tasks,
     ia_upload,
 )
@@ -114,6 +115,7 @@ def main():
     ia_move.setup(subparsers)
     ia_reviews.setup(subparsers)
     ia_search.setup(subparsers)
+    ia_simplelists.setup(subparsers)
     ia_tasks.setup(subparsers)
     ia_upload.setup(subparsers)
 

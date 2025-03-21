@@ -33,7 +33,7 @@ def setup(subparsers):
         subparsers: argparse subparsers object from main CLI
     """
     parser = subparsers.add_parser("flag",
-                                   aliases=["sl"],
+                                   aliases=["fl"],
                                    help="Manage flags")
     parser.add_argument(
         "identifier",

@@ -89,6 +89,8 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         flag_user = args.user
     else:
         flag_user = args.session.config.get("general", {}).get("screenname")
+    if not flag_user.startswith('@'):
+        flag_user = f"@{flag_user}"
     if args.add_flag:
         r = item.add_flag(args.add_flag, flag_user)
         j = r.json()

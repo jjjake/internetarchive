@@ -66,16 +66,7 @@ def setup(subparsers):
         help="Delete a flag from the item",
     )
 
-    # Using a named function instead of a lambda for more explicit behavior
-    parser.set_defaults(func=main_wrapper)
-
-
-def main_wrapper(args):
-    """Wrapper function to call main with args and parser."""
-    # Get parser from args (usually stored by argparse)
-    parser = args.parser if hasattr(args, "parser") else None
-    return main(args, parser)
-
+    parser.set_defaults(func=lambda args: main(args, parser))
 
 def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """Handle flag subcommand execution.

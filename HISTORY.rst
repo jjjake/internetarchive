@@ -12,6 +12,11 @@ Release History
 - Added ``ia configure --check`` for validating credentials.
 - Added ``ia configure --whoami`` for retrieving info about the configured user.
 
+**Features and Improvements**
+
+- Added ``ia simplelists`` command for managing simplelists.
+- Added ``ia flag`` command for managing flags.
+
 **Bugfixes**
 
 - Fixed bugs in ``ia copy`` and ``ia move`` where an ``AttributeError`` was being raised.

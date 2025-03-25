@@ -31,11 +31,13 @@ from internetarchive.cli import (
     ia_copy,
     ia_delete,
     ia_download,
+    ia_flag,
     ia_list,
     ia_metadata,
     ia_move,
     ia_reviews,
     ia_search,
+    ia_simplelists,
     ia_tasks,
     ia_upload,
 )
@@ -109,11 +111,13 @@ def main():
     ia_copy.setup(subparsers)
     ia_delete.setup(subparsers)
     ia_download.setup(subparsers)
+    ia_flag.setup(subparsers)
     ia_list.setup(subparsers)
     ia_metadata.setup(subparsers)
     ia_move.setup(subparsers)
     ia_reviews.setup(subparsers)
     ia_search.setup(subparsers)
+    ia_simplelists.setup(subparsers)
     ia_tasks.setup(subparsers)
     ia_upload.setup(subparsers)
 

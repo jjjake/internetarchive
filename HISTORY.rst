@@ -3,7 +3,7 @@
 Release History
 ---------------
 
-5.3.0 (2025-03-25)
+5.3.0 (2025-03-26)
 ++++++++++++++++++
 
 **Features and Improvements**
@@ -11,9 +11,6 @@ Release History
 - Added ``ia configure --show`` to print config to stdout.
 - Added ``ia configure --check`` for validating credentials.
 - Added ``ia configure --whoami`` for retrieving info about the configured user.
-
-**Features and Improvements**
-
 - Added ``ia simplelists`` command for managing simplelists.
 - Added ``ia flag`` command for managing flags.
 

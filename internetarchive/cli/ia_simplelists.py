@@ -20,9 +20,9 @@ ia_simplelists.py
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import annotations
+from internetarchive.utils import json
 
 import argparse
-import json
 import sys
 
 

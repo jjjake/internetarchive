@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+5.3.1 (2025-03-26)
+++++++++++++++++++
+
+**Bugfixes**
+
+- Fixed bug where ``ia reviews --index/--noindex`` was only working for the configured user.
+
 5.3.0 (2025-03-26)
 ++++++++++++++++++
 

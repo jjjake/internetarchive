@@ -498,11 +498,11 @@ class Item(BaseItem):
         p = {'identifier': self.identifier}
         d = {'noindex': '0'}
         if username:
-            d = {'username': username}
+            d['username'] = username
         elif screenname:
-            d = {'screenname': screenname}
+            d['screenname'] = screenname
         elif itemname:
-            d = {'itemname': itemname}
+            d['itemname'] = itemname
         a = S3Auth(self.session.access_key, self.session.secret_key)
         r = self.session.put(u, params=p, data=d, auth=a)
         r.raise_for_status()
@@ -513,11 +513,11 @@ class Item(BaseItem):
         p = {'identifier': self.identifier}
         d = {'noindex': '1'}
         if username:
-            d = {'username': username}
+            d['username'] = username
         elif screenname:
-            d = {'screenname': screenname}
+            d['screenname'] = screenname
         elif itemname:
-            d = {'itemname': itemname}
+            d['itemname'] = itemname
         a = S3Auth(self.session.access_key, self.session.secret_key)
         r = self.session.put(u, params=p, data=d, auth=a)
         r.raise_for_status()

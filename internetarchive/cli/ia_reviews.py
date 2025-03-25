@@ -84,12 +84,16 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     item = args.session.get_item(args.identifier)
     if args.index:
-        r = item.index_review()
+        r = item.index_review(username=args.username,
+                               screenname=args.screenname,
+                               itemname=args.itemname)
         if r.json().get("success"):
             print(f"{item.identifier} - success: review indexed", file=sys.stderr)
             sys.exit(0)
     elif args.noindex:
-        r = item.noindex_review()
+        r = item.noindex_review(username=args.username,
+                                screenname=args.screenname,
+                                itemname=args.itemname)
         if r.json().get("success"):
             print(f"{item.identifier} - success: review removed from index", file=sys.stderr)
             sys.exit(0)

@@ -54,6 +54,12 @@ def setup(subparsers):
     parser.add_argument("-s", "--stars",
                         type=int,
                         help="the number of stars for your review")
+    parser.add_argument("-i", "--index",
+                        action="store_true",
+                        help="Index a review")
+    parser.add_argument("-n", "--noindex",
+                        action="store_true",
+                        help="Remove a review from the index")
 
     # Conditional arguments that require --delete
     delete_group = parser.add_argument_group("delete options",
@@ -77,6 +83,16 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     Main entry point for 'ia reviews'.
     """
     item = args.session.get_item(args.identifier)
+    if args.index:
+        r = item.index_review()
+        if r.json().get("success"):
+            print(f"{item.identifier} - success: review indexed", file=sys.stderr)
+            sys.exit(0)
+    elif args.noindex:
+        r = item.noindex_review()
+        if r.json().get("success"):
+            print(f"{item.identifier} - success: review removed from index", file=sys.stderr)
+            sys.exit(0)
     if args.delete:
         r = item.delete_review(username=args.username,
                                screenname=args.screenname,

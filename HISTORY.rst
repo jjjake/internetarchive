@@ -3,12 +3,19 @@
 Release History
 ---------------
 
-5.3.0 (?)
-+++++++++
+5.3.0 (2025-03-25)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Added ``ia configure --show`` to print config to stdout.
+- Added ``ia configure --check`` for validating credentials.
+- Added ``ia configure --whoami`` for retrieving info about the configured user.
 
 **Bugfixes**
 
 - Fixed bugs in ``ia copy`` and ``ia move`` where an ``AttributeError`` was being raised.
+- Exit with 0 rather than 1 with ``ia upload --checksum`` if the file already exists.
 
 
 5.2.1 (2025-02-12)

@@ -20,11 +20,11 @@ ia_simplelists.py
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import annotations
-from internetarchive.utils import json
 
 import argparse
 import sys
 
+from internetarchive.utils import json
 
 def setup(subparsers):
     """Set up argument parser for the 'simplelists' subcommand.

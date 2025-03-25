@@ -26,6 +26,7 @@ import sys
 
 from internetarchive.utils import json
 
+
 def setup(subparsers):
     """Set up argument parser for the 'simplelists' subcommand.
 

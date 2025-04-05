@@ -266,6 +266,7 @@ class CatalogTask:
     """
     def __init__(self, task_dict: Mapping, catalog_obj: Catalog):
         self.session = catalog_obj.session
+        self.auth = catalog_obj.auth
         self.request_kwargs = catalog_obj.request_kwargs
         self.color = None
         self.task_dict = task_dict
@@ -329,3 +330,31 @@ class CatalogTask:
         r = session.get(url, params=params, auth=_auth, **request_kwargs)
         r.raise_for_status()
         return r.content.decode('utf-8', errors='surrogateescape')
+
+    def rerun(self):
+        """Rerun the task.
+
+        Sends a PUT request to rerun the task and returns the response.
+
+        :returns: A dictionary containing the response from the server.
+        """
+        task_id = self.task_id  # type: ignore
+        if task_id is None:
+            raise ValueError('task_id is None')
+
+        url = f"{self.session.protocol}//{self.session.host}/services/tasks.php"
+
+        data = json.dumps({
+            "op": "rerun",
+            "task_id": task_id
+        })
+
+        response = self.session.put(
+            url,
+            data=data,
+            auth=self.auth,
+            **self.request_kwargs
+        )
+
+        response.raise_for_status()
+        return response

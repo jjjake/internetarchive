@@ -100,10 +100,10 @@ def main(args: argparse.Namespace) -> None:
     elif args.is_locked:
         print(account.locked)
     elif args.lock:
-        r = account.lock("test lock", session=args.session)
+        r = account.lock(args.comment, session=args.session)
         print(r.text)
     elif args.unlock:
-        r = account.unlock("test unlock", session=args.session)
+        r = account.unlock(args.comment, session=args.session)
         print(r.text)
     else:
         account_data = account.to_dict()

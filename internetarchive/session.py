@@ -552,6 +552,15 @@ class ArchiveSession(requests.sessions.Session):
                 except Exception:
                     logger.error(e)
                     raise e
+
+            # Check for 5xx server errors and raise exception with response body
+            if 500 <= r.status_code < 600:
+                from requests.exceptions import HTTPError
+                raise HTTPError(
+                    f"Server Error {r.status_code} occurred with response body: {r.text}",
+                    response=r
+                )
+
             if self.protocol == 'http:':
                 return r
             insecure_warnings = ['SNIMissingWarning', 'InsecurePlatformWarning']

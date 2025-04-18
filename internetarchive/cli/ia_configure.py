@@ -67,6 +67,9 @@ def setup(subparsers):
     parser.add_argument("--print-cookies", "-c",
                         action="store_true",
                         help="print archive.org logged-in-* cookies")
+    parser.add_argument("--print-auth-header", "-a",
+                        action="store_true",
+                        help="print an Authorization header with your IA-S3 keys")
 
     parser.set_defaults(func=main)
 
@@ -75,6 +78,21 @@ def main(args: argparse.Namespace) -> None:
     """
     Main entrypoint for 'ia configure'.
     """
+    if args.print_auth_header:
+        secret = args.session.config.get("s3", {}).get("secret")
+        access = args.session.config.get("s3", {}).get("access")
+        if not secret or not access:
+            print('hi')
+            if not access:
+                print("error: 'access' key not found in config file, try reconfiguring.",
+                      file=sys.stderr)
+            elif not secret:
+                print("error: 'secret' key not found in config file, try reconfiguring.",
+                      file=sys.stderr)
+            sys.exit(1)
+        print(f"Authorization: LOW {access}:{secret}")
+        sys.exit()
+
     if args.print_cookies:
         user = args.session.config.get("cookies", {}).get("logged-in-user")
         sig = args.session.config.get("cookies", {}).get("logged-in-sig")

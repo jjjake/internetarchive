@@ -535,6 +535,25 @@ def search_items(
     )
 
 
+def rerun_task(
+    identifier: str,
+    task_id: int,
+) -> requests.Request | requests.Response:
+    """Rerun a task.
+
+    :param identifier: The Archive.org identifier for which to rerun the task.
+
+    :param task_id: The task ID to rerun.
+
+    :param archive_session: An :class:`ArchiveSession` object can be provided.
+
+    :returns: A :class:`requests.Response` object.
+    """
+    archive_session = get_session()
+    item = archive_session.get_item(identifier)
+    return item.rerun_task(task_id)
+
+
 def configure(  # nosec: hardcoded_password_default
     username: str = "",
     password: str = "",

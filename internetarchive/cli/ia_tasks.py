@@ -23,6 +23,8 @@ import argparse
 import sys
 import warnings
 
+from requests.exceptions import HTTPError
+
 from internetarchive.cli.cli_utils import PostDataAction, QueryStringAction
 from internetarchive.utils import json
 
@@ -40,8 +42,10 @@ def setup(subparsers):
 
     parser.add_argument("-t", "--task",
                         nargs="*",
+                        metavar="TASK_ID",
                         help="Return information about the given task.")
     parser.add_argument("-G", "--get-task-log",
+                        metavar="TASK_ID",
                         help="Return the given tasks task log.")
     parser.add_argument("-p", "--parameter",
                         nargs="+",
@@ -80,22 +84,12 @@ def setup(subparsers):
                         type=str,
                         nargs="?",
                         help="Identifier for tasks specific operations.")
+    parser.add_argument("-R", "--rerun",
+                        type=int,
+                        metavar="TASK_ID",
+                        help="Rerun the specified task.")
 
     parser.set_defaults(func=lambda args: main(args, parser))
-
-
-def handle_task_submission_result(result, cmd):
-    """
-    Handle the result of a task submission.
-    """
-    if result.get("success"):
-        task_log_url = result.get("value", {}).get("log")
-        print(f"success: {task_log_url}", file=sys.stderr)
-    elif "already queued/running" in result.get("error", ""):
-        print(f"success: {cmd} task already queued/running", file=sys.stderr)
-    else:
-        print(f"error: {result.get('error')}", file=sys.stderr)
-    sys.exit(0 if result.get("success") else 1)
 
 
 def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
@@ -115,7 +109,31 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
                                      priority=int(args.data.get("priority", 0)),
                                      reduced_priority=args.reduced_priority,
                                      data=args.data)
-        handle_task_submission_result(r.json(), args.cmd)
+        j = r.json()
+        if j.get("success"):
+            task_log_url = j.get("value", {}).get("log")
+            print(f"success: {task_log_url}", file=sys.stderr)
+        elif "already queued/running" in j.get("error", ""):
+            print(f"success: {args.cmd} task already queued/running", file=sys.stderr)
+        else:
+            print(f"error: {j.get('error')}", file=sys.stderr)
+        sys.exit(0 if j.get("success") else 1)
+    elif args.rerun:
+        if not args.identifier:
+            parser.error('The positional argument `identifier` '
+                         'is required when using `--rerun`.')
+        item = args.session.get_item(args.identifier)
+        try:
+            r = item.rerun_task(args.rerun)
+        except HTTPError as exc:
+            if exc.response.status_code == 409:
+                print(f"warning: task {args.rerun} "
+                      f"for item '{args.identifier}' "
+                      "does not need to be reran")
+                sys.exit(0)
+        j = r.json()
+        if j.get("success"):
+            print(f"success: Reran task {args.rerun} for item '{args.identifier}'")
         sys.exit(0)
 
     # Tasks read API.

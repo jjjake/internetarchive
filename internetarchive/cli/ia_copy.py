@@ -109,7 +109,7 @@ def main(args: argparse.Namespace,
 
     global SRC_ITEM
     SRC_ITEM = args.session.get_item(args.source.split("/")[0])  # type: ignore
-    SRC_FILE = SRC_ITEM.get_file(args.source.split("/")[-1])  # type: ignore
+    SRC_FILE = SRC_ITEM.get_file(args.source.split("/",1)[-1])  # type: ignore
 
     try:
         assert_src_file_exists(args.source)

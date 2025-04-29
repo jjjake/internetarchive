@@ -3,6 +3,17 @@
 Release History
 ---------------
 
+5.4.0 (2025-04-29)
+++++++++++++++++++
+
+**Features and Improvements**
+- Added ``--print-auth-header`` option to ``ia configure``.
+
+**Bugfixes**
+- Corrected behavior of ``ia_copy`` to avoid dropping path prefixes, fixing ``ia_move`` to properly delete moved files in subdirectories (via :gh:`693`).
+- Fixed bug where hardcoded test comment was being sent with every request.
+- Fixed issue where ``ia reviews --index/--noindex`` only worked for configured user.
+
 5.3.1 (2025-03-26)
 ++++++++++++++++++
 
@@ -25,7 +36,6 @@ Release History
 
 - Fixed bugs in ``ia copy`` and ``ia move`` where an ``AttributeError`` was being raised.
 - Exit with 0 rather than 1 with ``ia upload --checksum`` if the file already exists.
-
 
 5.2.1 (2025-02-12)
 ++++++++++++++++++

@@ -32,6 +32,6 @@ docs:
 binary:
 	pex . --python-shebang='/usr/bin/env python3' --python python3 -e internetarchive.cli.ia:main -o ia-$(VERSION)-py3-none-any.pex -r pex-requirements.txt --use-pep517
 
-publish-binary:
+publish-binary: binary
 	./ia-$(VERSION)-py3-none-any.pex upload ia-pex ia-$(VERSION)-py3-none-any.pex --no-derive
 	./ia-$(VERSION)-py3-none-any.pex upload ia-pex ia-$(VERSION)-py3-none-any.pex --remote-name=ia --no-derive

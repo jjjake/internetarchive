@@ -452,7 +452,10 @@ def _process_non_indexed_keys(metadata, source, prepared, append, append_list, i
 def _cleanup_indexed_keys(prepared, indexed_keys, metadata):
     for base in indexed_keys:
         if base in prepared:
-            prepared[base] = [v for v in prepared[base] if v is not None]
+            if isinstance(prepared[base], str):
+                prepared[base] = [prepared[base]]
+            prepared[base] = [v for v in prepared[base] if v is not None
+                              and v != 'REMOVE_TAG']
             indexes = [
                 i for i, k in enumerate(metadata)
                 if _get_base_key(k) == base and metadata[k] == 'REMOVE_TAG'

@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+5.4.1 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug where REMOVE_TAG was not working with indexed keys
+
 5.4.0 (2025-04-29)
 ++++++++++++++++++
 

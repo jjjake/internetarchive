@@ -9,6 +9,7 @@ Release History
 **Bugfixes**
 
 - Fixed bug where REMOVE_TAG was not working with indexed keys
+- Fixed argument validation and option parsing in ``ia download``
 
 5.4.0 (2025-04-29)
 ++++++++++++++++++

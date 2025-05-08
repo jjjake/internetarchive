@@ -43,7 +43,7 @@ def setup(subparsers):
     """
     parser = subparsers.add_parser("download",
                                    aliases=["do"],
-                                   help="Retrieve and modify archive.org item metadata")
+                                   help="Download files from archive.org",)
 
     # Main options
     parser.add_argument("identifier",
@@ -52,12 +52,12 @@ def setup(subparsers):
                         help="Identifier for the upload")
     parser.add_argument("file",
                         nargs="*",
-                        help="Files to download")
+                        help="Files to download (only allowed with identifier)")
 
     # Additional options
     parser.add_argument("-q", "--quiet",
                         action="store_true",
-                        help="Turn off ia's output [default: False]")
+                        help="Turn off ia's output")
     parser.add_argument("-d", "--dry-run",
                         action="store_true",
                         help="Print URLs to stdout and exit")
@@ -66,14 +66,14 @@ def setup(subparsers):
                         help="Clobber files already downloaded")
     parser.add_argument("-C", "--checksum",
                         action="store_true",
-                        help="Skip files based on checksum [default: False]")
+                        help="Skip files based on checksum")
     parser.add_argument("--checksum-archive",
                         action="store_true",
                         help="Skip files based on _checksum_archive.txt file")
     parser.add_argument("-R", "--retries",
                         type=int,
                         default=5,
-                        help="Set number of retries to <retries> [default: 5]")
+                        help="Set number of retries to <retries> (default: 5)")
     parser.add_argument("-I", "--itemlist",
                         type=argparse.FileType("r"),
                         help=("Download items from a specified file. "
@@ -94,6 +94,7 @@ def setup(subparsers):
                              "the given glob pattern"))
     parser.add_argument("-f", "--format",
                         nargs="+",
+                        action="extend",
                         help=("Only download files of the specified format. "
                              "Use this option multiple times to download "
                              "multiple formats. You can use the following command to "
@@ -129,10 +130,12 @@ def setup(subparsers):
                         help="Also download files from the history directory")
     parser.add_argument("--source",
                         nargs="+",
+                        action="extend",
                         help=("Filter files based on their source value in files.xml "
                              "(i.e. `original`, `derivative`, `metadata`)"))
     parser.add_argument("--exclude-source",
                         nargs="+",
+                        action="extend",
                         help=("Filter files based on their source value in files.xml "
                              "(i.e. `original`, `derivative`, `metadata`)"))
     parser.add_argument("-t", "--timeout",
@@ -143,14 +146,31 @@ def setup(subparsers):
     parser.set_defaults(func=lambda args: main(args, parser))
 
 
+def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    if args.itemlist and args.search:
+        parser.error("--itemlist and --search cannot be used together")
+
+    if args.itemlist or args.search:
+        if args.identifier:
+            parser.error("Cannot specify an identifier with --itemlist/--search")
+        if args.file:
+            parser.error("Cannot specify files with --itemlist/--search")
+    else:
+        if not args.identifier:
+            parser.error("Identifier is required when not using --itemlist/--search")
+
+
 def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for 'ia download'.
     """
     ids: list[File | str] | Search | TextIO
+    validate_args(args, parser)
 
     if args.itemlist:
-        ids = [x.strip() for x in args.itemlist]
+        ids = [x.strip() for x in args.itemlist if x.strip()]
+        if not ids:
+            parser.error("--itemlist file is empty or contains only whitespace")
         total_ids = len(ids)
     elif args.search:
         try:

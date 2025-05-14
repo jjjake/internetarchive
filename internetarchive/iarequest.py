@@ -405,17 +405,6 @@ def prepare_target_patch(metadata, source_metadata, append, target,
     )
 
 
-def _create_nested_dict(metadata):
-    nested = {}
-    for key_path, value in metadata.items():
-        parts = key_path.split('/')
-        current = nested
-        for part in parts[:-1]:
-            current = current.setdefault(part, {})
-        current[parts[-1]] = value
-    return nested
-
-
 def prepare_files_patch(metadata, files_metadata, target, append,
                         append_list, insert, expect):
     filename = target.split('/')[1]

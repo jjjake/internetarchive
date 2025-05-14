@@ -379,17 +379,12 @@ def _create_patch_tests(expect):
 def prepare_target_patch(metadata, source_metadata, append, target,
                          append_list, key, insert, expect):
     def get_nested_value(data, parts):
-        """Traverse data structure using parts, handling list indexes"""
         current = data
         for part in parts:
-            if isinstance(current, list):
-                try:
-                    idx = int(part)
-                    current = current[idx]
-                except (ValueError, IndexError):
-                    return {}
+            if isinstance(current, list) and part.isdigit():
+                current = current[int(part)]
             else:
-                current = current.get(part, {})
+                current = current[part]
         return current
 
     key_parts = key.split('/')
@@ -440,7 +435,7 @@ def _process_non_indexed_keys(metadata, source, prepared, append, append_list, i
         if isinstance(value, (int, float, complex)) and not isinstance(value, bool):
             value = str(value)
 
-        if append_list and source.get(current_key):
+        if append_list and isinstance(source, dict) and source.get(current_key):
             existing = source[current_key]
             if not isinstance(existing, list):
                 existing = [existing]

@@ -316,7 +316,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             )
         else:
             patch = prepare_target_patch(
-                {target: metadata},
+                metadata,
                 source_metadata,
                 append,
                 target,
@@ -378,12 +378,31 @@ def _create_patch_tests(expect):
 
 def prepare_target_patch(metadata, source_metadata, append, target,
                          append_list, key, insert, expect):
-    nested_dict = _create_nested_dict(metadata)
-    current = source_metadata
-    for part in key.split('/'):
-        current = current.get(part, {})
-    patch = prepare_patch(nested_dict, current, append, expect, append_list, insert)
-    return patch
+    def get_nested_value(data, parts):
+        """Traverse data structure using parts, handling list indexes"""
+        current = data
+        for part in parts:
+            if isinstance(current, list):
+                try:
+                    idx = int(part)
+                    current = current[idx]
+                except (ValueError, IndexError):
+                    return {}
+            else:
+                current = current.get(part, {})
+        return current
+
+    key_parts = key.split('/')
+    current_source = get_nested_value(source_metadata, key_parts)
+
+    return prepare_patch(
+        metadata,
+        current_source,
+        append,
+        expect,
+        append_list,
+        insert,
+    )
 
 
 def _create_nested_dict(metadata):

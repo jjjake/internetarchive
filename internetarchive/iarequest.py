@@ -316,7 +316,7 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             )
         else:
             patch = prepare_target_patch(
-                {target: metadata},
+                metadata,
                 source_metadata,
                 append,
                 target,
@@ -378,23 +378,26 @@ def _create_patch_tests(expect):
 
 def prepare_target_patch(metadata, source_metadata, append, target,
                          append_list, key, insert, expect):
-    nested_dict = _create_nested_dict(metadata)
-    current = source_metadata
-    for part in key.split('/'):
-        current = current.get(part, {})
-    patch = prepare_patch(nested_dict, current, append, expect, append_list, insert)
-    return patch
+    def get_nested_value(data, parts):
+        current = data
+        for part in parts:
+            if isinstance(current, list) and part.isdigit():
+                current = current[int(part)]
+            else:
+                current = current[part]
+        return current
 
+    key_parts = key.split('/')
+    current_source = get_nested_value(source_metadata, key_parts)
 
-def _create_nested_dict(metadata):
-    nested = {}
-    for key_path, value in metadata.items():
-        parts = key_path.split('/')
-        current = nested
-        for part in parts[:-1]:
-            current = current.setdefault(part, {})
-        current[parts[-1]] = value
-    return nested
+    return prepare_patch(
+        metadata,
+        current_source,
+        append,
+        expect,
+        append_list,
+        insert,
+    )
 
 
 def prepare_files_patch(metadata, files_metadata, target, append,
@@ -432,7 +435,7 @@ def _process_non_indexed_keys(metadata, source, prepared, append, append_list, i
         if isinstance(value, (int, float, complex)) and not isinstance(value, bool):
             value = str(value)
 
-        if append_list and source.get(current_key):
+        if append_list and isinstance(source, dict) and source.get(current_key):
             existing = source[current_key]
             if not isinstance(existing, list):
                 existing = [existing]

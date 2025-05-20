@@ -321,7 +321,6 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
                 append,
                 target,
                 append_list,
-                target,
                 insert,
                 expect,
             )
@@ -377,7 +376,7 @@ def _create_patch_tests(expect):
 
 
 def prepare_target_patch(metadata, source_metadata, append, target,
-                         append_list, key, insert, expect):
+                         append_list, insert, expect):
     def get_nested_value(data, parts):
         current = data
         for part in parts:
@@ -387,7 +386,7 @@ def prepare_target_patch(metadata, source_metadata, append, target,
                 current = current[part]
         return current
 
-    key_parts = key.split('/')
+    key_parts = target.split('/')
     current_source = get_nested_value(source_metadata, key_parts)
 
     return prepare_patch(

@@ -29,9 +29,10 @@ search engine.
 from __future__ import annotations
 
 from logging import getLogger
+from typing import Generator, Iterable
 
 from requests.exceptions import ReadTimeout
-from typing import Generator, Iterable, Optional
+from urllib3 import Retry
 
 from internetarchive.auth import S3Auth
 from internetarchive.item import Item
@@ -39,21 +40,21 @@ from internetarchive.session import ArchiveSession
 
 log = getLogger(__name__)
 
-class SearchIterator:
+class SearchIterator(list):
     """This class is an iterator wrapper for search results.
 
     It provides access to the underlying Search, and supports
     len() (since that is known initially)."""
 
-    def __init__(self, search: Search, iterator: iter[dict | Item]):
+    def __init__(self, search: Search, iterator: Iterable[dict | Item]):
         self.search = search
         self.iterator = iterator
 
     def __len__(self) -> int:
-        return self.search.num_found
+        return int(self.search.num_found) # type: ignore
 
     def __next__(self) -> dict | Item:
-        return next(self.iterator)
+        return next(self.iterator) # type: ignore
 
     def __iter__(self) -> SearchIterator:
         return self
@@ -67,10 +68,29 @@ class Search:
     this class to search for Archive.org items using the advanced search
     engine. By default it uses the scaping API, see for
     `documentation <https://archive.org/help/aboutsearch.htm>`__,
-     which uses the same query Lucene-like queries supported by 
-    Internet Archive Advanced Search. See the advance search page for 
-    `documentation <https://archive.org/advancedsearch.php>`__, 
+    which uses the same query Lucene-like queries supported by
+    Internet Archive Advanced Search. See the advance search page for
+    `documentation <https://archive.org/advancedsearch.php>`__,
     when using `pages`.
+
+    :param archive_session: A session
+    :type archive_session: ArchiveSession
+    :param query: Lucene-like query string
+    :type query: str
+    :param fields: Fields to return. This always includes `identifier`.
+    :type fields: list[str] or None
+    :param sorts: Sort by field (value: 'desc' or 'asc')
+    :type sorts: dict or None
+    :param params: ?
+    :type params: dict or None
+    :param full_text_search: Use the undocumented full text search API
+    :type full_text_search: bool or None
+    :param dsl_fts: ?
+    :type dsl_fts: dict or None
+    :param request_kwargs: kwargs passed to request
+    :type request_kwargs: dict or None
+    :param max_retries: Max retries tried by request
+    :type max_retries: int or Retry
 
     Usage::
 
@@ -82,16 +102,17 @@ class Search:
         ...     print(result['identifier'])
     """
 
-    def __init__(self, archive_session: ArchiveSession,
+    def __init__(self,
+                 archive_session: ArchiveSession,
                  query: str,
-                 fields: Optional[list[str]] = None,
-                 sorts: Optional[list[str]] = None,
-                 params: Optional[dict] = None,
-                 full_text_search: Optional[bool] = None,
-                 dsl_fts: Optional[bool] = None,
-                 request_kwargs: Optional[dict] = None,
-                 max_retries: Optional[int] = None):
-        
+                 fields: list[str] | None = None, # UP007
+                 sorts: dict | None = None,
+                 params: dict | None = None,
+                 full_text_search: bool | None = None,
+                 dsl_fts: bool | None = None,
+                 request_kwargs: dict | None = None,
+                 max_retries: int | Retry | None = None):
+
         params = params or {}
 
         self.session = archive_session
@@ -104,14 +125,14 @@ class Search:
         if self.fts and not self.dsl_fts:
             self.query = f'!L {self.query}'
         self.fields = fields or []
-        self.sorts = sorts or []
+        self.sorts = sorts or {}
         self.request_kwargs = request_kwargs or {}
-        self._num_found = None
+        self._num_found: int | None = None
         self.fts_url = f'{self.session.protocol}//be-api.us.archive.org/ia-pub-fts-api'
         self.scrape_url = f'{self.session.protocol}//{self.session.host}/services/search/v1/scrape'
         self.search_url = f'{self.session.protocol}//{self.session.host}/advancedsearch.php'
         if self.session.access_key and self.session.secret_key:
-            self.auth = S3Auth(self.session.access_key, self.session.secret_key)
+            self.auth: S3Auth | None = S3Auth(self.session.access_key, self.session.secret_key)
         else:
             self.auth = None
         self.max_retries = max_retries if max_retries is not None else 5
@@ -122,7 +143,7 @@ class Search:
             if 'rows' in params:
                 params['page'] = 1
             else:
-                default_params['count'] = 10000
+                default_params["count"] = "10000"
         else:
             default_params['output'] = 'json'
         # In the beta endpoint 'scope' was called 'index'.
@@ -138,26 +159,29 @@ class Search:
             self.request_kwargs['timeout'] = 300
 
         # Set retries.
-        self.session.mount_http_adapter(max_retries=self.max_retries)
+        self.session.mount_http_adapter(max_retries=self.max_retries) # type: ignore
 
     def __repr__(self):
         return f'Search(query={self.query!r})'
 
-    def __iter__(self) -> Iterable[Item]:
+    def __iter__(self) -> SearchIterator:
         return self.iter_as_results()
 
-    def _get_item_from_search_result(self, search_result: Search) -> Item:
-        return self.session.get_item(search_result['identifier'])
+    def _get_item_from_search_result(
+                                     self,
+                                     search_result: SearchIterator
+                                    ) -> Item:
+        return self.session.get_item(search_result['identifier']) # type: ignore
 
-    def iter_as_results(self) -> Iterable[dict]:
-        return SearchIterator(self, self._make_results_generator())
+    def iter_as_results(self) -> SearchIterator:
+        return SearchIterator(self, self._make_results_generator()) # type: ignore
 
-    def iter_as_items(self) -> Iterable[Item]:
+    def iter_as_items(self) -> SearchIterator:
         """Returns an iterator over the fetched :class:`internetarchive.item.Item`s.
-        
+
         This fetches an :class:`internetarchive.item.Item` from IA.
         """
-        _map = map(self._get_item_from_search_result, self._make_results_generator())
+        _map = map(self._get_item_from_search_result, self._make_results_generator()) # type: ignore
         return SearchIterator(self, _map)
 
     def _make_results_generator(self) -> Generator[dict, None, None]:
@@ -169,7 +193,7 @@ class Search:
             return self._advanced_search()
         else:
             return self._scrape()
-        
+
     def _advanced_search(self) -> Generator[dict, None, None]:
         # Always return identifier.
         if 'identifier' not in self.fields:
@@ -193,7 +217,7 @@ class Search:
         if j.get('error'):
             yield j
         yield from j.get('response', {}).get('docs', [])
-        
+
     def _scrape(self) -> Generator[dict, None, None]:
         if self.fields:
             self.params['fields'] = ','.join(self.fields)
@@ -237,7 +261,7 @@ class Search:
             d['scope'] = self.params['scope']
 
         if 'size' in self.params:
-            d['scroll'] = False
+            d['scroll'] = str(False)
             d['size'] = self.params['size']
 
         while True:
@@ -273,7 +297,7 @@ class Search:
             yield {agg[0]: agg[1]}
 
     @property
-    def num_found(self) -> int:
+    def num_found(self) -> int | None:
         if not self._num_found:
             if not self.fts and 'page' in self.params:
                 p = self.params.copy()
@@ -307,7 +331,7 @@ class Search:
                 self._num_found = j.get('hits', {}).get('total')
         return self._num_found
 
-    def _handle_scrape_error(self, j: dict):
+    def _handle_scrape_error(self, j: dict) -> None:
         if 'error' in j:
             if all(s in j['error'].lower() for s in ['invalid', 'secret']):
                 if not j['error'].endswith('.'):
@@ -315,5 +339,5 @@ class Search:
                 raise ValueError(f"{j['error']} Try running 'ia configure' and retrying.")
             raise ValueError(j.get('error'))
 
-    def __len__(self) -> int:
+    def __len__(self) -> int | None:
         return self.num_found

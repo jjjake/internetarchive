@@ -45,7 +45,8 @@ from requests.cookies import create_cookie
 from requests.utils import default_headers
 from urllib3 import Retry
 
-from internetarchive import __version__, auth, catalog
+import internetarchive
+from internetarchive import auth, catalog
 from internetarchive.config import get_config
 from internetarchive.item import Collection, Item
 from internetarchive.search import Search
@@ -145,7 +146,7 @@ class ArchiveSession(requests.sessions.Session):
         except Exception:
             lang = ''
         py_version = '{}.{}.{}'.format(*sys.version_info)
-        return (f'internetarchive/{__version__} '
+        return (f'internetarchive/{internetarchive.__version__} '
                 f'({uname[0]} {uname[-1]}; N; {lang}; {self.access_key}) '
                 f'Python/{py_version}')
 
@@ -302,12 +303,12 @@ class ArchiveSession(requests.sessions.Session):
 
     def search_items(self,
                      query: str,
-                     fields: Iterable[str] | None = None,
-                     sorts: Iterable[str] | None = None,
-                     params: Mapping | None = None,
+                     fields: list[str] | None = None,
+                     sorts: dict | None = None,
+                     params: dict | None = None,
                      full_text_search: bool = False,
                      dsl_fts: bool = False,
-                     request_kwargs: Mapping | None = None,
+                     request_kwargs: dict | None = None,
                      max_retries: int | Retry | None = None) -> Search:
         """Search for items on Archive.org.
 
@@ -357,18 +358,22 @@ class ArchiveSession(requests.sessions.Session):
             return True
         return j.get('over_limit') != 0
 
-    def get_tasks_api_rate_limit(self, cmd: str = 'derive.php', request_kwargs: dict | None = None):
+    def get_tasks_api_rate_limit(self,
+                                 cmd: str = 'derive.php',
+                                 request_kwargs: dict | None = None
+                                ):
         return catalog.Catalog(self, request_kwargs).get_rate_limit(cmd=cmd)
 
     def submit_task(self,
-                    identifier: str,
-                    cmd: str,
+                    identifier: str = "",
+                    cmd: str ="",
                     comment: str = '',
                     priority: int = 0,
                     data: dict | None = None,
                     headers: dict | None = None,
                     reduced_priority: bool = False,
-                    request_kwargs: Mapping | None = None) -> requests.Response:
+                    request_kwargs: Mapping | None = None
+                   ) -> requests.Response:
         """Submit an archive.org task.
 
         :param identifier: Item identifier.
@@ -479,7 +484,8 @@ class ArchiveSession(requests.sessions.Session):
 
     def get_tasks(self, identifier: str = "",
                   params: dict | None = None,
-                  request_kwargs: Mapping | None = None) -> set[catalog.CatalogTask]:
+                  request_kwargs: Mapping | None = None
+                 ) -> set[catalog.CatalogTask]:
         """Get a list of all tasks meeting all criteria.
         The list is ordered by submission time.
 

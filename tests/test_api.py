@@ -204,7 +204,6 @@ def test_upload():
     expected_s3_headers = {
         'content-length': '7557',
         'x-archive-queue-derive': '1',
-        'x-archive-meta00-scanner': 'uri(Internet%20Archive%20Python%20library',
         'x-archive-size-hint': '7557',
         'x-archive-auto-make-bucket': '1',
         'authorization': 'LOW test_access:test_secret',
@@ -221,9 +220,6 @@ def test_upload():
         for response in _responses:
             req = response.request
             headers = {k.lower(): str(v) for k, v in req.headers.items()}
-            scanner_header = '%20'.join(
-                response.headers['x-archive-meta00-scanner'].split('%20')[:4])
-            headers['x-archive-meta00-scanner'] = scanner_header
             assert 'user-agent' in headers
             del headers['accept']
             del headers['accept-encoding']
@@ -246,7 +242,6 @@ def test_upload_validate_identifier():
     expected_s3_headers = {
         'content-length': '7557',
         'x-archive-queue-derive': '1',
-        'x-archive-meta00-scanner': 'uri(Internet%20Archive%20Python%20library',
         'x-archive-size-hint': '7557',
         'x-archive-auto-make-bucket': '1',
         'authorization': 'LOW test_access:test_secret',

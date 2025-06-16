@@ -117,20 +117,6 @@ def test_metadata_request_patch_key(sample_metadata):
         assert any(k.endswith('-patch') for k in prepared.data)
 
 
-def test_scanner_header_injection():
-    req = S3Request(
-        method='PUT',
-        url=f"{PROTOCOL}//s3.us.archive.org/test_item",
-        metadata={"title": "Test"},
-        set_scanner=True,
-        access_key='test_access',
-        secret_key='test_secret'
-    )
-    prepared = req.prepare()
-    header = prepared.headers.get('x-archive-meta00-scanner', '')
-    assert 'Internet%20Archive%20Python%20library' in header
-
-
 @pytest.mark.parametrize(("test_value", "expected"), [
     (
         "http://example.com/foo bar?q=✓",

@@ -127,9 +127,6 @@ def setup(subparsers):
     parser.add_argument("--keep-directories",
                         action="store_true",
                         help="Keep directories in the supplied file paths for the remote filename")
-    parser.add_argument("--no-scanner",
-                        action="store_true",
-                        help="Do not set the scanner field in meta.xml")
     parser.add_argument("--status-check",
                         action="store_true",
                         help="Check if S3 is accepting requests to the given item")
@@ -229,10 +226,6 @@ def main(args, parser): # noqa: PLR0912,C901
         verbose = False
     else:
         verbose = True
-    if args.no_scanner:
-        set_scanner = False
-    else:
-        set_scanner = True
     if args.size_hint:
         args.header["x-archive-size-hint"] = args.size_hint
     if not args.header.get("x-archive-keep-old-version") \
@@ -255,7 +248,6 @@ def main(args, parser): # noqa: PLR0912,C901
         "headers": args.header,
         "debug": args.debug,
         "queue_derive": queue_derive,
-        "set_scanner": set_scanner,
         "verbose": verbose,
         "verify": args.verify,
         "checksum": args.checksum,

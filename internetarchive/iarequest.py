@@ -46,7 +46,6 @@ class S3Request(requests.models.Request):
                  queue_derive=True,
                  access_key=None,
                  secret_key=None,
-                 set_scanner=True,
                  **kwargs):
 
         super().__init__(**kwargs)
@@ -55,7 +54,6 @@ class S3Request(requests.models.Request):
         self.metadata = metadata or {}
         self.file_metadata = file_metadata or {}
         self.queue_derive = queue_derive
-        self.set_scanner = set_scanner
 
     def prepare(self):
         p = S3PreparedRequest()
@@ -74,7 +72,6 @@ class S3Request(requests.models.Request):
             metadata=self.metadata,
             file_metadata=self.file_metadata,
             queue_derive=self.queue_derive,
-            set_scanner=self.set_scanner,
         )
         return p
 
@@ -82,10 +79,10 @@ class S3Request(requests.models.Request):
 class S3PreparedRequest(requests.models.PreparedRequest):
     def prepare(self, method=None, url=None, headers=None, files=None, data=None,
                 params=None, auth=None, cookies=None, hooks=None, queue_derive=None,
-                metadata=None, file_metadata=None, set_scanner=None):
+                metadata=None, file_metadata=None):
         self.prepare_method(method)
         self.prepare_url(url, params)
-        self.prepare_headers(headers, metadata, file_metadata, queue_derive, set_scanner)
+        self.prepare_headers(headers, metadata, file_metadata, queue_derive)
         self.prepare_cookies(cookies)
         self.prepare_body(data, files)
         self.prepare_auth(auth, url)
@@ -95,19 +92,11 @@ class S3PreparedRequest(requests.models.PreparedRequest):
         # This MUST go after prepare_auth. Authenticators could add a hook
         self.prepare_hooks(hooks)
 
-    def prepare_headers(self, headers, metadata, file_metadata, queue_derive,
-                        set_scanner):
+    def prepare_headers(self, headers, metadata, file_metadata, queue_derive):
         headers = headers.copy() if headers else {}
         metadata = metadata.copy() if metadata else {}
         file_metadata = file_metadata.copy() if file_metadata else {}
 
-        if set_scanner:
-            scanner_value = f'Internet Archive Python library {__version__}'
-            existing_scanner = metadata.get('scanner', [])
-            if not isinstance(existing_scanner, list):
-                existing_scanner = [existing_scanner]
-            existing_scanner.append(scanner_value)
-            metadata['scanner'] = existing_scanner
         prepared_metadata = prepare_metadata(metadata)
         prepared_file_metadata = prepare_metadata(file_metadata)
 

@@ -29,7 +29,6 @@ EXPECTED_LAST_MOD_HEADER = {"Last-Modified": "Tue, 14 Nov 2023 20:25:48 GMT"}
 EXPECTED_S3_HEADERS = {
     'content-length': '7557',
     'x-archive-queue-derive': '1',
-    'x-archive-meta00-scanner': 'uri(Internet%20Archive%20Python%20library',
     'x-archive-size-hint': '7557',
     'x-archive-auto-make-bucket': '1',
     'authorization': 'LOW a:b',
@@ -330,9 +329,6 @@ def test_upload(nasa_item):
         for resp in _responses:
             request = resp.request
             headers = {k.lower(): str(v) for k, v in request.headers.items()}
-            scanner_header = '%20'.join(
-                resp.headers['x-archive-meta00-scanner'].split('%20')[:4])
-            headers['x-archive-meta00-scanner'] = scanner_header
             assert 'user-agent' in headers
             del headers['user-agent']
             assert headers == EXPECTED_S3_HEADERS
@@ -379,7 +375,6 @@ def test_upload_secure_session():
 def test_upload_metadata(nasa_item):
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
-        del _expected_headers['x-archive-meta00-scanner']
         _expected_headers['x-archive-meta00-foo'] = 'bar'
         _expected_headers['x-archive-meta00-subject'] = 'first'
         _expected_headers['x-archive-meta01-subject'] = 'second'
@@ -406,7 +401,6 @@ def test_upload_metadata(nasa_item):
                                       secret_key='b')
         for resp in _responses:
             request = resp.request
-            del request.headers['x-archive-meta00-scanner']
             headers = {k.lower(): str(v) for k, v in request.headers.items()}
             assert 'user-agent' in headers
             del headers['user-agent']
@@ -495,12 +489,10 @@ def test_upload_queue_derive(nasa_item):
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
         _expected_headers['x-archive-queue-derive'] = '1'
-        del _expected_headers['x-archive-meta00-scanner']
         rsps.add(responses.PUT, S3_URL_RE, adding_headers=_expected_headers)
         _responses = nasa_item.upload(NASA_METADATA_PATH, access_key='a', secret_key='b')
         for resp in _responses:
             headers = {k.lower(): str(v) for k, v in resp.request.headers.items()}
-            del headers['x-archive-meta00-scanner']
             assert 'user-agent' in headers
             del headers['user-agent']
             assert headers == _expected_headers
@@ -516,7 +508,6 @@ def test_upload_delete(tmpdir, nasa_item):
 
     _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
     _expected_headers['content-length'] = '383'
-    del _expected_headers['x-archive-meta00-scanner']
     tmpdir.chdir()
     test_file = os.path.join(str(tmpdir), 'test.txt')
     with open(test_file, 'w') as fh:
@@ -564,7 +555,6 @@ def test_upload_checksum(tmpdir, nasa_item):
         nasa_item = get_item('nasa')
 
         _expected_headers = deepcopy(EXPECTED_S3_HEADERS)
-        del _expected_headers['x-archive-meta00-scanner']
         _expected_headers['content-md5'] = '6f1834f5c70c0eabf93dea675ccf90c4'
 
         test_file = os.path.join(str(tmpdir), 'checksum_test.txt')

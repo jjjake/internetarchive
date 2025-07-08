@@ -461,7 +461,7 @@ class File(BaseFile):
         else:
             if verbose:
                 msg = f' deleting: {self.name}'
-                if cascade_delete:
+                if cascade_delete == '1':
                     msg += ' and all derivative files.'
                 print(msg, file=sys.stderr)
             prepared_request = self.item.session.prepare_request(request)

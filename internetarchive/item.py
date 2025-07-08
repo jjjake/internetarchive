@@ -1005,9 +1005,7 @@ class Item(BaseItem):
                     retries_sleep: int | None = None,
                     debug: bool = False,
                     validate_identifier: bool = False,
-                    request_kwargs: MutableMapping | None = None,
-                    set_scanner: bool = True
-                    ) -> Response | Request:
+                    request_kwargs: MutableMapping | None = None) -> Request | Response:
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
@@ -1170,8 +1168,7 @@ class Item(BaseItem):
                                 file_metadata=file_metadata,
                                 access_key=access_key,
                                 secret_key=secret_key,
-                                queue_derive=queue_derive,
-                                set_scanner=set_scanner)
+                                queue_derive=queue_derive)
             return request
 
         if debug:
@@ -1273,9 +1270,7 @@ class Item(BaseItem):
                retries_sleep: int | None = None,
                debug: bool = False,
                validate_identifier: bool = False,
-               request_kwargs: dict | None = None,
-               set_scanner: bool = True
-              ) -> list[Response | Request]:
+               request_kwargs: dict | None = None) -> list[Request | Response]:
         r"""Upload files to an item. The item will be created if it
         does not exist.
 
@@ -1383,8 +1378,7 @@ class Item(BaseItem):
                                             retries_sleep=retries_sleep,
                                             debug=debug,
                                             validate_identifier=validate_identifier,
-                                            request_kwargs=request_kwargs,
-                                            set_scanner=set_scanner)
+                                            request_kwargs=request_kwargs)
                     responses.append(resp)
             else:
                 file_index += 1
@@ -1418,8 +1412,7 @@ class Item(BaseItem):
                                         retries_sleep=retries_sleep,
                                         debug=debug,
                                         validate_identifier=validate_identifier,
-                                        request_kwargs=request_kwargs,
-                                        set_scanner=set_scanner)
+                                        request_kwargs=request_kwargs)
                 responses.append(resp)
         return responses
 

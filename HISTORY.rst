@@ -6,10 +6,14 @@ Release History
 5.4.1 (?)
 +++++++++
 
+**Features and Improvements**
+
+- Stop setting scanner on upload per policy change.
+
 **Bugfixes**
 
-- Fixed bug where REMOVE_TAG was not working with indexed keys
-- Fixed argument validation and option parsing in ``ia download``
+- Fixed bug where REMOVE_TAG was not working with indexed keys.
+- Fixed argument validation and option parsing in ``ia download``.
 
 5.4.0 (2025-04-29)
 ++++++++++++++++++

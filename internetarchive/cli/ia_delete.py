@@ -122,7 +122,12 @@ def delete_files(files, args, item, verbose):
     errors = False
 
     # Files that cannot be deleted via S3.
-    no_delete = ["_meta.xml", "_files.xml", "_meta.sqlite"]
+    no_delete = [
+        "_meta.xml",
+        "_files.xml",
+        "_meta.sqlite"
+        "_reviews.xml",
+    ]
 
     for f in files:
         if not f:

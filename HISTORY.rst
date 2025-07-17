@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+5.5.0 (2025-07-17)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Added --parameters option to ``ia metadata``.
+
 5.4.1 (2025-07-16)
 ++++++++++++++++++
 

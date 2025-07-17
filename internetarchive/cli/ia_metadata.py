@@ -115,6 +115,11 @@ def setup(subparsers):
     parser.add_argument("-R", "--reduced-priority",
                         action="store_true",
                         help="Submit task at a reduced priority.")
+    parser.add_argument("-P", "--parameters",
+                        nargs="+",
+                        action=QueryStringAction,
+                        metavar="KEY:VALUE",
+                        help="Parameters to send with your query.")
 
     parser.set_defaults(func=lambda args: main(args, parser))
 
@@ -234,7 +239,8 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     formats = set()
     responses: list[bool | Response] = []
 
-    item = args.session.get_item(args.identifier)
+    item = args.session.get_item(args.identifier,
+                                 request_kwargs={'params': args.parameters})
 
     # Check existence of item.
     if args.exists:

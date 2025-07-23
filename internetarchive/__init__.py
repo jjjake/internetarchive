@@ -70,8 +70,8 @@ __all__ = [
     'configure',
     'delete',
     'download',
-    'get_files',
     # API.
+    'get_files',
     'get_item',
     'get_session',
     'get_tasks',

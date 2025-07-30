@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+5.6.0 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug in JSON parsing for ``ia upload --file-metadata ...``.
+
 5.5.0 (2025-07-17)
 ++++++++++++++++++
 

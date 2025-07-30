@@ -234,11 +234,11 @@ def main(args, parser): # noqa: PLR0912,C901
 
     if args.file_metadata:
         try:
-            with open(args.file_metadata) as fh:
-                args.file_metadata = json.load(fh)
+            with open(args.file_metadata.name) as fh:
+                args.file = json.load(fh)
         except JSONDecodeError:
             args.file = []
-            with open(args.file_metadata) as fh:
+            with open(args.file_metadata.name) as fh:
                 for line in fh:
                     j = json.loads(line.strip())
                     args.file.append(j)

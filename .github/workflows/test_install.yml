@@ -11,6 +11,6 @@ jobs:
       matrix:
         setuptools-version: ["45.2.0", "58.1.0", "62.4.0"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: pip install setuptools=="${{ matrix.setuptools-version }}"
       - run: pip install .

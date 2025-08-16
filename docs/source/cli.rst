@@ -242,6 +242,12 @@ Download specific files matching a glob pattern, but excluding files matching a 
 
 Note that ``--exclude`` can only be used in conjunction with ``--glob``.
 
+Download files matching multiple glob and exclude patterns:
+
+.. code:: bash
+
+    $ ia download TripDown1905 --glob="*.mp4|*.xml" --exclude "*512kb*|*_reviews.xml"
+
 Download only files of a specific format:
 
 .. code:: bash

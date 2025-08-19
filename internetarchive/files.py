@@ -233,6 +233,14 @@ class File(BaseFile):
         self.item.session.mount_http_adapter(max_retries=retries)
         file_path = file_path or self.name
 
+        # Sanitize only the filename portion of file_path to prevent invalid characters
+        # and potential directory traversal issues.
+        # We use `utils.sanitize_filepath` instead of `utils.sanitize_filename` because:
+        # - `sanitize_filepath` preserves the directory path intact (does not encode path separators),
+        # - allowing `os.makedirs` to create intermediate directories correctly,
+        # - while still sanitizing just the filename to ensure it is safe for filesystem use.
+        file_path = utils.sanitize_filepath(file_path)
+
         if destdir:
             if return_responses is not True:
                 try:

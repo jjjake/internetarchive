@@ -22,6 +22,10 @@ This package installs a command-line tool named ``ia`` for using Archive.org fro
 It also installs the ``internetarchive`` Python module for programmatic access to archive.org.
 Please report all bugs and issues on `Github <https://github.com/jjjake/internetarchive/issues>`__.
 
+SECURITY NOTICE
+_______________
+
+**Please upgrade to v5.4.2+ immediately.** Versions <=5.4.1 contain a critical directory traversal vulnerability in the `File.download()` method. [See the changelog for details](https://github.com/jjjake/internetarchive/blob/master/HISTORY.rst).
 
 Installation
 ------------

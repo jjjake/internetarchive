@@ -234,6 +234,19 @@ def test_download_checksum(tmpdir, caplog):
             assert 'nasa_meta.xml, file already exists based on checksum.' in caplog.text
 
 
+def test_download_destdir(tmpdir, nasa_item):
+    tmpdir.chdir()
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='new destdir',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
+        dest = os.path.join(str(tmpdir), 'new destdir')
+        nasa_item.download(files='nasa_meta.xml', destdir=dest)
+        assert 'nasa' in os.listdir(dest)
+        with open(os.path.join(dest, 'nasa/nasa_meta.xml')) as fh:
+            assert fh.read() == 'new destdir'
+
+
 def test_download_no_directory(tmpdir, nasa_item):
     url_re = re.compile(f'{PROTOCOL}//archive.org/download/.*')
     tmpdir.chdir()

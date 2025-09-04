@@ -562,7 +562,7 @@ def sanitize_filename_windows(name: str) -> str:
         str: A sanitized version safe for filesystem use.
     """
     # Encode `%` so that it's possible to round-trip (i.e. via `unsanitize_filename`)
-    invalid_chars = r'[<>:"/\\|?*\x00-\x1F]%'
+    invalid_chars = r'[<>:"/\\|?*\x00-\x1F%]'
 
     def encode(char):
         return f'%{ord(char.group()):02X}'

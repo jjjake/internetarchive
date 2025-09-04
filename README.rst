@@ -25,7 +25,7 @@ Please report all bugs and issues on `Github <https://github.com/jjjake/internet
 SECURITY NOTICE
 _______________
 
-**Please upgrade to v5.4.2+ immediately.** Versions <=5.4.1 contain a critical directory traversal vulnerability in the `File.download()` method. [See the changelog for details](https://github.com/jjjake/internetarchive/blob/master/HISTORY.rst).
+**Please upgrade to v5.4.2+ immediately.** Versions <=5.4.1 contain a critical directory traversal vulnerability in the `File.download()` method. [See the changelog for details](https://github.com/jjjake/internetarchive/blob/master/HISTORY.rst). Thank you to Pengo Wray for their contributions in identifying and resolving this issue.
 
 Installation
 ------------

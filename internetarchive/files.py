@@ -29,6 +29,7 @@ import socket
 import sys
 from contextlib import nullcontext, suppress
 from email.utils import parsedate_to_datetime
+from pathlib import Path
 from time import sleep
 from urllib.parse import quote
 
@@ -233,8 +234,8 @@ class File(BaseFile):
         self.item.session.mount_http_adapter(max_retries=retries)
         file_path = file_path or self.name
 
-        # Sanitize only the filename portion of file_path to prevent invalid characters
-        # and potential directory traversal issues.
+        # Critical security check: Sanitize only the filename portion of file_path to
+        # prevent invalid characters and potential directory traversal issues.
         # We use `utils.sanitize_filepath` instead of `utils.sanitize_filename` because:
         # - `sanitize_filepath` preserves the directory path intact (does not encode path separators),
         # - allowing `os.makedirs` to create intermediate directories correctly,
@@ -250,6 +251,19 @@ class File(BaseFile):
             if os.path.isfile(destdir):
                 raise OSError(f'{destdir} is not a directory!')
             file_path = os.path.join(destdir, file_path)
+
+        # Critical security check: Prevent directory traversal attacks by ensuring
+        # the download path doesn't escape the target directory using path resolution
+        # and relative path validation. This protects against malicious filenames
+        # containing ../ sequences or other path manipulation attempts.
+        try:
+            # Resolve both paths to handle symlinks and absolute paths
+            target_path = Path(file_path).resolve()
+            base_dir = Path(destdir).resolve() if destdir else Path.cwd().resolve()
+            # Ensure the target path is relative to base directory
+            target_path.relative_to(base_dir)
+        except ValueError:
+            raise ValueError(f"Download path {file_path} is outside target directory {base_dir}")
 
         parent_dir = os.path.dirname(file_path)
 

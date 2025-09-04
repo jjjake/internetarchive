@@ -553,7 +553,7 @@ def unsanitize_filename(name: str) -> str:
 def sanitize_filename_windows(name: str) -> str:
     r"""
     Replaces Windows-invalid filename characters with percent-encoded values.
-    Characters replaced: < > : " / \ | ? *
+    Characters replaced: < > : " / \ | ? * %
 
     Args:
         name (str): The original string.
@@ -561,7 +561,8 @@ def sanitize_filename_windows(name: str) -> str:
     Returns:
         str: A sanitized version safe for filesystem use.
     """
-    invalid_chars = r'[<>:"/\\|?*\x00-\x1F]'
+    # Encode `%` so that it's possible to round-trip (i.e. via `unsanitize_filename`)
+    invalid_chars = r'[<>:"/\\|?*\x00-\x1F]%'
 
     def encode(char):
         return f'%{ord(char.group()):02X}'

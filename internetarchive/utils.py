@@ -29,8 +29,10 @@ from __future__ import annotations
 
 import hashlib
 import os
+import platform
 import re
 import sys
+import warnings
 from collections.abc import Mapping
 from typing import Iterable
 from xml.dom.minidom import parseString
@@ -464,3 +466,136 @@ def is_valid_email(email):
     # Ensures the TLD has at least 2 characters
     pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
+
+
+def is_windows() -> bool:
+    return (
+        platform.system().lower() == "windows"
+        or sys.platform.startswith("win")
+    )
+
+
+def sanitize_filepath(filepath: str, avoid_colon: bool = False) -> str:
+    """
+    Sanitizes only the filename part of a full file path, leaving the directory path intact.
+
+    This is useful when you need to ensure the filename is safe for filesystem use
+    without modifying the directory structure. Typically used before creating files
+    or directories to prevent invalid filename characters.
+
+    Args:
+        filepath (str): The full file path to sanitize.
+        avoid_colon (bool): If True, colon ':' in the filename will be percent-encoded
+            for macOS compatibility. Defaults to False.
+
+    Returns:
+        str: The sanitized file path with the filename portion percent-encoded as needed.
+    """
+    parent_dir = os.path.dirname(filepath)
+    filename = os.path.basename(filepath)
+    sanitized_filename = sanitize_filename(filename, avoid_colon)
+    return os.path.join(parent_dir, sanitized_filename)
+
+
+def sanitize_filename(name: str, avoid_colon: bool = False) -> str:
+    """
+    Sanitizes a filename by replacing invalid characters with percent-encoded values.
+    This function is designed to be compatible with both Windows and POSIX systems.
+
+    Args:
+        name (str): The original string to sanitize.
+        avoid_colon (bool): If True, colon ':' will be percent-encoded.
+
+    Returns:
+        str: A sanitized version of the filename.
+    """
+    original = name
+    if is_windows():
+        sanitized = sanitize_filename_windows(name)
+    else:
+        sanitized = sanitize_filename_posix(name, avoid_colon)
+
+    if sanitized != original:
+        warnings.warn(
+            f"Filename sanitized: original='{original}' sanitized='{sanitized}'",
+            UserWarning,
+            stacklevel=2
+        )
+
+    return sanitized
+
+
+def unsanitize_filename(name: str) -> str:
+    """
+    Reverses percent-encoding of the form %XX back to original characters.
+    Works for filenames sanitized by sanitize_filename (Windows or POSIX).
+
+    Args:
+        name (str): Sanitized filename string with %XX encodings.
+
+    Returns:
+        str: Original filename with all %XX sequences decoded.
+    """
+    if '%' in name:
+        if re.search(r'%[0-9A-Fa-f]{2}', name):
+            warnings.warn(
+                "Filename contains percent-encoded sequences that will be decoded.",
+                UserWarning,
+                stacklevel=2
+            )
+    def decode_match(match):
+        hex_value = match.group(1)
+        return chr(int(hex_value, 16))
+
+    return re.sub(r'%([0-9A-Fa-f]{2})', decode_match, name)
+
+
+def sanitize_filename_windows(name: str) -> str:
+    r"""
+    Replaces Windows-invalid filename characters with percent-encoded values.
+    Characters replaced: < > : " / \ | ? * %
+
+    Args:
+        name (str): The original string.
+
+    Returns:
+        str: A sanitized version safe for filesystem use.
+    """
+    # Encode `%` so that it's possible to round-trip (i.e. via `unsanitize_filename`)
+    invalid_chars = r'[<>:"/\\|?*\x00-\x1F%]'
+
+    def encode(char):
+        return f'%{ord(char.group()):02X}'
+
+    # Replace invalid characters
+    name = re.sub(invalid_chars, encode, name)
+
+    # Remove trailing dots or spaces (not allowed in Windows filenames)
+    return name.rstrip(' .')
+
+
+def sanitize_filename_posix(name: str, avoid_colon: bool = False) -> str:
+    """
+    Sanitizes filenames for Linux, BSD, and Unix-like systems.
+
+    - Percent-encodes forward slash '/' (always)
+    - Optionally percent-encodes colon ':' for macOS compatibility
+
+    Args:
+        name (str): Original filename string.
+        avoid_colon (bool): If True, colon ':' will be encoded.
+
+    Returns:
+        str: Sanitized filename safe for POSIX systems.
+    """
+    # Build regex pattern dynamically
+    chars_to_encode = r'/'
+    if avoid_colon:
+        chars_to_encode += ':'
+
+    pattern = f'[{re.escape(chars_to_encode)}]'
+
+    def encode_char(match):
+        return f'%{ord(match.group()):02X}'
+
+    return re.sub(pattern, encode_char, name)

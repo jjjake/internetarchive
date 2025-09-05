@@ -3,12 +3,16 @@
 Release History
 ---------------
 
-5.6.0 (?)
-+++++++++
+5.5.1 (2025-09-05)
+++++++++++++++++++
 
-**Bugfixes**
+**Security**
 
-- Fixed bug in JSON parsing for ``ia upload --file-metadata ...``.
+- **Fixed a critical directory traversal vulnerability in** File.download(). All users are urged to upgrade immediately. This prevents malicious filenames from writing files outside the target directory, a risk especially critical for Windows users.
+- Added automatic filename sanitization with platform-specific rules.
+- Added path resolution checks to block directory traversal attacks.
+- Introduced warnings when filenames are sanitized to maintain user awareness.
+
 
 5.5.0 (2025-07-17)
 ++++++++++++++++++

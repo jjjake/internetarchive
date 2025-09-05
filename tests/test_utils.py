@@ -1,4 +1,8 @@
 import string
+import warnings
+from unittest.mock import patch
+
+import pytest
 
 import internetarchive.utils
 from tests.conftest import NASA_METADATA_PATH, IaRequestsMock
@@ -95,3 +99,89 @@ def test_is_valid_metadata_key():
 
     for metadata_key in invalid:
         assert not internetarchive.utils.is_valid_metadata_key(metadata_key)
+
+
+def test_is_windows():
+    with patch('platform.system', return_value='Windows'), \
+         patch('sys.platform', 'win32'):
+        assert internetarchive.utils.is_windows() is True
+
+    with patch('platform.system', return_value='Linux'), \
+         patch('sys.platform', 'linux'):
+        assert internetarchive.utils.is_windows() is False
+
+def test_sanitize_filename_windows():
+    test_cases = [
+        ('file:name.txt', 'file%3Aname.txt'),
+        ('file%name.txt', 'file%25name.txt'),
+        ('con.txt', 'con.txt'),  # Reserved name, but no invalid chars so unchanged
+        ('file .txt', 'file .txt'),  # Internal space preserved (not trailing)
+        ('file  ', 'file'),  # Trailing spaces removed
+        ('file..', 'file'),  # Trailing dots removed
+        ('file . ', 'file'),  # Trailing space and dot removed
+    ]
+
+    for input_name, expected in test_cases:
+        result = internetarchive.utils.sanitize_filename_windows(input_name)
+        assert result == expected
+
+
+def test_sanitize_filename_posix():
+    # Test without colon encoding
+    result = internetarchive.utils.sanitize_filename_posix('file/name.txt', False)
+    assert result == 'file%2Fname.txt'
+
+    # Test with colon encoding
+    result = internetarchive.utils.sanitize_filename_posix('file:name.txt', True)
+    assert result == 'file%3Aname.txt'
+
+    # Test mixed encoding
+    result = internetarchive.utils.sanitize_filename_posix('file/:name.txt', True)
+    assert result == 'file%2F%3Aname.txt'
+
+
+def test_unsanitize_filename():
+    test_cases = [
+        ('file%3Aname.txt', 'file:name.txt'),
+        ('file%2Fname.txt', 'file/name.txt'),
+        ('file%25name.txt', 'file%name.txt'),  # Percent sign
+        ('normal.txt', 'normal.txt'),  # No encoding
+    ]
+
+    for input_name, expected in test_cases:
+        with warnings.catch_warnings(record=True) as w:
+            result = internetarchive.utils.unsanitize_filename(input_name)
+            assert result == expected
+            if '%' in input_name:
+                assert len(w) == 1
+                assert issubclass(w[0].category, UserWarning)
+
+
+def test_sanitize_filename():
+    # Test Windows path
+    with patch('internetarchive.utils.is_windows', return_value=True):
+        with warnings.catch_warnings(record=True) as w:
+            result = internetarchive.utils.sanitize_filename('file:name.txt')
+            assert result == 'file%3Aname.txt'
+            assert len(w) == 1
+            assert "sanitized" in str(w[0].message)
+
+    # Test POSIX path
+    with patch('internetarchive.utils.is_windows', return_value=False):
+        result = internetarchive.utils.sanitize_filename('file/name.txt', False)
+        assert result == 'file%2Fname.txt'
+
+
+def test_sanitize_filepath():
+    # Test with colon encoding
+    result = internetarchive.utils.sanitize_filepath('/path/to/file:name.txt', True)
+    assert result == '/path/to/file%3Aname.txt'
+
+    # Test without colon encoding
+    result = internetarchive.utils.sanitize_filepath('/path/to/file:name.txt', False)
+    assert result == '/path/to/file:name.txt'  # Colon not encoded on POSIX by default
+
+    # Test Windows path (mocked)
+    with patch('internetarchive.utils.is_windows', return_value=True):
+        result = internetarchive.utils.sanitize_filepath('/path/to/con.txt')
+        assert result == '/path/to/con.txt'  # Reserved name sanitized

@@ -47,7 +47,7 @@ Binaries of the command-line tool are also available:
 Unsupported Installation Methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**This library must only be installed via `one of the supported methods <https://archive.org/developers/internetarchive/installation.html>`_ (i.e. ``pip``, ``pipx``, or from source).**
+**This library must only be installed via** `one of the supported methods <https://archive.org/developers/internetarchive/installation.html>`_ **(i.e. ``pip``, ``pipx``, or from source).**
 
 Installation via third-party package managers like Homebrew, MacPorts, or Linux system packages (apt, yum, etc.) is **not supported**. These versions are often severely outdated, incompatible, and broken.
 

@@ -13,6 +13,9 @@ Release History
 - Added path resolution checks to block directory traversal attacks.
 - Introduced warnings when filenames are sanitized to maintain user awareness.
 
+**Bugfixes**
+
+- Fixed bug in JSON parsing for ia upload --file-metadata ....
 
 5.5.0 (2025-07-17)
 ++++++++++++++++++

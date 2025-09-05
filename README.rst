@@ -25,7 +25,7 @@ Please report all bugs and issues on `Github <https://github.com/jjjake/internet
 SECURITY NOTICE
 _______________
 
-**Please upgrade to v5.4.2+ immediately.** Versions <=5.4.1 contain a critical directory traversal vulnerability in the `File.download()` method. `See the changelog for details <https://github.com/jjjake/internetarchive/blob/master/HISTORY.rst>`_. Thank you to Pengo Wray for their contributions in identifying and resolving this issue.
+**Please upgrade to v5.4.2+ immediately.** Versions <=5.4.1 contain a critical directory traversal vulnerability in the ``File.download()`` method. `See the changelog for details <https://github.com/jjjake/internetarchive/blob/master/HISTORY.rst>`_. Thank you to Pengo Wray for their contributions in identifying and resolving this issue.
 
 Installation
 ------------
@@ -44,6 +44,14 @@ Binaries of the command-line tool are also available:
     $ chmod +x ia
     $ ./ia --help
 
+Unsupported Installation Methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**This library must only be installed via `one of the supported methods <https://archive.org/developers/internetarchive/installation.html>`_** (i.e. ``pip``, ``pipx``, or from source).
+
+Installation via third-party package managers like Homebrew, MacPorts, or Linux system packages (apt, yum, etc.) is **not supported**. These versions are often severely outdated, incompatible, and broken.
+
+If you have installed this software via Homebrew, please uninstall it (`brew uninstall internetarchive`) and use a supported method.
 
 Documentation
 -------------

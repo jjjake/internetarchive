@@ -28,7 +28,6 @@ from typing import TextIO
 from internetarchive.cli.cli_utils import (
     QueryStringAction,
     validate_dir_path,
-    validate_identifier,
 )
 from internetarchive.files import File
 from internetarchive.search import Search
@@ -48,7 +47,7 @@ def setup(subparsers):
     # Main options
     parser.add_argument("identifier",
                         nargs="?",
-                        type=validate_identifier,
+                        type=str,
                         help="Identifier for the upload")
     parser.add_argument("file",
                         nargs="*",

@@ -3,6 +3,17 @@
 Release History
 ---------------
 
+5.6.0 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug in ``ia download`` where identifier was needlessly being validated and blocking some items from being downloaded.
+
+**Features and Improvements**
+
+- Added support for configuring IA-S3 keys via IA_ACCESS_KEY_ID and IA_SECRET_ACCESS_KEY environment variables.
+
 5.5.1 (2025-09-05)
 ++++++++++++++++++
 

@@ -176,15 +176,18 @@ class ArchiveSession(requests.sessions.Session):
         if max_retries is None:
             max_retries = self.http_adapter_kwargs.get('max_retries', 3)
 
-        status_forcelist = status_forcelist or [500, 501, 502, 503, 504]
+        status_forcelist = status_forcelist or [429, 500, 501, 502, 503, 504]
         if max_retries and isinstance(max_retries, (int, float)):
-            self.http_adapter_kwargs['max_retries'] = Retry(total=max_retries,
-                                connect=max_retries,
-                                read=max_retries,
-                                redirect=False,
-                                allowed_methods=Retry.DEFAULT_ALLOWED_METHODS,
-                                status_forcelist=status_forcelist,
-                                backoff_factor=1)
+            self.http_adapter_kwargs['max_retries'] = Retry(
+                total=max_retries,
+                connect=max_retries,
+                read=max_retries,
+                redirect=False,
+                allowed_methods=Retry.DEFAULT_ALLOWED_METHODS,
+                status_forcelist=status_forcelist,
+                backoff_factor=1,
+                respect_retry_after_header=True
+            )
 
         else:
             self.http_adapter_kwargs['max_retries'] = max_retries

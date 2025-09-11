@@ -32,7 +32,8 @@ Note that Python's netrc library does not currently support passphrases, or pass
    - ``IA_ACCESS_KEY_ID``: Your IA-S3 access key
    - ``IA_SECRET_ACCESS_KEY``: Your IA-S3 secret key
 
-If both the config file and environment variables are present, the environment variables will take precedence.
+   Note: Both environment variables must be set together. If only one is set, a ``ValueError`` will be raised. If both are set, they will take precedence over the config file.
+
 
 Uploading
 ---------

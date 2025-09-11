@@ -180,8 +180,8 @@ def get_config(config=None, config_file=None) -> dict:
                 pass
 
     # Check environment variables and override S3 config if present
-    env_access_key = os.environ.get('IA_S3_ACCESS_KEY_ID')
-    env_secret_key = os.environ.get('IA_S3_SECRET_ACCESS_KEY')
+    env_access_key = os.environ.get('IA_ACCESS_KEY_ID')
+    env_secret_key = os.environ.get('IA_SECRET_ACCESS_KEY')
 
     if env_access_key and env_secret_key:
         if 's3' not in config_dict:

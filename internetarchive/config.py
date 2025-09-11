@@ -184,12 +184,8 @@ def get_config(config=None, config_file=None) -> dict:
     env_secret_key = os.environ.get('IA_SECRET_ACCESS_KEY')
 
     if env_access_key and env_secret_key:
-        if 's3' not in config_dict:
-            config_dict['s3'] = {}
-        if env_access_key:
-            config_dict['s3']['access'] = env_access_key
-        if env_secret_key:
-            config_dict['s3']['secret'] = env_secret_key
+        config_dict['s3']['access'] = env_access_key
+        config_dict['s3']['secret'] = env_secret_key
 
     # Recursive/deep update with passed config
     deep_update(config_dict, _config)

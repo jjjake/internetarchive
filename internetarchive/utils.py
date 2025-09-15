@@ -464,3 +464,89 @@ def is_valid_email(email):
     # Ensures the TLD has at least 2 characters
     pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
+
+
+# ------------------------------
+# Filename sanitization helpers
+# ------------------------------
+
+_WINDOWS_RESERVED_BASENAMES = {
+    # Device names without extensions (case-insensitive match on stem only)
+    'CON', 'PRN', 'AUX', 'NUL',
+    *(f'COM{i}' for i in range(1, 10)),
+    *(f'LPT{i}' for i in range(1, 10)),
+}
+
+_WINDOWS_INVALID_CHARS = set('<>:"\\|?*')  # plus control chars 0x00-0x1F handled separately
+
+def _percent_encode_byte(b: int) -> str:
+    return f'%{b:02X}'
+
+def sanitize_windows_filename(name: str) -> tuple[str, bool]:
+    """Return a Windows-safe filename by percent-encoding illegal constructs.
+
+    Returns (sanitized_name, modified_flag).
+    """
+    original = name
+    if not name:
+        return name, False
+
+    # Split stem / extension to evaluate reserved device names.
+    if '.' in name:
+        stem, ext = name.rsplit('.', 1)
+    else:
+        stem, ext = name, ''
+    reserved_no_ext = ext == '' and stem.upper() in _WINDOWS_RESERVED_BASENAMES
+
+    # Determine indexes to encode.
+    encode_indexes: set[int] = set()
+    length = len(name)
+    for idx, ch in enumerate(name):
+        code = ord(ch)
+        if code < 0x20:
+            encode_indexes.add(idx)
+        elif ch in _WINDOWS_INVALID_CHARS:
+            encode_indexes.add(idx)
+        elif ch == '\\':  # already included above but explicit for clarity
+            encode_indexes.add(idx)
+        # NOTE: '%' handled later globally
+
+    # Encode trailing spaces and dots
+    t = length - 1
+    while t >= 0 and name[t] in (' ', '.'):
+        encode_indexes.add(t)
+        t -= 1
+
+    # Reserved device name last character encoding (when no extension).
+    if reserved_no_ext and stem:
+        encode_indexes.add(len(stem) - 1)
+
+    modified = bool(encode_indexes)
+
+    if not modified:
+        # Nothing to do; leave '%' untouched.
+        return name, False
+
+    # Build output encoding '%' first.
+    out_chars: list[str] = []
+    for idx, ch in enumerate(name):
+        if ch == '%':
+            out_chars.append('%25')
+            continue
+        if idx in encode_indexes:
+            out_chars.append(_percent_encode_byte(ord(ch)))
+        else:
+            out_chars.append(ch)
+
+    sanitized = ''.join(out_chars)
+    return sanitized, sanitized != original
+
+
+def is_path_within_directory(base_dir: str, target_path: str) -> bool:
+    """Return True if target_path is within base_dir (after resolving symlinks)."""
+    base_real = os.path.realpath(base_dir)
+    target_real = os.path.realpath(target_path)
+    # Ensure base path ends with separator for prefix test to avoid /foo/bar vs /foo/barista
+    if not base_real.endswith(os.path.sep):
+        base_real += os.path.sep
+    return target_real.startswith(base_real)

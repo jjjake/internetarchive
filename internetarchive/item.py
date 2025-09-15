@@ -42,7 +42,7 @@ from requests import Request, Response
 from requests.exceptions import HTTPError
 from tqdm import tqdm
 
-from internetarchive import catalog
+from internetarchive import catalog, exceptions
 from internetarchive.auth import S3Auth
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
@@ -793,9 +793,10 @@ class Item(BaseItem):
                                no_change_timestamp, params, None, stdout, ors, timeout)
             except exceptions.DirectoryTraversalError as exc:  # type: ignore
                 # Record error and continue; do not abort entire download batch.
-                log.error(str(exc))
-                if verbose:
-                    print(f' error: {exc}', file=sys.stderr)
+                msg = f'error: {exc}'
+                log.error(msg)
+                # Always surface to stderr so user sees the skip.
+                print(f' {msg}', file=sys.stderr)
                 errors.append(f.name)
                 continue
             if return_responses:

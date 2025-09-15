@@ -157,6 +157,7 @@ class File(BaseFile):
         stdout=None,
         ors=None,
         timeout=None,
+        headers=None,
     ):
         """Download the file into the current working directory.
 
@@ -227,7 +228,7 @@ class File(BaseFile):
         no_change_timestamp = no_change_timestamp or False
         params = params or None
         timeout = 12 if not timeout else timeout
-        headers = {}
+        headers = headers or {}
         retries_sleep = 3  # TODO: exponential sleep
         retrying = False  # for retry loop
 
@@ -243,7 +244,7 @@ class File(BaseFile):
         file_path = utils.sanitize_filepath(file_path)
 
         if destdir:
-            if return_responses is not True:
+            if not (return_responses or stdout):
                 try:
                     os.mkdir(destdir)
                 except FileExistsError:
@@ -309,7 +310,7 @@ class File(BaseFile):
         # Retry loop
         while True:
             try:
-                if parent_dir != '' and return_responses is not True:
+                if parent_dir != '' and not (return_responses or stdout):
                     os.makedirs(parent_dir, exist_ok=True)
 
                 if not return_responses \

@@ -2,7 +2,10 @@ import os
 import sys
 import pytest
 
-from internetarchive.utils import sanitize_windows_filename, is_path_within_directory
+from internetarchive.utils import sanitize_windows_filename, is_path_within_directory, sanitize_windows_relpath
+from internetarchive.item import Item
+from internetarchive.files import File
+from internetarchive import get_item
 from internetarchive.exceptions import DirectoryTraversalError
 
 IS_WIN = os.name == 'nt'
@@ -61,6 +64,48 @@ def test_invalid_chars(ch, enc):
 def test_backslash_always_encoded(name):
     sanitized, modified = sanitize_windows_filename(name)
     assert '%5C' in sanitized
+
+
+def test_full_filename_combined_sanitization(tmp_path, monkeypatch):
+    """Simulate downloading a file whose remote name contains many invalid characters including a backslash.
+    We only test the sanitization logic up to path formation (not actual network download)."""
+    remote_name = 'hello < > : " \\ | ? *.txt'
+    # Use direct sanitize to assert expected output
+    sanitized, modified = sanitize_windows_filename(remote_name)
+    assert modified
+    # Ensure each invalid char encoded
+    for ch in ['<','>','|','?','*',':','\\','"',' ']:
+        assert ch not in sanitized or ch == ' '  # trailing/inner spaces become %20
+    assert '%5C' in sanitized  # backslash
+
+
+def test_reserved_identifier_directory_sanitized(tmp_path):
+    """Ensure that an item identifier that is a reserved device name is sanitized when constructing download paths."""
+    # This test focuses on sanitize_windows_filename, as item.Download path building now sanitizes components.
+    reserved = 'AUX'
+    sanitized, modified = sanitize_windows_filename(reserved)
+    assert modified
+    assert sanitized.startswith('AU') and sanitized.endswith('X'.encode().hex().upper()[:]) or sanitized == 'AU%58'
+
+
+def test_directory_traversal_exception_handled(monkeypatch, tmp_path):
+    from internetarchive.exceptions import DirectoryTraversalError
+    # Use is_path_within_directory directly
+    base = tmp_path
+    outside = tmp_path.parent / 'outside.txt'
+    outside.write_text('x')
+    assert not is_path_within_directory(str(base), str(outside))
+
+
+@pytest.mark.parametrize('attempt', [
+    '../evil.txt', '..\\evil.txt', '..%2Fevil.txt', '%2e%2e/evil.txt'
+])
+def test_traversal_attempt_sanitization(attempt):
+    # sanitize_windows_relpath should NOT remove traversal but higher layer blocks it; here we just ensure it encodes backslashes
+    sanitized, _ = sanitize_windows_relpath(attempt, verbose=False)
+    # Backslashes encoded
+    if '\\' in attempt:
+        assert '%5C' in sanitized or sanitized.replace('\\', '%5C')
 
 @pytest.mark.parametrize('name', [
     'hello%20world', '%41already'

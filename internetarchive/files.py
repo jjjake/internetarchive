@@ -233,27 +233,24 @@ class File(BaseFile):
         self.item.session.mount_http_adapter(max_retries=retries)
         file_path = file_path or self.name
 
+        if os.name == 'nt' and not return_responses:
+            file_path, _ = utils.sanitize_windows_relpath(
+                file_path,
+                verbose=bool(verbose),
+                printer=lambda m: print(m, file=sys.stderr),
+            )
+
         if destdir:
             if return_responses is not True:
                 try:
-                    os.mkdir(destdir)
-                except FileExistsError:
+                    os.makedirs(destdir, exist_ok=True)
+                except OSError:
                     pass
             if os.path.isfile(destdir):
                 raise OSError(f'{destdir} is not a directory!')
             file_path = os.path.join(destdir, file_path)
 
-        # Windows-only local filename sanitization for invalid / reserved names.
-        # Keep original remote filename (self.name) unchanged for HTTP request.
-        # Only sanitize the final path component, not the whole provided path.
-        if os.name == 'nt' and not return_responses:
-            base_dir, base_name = os.path.split(file_path)
-            sanitized, modified = utils.sanitize_windows_filename(base_name)
-            if modified:
-                if verbose:
-                    print(f' encoding windows filename component: {base_name} -> {sanitized}', file=sys.stderr)
-                log.debug('Sanitized Windows filename component %r -> %r', base_name, sanitized)
-                file_path = os.path.join(base_dir, sanitized)
+    # Windows sanitization handled earlier; legacy comment removed.
 
         # Directory traversal guard (all platforms). Ensure target path is inside destdir (or cwd if none provided).
         # Determine intended base directory.

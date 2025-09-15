@@ -774,7 +774,12 @@ class Item(BaseItem):
             if no_directory:
                 path = f.name
             else:
-                path = os.path.join(str(self.identifier), f.name)
+                # Use forward slash as logical separator even on Windows so that
+                # downstream sanitization treats backslashes inside remote filenames as data.
+                if os.name == 'nt':
+                    path = f'{self.identifier}/{f.name}'
+                else:
+                    path = os.path.join(str(self.identifier), f.name)
             if dry_run:
                 print(f.url)
                 continue
@@ -782,9 +787,17 @@ class Item(BaseItem):
                 ors = True
             else:
                 ors = False
-            r = f.download(path, verbose, ignore_existing, checksum, checksum_archive,
-                           destdir, retries, ignore_errors, fileobj, return_responses,
-                           no_change_timestamp, params, None, stdout, ors, timeout)
+            try:
+                r = f.download(path, verbose, ignore_existing, checksum, checksum_archive,
+                               destdir, retries, ignore_errors, fileobj, return_responses,
+                               no_change_timestamp, params, None, stdout, ors, timeout)
+            except exceptions.DirectoryTraversalError as exc:  # type: ignore
+                # Record error and continue; do not abort entire download batch.
+                log.error(str(exc))
+                if verbose:
+                    print(f' error: {exc}', file=sys.stderr)
+                errors.append(f.name)
+                continue
             if return_responses:
                 responses.append(r)
 

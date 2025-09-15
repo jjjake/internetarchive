@@ -550,3 +550,29 @@ def is_path_within_directory(base_dir: str, target_path: str) -> bool:
     if not base_real.endswith(os.path.sep):
         base_real += os.path.sep
     return target_real.startswith(base_real)
+
+
+def sanitize_windows_relpath(rel_path: str, verbose: bool = False, printer=None) -> tuple[str, bool]:
+    """Sanitize a relative path intended for Windows downloads.
+
+    Splits only on forward slashes (logical separators we introduce) so that any
+    backslashes present in remote filenames are treated as data and percent-encoded.
+
+    Returns (sanitized_rel_path, modified_flag).
+    """
+    if os.name != 'nt':  # no-op on non-Windows
+        return rel_path, False
+    if not rel_path:
+        return rel_path, False
+    components = rel_path.split('/') if '/' in rel_path else [rel_path]
+    out_parts: list[str] = []
+    modified_any = False
+    if printer is None:
+        printer = lambda msg: None  # noqa: E731
+    for comp in components:
+        sanitized, modified = sanitize_windows_filename(comp)
+        if modified and verbose:
+            printer(f' encoding windows filename component: {comp} -> {sanitized}')
+        out_parts.append(sanitized)
+        modified_any = modified_any or modified
+    return os.path.join(*out_parts), modified_any

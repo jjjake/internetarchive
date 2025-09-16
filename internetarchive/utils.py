@@ -579,10 +579,14 @@ def sanitize_windows_relpath(rel_path: str, verbose: bool = False, printer=None)
     modified_any = False
     if printer is None:
         printer = lambda msg: None  # noqa: E731
+    original_components: list[str] = []
     for comp in components:
+        original_components.append(comp)
         sanitized, modified = sanitize_windows_filename(comp)
-        if modified and verbose:
-            printer(f' encoding windows filename component: {comp} -> {sanitized}')
         out_parts.append(sanitized)
         modified_any = modified_any or modified
-    return os.path.join(*out_parts), modified_any
+    result_path = os.path.join(*out_parts)
+    if verbose and modified_any:
+        original_path_display = os.path.join(*original_components)
+        printer(f'windows path sanitized: {original_path_display} -> {result_path}')
+    return result_path, modified_any

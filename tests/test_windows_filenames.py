@@ -30,14 +30,16 @@ def test_reserved_names(reserved, expected):
     assert modified
     assert sanitized == expected
 
-@pytest.mark.parametrize('filename', [
-    'AUX.txt', 'con.log', 'Com1.bin'
+@pytest.mark.parametrize('filename,expected', [
+    ('AUX.txt', 'AU%58.txt'),
+    ('con.log', 'co%6E.log'),
+    ('Com1.bin', 'Com%31.bin'),
+    ('COM3.txt.txt', 'COM%33.txt.txt'),
 ])
-def test_reserved_with_extension_allowed(filename):
+def test_reserved_with_extension_sanitized(filename, expected):
     sanitized, modified = sanitize_windows_filename(filename)
-    # Should not modify because extension present
-    assert not modified
-    assert sanitized == filename
+    assert modified
+    assert sanitized == expected
 
 @pytest.mark.parametrize('filename,expected', [
     ('name.', 'name%2E'),

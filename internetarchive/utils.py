@@ -485,18 +485,28 @@ def _percent_encode_byte(b: int) -> str:
 def sanitize_windows_filename(name: str) -> tuple[str, bool]:
     """Return a Windows-safe filename by percent-encoding illegal constructs.
 
+    Highlights (Windows relevance):
+      * Control chars (0x00-0x1F) encoded.
+      * Characters in _WINDOWS_INVALID_CHARS encoded.
+      * Trailing spaces and periods encoded.
+      * Existing '%' encoded only if another change occurs (to avoid unnecessary churn).
+      * Reserved device names (CON, PRN, AUX, NUL, COM1-9, LPT1-9) including when followed by a dot/extension
+        have their final character encoded. (e.g. "AUX" -> "AU%58", "AUX.txt" -> "AU%58.txt").
+
     Returns (sanitized_name, modified_flag).
     """
     original = name
     if not name:
         return name, False
 
-    # Split stem / extension to evaluate reserved device names.
-    if '.' in name:
-        stem, ext = name.rsplit('.', 1)
-    else:
-        stem, ext = name, ''
-    reserved_no_ext = ext == '' and stem.upper() in _WINDOWS_RESERVED_BASENAMES
+    # Reserved device name detection (with or without extension). We encode the last character
+    # of the reserved token so that the resulting string no longer triggers Windows device name rules.
+    upper_name = name.upper()
+    reserved_index: int | None = None
+    for base in _WINDOWS_RESERVED_BASENAMES:
+        if upper_name == base or upper_name.startswith(base + '.'):
+            reserved_index = len(base) - 1
+            break
 
     # Determine indexes to encode.
     encode_indexes: set[int] = set()
@@ -517,9 +527,9 @@ def sanitize_windows_filename(name: str) -> tuple[str, bool]:
         encode_indexes.add(t)
         t -= 1
 
-    # Reserved device name last character encoding (when no extension).
-    if reserved_no_ext and stem:
-        encode_indexes.add(len(stem) - 1)
+    # Reserved device name last character encoding (with or without extension).
+    if reserved_index is not None:
+        encode_indexes.add(reserved_index)
 
     modified = bool(encode_indexes)
 

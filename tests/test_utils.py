@@ -173,15 +173,36 @@ def test_sanitize_filename():
 
 
 def test_sanitize_filepath():
-    # Test with colon encoding
-    result = internetarchive.utils.sanitize_filepath('/path/to/file:name.txt', True)
-    assert result == '/path/to/file%3Aname.txt'
+    """
+    Tests the sanitize_filepath function in both Windows and POSIX environments.
+    """
+    # --- Test POSIX-like behavior (e.g., Linux, macOS) ---
+    with patch('internetarchive.utils.is_windows', return_value=False):
+        # On POSIX, colon is only encoded when avoid_colon=True
+        posix_path = '/path/to/file:name.txt'
 
-    # Test without colon encoding
-    result = internetarchive.utils.sanitize_filepath('/path/to/file:name.txt', False)
-    assert result == '/path/to/file:name.txt'  # Colon not encoded on POSIX by default
+        # Test with colon encoding enabled
+        result_avoid_colon = internetarchive.utils.sanitize_filepath(posix_path, avoid_colon=True)
+        assert result_avoid_colon == '/path/to/file%3Aname.txt'
 
-    # Test Windows path (mocked)
+        # Test with colon encoding disabled (default)
+        result_no_avoid_colon = internetarchive.utils.sanitize_filepath(posix_path, avoid_colon=False)
+        assert result_no_avoid_colon == '/path/to/file:name.txt'
+
+        # Test another invalid char that should always be sanitized
+        result_other_char = internetarchive.utils.sanitize_filepath('/path/to/file/name.txt')
+        assert result_other_char == '/path/to/file%2Fname.txt'
+
+    # --- Test Windows-specific behavior ---
     with patch('internetarchive.utils.is_windows', return_value=True):
-        result = internetarchive.utils.sanitize_filepath('/path/to/con.txt')
-        assert result == '/path/to/con.txt'  # Reserved name sanitized
+        # On Windows, colon is ALWAYS an invalid character and must be encoded,
+        # regardless of the 'avoid_colon' flag.
+        win_path = 'C:\\path\\to\\file:name.txt'
+
+        # Test with avoid_colon=True (should encode the colon)
+        result_avoid_colon_win = internetarchive.utils.sanitize_filepath(win_path, avoid_colon=True)
+        assert result_avoid_colon_win == 'C:\\path\\to\\file%3Aname.txt'
+
+        # Test with avoid_colon=False (should STILL encode the colon)
+        result_no_avoid_colon_win = internetarchive.utils.sanitize_filepath(win_path, avoid_colon=False)
+        assert result_no_avoid_colon_win == 'C:\\path\\to\\file%3Aname.txt'

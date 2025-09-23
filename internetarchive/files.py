@@ -235,6 +235,8 @@ class File(BaseFile):
         self.item.session.mount_http_adapter(max_retries=retries)
         file_path = file_path or self.name
 
+        file_path = os.path.basename(file_path)
+
         # Critical security check: Sanitize only the filename portion of file_path to
         # prevent invalid characters and potential directory traversal issues.
         # We use `utils.sanitize_filepath` instead of `utils.sanitize_filename` because:
@@ -253,15 +255,14 @@ class File(BaseFile):
                 raise OSError(f'{destdir} is not a directory!')
             file_path = os.path.join(destdir, file_path)
 
+
         # Critical security check: Prevent directory traversal attacks by ensuring
         # the download path doesn't escape the target directory using path resolution
         # and relative path validation. This protects against malicious filenames
         # containing ../ sequences or other path manipulation attempts.
         try:
-            # Resolve both paths to handle symlinks and absolute paths
-            target_path = Path(file_path).resolve()
             base_dir = Path(destdir).resolve() if destdir else Path.cwd().resolve()
-            # Ensure the target path is relative to base directory
+            target_path = (base_dir / file_path).resolve()
             target_path.relative_to(base_dir)
         except ValueError:
             raise ValueError(f"Download path {file_path} is outside target directory {base_dir}")

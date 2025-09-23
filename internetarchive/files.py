@@ -258,10 +258,8 @@ class File(BaseFile):
         # and relative path validation. This protects against malicious filenames
         # containing ../ sequences or other path manipulation attempts.
         try:
-            # Resolve both paths to handle symlinks and absolute paths
-            target_path = Path(file_path).resolve()
             base_dir = Path(destdir).resolve() if destdir else Path.cwd().resolve()
-            # Ensure the target path is relative to base directory
+            target_path = (base_dir / file_path).resolve()
             target_path.relative_to(base_dir)
         except ValueError:
             raise ValueError(f"Download path {file_path} is outside target directory {base_dir}")

@@ -480,8 +480,9 @@ def sanitize_filepath(filepath: str, avoid_colon: bool = False) -> str:
     Sanitizes only the filename part of a full file path, leaving the directory path intact.
 
     This is useful when you need to ensure the filename is safe for filesystem use
-    without modifying the directory structure. Typically used before creating files
-    or directories to prevent invalid filename characters.
+    without modifying the directory structure. This implementation robustly handles both
+    simple filenames and full paths by avoiding `os.path` functions that can have
+    unreliable, platform-specific behavior with certain characters (e.g., colons on Windows).
 
     Args:
         filepath (str): The full file path to sanitize.
@@ -491,10 +492,29 @@ def sanitize_filepath(filepath: str, avoid_colon: bool = False) -> str:
     Returns:
         str: The sanitized file path with the filename portion percent-encoded as needed.
     """
-    parent_dir = os.path.dirname(filepath)
-    filename = os.path.basename(filepath)
-    sanitized_filename = sanitize_filename(filename, avoid_colon)
-    return os.path.join(parent_dir, sanitized_filename)
+    # First, handle the case where the input is a simple filename (no directory path).
+    # This avoids issues with os.path functions misinterpreting characters like colons
+    # in filenames as drive separators on Windows.
+    if os.sep not in filepath and '/' not in filepath:
+        return sanitize_filename(filepath, avoid_colon)
+
+    # For full paths, reliably separate the directory from the filename using
+    # string splitting, which is safer than relying on os.path functions.
+    # We prefer the POSIX separator for cross-platform consistency if present.
+    separator = '/' if '/' in filepath else os.sep
+    parts = filepath.rsplit(separator, 1)
+
+    if len(parts) == 2:
+        # The path was successfully split into a directory and a filename.
+        parent_dir, filename = parts
+        sanitized_filename = sanitize_filename(filename, avoid_colon)
+
+        # Rejoin the directory with the now-sanitized filename.
+        return parent_dir + separator + sanitized_filename
+    else:
+        # This is a fallback for unusual cases (e.g., an absolute path root '/').
+        # We treat the whole string as a filename to ensure it's always sanitized.
+        return sanitize_filename(filepath, avoid_colon)
 
 
 def sanitize_filename(name: str, avoid_colon: bool = False) -> str:

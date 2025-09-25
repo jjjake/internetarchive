@@ -58,4 +58,3 @@ class AccountAPIError(Exception):
 
 class DirectoryTraversalError(Exception):
     """Raised when a computed local file path escapes the intended destination directory."""
-    pass

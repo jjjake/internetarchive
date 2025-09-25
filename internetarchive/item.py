@@ -610,6 +610,7 @@ class Item(BaseItem):
                         if not any(fnmatch(f.get('name', ''), e) for e in exclude_patterns):
                             yield self.get_file(str(f.get('name')))
 
+    # ruff: noqa: PLR0912
     def download(self,
                  files: File | list[File] | None = None,
                  formats: str | list[str] | None = None,

@@ -253,10 +253,10 @@ class File(BaseFile):
                 raise OSError(f'{destdir} is not a directory!')
             file_path = os.path.join(destdir, file_path)
 
-    # Windows sanitization handled earlier; legacy comment removed.
+        # Windows sanitization handled earlier; legacy comment removed.
 
-        # Directory traversal guard (all platforms). Ensure target path is inside destdir (or cwd if none provided).
-        # Determine intended base directory.
+        # Directory traversal guard (all platforms). Ensure target path is inside destdir
+        # (or cwd if none provided). Determine intended base directory.
         intended_base = destdir if destdir else os.getcwd()
         try:
             if not utils.is_path_within_directory(intended_base, os.path.abspath(file_path)):

@@ -578,7 +578,9 @@ def sanitize_windows_relpath(rel_path: str, verbose: bool = False, printer=None)
     out_parts: list[str] = []
     modified_any = False
     if printer is None:
-        printer = lambda msg: None  # noqa: E731
+        def noop_printer(msg):
+            pass
+        printer = noop_printer
     original_components: list[str] = []
     for comp in components:
         original_components.append(comp)

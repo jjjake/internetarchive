@@ -492,8 +492,9 @@ def sanitize_windows_filename(name: str) -> tuple[str, bool]:
       * Characters in _WINDOWS_INVALID_CHARS encoded.
       * Trailing spaces and periods encoded.
       * Existing '%' encoded only if another change occurs (to avoid unnecessary churn).
-      * Reserved device names (CON, PRN, AUX, NUL, COM1-9, LPT1-9) including when followed by a dot/extension
-        have their final character encoded. (e.g. "AUX" -> "AU%58", "AUX.txt" -> "AU%58.txt").
+      * Reserved device names (CON, PRN, AUX, NUL, COM1-9, LPT1-9) including when followed
+        by a dot/extension have their final character encoded.
+        (e.g. "AUX" -> "AU%58", "AUX.txt" -> "AU%58.txt").
 
     Returns (sanitized_name, modified_flag).
     """
@@ -594,7 +595,7 @@ def sanitize_windows_relpath(rel_path: str, verbose: bool = False, printer=None)
         original_path_display = os.path.join(*original_components)
         printer(f'windows path sanitized: {original_path_display} -> {result_path}')
     return result_path, modified_any
-=======
+
 def is_windows() -> bool:
     return (
         platform.system().lower() == "windows"

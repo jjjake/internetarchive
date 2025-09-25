@@ -1,12 +1,17 @@
 import os
 import sys
+
 import pytest
 
-from internetarchive.utils import sanitize_windows_filename, is_path_within_directory, sanitize_windows_relpath
-from internetarchive.item import Item
-from internetarchive.files import File
 from internetarchive import get_item
 from internetarchive.exceptions import DirectoryTraversalError
+from internetarchive.files import File
+from internetarchive.item import Item
+from internetarchive.utils import (
+    is_path_within_directory,
+    sanitize_windows_filename,
+    sanitize_windows_relpath,
+)
 
 IS_WIN = os.name == 'nt'
 
@@ -18,7 +23,7 @@ def test_control_char_encoding():
     assert modified
     assert sanitized == 'bad%05name'
 
-@pytest.mark.parametrize('reserved,expected', [
+@pytest.mark.parametrize(('reserved','expected'), [
     ('AUX', 'AU%58'),
     ('CON', 'CO%4E'),
     ('COM1', 'COM%31'),
@@ -30,7 +35,7 @@ def test_reserved_names(reserved, expected):
     assert modified
     assert sanitized == expected
 
-@pytest.mark.parametrize('filename,expected', [
+@pytest.mark.parametrize(('filename','expected'), [
     ('AUX.txt', 'AU%58.txt'),
     ('con.log', 'co%6E.log'),
     ('Com1.bin', 'Com%31.bin'),
@@ -41,7 +46,7 @@ def test_reserved_with_extension_sanitized(filename, expected):
     assert modified
     assert sanitized == expected
 
-@pytest.mark.parametrize('filename,expected', [
+@pytest.mark.parametrize(('filename','expected'), [
     ('name.', 'name%2E'),
     ('name..', 'name%2E%2E'),
     ('trailspace ', 'trailspace%20'),
@@ -52,8 +57,15 @@ def test_trailing_dot_space(filename, expected):
     assert modified
     assert sanitized == expected
 
-@pytest.mark.parametrize('ch,enc', [
-    (':', '%3A'), ('*', '%2A'), ('<', '%3C'), ('>', '%3E'), ('|', '%7C'), ('?', '%3F'), ('\\', '%5C'), ('"', '%22')
+@pytest.mark.parametrize(('ch','enc'), [
+    (':', '%3A'),
+    ('*', '%2A'),
+    ('<', '%3C'),
+    ('>', '%3E'),
+    ('|', '%7C'),
+    ('?', '%3F'),
+    ('\\', '%5C'),
+    ('"', '%22')
 ])
 def test_invalid_chars(ch, enc):
     sanitized, modified = sanitize_windows_filename(f'a{ch}b')
@@ -69,8 +81,9 @@ def test_backslash_always_encoded(name):
 
 
 def test_full_filename_combined_sanitization(tmp_path, monkeypatch):
-    """Simulate downloading a file whose remote name contains many invalid characters including a backslash.
-    We only test the sanitization logic up to path formation (not actual network download)."""
+    """Simulate downloading a file whose remote name contains many invalid characters
+    including a backslash. We only test the sanitization logic up to path formation
+    (not actual network download)."""
     remote_name = 'hello < > : " \\ | ? *.txt'
     # Use direct sanitize to assert expected output
     sanitized, modified = sanitize_windows_filename(remote_name)
@@ -82,16 +95,18 @@ def test_full_filename_combined_sanitization(tmp_path, monkeypatch):
 
 
 def test_reserved_identifier_directory_sanitized(tmp_path):
-    """Ensure that an item identifier that is a reserved device name is sanitized when constructing download paths."""
-    # This test focuses on sanitize_windows_filename, as item.Download path building now sanitizes components.
+    """Ensure that an item identifier that is a reserved device name is sanitized when
+    constructing download paths."""
+    # This test focuses on sanitize_windows_filename, as item.Download path building now
+    # sanitizes components.
     reserved = 'AUX'
     sanitized, modified = sanitize_windows_filename(reserved)
     assert modified
-    assert sanitized.startswith('AU') and sanitized.endswith('X'.encode().hex().upper()[:]) or sanitized == 'AU%58'
+    assert (sanitized.startswith('AU') and sanitized.endswith(b'X'.hex().upper()[:])) \
+            or sanitized == 'AU%58'
 
 
 def test_directory_traversal_exception_handled(monkeypatch, tmp_path):
-    from internetarchive.exceptions import DirectoryTraversalError
     # Use is_path_within_directory directly
     base = tmp_path
     outside = tmp_path.parent / 'outside.txt'
@@ -103,7 +118,8 @@ def test_directory_traversal_exception_handled(monkeypatch, tmp_path):
     '../evil.txt', '..\\evil.txt', '..%2Fevil.txt', '%2e%2e/evil.txt'
 ])
 def test_traversal_attempt_sanitization(attempt):
-    # sanitize_windows_relpath should NOT remove traversal but higher layer blocks it; here we just ensure it encodes backslashes
+    # sanitize_windows_relpath should NOT remove traversal but higher layer blocks it;
+    # here we just ensure it encodes backslashes
     sanitized, _ = sanitize_windows_relpath(attempt, verbose=False)
     # Backslashes encoded
     if '\\' in attempt:
@@ -113,7 +129,8 @@ def test_traversal_attempt_sanitization(attempt):
     'hello%20world', '%41already'
 ])
 def test_existing_percent_sequences(name):
-    # If no other encoding needed, percent remains unless part of %HH sequence and no other changes?
+    # If no other encoding needed, percent remains unless part of %HH sequence
+    # and no other changes?
     sanitized, modified = sanitize_windows_filename(name)
     # existing sequences remain unchanged because no other encoding triggered
     assert sanitized == name
@@ -126,7 +143,8 @@ def test_percent_gets_encoded_when_other_modifications(name):
     if '%' in name and modified:
         assert '%25' in sanitized or name.count('%') == sanitized.count('%25')
 
-# Directory traversal guard logic tests (cross-platform semantics validated on Windows here)
+# Directory traversal guard logic tests
+# (cross-platform semantics validated on Windows here)
 
 def test_is_path_within_directory_true(tmp_path):
     base = tmp_path

@@ -28,7 +28,6 @@ from typing import TextIO
 from internetarchive.cli.cli_utils import (
     QueryStringAction,
     validate_dir_path,
-    validate_identifier,
 )
 from internetarchive.files import File
 from internetarchive.search import Search
@@ -48,7 +47,7 @@ def setup(subparsers):
     # Main options
     parser.add_argument("identifier",
                         nargs="?",
-                        type=validate_identifier,
+                        type=str,
                         help="Identifier for the upload")
     parser.add_argument("file",
                         nargs="*",
@@ -88,10 +87,13 @@ def setup(subparsers):
                         help="Parameters to send with your --search query")
     parser.add_argument("-g", "--glob",
                         help=("Only download files whose filename matches "
-                             "the given glob pattern"))
+                             "the given glob pattern. You can provide multiple "
+                             "patterns separated by a pipe symbol `|`"))
     parser.add_argument("-e", "--exclude",
                         help=("Exclude files whose filename matches "
-                             "the given glob pattern"))
+                             "the given glob pattern. You can provide multiple "
+                             "patterns separated by a pipe symbol `|`. You can only "
+                             "use this option in conjunction with --glob"))
     parser.add_argument("-f", "--format",
                         nargs="+",
                         action="extend",

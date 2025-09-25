@@ -29,7 +29,7 @@ import os
 from collections import defaultdict
 from configparser import RawConfigParser
 from time import sleep
-from typing import Mapping
+from typing import DefaultDict, Dict, Mapping
 
 import requests
 
@@ -162,22 +162,39 @@ def parse_config_file(config_file=None):
 
 def get_config(config=None, config_file=None) -> dict:
     _config = config or {}
-    config_file, is_xdg, config = parse_config_file(config_file)
+    config_file, is_xdg, config_parser = parse_config_file(config_file)
 
-    if not os.path.isfile(config_file):
-        return _config
+    # TODO: Use typing.TypedDict when we drop Python 3.8 support
+    # to get rid of noqa: UP006
+    config_dict: DefaultDict[str, Dict[str, str]] = defaultdict(dict)  # noqa: UP006
 
-    config_dict: dict = defaultdict(dict)
-    for sec in config.sections():
-        try:
-            for k, v in config.items(sec):
-                if k is None or v is None:
-                    continue
-                config_dict[sec][k] = v
-        except TypeError:
-            pass
+    # Read from config file if it exists
+    if os.path.isfile(config_file):
+        for sec in config_parser.sections():
+            try:
+                for k, v in config_parser.items(sec):
+                    if k is None or v is None:
+                        continue
+                    config_dict[sec][k] = v
+            except TypeError:
+                pass
 
-    # Recursive/deep update.
+    # Check environment variables and override S3 config if present
+    env_access_key = os.environ.get('IA_ACCESS_KEY_ID')
+    env_secret_key = os.environ.get('IA_SECRET_ACCESS_KEY')
+
+    # Check if only one environment variable is set
+    if (env_access_key and not env_secret_key) or (not env_access_key and env_secret_key):
+        raise ValueError(
+            "Both IA_ACCESS_KEY_ID and IA_SECRET_ACCESS_KEY environment variables "
+            "must be set together, or neither should be set."
+        )
+
+    if env_access_key and env_secret_key:
+        config_dict['s3']['access'] = env_access_key
+        config_dict['s3']['secret'] = env_secret_key
+
+    # Recursive/deep update with passed config
     deep_update(config_dict, _config)
 
     return {k: v for k, v in config_dict.items() if v is not None}

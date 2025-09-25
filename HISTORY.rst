@@ -8,7 +8,27 @@ Release History
 
 **Bugfixes**
 
-- Fixed bug in JSON parsing for ``ia upload --file-metadata ...``.
+- Fixed bug in ``ia download`` where identifier was needlessly being validated and blocking some items from being downloaded.
+- Fixed regression in ``ia download --stdout`` where directories were being created.
+
+**Features and Improvements**
+
+- Added support for configuring IA-S3 keys via IA_ACCESS_KEY_ID and IA_SECRET_ACCESS_KEY environment variables.
+- Added ``headers`` parameter to ``internetarchive.files.File.download()`` for adding custom headers to download requests.
+
+5.5.1 (2025-09-05)
+++++++++++++++++++
+
+**Security**
+
+- **Fixed a critical directory traversal vulnerability in** File.download(). All users are urged to upgrade immediately. This prevents malicious filenames from writing files outside the target directory, a risk especially critical for Windows users.
+- Added automatic filename sanitization with platform-specific rules.
+- Added path resolution checks to block directory traversal attacks.
+- Introduced warnings when filenames are sanitized to maintain user awareness.
+
+**Bugfixes**
+
+- Fixed bug in JSON parsing for ia upload --file-metadata ....
 
 5.5.0 (2025-07-17)
 ++++++++++++++++++

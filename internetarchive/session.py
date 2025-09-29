@@ -183,7 +183,7 @@ class ArchiveSession(requests.sessions.Session):
                 connect=max_retries,
                 read=max_retries,
                 redirect=False,
-                allowed_methods=Retry.DEFAULT_ALLOWED_METHODS,
+                allowed_methods=["POST", "HEAD", "GET", "OPTIONS"],
                 status_forcelist=status_forcelist,
                 backoff_factor=1,
                 respect_retry_after_header=True

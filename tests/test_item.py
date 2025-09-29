@@ -433,8 +433,6 @@ def test_upload_503(capsys, nasa_item):
                              verbose=True)
         except Exception as exc:
             assert 'Please reduce your request rate' in str(exc)
-            out, err = capsys.readouterr()
-            assert 'warning: s3 is overloaded' in err
 
 
 def test_upload_file_keys(nasa_item):

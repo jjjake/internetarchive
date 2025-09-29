@@ -42,6 +42,7 @@ import requests.sessions
 from requests import Response
 from requests.adapters import HTTPAdapter
 from requests.cookies import create_cookie
+from requests.exceptions import JSONDecodeError
 from requests.utils import default_headers
 from urllib3 import Retry
 
@@ -52,6 +53,21 @@ from internetarchive.search import Search
 from internetarchive.utils import parse_dict_cookies, reraise_modify
 
 logger = logging.getLogger(__name__)
+
+
+# Monkey-patch the .json() method to output the response body
+# if a JSONDecodeError occurs.
+original_json = Response.json
+def json_with_body(self, *args, **kwargs):
+    try:
+        return original_json(self, *args, **kwargs)
+    except JSONDecodeError as e:
+        # Include the response body in the error message
+        body = self.text
+        msg = f"{e.msg} (Response body: {body})"
+        # Re-raise with the updated message
+        raise JSONDecodeError(msg, e.doc, e.pos) from None
+Response.json = json_with_body # type: ignore[method-assign]
 
 
 class ArchiveSession(requests.sessions.Session):
@@ -552,6 +568,15 @@ class ArchiveSession(requests.sessions.Session):
                 except Exception:
                     logger.error(e)
                     raise e
+
+            # Check for 5xx server errors and raise exception with response body
+            if 500 <= r.status_code < 600:
+                from requests.exceptions import HTTPError
+                raise HTTPError(
+                    f"Server Error {r.status_code} occurred with response body: {r.text}",
+                    response=r
+                )
+
             if self.protocol == 'http:':
                 return r
             insecure_warnings = ['SNIMissingWarning', 'InsecurePlatformWarning']

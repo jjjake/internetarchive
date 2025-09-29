@@ -468,6 +468,134 @@ def is_valid_email(email):
     return re.match(pattern, email) is not None
 
 
+# ------------------------------
+# Filename sanitization helpers
+# ------------------------------
+
+_WINDOWS_RESERVED_BASENAMES = {
+    # Device names without extensions (case-insensitive match on stem only)
+    'CON', 'PRN', 'AUX', 'NUL',
+    *(f'COM{i}' for i in range(1, 10)),
+    *(f'LPT{i}' for i in range(1, 10)),
+}
+
+_WINDOWS_INVALID_CHARS = set('<>:"\\|?*')  # plus control chars 0x00-0x1F handled separately
+
+def _percent_encode_byte(b: int) -> str:
+    return f'%{b:02X}'
+
+def sanitize_windows_filename(name: str) -> tuple[str, bool]:
+    """Return a Windows-safe filename by percent-encoding illegal constructs.
+
+    Highlights (Windows relevance):
+      * Control chars (0x00-0x1F) encoded.
+      * Characters in _WINDOWS_INVALID_CHARS encoded.
+      * Trailing spaces and periods encoded.
+      * Existing '%' encoded only if another change occurs (to avoid unnecessary churn).
+      * Reserved device names (CON, PRN, AUX, NUL, COM1-9, LPT1-9) including when followed
+        by a dot/extension have their final character encoded.
+        (e.g. "AUX" -> "AU%58", "AUX.txt" -> "AU%58.txt").
+
+    Returns (sanitized_name, modified_flag).
+    """
+    original = name
+    if not name:
+        return name, False
+
+    # Reserved device name detection (with or without extension). We encode the last character
+    # of the reserved token so that the resulting string no longer triggers Windows device name rules.
+    upper_name = name.upper()
+    reserved_index: int | None = None
+    for base in _WINDOWS_RESERVED_BASENAMES:
+        if upper_name == base or upper_name.startswith(base + '.'):
+            reserved_index = len(base) - 1
+            break
+
+    # Determine indexes to encode.
+    encode_indexes: set[int] = set()
+    length = len(name)
+    for idx, ch in enumerate(name):
+        code = ord(ch)
+        if code < 0x20:
+            encode_indexes.add(idx)
+        elif ch in _WINDOWS_INVALID_CHARS:
+            encode_indexes.add(idx)
+        elif ch == '\\':  # already included above but explicit for clarity
+            encode_indexes.add(idx)
+        # NOTE: '%' handled later globally
+
+    # Encode trailing spaces and dots
+    t = length - 1
+    while t >= 0 and name[t] in (' ', '.'):
+        encode_indexes.add(t)
+        t -= 1
+
+    # Reserved device name last character encoding (with or without extension).
+    if reserved_index is not None:
+        encode_indexes.add(reserved_index)
+
+    modified = bool(encode_indexes)
+
+    if not modified:
+        # Nothing to do; leave '%' untouched.
+        return name, False
+
+    # Build output encoding '%' first.
+    out_chars: list[str] = []
+    for idx, ch in enumerate(name):
+        if ch == '%':
+            out_chars.append('%25')
+            continue
+        if idx in encode_indexes:
+            out_chars.append(_percent_encode_byte(ord(ch)))
+        else:
+            out_chars.append(ch)
+
+    sanitized = ''.join(out_chars)
+    return sanitized, sanitized != original
+
+
+def is_path_within_directory(base_dir: str, target_path: str) -> bool:
+    """Return True if target_path is within base_dir (after resolving symlinks)."""
+    base_real = os.path.realpath(base_dir)
+    target_real = os.path.realpath(target_path)
+    # Ensure base path ends with separator for prefix test to avoid /foo/bar vs /foo/barista
+    if not base_real.endswith(os.path.sep):
+        base_real += os.path.sep
+    return target_real.startswith(base_real)
+
+
+def sanitize_windows_relpath(rel_path: str, verbose: bool = False, printer=None) -> tuple[str, bool]:
+    """Sanitize a relative path intended for Windows downloads.
+
+    Splits only on forward slashes (logical separators we introduce) so that any
+    backslashes present in remote filenames are treated as data and percent-encoded.
+
+    Returns (sanitized_rel_path, modified_flag).
+    """
+    if os.name != 'nt':  # no-op on non-Windows
+        return rel_path, False
+    if not rel_path:
+        return rel_path, False
+    components = rel_path.split('/') if '/' in rel_path else [rel_path]
+    out_parts: list[str] = []
+    modified_any = False
+    if printer is None:
+        def noop_printer(msg):
+            pass
+        printer = noop_printer
+    original_components: list[str] = []
+    for comp in components:
+        original_components.append(comp)
+        sanitized, modified = sanitize_windows_filename(comp)
+        out_parts.append(sanitized)
+        modified_any = modified_any or modified
+    result_path = os.path.join(*out_parts)
+    if verbose and modified_any:
+        original_path_display = os.path.join(*original_components)
+        printer(f'windows path sanitized: {original_path_display} -> {result_path}')
+    return result_path, modified_any
+
 def is_windows() -> bool:
     return (
         platform.system().lower() == "windows"

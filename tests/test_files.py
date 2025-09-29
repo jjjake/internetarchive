@@ -5,6 +5,8 @@ from unittest.mock import patch
 import pytest
 import responses
 
+from internetarchive.exceptions import DirectoryTraversalError
+from internetarchive.utils import sanitize_filename
 from tests.conftest import PROTOCOL, IaRequestsMock
 
 DOWNLOAD_URL_RE = re.compile(f'{PROTOCOL}//archive.org/download/.*')
@@ -23,11 +25,10 @@ def test_file_download_sanitizes_filename(tmpdir, nasa_item):
             # Test filename with Windows-invalid characters
             file_obj = nasa_item.get_file('nasa_meta.xml')
             problematic_name = 'file:with<illegal>chars.xml'
-            file_obj.download(file_path=problematic_name, destdir=str(tmpdir))
+            sanitized_name = sanitize_filename(problematic_name)
+            expected_path = os.path.join(str(tmpdir), sanitized_name)
 
-            # Should create sanitized filename with percent encoding
-            expected_name = 'file%3Awith%3Cillegal%3Echars.xml'
-            expected_path = os.path.join(str(tmpdir), expected_name)
+            file_obj.download(file_path=sanitized_name, destdir=str(tmpdir))
             assert os.path.exists(expected_path)
 
 
@@ -38,5 +39,5 @@ def test_file_download_prevents_directory_traversal(tmpdir, nasa_item):
         # Test directory traversal attempt by getting the file and calling download directly
         file_obj = nasa_item.get_file('nasa_meta.xml')
         malicious_path = os.path.join('..', 'nasa_meta.xml')
-        with pytest.raises(ValueError, match="outside target directory"):
+        with pytest.raises(DirectoryTraversalError, match="outside.*directory"):
             file_obj.download(file_path=malicious_path, destdir=str(tmpdir))

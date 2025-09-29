@@ -54,3 +54,7 @@ class AccountAPIError(Exception):
     def __init__(self, message: str, error_data: Optional[Dict] = None):
         super().__init__(message)
         self.error_data = error_data
+
+
+class DirectoryTraversalError(Exception):
+    """Raised when a computed local file path escapes the intended destination directory."""

@@ -235,38 +235,45 @@ class File(BaseFile):
         self.item.session.mount_http_adapter(max_retries=retries)
         file_path = file_path or self.name
 
-        # Critical security check: Sanitize only the filename portion of file_path to
-        # prevent invalid characters and potential directory traversal issues.
-        # We use `utils.sanitize_filepath` instead of `utils.sanitize_filename` because:
-        # - `sanitize_filepath` preserves the directory path intact (does not encode path separators),
-        # - allowing `os.makedirs` to create intermediate directories correctly,
-        # - while still sanitizing just the filename to ensure it is safe for filesystem use.
-        file_path = utils.sanitize_filepath(file_path)
+        if os.name == 'nt' and not return_responses:
+            file_path, _ = utils.sanitize_windows_relpath(
+                file_path,
+                verbose=bool(verbose),
+                printer=lambda m: print(m, file=sys.stderr),
+            )
+
 
         if destdir:
             if not (return_responses or stdout):
                 try:
-                    os.mkdir(destdir)
-                except FileExistsError:
+                    os.makedirs(destdir, exist_ok=True)
+                except OSError:
                     pass
             if os.path.isfile(destdir):
                 raise OSError(f'{destdir} is not a directory!')
             file_path = os.path.join(destdir, file_path)
 
-        # Critical security check: Prevent directory traversal attacks by ensuring
-        # the download path doesn't escape the target directory using path resolution
-        # and relative path validation. This protects against malicious filenames
-        # containing ../ sequences or other path manipulation attempts.
+        # Windows sanitization handled earlier; legacy comment removed.
+
+        # Directory traversal guard (all platforms). Ensure target path is inside destdir
+        # (or cwd if none provided). Determine intended base directory.
+        intended_base = destdir if destdir else os.getcwd()
         try:
-            # Resolve both paths to handle symlinks and absolute paths
-            target_path = Path(file_path).resolve()
-            base_dir = Path(destdir).resolve() if destdir else Path.cwd().resolve()
-            # Ensure the target path is relative to base directory
-            target_path.relative_to(base_dir)
-        except ValueError:
-            raise ValueError(f"Download path {file_path} is outside target directory {base_dir}")
+            if not utils.is_path_within_directory(intended_base, os.path.abspath(file_path)):
+                raise exceptions.DirectoryTraversalError(
+                    f'Unsafe file path resolved outside destination directory: {file_path}'
+                )
+        except AttributeError:
+            # Fallback if DirectoryTraversalError not present (older versions); re-raise generic.
+            raise OSError(f'Unsafe file path resolved outside destination directory: {file_path}')
 
         parent_dir = os.path.dirname(file_path)
+
+        # Warn (not fail) if path length may cause Windows issues (>240 chars typical safe limit)
+        if os.name == 'nt' and len(os.path.abspath(file_path)) > 240:
+            log.warning('Long path may cause issues: %s', file_path)
+            if verbose:
+                print(f' warning: long path may cause issues: {file_path}', file=sys.stderr)
 
         # Check if we should skip...
         if not return_responses and os.path.exists(file_path.encode('utf-8')):

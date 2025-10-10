@@ -3,8 +3,8 @@
 Release History
 ---------------
 
-5.6.0 (?)
-+++++++++
+5.6.0 (2025-10-10)
+++++++++++++++++++
 
 **Bugfixes**
 
@@ -13,8 +13,10 @@ Release History
 
 **Features and Improvements**
 
+- Added support for the Retry-After HTTP header to improve handling of rate-limited API responses.
 - Added support for configuring IA-S3 keys via IA_ACCESS_KEY_ID and IA_SECRET_ACCESS_KEY environment variables.
 - Added ``headers`` parameter to ``internetarchive.files.File.download()`` for adding custom headers to download requests.
+- Improved Windows filename sanitization.
 
 5.5.1 (2025-09-05)
 ++++++++++++++++++

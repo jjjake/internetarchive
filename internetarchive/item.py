@@ -34,7 +34,7 @@ from fnmatch import fnmatch
 from functools import total_ordering
 from logging import getLogger
 from time import sleep
-from typing import Mapping, MutableMapping, Optional
+from typing import Generator, Iterable, Mapping, MutableMapping, Optional, SupportsComplex
 from urllib.parse import quote
 from xml.parsers.expat import ExpatError
 
@@ -46,6 +46,7 @@ from internetarchive import catalog, exceptions
 from internetarchive.auth import S3Auth
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
+from internetarchive.session import ArchiveSession
 from internetarchive.utils import (
     IdentifierListAsItems,
     IterableToFileAdapter,
@@ -70,9 +71,9 @@ class BaseItem:
 
     def __init__(
         self,
-        identifier: str | None = None,
+        identifier: str = "",
         item_metadata: Mapping | None = None,
-    ):
+    ) -> None:
         # Default attributes.
         self.identifier = identifier
         self.item_metadata = item_metadata or {}
@@ -101,7 +102,10 @@ class BaseItem:
         notloaded = ', item_metadata={}' if not self.exists else ''
         return f'{self.__class__.__name__}(identifier={self.identifier!r}{notloaded})'
 
-    def load(self, item_metadata: Mapping | None = None) -> None:
+    def load(
+             self,
+             item_metadata: Mapping | None = None
+            ) -> None:
         if item_metadata:
             self.item_metadata = item_metadata
 
@@ -111,11 +115,7 @@ class BaseItem:
             setattr(self, key, self.item_metadata[key])
 
         if not self.identifier:
-            self.identifier = self.metadata.get('identifier')
-
-        mc = self.metadata.get('collection', [])
-        # TODO: The `type: ignore` on the following line should be removed.  See #518
-        self.collection = IdentifierListAsItems(mc, self.session)  # type: ignore
+            self.identifier = str(self.metadata.get('identifier'))
 
     def __eq__(self, other) -> bool:
         return (self.item_metadata == other.item_metadata
@@ -164,11 +164,11 @@ class Item(BaseItem):
     """
 
     def __init__(
-        self,
-        archive_session,
-        identifier: str,
-        item_metadata: Mapping | None = None,
-    ):
+                 self,
+                 archive_session: ArchiveSession,
+                 identifier: str = "",
+                 item_metadata: Mapping | None = None,
+                ) -> None:
         """
         :param archive_session: :class:`ArchiveSession <ArchiveSession>`
 
@@ -193,6 +193,9 @@ class Item(BaseItem):
         super().__init__(identifier, item_metadata)
 
         self.urls = Item.URLs(self)
+
+        mc = self.metadata.get('collection', [])
+        self.collection = IdentifierListAsItems(mc, self.session)
 
         if self.metadata.get('title'):
             # A copyable link to the item, in MediaWiki format
@@ -221,14 +224,22 @@ class Item(BaseItem):
         DEFAULT_URL_FORMAT = ('{0.session.protocol}//{0.session.host}'
                               '/{path}/{0.identifier}')
 
-        def _make_URL(self, path: str, url_format: str = DEFAULT_URL_FORMAT) -> None:
+        def _make_URL(
+                      self,
+                      path: str,
+                      url_format: str = DEFAULT_URL_FORMAT
+                     ) -> None:
             setattr(self, path, url_format.format(self._itm_obj, path=path))
             self._paths.append(path)
 
         def __str__(self) -> str:
             return f'URLs ({", ".join(self._paths)}) for {self._itm_obj.identifier}'
 
-    def refresh(self, item_metadata: Mapping | None = None, **kwargs) -> None:
+    def refresh(
+                self,
+                item_metadata: dict | None = None,
+                **kwargs: dict | None
+                ) -> None:
         if not item_metadata:
             item_metadata = self.session.get_metadata(self.identifier, **kwargs)
         self.load(item_metadata)
@@ -247,10 +258,10 @@ class Item(BaseItem):
         return availability == 'available'
 
     def get_task_summary(
-        self,
-        params: Mapping | None = None,
-        request_kwargs: Mapping | None = None,
-    ) -> dict:
+                         self,
+                         params: dict | None = None,
+                         request_kwargs: dict | None = None,
+                        ) -> dict:
         """Get a summary of the item's pending tasks.
 
         :param params: Params to send with your request.
@@ -260,10 +271,10 @@ class Item(BaseItem):
         return self.session.get_tasks_summary(self.identifier, params, request_kwargs)
 
     def no_tasks_pending(
-        self,
-        params: Mapping | None = None,
-        request_kwargs: Mapping | None = None,
-    ) -> bool:
+                         self,
+                         params: dict | None = None,
+                         request_kwargs: dict | None = None,
+                        ) -> bool:
         """Check if there is any pending task for the item.
 
         :param params: Params to send with your request.
@@ -273,10 +284,10 @@ class Item(BaseItem):
         return all(x == 0 for x in self.get_task_summary(params, request_kwargs).values())
 
     def get_all_item_tasks(
-        self,
-        params: dict | None = None,
-        request_kwargs: Mapping | None = None,
-    ) -> list[catalog.CatalogTask]:
+                           self,
+                           params: dict | None = None,
+                           request_kwargs: dict | None = None,
+                          ) -> set[catalog.CatalogTask]:
         """Get a list of all tasks for the item, pending and complete.
 
         :param params: Query parameters, refer to
@@ -293,11 +304,10 @@ class Item(BaseItem):
         params.update({'catalog': 1, 'history': 1})
         return self.session.get_tasks(self.identifier, params, request_kwargs)
 
-    def get_history(
-        self,
-        params: Mapping | None = None,
-        request_kwargs: Mapping | None = None,
-    ) -> list[catalog.CatalogTask]:
+    def get_history(self,
+                    params: dict | None = None,
+                    request_kwargs: dict | None = None,
+                   ) -> list[catalog.CatalogTask]:
         """Get a list of completed catalog tasks for the item.
 
         :param params: Params to send with your request.
@@ -306,11 +316,10 @@ class Item(BaseItem):
         """
         return list(self.session.iter_history(self.identifier, params, request_kwargs))
 
-    def get_catalog(
-        self,
-        params: Mapping | None = None,
-        request_kwargs: Mapping | None = None,
-    ) -> list[catalog.CatalogTask]:
+    def get_catalog(self,
+                    params: dict | None = None,
+                    request_kwargs: dict | None = None,
+                   ) -> list[catalog.CatalogTask]:
         """Get a list of pending catalog tasks for the item.
 
         :param params: Params to send with your request.
@@ -323,9 +332,10 @@ class Item(BaseItem):
                priority: int = 0,
                remove_derived: str | None = None,
                reduced_priority: bool = False,
-               data: MutableMapping | None = None,
-               headers: Mapping | None = None,
-               request_kwargs: Mapping | None = None) -> Response:
+               data: dict | None = None,
+               headers: dict | None = None,
+               request_kwargs: Mapping | None = None
+               ) -> Response:
         """Derive an item.
 
         :param priority: Task priority from 10 to -10 [default: 0]
@@ -368,11 +378,12 @@ class Item(BaseItem):
 
     def fixer(self,
               ops: list | str | None = None,
-              priority: int | str | None = None,
+              priority: int = 0,
               reduced_priority: bool = False,
-              data: MutableMapping | None = None,
-              headers: Mapping | None = None,
-              request_kwargs: Mapping | None = None) -> Response:
+              data: dict | None = None,
+              headers: dict | None = None,
+              request_kwargs: Mapping | None = None
+              ) -> Response:
         """Submit a fixer task on an item.
 
         :param ops: The fixer operation(s) to run on the item
@@ -414,10 +425,11 @@ class Item(BaseItem):
 
     def undark(self,
                comment: str,
-               priority: int | str | None = None,
+               priority: int = 0,
                reduced_priority: bool = False,
-               data: Mapping | None = None,
-               request_kwargs: Mapping | None = None) -> Response:
+               data: dict | None = None,
+               request_kwargs: Mapping | None = None
+               ) -> Response:
         """Undark the item.
 
         :param comment: The curation comment explaining reason for
@@ -451,10 +463,11 @@ class Item(BaseItem):
     # TODO: dark and undark have different order for data and reduced_pripoity
     def dark(self,
              comment: str,
-             priority: int | str | None = None,
-             data: Mapping | None = None,
+             priority: int = 0,
+             data: dict | None = None,
              reduced_priority: bool = False,
-             request_kwargs: Mapping | None = None) -> Response:
+             request_kwargs: Mapping | None = None
+             ) -> Response:
         """Dark the item.
 
         :param comment: The curation comment explaining reason for
@@ -493,7 +506,11 @@ class Item(BaseItem):
         r.raise_for_status()
         return r
 
-    def index_review(self, username=None, screenname=None, itemname=None) -> Response:
+    def index_review(self,
+                     username = None,
+                     screenname = None,
+                     itemname = None
+                     ) -> Response:
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = {'identifier': self.identifier}
         d = {'noindex': '0'}
@@ -508,7 +525,11 @@ class Item(BaseItem):
         r.raise_for_status()
         return r
 
-    def noindex_review(self, username=None, screenname=None, itemname=None) -> Response:
+    def noindex_review(self,
+                       username = None,
+                       screenname = None,
+                       itemname = None
+                       ) -> Response:
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = {'identifier': self.identifier}
         d = {'noindex': '1'}
@@ -523,7 +544,11 @@ class Item(BaseItem):
         r.raise_for_status()
         return r
 
-    def delete_review(self, username=None, screenname=None, itemname=None) -> Response:
+    def delete_review(self,
+                      username = None,
+                      screenname = None,
+                      itemname = None
+                      ) -> Response:
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = {'identifier': self.identifier}
         d = None
@@ -538,7 +563,11 @@ class Item(BaseItem):
         r.raise_for_status()
         return r
 
-    def review(self, title, body, stars=None) -> Response:
+    def review(self,
+               title: str,
+               body: str,
+               stars = None
+               ) -> Response:
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = {'identifier': self.identifier}
         d = {'title': title, 'body': body}
@@ -549,7 +578,10 @@ class Item(BaseItem):
         r.raise_for_status()
         return r
 
-    def get_file(self, file_name: str, file_metadata: Mapping | None = None) -> File:
+    def get_file(self,
+                 file_name: str,
+                 file_metadata: Mapping | None = None
+                 ) -> File:
         """Get a :class:`File <File>` object for the named file.
 
         :param file_metadata: a dict of metadata for the
@@ -564,7 +596,8 @@ class Item(BaseItem):
                   formats: str | list[str] | None = None,
                   glob_pattern: str | list[str] | None = None,
                   exclude_pattern: str | list[str] | None = None,
-                  on_the_fly: bool = False):
+                  on_the_fly: bool = False
+                 ) -> Generator[File]:
         files = files or []
         formats = formats or []
         exclude_pattern = exclude_pattern or ''
@@ -635,7 +668,7 @@ class Item(BaseItem):
                  stdout: bool = False,
                  params: Mapping | None = None,
                  timeout: float | tuple[int, float] | None = None
-                 ) -> list[Request | Response]:
+                ) -> list[Request | Response]:
         """Download files from an item.
 
         :param files: Only download files matching given file names.
@@ -744,17 +777,17 @@ class Item(BaseItem):
             return []
 
         if files:
-            files = self.get_files(files, on_the_fly=on_the_fly)
+            files = self.get_files(files, on_the_fly=on_the_fly) # type: ignore
         else:
-            files = self.get_files(on_the_fly=on_the_fly)
+            files = self.get_files(on_the_fly=on_the_fly) # type: ignore
         if formats:
-            files = self.get_files(formats=formats, on_the_fly=on_the_fly)
+            files = self.get_files(formats=formats, on_the_fly=on_the_fly) # type: ignore
         if glob_pattern:
             files = self.get_files(
                 glob_pattern=glob_pattern,
                 exclude_pattern=exclude_pattern,
                 on_the_fly=on_the_fly
-            )
+            ) # type: ignore
         if stdout:
             files = list(files)  # type: ignore
 
@@ -830,9 +863,10 @@ class Item(BaseItem):
                         debug: bool = False,
                         headers: Mapping | None = None,
                         reduced_priority: bool = False,
-                        request_kwargs: Mapping | None = None,
+                        request_kwargs: dict | None = None,
                         timeout: float | None = None,
-                        refresh: bool = True) -> Request | Response:
+                        refresh: bool = True
+                       ) -> Response | Request:
         """Modify the metadata of an existing item on Archive.org.
 
         Note: The Metadata Write API does not yet comply with the
@@ -883,7 +917,7 @@ class Item(BaseItem):
         else:
             request_kwargs["timeout"] = 60  # type: ignore
 
-        _headers = self.session.headers.copy()
+        _headers = deepcopy(self.session.headers)
         _headers.update(headers)
 
         url = f'{self.session.protocol}//{self.session.host}/metadata/{self.identifier}'
@@ -917,10 +951,10 @@ class Item(BaseItem):
         return resp
 
     def delete_flag(
-            self,
-            category: str,
-            user: Optional[str] = None,  # noqa: UP007
-    ) -> Response:
+                    self,
+                    category: str,
+                    user: Optional[str] = None,  # noqa: UP007
+                   ) -> Response:
         if user is None:
             user = f"@{self.session.config.get('general', {}).get('screenname')}"
         url = f'{self.session.protocol}//{self.session.host}/services/flags/admin.php'
@@ -930,10 +964,10 @@ class Item(BaseItem):
         return r
 
     def add_flag(
-            self,
-            category: str,
-            user: Optional[str] = None,  # noqa: UP007
-    ) -> Response:
+                 self,
+                 category: str,
+                 user: Optional[str] = None,  # noqa: UP007
+                ) -> Response:
         if user is None:
             user = f"@{self.session.config.get('general', {}).get('screenname')}"
         url = f'{self.session.protocol}//{self.session.host}/services/flags/admin.php'
@@ -950,7 +984,10 @@ class Item(BaseItem):
         return r
 
     # TODO: `list` parameter name shadows the Python builtin
-    def remove_from_simplelist(self, parent, list) -> Response:
+    def remove_from_simplelist(self,
+                               parent: str | bool | dict | list | SupportsComplex | None,
+                               list: str | bool | dict | list | SupportsComplex | None
+                              ) -> Response:
         """Remove item from a simplelist.
 
         :returns: :class:`requests.Response`
@@ -1152,7 +1189,7 @@ class Item(BaseItem):
         if debug:
             prepared_request = self.session.prepare_request(_build_request())
             body.close()
-            return prepared_request
+            return prepared_request # type: ignore
         else:
             try:
                 first_try = True

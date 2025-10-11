@@ -31,11 +31,13 @@ from getpass import getpass
 from typing import Iterable, Mapping, MutableMapping
 
 import requests
+from requests import PreparedRequest, Request, Response
 from urllib3 import Retry
 
 from internetarchive import auth, catalog, files, item, search, session
 from internetarchive import config as config_module
 from internetarchive.exceptions import AuthenticationError
+from internetarchive.files import File
 
 
 def get_session(
@@ -105,7 +107,7 @@ def get_item(
                                 :py:class:`requests.adapters.HTTPAdapter` takes.
 
     :param request_kwargs: Keyword arguments that
-                           :py:class:`requests.Request` takes.
+                           :py:class:`Request` takes.
 
     :returns: The Item that fits the criteria.
 
@@ -119,16 +121,17 @@ def get_item(
         archive_session = get_session(config, config_file, debug, http_adapter_kwargs)
     return archive_session.get_item(identifier, request_kwargs=request_kwargs)
 
-
+# mypy is confused
+# mypy: disable-error-code="return-value"
 def get_files(
-    identifier: str,
-    files: files.File | list[files.File] | None = None,
-    formats: str | list[str] | None = None,
-    glob_pattern: str | None = None,
-    exclude_pattern: str | None = None,
-    on_the_fly: bool = False,
-    **get_item_kwargs,
-) -> list[files.File]:
+              identifier: str,
+              files: files.File | list[files.File] | None = None,
+              formats: str | list[str] | None = None,
+              glob_pattern: str | None = None,
+              exclude_pattern: str | None = None,
+              on_the_fly: bool = False,
+              **get_item_kwargs,
+             ) -> list[File]:
     r"""Get :class:`File` objects from an item.
 
     :param identifier: The globally unique Archive.org identifier for a given item.
@@ -157,7 +160,6 @@ def get_files(
     item = get_item(identifier, **get_item_kwargs)
     return item.get_files(files, formats, glob_pattern, exclude_pattern, on_the_fly)
 
-
 def modify_metadata(
     identifier: str,
     metadata: Mapping,
@@ -168,9 +170,9 @@ def modify_metadata(
     access_key: str | None = None,
     secret_key: str | None = None,
     debug: bool = False,
-    request_kwargs: Mapping | None = None,
+    request_kwargs: dict | None = None,
     **get_item_kwargs,
-) -> requests.Request | requests.Response:
+) -> PreparedRequest | Response | Request :
     r"""Modify the metadata of an existing item on Archive.org.
 
     :param identifier: The globally unique Archive.org identifier for a given item.
@@ -191,7 +193,7 @@ def modify_metadata(
 
     :param secret_key: IA-S3 secret_key to use when making the given request.
 
-    :param debug: set to True to return a :class:`requests.Request <Request>`
+    :param debug: set to True to return a :class:`Request <Request>`
                   object instead of sending request. Defaults to ``False``.
 
     :param \*\*get_item_kwargs: Arguments that ``get_item`` takes.
@@ -214,24 +216,24 @@ def modify_metadata(
 
 
 def upload(
-    identifier: str,
-    files,
-    metadata: Mapping | None = None,
-    headers: dict | None = None,
-    access_key: str | None = None,
-    secret_key: str | None = None,
-    queue_derive=None,
-    verbose: bool = False,
-    verify: bool = False,
-    checksum: bool = False,
-    delete: bool = False,
-    retries: int | None = None,
-    retries_sleep: int | None = None,
-    debug: bool = False,
-    validate_identifier: bool = False,
-    request_kwargs: dict | None = None,
-    **get_item_kwargs,
-) -> list[requests.Request | requests.Response]:
+           identifier: str,
+           files,
+           metadata: Mapping | None = None,
+           headers: dict | None = None,
+           access_key: str | None = None,
+           secret_key: str | None = None,
+           queue_derive=None,
+           verbose: bool = False,
+           verify: bool = False,
+           checksum: bool = False,
+           delete: bool = False,
+           retries: int | None = None,
+           retries_sleep: int | None = None,
+           debug: bool = False,
+           validate_identifier: bool = False,
+           request_kwargs: dict | None = None,
+           **get_item_kwargs,
+          ) -> list[PreparedRequest | Response | Request]:
     r"""Upload files to an item. The item will be created if it does not exist.
 
     :param identifier: The globally unique Archive.org identifier for a given item.
@@ -297,26 +299,26 @@ def upload(
 
 
 def download(
-    identifier: str,
-    files: files.File | list[files.File] | None = None,
-    formats: str | list[str] | None = None,
-    glob_pattern: str | None = None,
-    dry_run: bool = False,
-    verbose: bool = False,
-    ignore_existing: bool = False,
-    checksum: bool = False,
-    checksum_archive: bool = False,
-    destdir: str | None = None,
-    no_directory: bool = False,
-    retries: int | None = None,
-    item_index: int | None = None,
-    ignore_errors: bool = False,
-    on_the_fly: bool = False,
-    return_responses: bool = False,
-    no_change_timestamp: bool = False,
-    timeout: float | tuple[int, float] | None = None,
-    **get_item_kwargs,
-) -> list[requests.Request | requests.Response]:
+             identifier: str,
+             files: files.File | list[files.File] | None = None,
+             formats: str | list[str] | None = None,
+             glob_pattern: str | None = None,
+             dry_run: bool = False,
+             verbose: bool = False,
+             ignore_existing: bool = False,
+             checksum: bool = False,
+             checksum_archive: bool = False,
+             destdir: str | None = None,
+             no_directory: bool = False,
+             retries: int | None = None,
+             item_index: int | None = None,
+             ignore_errors: bool = False,
+             on_the_fly: bool = False,
+             return_responses: bool = False,
+             no_change_timestamp: bool = False,
+             timeout: float | tuple[int, float] | None = None,
+             **get_item_kwargs,
+            ) -> list[Response | Request]:
     r"""Download files from an item.
 
     :param identifier: The globally unique Archive.org identifier for a given item.
@@ -398,7 +400,7 @@ def delete(
     verbose: bool = False,
     debug: bool = False,
     **kwargs,
-) -> list[requests.Request | requests.Response]:
+) -> list[Response | Request]:
     """Delete files from an item. Note: Some system files, such as <itemname>_meta.xml,
     cannot be deleted.
 
@@ -466,16 +468,16 @@ def get_tasks(
 
 def search_items(
     query: str,
-    fields: Iterable | None = None,
+    fields: list | None = None,
     sorts=None,
-    params: Mapping | None = None,
+    params: dict | None = None,
     full_text_search: bool = False,
     dsl_fts: bool = False,
     archive_session: session.ArchiveSession | None = None,
     config: Mapping | None = None,
     config_file: str | None = None,
     http_adapter_kwargs: MutableMapping | None = None,
-    request_kwargs: Mapping | None = None,
+    request_kwargs: dict | None = None,
     max_retries: int | Retry | None = None,
 ) -> search.Search:
     """Search for items on Archive.org.
@@ -504,7 +506,7 @@ def search_items(
                                 :py:class:`requests.adapters.HTTPAdapter` takes.
 
     :param request_kwargs: Keyword arguments that
-                           :py:class:`requests.Request` takes.
+                           :py:class:`Request` takes.
 
     :param max_retries: The number of times to retry a failed request.
                         This can also be an `urllib3.Retry` object.

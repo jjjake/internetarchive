@@ -409,8 +409,7 @@ def prepare_metadata(metadata, source_metadata=None, append=False,
     source = copy.deepcopy(source_metadata) if source_metadata else {}
     prepared = {}
 
-    if append or append_list or insert:
-        _process_non_indexed_keys(metadata, source, prepared, append, append_list, insert)
+    _process_non_indexed_keys(metadata, source, prepared, append, append_list, insert)
     indexed_keys = _process_indexed_keys(metadata, source, prepared)
     _cleanup_indexed_keys(prepared, indexed_keys, metadata)
 

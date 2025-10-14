@@ -409,8 +409,9 @@ def prepare_metadata(metadata, source_metadata=None, append=False,
     source = copy.deepcopy(source_metadata) if source_metadata else {}
     prepared = {}
 
+    if append or append_list or insert:
+        _process_non_indexed_keys(metadata, source, prepared, append, append_list, insert)
     indexed_keys = _process_indexed_keys(metadata, source, prepared)
-    _process_non_indexed_keys(metadata, source, prepared, append, append_list, insert)
     _cleanup_indexed_keys(prepared, indexed_keys, metadata)
 
     return prepared
@@ -418,7 +419,10 @@ def prepare_metadata(metadata, source_metadata=None, append=False,
 
 def _process_non_indexed_keys(metadata, source, prepared, append, append_list, insert):
     for key, value in metadata.items():
-        current_key = key
+        current_key = _get_base_key(key)
+        insert_index = None
+        if _is_indexed_key(key):
+            insert_index = _get_index(key)
 
         if isinstance(value, (int, float, complex)) and not isinstance(value, bool):
             value = str(value)
@@ -434,7 +438,12 @@ def _process_non_indexed_keys(metadata, source, prepared, append, append_list, i
             existing = source[current_key]
             if not isinstance(existing, list):
                 existing = [existing]
-            existing.insert(0, value)
+            if value in existing:
+                continue
+            if insert_index is not None:
+                existing.insert(insert_index, value)
+            else:
+                existing.insert(0, value)
             prepared[current_key] = [v for v in existing if v]
         else:
             prepared[current_key] = value

@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+5.6.1 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug where metadata insert was clobbering and indexed modify writes were inserting.
+
 5.6.0 (2025-10-10)
 ++++++++++++++++++
 

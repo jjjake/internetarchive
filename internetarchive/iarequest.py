@@ -406,25 +406,54 @@ def prepare_files_patch(metadata, files_metadata, target, append,
 
 def prepare_metadata(metadata, source_metadata=None, append=False,
                      append_list=False, insert=False):
+    """
+    Normalize and merge metadata before building JSON Patch.
+
+    Handles both plain key/value metadata and "indexed" keys like
+    `subject[0]`, `subject[1]`, etc. that represent list elements.
+
+    Args:
+        metadata (dict): New metadata to apply.
+        source_metadata (dict, optional): Existing metadata from the item.
+        append (bool): If True, append values for existing keys (concatenate strings).
+        append_list (bool): If True, append values to lists.
+        insert (bool): If True, insert elements instead of overwriting.
+
+    Returns:
+        dict: Prepared metadata dictionary ready for patch generation.
+    """
+    # Deep copy source to avoid mutating input
     source = copy.deepcopy(source_metadata) if source_metadata else {}
     prepared = {}
 
-    _process_non_indexed_keys(metadata, source, prepared, append, append_list, insert)
-    indexed_keys = _process_indexed_keys(metadata, source, prepared)
-    _cleanup_indexed_keys(prepared, indexed_keys, metadata)
+    # If using insert-mode but metadata has no indexed keys,
+    # rewrite unindexed keys as [0]-indexed to normalize.
+    if insert and not all(_is_indexed_key(k) for k in metadata):
+        for k in list(metadata):
+            if not _is_indexed_key(k):
+                metadata[f"{k}[0]"] = metadata[k]
+
+    _process_non_indexed_keys(metadata, source, prepared, append, append_list)
+    indexed_keys = _process_indexed_keys(metadata, source, prepared, insert)
 
     return prepared
 
 
-def _process_non_indexed_keys(metadata, source, prepared, append, append_list, insert):
-    for key, value in metadata.items():
-        current_key = _get_base_key(key)
-        insert_index = None
-        if _is_indexed_key(key):
-            insert_index = _get_index(key)
+def _process_non_indexed_keys(metadata, source, prepared, append, append_list):
+    """
+    Process plain (non-indexed) metadata keys.
 
-        if isinstance(value, (int, float, complex)) and not isinstance(value, bool):
-            value = str(value)
+    Handles:
+      - Numeric value conversion to strings.
+      - String concatenation when `append` is True.
+      - List extension when `append_list` is True.
+    """
+    for key, value in metadata.items():
+        # Skip indexed keys; handled in _process_indexed_keys().
+        if _is_indexed_key(key):
+            continue
+
+        current_key = key
 
         if append_list and isinstance(source, dict) and source.get(current_key):
             existing = source[current_key]
@@ -433,71 +462,107 @@ def _process_non_indexed_keys(metadata, source, prepared, append, append_list, i
             prepared[current_key] = existing + [value]
         elif append and source.get(current_key):
             prepared[current_key] = f'{source[current_key]} {value}'
-        elif insert and source.get(current_key):
-            existing = source[current_key]
-            if not isinstance(existing, list):
-                existing = [existing]
-            if value in existing:
-                continue
-            if insert_index is not None:
-                existing.insert(insert_index, value)
-            else:
-                existing.insert(0, value)
-            prepared[current_key] = [v for v in existing if v]
         else:
             prepared[current_key] = value
 
 
-def _cleanup_indexed_keys(prepared, indexed_keys, metadata):
-    for base in indexed_keys:
-        if base in prepared:
-            if isinstance(prepared[base], str):
-                prepared[base] = [prepared[base]]
-            prepared[base] = [v for v in prepared[base] if v is not None
-                              and v != 'REMOVE_TAG']
-            indexes = [
-                i for i, k in enumerate(metadata)
-                if _get_base_key(k) == base and metadata[k] == 'REMOVE_TAG'
-            ]
-            for i in reversed(indexes):
-                if i < len(prepared[base]):
-                    del prepared[base][i]
+def _process_indexed_keys(metadata, source, prepared, insert):
+    """
+    Process indexed metadata keys such as 'subject[0]', 'subject[1]', etc.
 
+    Builds list values in `prepared` based on these indexed keys.
+    Merges with any existing list data from `source`, optionally
+    inserting new values when `insert=True` (otherwise existing values are
+    overwritten at given index).
 
-def _process_indexed_keys(metadata, source, prepared):
+    Also filters out None and 'REMOVE_TAG' placeholders, which
+    indicate that a list element should be deleted.
+
+    Args:
+        metadata (dict): Input metadata possibly containing indexed keys.
+        source (dict): Existing metadata for the item.
+        prepared (dict): Dict being built up by prepare_metadata().
+        insert (bool): If True, insert elements instead of overwriting.
+
+    Returns:
+        dict: Mapping of base keys to original list lengths (for reference).
+    """
     indexed_keys = {}
+    # Track explicit indexes to delete (where value is REMOVE_TAG)
+    remove_indexes = {}
+
     for key in list(metadata.keys()):
-        if _is_indexed_key(key):
-            base = _get_base_key(key)
-            idx = _get_index(key)
+        # Skip non-indexed keys; handled in _process_non_indexed_keys().
+        if not _is_indexed_key(key):
+            continue
 
-            if base not in indexed_keys:
-                source_list = source.get(base, [])
-                if not isinstance(source_list, list):
-                    source_list = [source_list]
-                indexed_keys[base] = len(source_list)
+        # Extract base key ('subject' from 'subject[2]')
+        base = _get_base_key(key)
+        # Extract list index (2 from 'subject[2]')
+        idx = _get_index(key)
 
-                current_metadata_length = len(metadata)
-                prepared[base] = source_list + [None] * (
-                    current_metadata_length - len(source_list)
-                )
+        if base not in indexed_keys:
+            # Initialize this base key once per group of indexed keys.
+            # Pull any existing list data from the source metadata.
+            source_list = source.get(base, [])
+            if not isinstance(source_list, list):
+                source_list = [source_list]
 
-            while len(prepared[base]) <= idx:
-                prepared[base].append(None)
+            indexed_keys[base] = len(source_list)
 
+            # Preallocate enough None slots to handle incoming indices.
+            current_metadata_length = len(metadata)
+            prepared[base] = source_list + [None] * (
+                current_metadata_length - len(source_list)
+            )
+
+        # Ensure we're working with a list at this point.
+        if not isinstance(prepared[base], list):
+            prepared[base] = [prepared[base]]
+
+        # Make sure list is long enough to hold this index.
+        while len(prepared[base]) <= idx:
+            prepared[base].append(None)
+
+        # Track REMOVE_TAG for later deletion
+        if metadata[key] == 'REMOVE_TAG':
+            remove_indexes.setdefault(base, []).append(idx)
+            prepared[base][idx] = None  # Placeholder for now
+        elif insert:
+            # In "insert" mode, insert at index (shift others right),
+            # and remove duplicates if value already exists.
+            if metadata[key] in prepared[base]:
+                prepared[base].remove(metadata[key])
+            prepared[base].insert(idx, metadata[key])
+        else:
+            # Default mode: overwrite value at given index.
             prepared[base][idx] = metadata[key]
-            del metadata[key]
+
+    # Cleanup lists: first remove explicit REMOVE_TAG indexes
+    for base, indexes in remove_indexes.items():
+        for idx in sorted(indexes, reverse=True):
+            if idx < len(prepared[base]):
+                del prepared[base][idx]
+
+    # Then remove any remaining None values from preallocation
+    for base in prepared:
+        if isinstance(prepared[base], list):
+            prepared[base] = [v for v in prepared[base] if v is not None]
+
     return indexed_keys
 
 
 def _get_base_key(key):
+    """Return the part of a metadata key before any [index] notation."""
     return key.split('[')[0]
 
 
 def _is_indexed_key(key):
+    """Return True if key includes [n] list indexing syntax."""
     return '[' in key and ']' in key
 
 
 def _get_index(key):
+    """Extract integer index from an indexed metadata key (e.g. 'subject[2]')."""
     match = re.search(r'(?<=\[)\d+(?=\])', key)
     return int(match.group()) if match else None

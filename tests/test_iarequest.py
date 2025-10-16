@@ -7,6 +7,7 @@ from internetarchive.iarequest import (
     MetadataRequest,
     S3Request,
     prepare_files_patch,
+    prepare_metadata,
     prepare_patch,
     prepare_target_patch,
 )
@@ -134,3 +135,174 @@ def test_metadata_header_uri_encoding(test_value, expected):
     prepared = req.prepare()
     header = prepared.headers.get('x-archive-meta00-source', '')
     assert header == expected
+
+
+@pytest.mark.parametrize(("metadata", "source", "insert", "expected"), [
+    # Shift existing elements in insert mode
+    ({"collection[0]": "noaa-hawaii"},
+     {"collection": ["internetarchivebooks", "noaa-hawaii", "noaa", "democracys-library"]},
+     True,
+     {"collection": ["noaa-hawaii", "internetarchivebooks", "noaa", "democracys-library"]}),
+
+    # Simple overwrite of an indexed key
+    ({"subject[0]": "Math"},
+     {"subject": "Science"},
+     False,
+     {"subject": ["Math"]}),
+
+    # Indexed key overwriting existing list
+    ({"subject[1]": "Science"},
+     {"subject": ["Math"]},
+     False,
+     {"subject": ["Math", "Science"]}),
+
+    # Insert mode: shifts existing elements
+    ({"subject[1]": "History"},
+     {"subject": ["Math", "Science"]},
+     True,
+     {"subject": ["Math", "History", "Science"]}),
+
+    # REMOVE_TAG removes an element
+    ({"subject[0]": "REMOVE_TAG"},
+     {"subject": ["Math", "Science"]},
+     False,
+     {"subject": ["Science"]}),
+
+    # Multiple indexed keys out of order
+    ({"subject[2]": "Art", "subject[0]": "Math"},
+     {},
+     False,
+     {"subject": ["Math", "Art"]}),
+
+    # Insert at beginning of an existing list
+    ({"subject[0]": "Physics"},
+     {"subject": ["Math", "Chemistry"]},
+     True,
+     {"subject": ["Physics", "Math", "Chemistry"]}),
+
+    # Insert at end of an existing list
+    ({"subject[2]": "Biology"},
+     {"subject": ["Math", "Chemistry"]},
+     True,
+     {"subject": ["Math", "Chemistry", "Biology"]}),
+
+    # Overwrite numeric value
+    ({"page[0]": 42},
+     {"page": [1]},
+     False,
+     {"page": [42]}),
+
+    # Mixed non-indexed and indexed keys
+    ({"subject": "History", "topic[0]": "Algebra"},
+     {"subject": "Math", "topic": ["English", "Geometry"]},
+     False,
+     {"subject": "History", "topic": ["Algebra", "Geometry"]}),
+
+    # Remove multiple elements with REMOVE_TAG
+    ({"subject[0]": "REMOVE_TAG", "subject[1]": "REMOVE_TAG"},
+     {"subject": ["Math", "Science", "History"]},
+     False,
+     {"subject": ["History"]}),
+
+    # Indexed key beyond current list length
+    ({"subject[5]": "Philosophy"},
+     {"subject": ["Math"]},
+     False,
+     {"subject": ["Math", "Philosophy"]}),
+
+    # Insert mode with duplicate prevention
+    ({"subject[1]": "Math"},
+     {"subject": ["Math", "Science"]},
+     True,
+     {"subject": ["Science", "Math"]}),
+])
+def test_prepare_metadata_indexed_keys(metadata, source, insert, expected):
+    result = prepare_metadata(metadata, source_metadata=source, insert=insert)
+    # remove None placeholders for comparison
+    for k, v in result.items():
+        if isinstance(v, list):
+            result[k] = [i for i in v if i is not None]
+    assert result == expected
+
+
+def test_prepare_metadata_insert_mode_and_duplicates():
+    source = {"tags": ["foo", "bar"]}
+    metadata = {"tags[1]": "foo"}  # duplicate value
+    result = prepare_metadata(metadata, source_metadata=source, insert=True)
+    # Duplicate should be removed and value inserted at index 1
+    assert result["tags"] == ["bar", "foo"]
+
+
+def test_prepare_metadata_with_preallocation_and_none_cleanup():
+    source = {"keywords": ["python"]}
+    metadata = {"keywords[3]": "testing"}
+    result = prepare_metadata(metadata, source_metadata=source)
+    # Index 1 and 2 are None and should be removed
+    assert result["keywords"] == ["python", "testing"]
+
+
+def test_prepare_metadata_numeric_conversion_and_append():
+    source = {"page": 5}
+    metadata = {"page": 10}
+    result = prepare_metadata(metadata, source_metadata=source, append=True)
+    # Numeric values should be converted to strings and concatenated
+    assert result["page"] == "5 10"
+
+
+def test_prepare_metadata_append_list():
+    source = {"tags": ["foo"]}
+    metadata = {"tags": ["bar"]}
+    result = prepare_metadata(metadata, source_metadata=source, append_list=True)
+    assert result["tags"] == ["foo", ["bar"]]
+
+
+@pytest.mark.parametrize(("metadata", "source", "insert", "expected"), [
+    # Multiple REMOVE_TAGs interleaved with inserts
+    ({"tags[0]": "REMOVE_TAG", "tags[2]": "new", "tags[1]": "REMOVE_TAG"},
+     {"tags": ["foo", "bar", "baz"]},
+     True,
+     {"tags": ["new", "baz"]}),
+
+    # Sparse indices beyond current list length, insert mode
+    ({"keywords[5]": "python", "keywords[2]": "pytest"},
+     {"keywords": ["testing"]},
+     True,
+     {"keywords": ["testing", "pytest", "python"]}),
+
+    # Duplicate prevention with insert mode
+    ({"categories[1]": "Tech"},
+     {"categories": ["Tech", "Science"]},
+     True,
+     {"categories": ["Science", "Tech"]}),
+
+    # Indexed key overwrite where source is a non-list
+    ({"page[0]": 99},
+     {"page": 42},
+     False,
+     {"page": [99]}),
+
+    # Mixed string and list in source
+    ({"authors[1]": "Alice"},
+     {"authors": "Bob"},
+     True,
+     {"authors": ["Bob", "Alice"]}),
+
+    # REMOVE_TAG at the end of list
+    ({"items[2]": "REMOVE_TAG"},
+     {"items": ["A", "B", "C"]},
+     False,
+     {"items": ["A", "B"]}),
+
+    # Multiple sparse inserts with duplicates
+    ({"tags[0]": "python", "tags[3]": "python"},
+     {"tags": ["python", "pytest"]},
+     True,
+     {"tags": ["pytest", "python"]}),
+])
+def test_prepare_metadata_edge_cases(metadata, source, insert, expected):
+    result = prepare_metadata(metadata, source_metadata=source, insert=insert)
+    # remove None placeholders for comparison
+    for k, v in result.items():
+        if isinstance(v, list):
+            result[k] = [i for i in v if i is not None]
+    assert result == expected

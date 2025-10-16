@@ -3,11 +3,13 @@
 Release History
 ---------------
 
-5.6.2 (2025-10-16)
+5.7.0 (2025-10-16)
 ++++++++++++++++++
 
 **Bugfixes**
 
+- Fixed critical bug in ``ia delete --glob`` where all files were being deleted regardless
+  of the glob pattern. This bug was introduced in version v5.4.1 (2025-07-16).
 - More metadata insert bugfixes and refactoring.
 
 5.6.1 (2025-10-14)

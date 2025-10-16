@@ -96,10 +96,11 @@ def get_files_to_delete(args: argparse.Namespace, item) -> list:
     if args.all or args.file == []:
         files = list(item.get_files())
         args.cascade = True
-    elif args.glob:
-        files = item.get_files(glob_pattern=args.glob)
+
+    if args.glob:
+        files = list(item.get_files(glob_pattern=args.glob))
     elif args.format:
-        files = item.get_files(formats=args.format)
+        files = list(item.get_files(formats=args.format))
     else:
         fnames = [f.strip() for f in (sys.stdin if args.file == ["-"] else args.file)]
         files = list(item.get_files(fnames))

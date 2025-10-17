@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import sys
 import types
 from copy import deepcopy
 
@@ -36,6 +37,9 @@ EXPECTED_S3_HEADERS = {
     'accept-encoding': 'gzip, deflate',
     'connection': 'close',
 }
+# `compression.zstd` is added to the Standard Library in Python >= 3.14.
+if sys.version_info >= (3, 14):
+    EXPECTED_S3_HEADERS['accept-encoding'] += ', zstd'
 
 
 def test_get_item(nasa_metadata, nasa_item, session):

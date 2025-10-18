@@ -919,7 +919,7 @@ class Item(BaseItem):
     def delete_flag(
             self,
             category: str,
-            user: Optional[str] = None,  # noqa: UP007
+            user: Optional[str] = None,  # noqa: UP045
     ) -> Response:
         if user is None:
             user = f"@{self.session.config.get('general', {}).get('screenname')}"
@@ -932,7 +932,7 @@ class Item(BaseItem):
     def add_flag(
             self,
             category: str,
-            user: Optional[str] = None,  # noqa: UP007
+            user: Optional[str] = None,  # noqa: UP045
     ) -> Response:
         if user is None:
             user = f"@{self.session.config.get('general', {}).get('screenname')}"
@@ -967,7 +967,7 @@ class Item(BaseItem):
         r = self.session.post(self.urls.metadata, data=data)  # type: ignore
         return r
 
-    def upload_file(self, body,  # noqa: PLR0915; TODO: Refactor this method to reduce complexity
+    def upload_file(self, body,  # noqa: PLR0915 TODO: Refactor this method to reduce complexity
                     key: str | None = None,
                     metadata: Mapping | None = None,
                     file_metadata: Mapping | None = None,

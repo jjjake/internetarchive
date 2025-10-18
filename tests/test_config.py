@@ -215,7 +215,7 @@ def _test_parse_config_file(
         if xdg_config_home is not None:
             env['XDG_CONFIG_HOME'] = xdg_config_home
         with _environ(**env):
-            config_file_path, is_xdg, config = internetarchive.config.parse_config_file(
+            config_file_path, is_xdg, _config = internetarchive.config.parse_config_file(
                 config_file=config_file_param)
 
     assert (config_file_path, is_xdg) == expected_result[0:2]

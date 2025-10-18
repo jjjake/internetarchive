@@ -54,7 +54,7 @@ def deep_update(d: dict, u: Mapping) -> dict:
             r = deep_update(d.get(k, {}), v)
             d[k] = r
         else:
-            d[k] = u[k]
+            d[k] = v
     return d
 
 

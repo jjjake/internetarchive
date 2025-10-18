@@ -21,7 +21,7 @@ def test_ia_search_itemlist(capsys):
                  match=[responses.matchers.query_param_matcher(p1)])
         ia_call(['ia', 'search', 'collection:attentionkmartshoppers', '--itemlist'])
 
-    out, err = capsys.readouterr()
+    out, _err = capsys.readouterr()
     assert len(set(out.split())) == 100
 
 
@@ -38,5 +38,5 @@ def test_ia_search_num_found(capsys):
                  match=[responses.matchers.query_param_matcher(p)])
 
         ia_call(['ia', 'search', 'collection:nasa', '--num-found'])
-    out, err = capsys.readouterr()
+    out, _err = capsys.readouterr()
     assert out == '50\n'

@@ -42,6 +42,7 @@ import requests.sessions
 from requests import Response
 from requests.adapters import HTTPAdapter
 from requests.cookies import create_cookie
+from requests.exceptions import RequestException
 from requests.utils import default_headers
 from urllib3 import Retry
 
@@ -603,7 +604,6 @@ class ArchiveSession(requests.sessions.Session):
                         insecure = True
                         break
         if insecure:
-            from requests.exceptions import RequestException
             msg = ('You are attempting to make an HTTPS request on an insecure platform,'
                    ' please see:\n\n\thttps://archive.org/services/docs/api'
                    '/internetarchive/troubleshooting.html#https-issues\n')

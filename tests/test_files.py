@@ -39,5 +39,5 @@ def test_file_download_prevents_directory_traversal(tmpdir, nasa_item):
         # Test directory traversal attempt by getting the file and calling download directly
         file_obj = nasa_item.get_file('nasa_meta.xml')
         malicious_path = os.path.join('..', 'nasa_meta.xml')
-        with pytest.raises(DirectoryTraversalError, match="outside.*directory"):
+        with pytest.raises(DirectoryTraversalError, match=r"outside.*directory"):
             file_obj.download(file_path=malicious_path, destdir=str(tmpdir))

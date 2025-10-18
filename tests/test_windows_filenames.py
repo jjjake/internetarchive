@@ -76,7 +76,7 @@ def test_invalid_chars(ch, enc):
     'back\\slash', 'dir\\\\file'
 ])
 def test_backslash_always_encoded(name):
-    sanitized, modified = sanitize_windows_filename(name)
+    sanitized, _modified = sanitize_windows_filename(name)
     assert '%5C' in sanitized
 
 
@@ -131,7 +131,7 @@ def test_traversal_attempt_sanitization(attempt):
 def test_existing_percent_sequences(name):
     # If no other encoding needed, percent remains unless part of %HH sequence
     # and no other changes?
-    sanitized, modified = sanitize_windows_filename(name)
+    sanitized, _modified = sanitize_windows_filename(name)
     # existing sequences remain unchanged because no other encoding triggered
     assert sanitized == name
 

@@ -1,4 +1,3 @@
-import json
 from dataclasses import dataclass, field
 from typing import ClassVar, Dict, List, Optional
 
@@ -136,7 +135,8 @@ class Account:
             response = session.post(
                 f'https://{session.host}{cls.API_BASE_URL}',  # type: ignore[attr-defined]
                 params=cls.API_INFO_PARAMS,
-                data=json.dumps(data)
+                data=data,
+                headers={'Content-Type': 'application/x-www-form-urlencoded'}
             )
             response.raise_for_status()
             j = response.json()

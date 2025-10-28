@@ -3,6 +3,14 @@
 Release History
 ---------------
 
+5.7.1 (?)
++++++++++
+
+**Bugfixes**
+
+- Explicitly set Content-Type header in account API requests.
+  This header wasn't being set in some cases and caused some requests to fail.
+
 5.7.0 (2025-10-16)
 ++++++++++++++++++
 

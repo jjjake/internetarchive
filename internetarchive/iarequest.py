@@ -338,7 +338,7 @@ def prepare_patch(metadata, source_metadata, append, expect=None,
     if isinstance(destination, dict):
         destination.update(prepared_metadata)
     elif isinstance(metadata, list):
-        destination = prepared_metadata if not destination else prepared_metadata  # noqa: RUF034
+        destination = prepared_metadata
     else:
         if isinstance(prepared_metadata, list):
             destination = prepared_metadata

@@ -8,7 +8,7 @@
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-builtin-literals
       - id: check-executables-have-shebangs
@@ -21,14 +21,14 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.8.5
+    rev: v0.14.1
 
     hooks:
-      - id: ruff
+      - id: ruff-check
         # args: [ --fix, --exit-non-zero-on-fix ]
 
   - repo: https://github.com/psf/black
-    rev: 24.10.0
+    rev: 25.9.0
     hooks:
       - id: black
         language_version: python3
@@ -37,12 +37,12 @@ repos:
           - --skip-string-normalization
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell  # See setup.cfg for args
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.1
+    rev: v1.18.2
     hooks:
       - id: mypy
         additional_dependencies:
@@ -54,6 +54,6 @@ repos:
           - types-urllib3
 
   - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.7.0
+    rev: v2.7.0  # Use v2.7.0 until dropping Python 3.9 support
     hooks:
       - id: setup-cfg-fmt

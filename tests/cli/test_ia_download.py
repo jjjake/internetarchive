@@ -22,7 +22,7 @@ def test_dry_run():
     nasa_url = 'http://archive.org/download/nasa/'
     expected_urls = {nasa_url + f for f in NASA_EXPECTED_FILES}
 
-    stdout, stderr = call_cmd('ia --insecure download --dry-run nasa')
+    stdout, _stderr = call_cmd('ia --insecure download --dry-run nasa')
     output_lines = stdout.split('\n')
     dry_run_urls = {x.strip() for x in output_lines if x and 'nasa:' not in x}
 
@@ -59,10 +59,10 @@ def test_format(tmpdir_ch):
 def test_on_the_fly_format():
     i = 'wonderfulwizardo00baumiala'
 
-    stdout, stderr = call_cmd(f'ia --insecure download --dry-run --format="DAISY" {i}')
+    stdout, _stderr = call_cmd(f'ia --insecure download --dry-run --format="DAISY" {i}')
     assert stdout == ''
 
-    stdout, stderr = call_cmd(f'ia --insecure download --dry-run --format="DAISY" --on-the-fly {i}')
+    stdout, _stderr = call_cmd(f'ia --insecure download --dry-run --format="DAISY" --on-the-fly {i}')
     assert stdout == f'http://archive.org/download/{i}/{i}_daisy.zip'
 
 
@@ -71,7 +71,7 @@ def test_clobber(tmpdir_ch):
     call_cmd(cmd)
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
 
-    stdout, stderr = call_cmd(cmd)
+    _stdout, stderr = call_cmd(cmd)
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
     prefix = 'nasa:\n'.replace('\n', os.linesep)
     filepath = os.path.join('nasa', 'nasa_meta.xml')
@@ -83,7 +83,7 @@ def test_checksum(tmpdir_ch):
     call_cmd('ia --insecure download nasa nasa_meta.xml')
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
 
-    stdout, stderr = call_cmd('ia --insecure download --checksum nasa nasa_meta.xml')
+    _stdout, stderr = call_cmd('ia --insecure download --checksum nasa nasa_meta.xml')
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
     prefix = 'nasa:\n'.replace('\n', os.linesep)
     filepath = os.path.join('nasa', 'nasa_meta.xml')
@@ -94,7 +94,7 @@ def test_checksum_archive(tmpdir_ch):
     call_cmd('ia --insecure download nasa nasa_meta.xml')
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
 
-    stdout, stderr = call_cmd('ia --insecure download --checksum-archive nasa nasa_meta.xml')
+    _stdout, stderr = call_cmd('ia --insecure download --checksum-archive nasa nasa_meta.xml')
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
     prefix = 'nasa:\n'.replace('\n', os.linesep)
     filepath = os.path.join('nasa', 'nasa_meta.xml')
@@ -105,7 +105,7 @@ def test_checksum_archive(tmpdir_ch):
         filepath = os.path.join('nasa', 'nasa_meta.xml')
         assert f.read() == f'{filepath}\n'
 
-    stdout, stderr = call_cmd('ia --insecure download --checksum-archive nasa nasa_meta.xml')
+    _stdout, stderr = call_cmd('ia --insecure download --checksum-archive nasa nasa_meta.xml')
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
     prefix = 'nasa:\n'.replace('\n', os.linesep)
     filepath = os.path.join('nasa', 'nasa_meta.xml')
@@ -119,7 +119,7 @@ def test_no_directories(tmpdir_ch):
 
 def test_destdir(tmpdir_ch):
     cmd = 'ia --insecure download --destdir=thisdirdoesnotexist/ nasa nasa_meta.xml'
-    stdout, stderr = call_cmd(cmd, expected_exit_code=2)
+    _stdout, stderr = call_cmd(cmd, expected_exit_code=2)
 
     assert "--destdir: 'thisdirdoesnotexist/' is not a valid directory" in stderr
 

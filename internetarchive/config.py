@@ -162,7 +162,7 @@ def parse_config_file(config_file=None):
 
 def get_config(config=None, config_file=None) -> dict:
     _config = config or {}
-    config_file, is_xdg, config_parser = parse_config_file(config_file)
+    config_file, _is_xdg, config_parser = parse_config_file(config_file)
 
     # TODO: Use typing.TypedDict when we drop Python 3.8 support
     # to get rid of noqa: UP006

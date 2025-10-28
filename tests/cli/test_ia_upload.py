@@ -33,7 +33,7 @@ def test_ia_upload_invalid_identifier(capsys, caplog):
     ia_call(['ia', '--log', 'upload', 'føø', 'test.txt'],
             expected_exit_code=2)
 
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert "Identifier can only contain alphanumeric" in err
 
 
@@ -44,7 +44,7 @@ def test_ia_upload_status_check(capsys):
                  content_type='application/json')
 
         ia_call(['ia', 'upload', 'nasa', '--status-check'])
-        out, err = capsys.readouterr()
+        _out, err = capsys.readouterr()
         assert 'success: nasa is accepting requests.' in err
 
         j = json.loads(STATUS_CHECK_RESPONSE)
@@ -55,7 +55,7 @@ def test_ia_upload_status_check(capsys):
                  content_type='application/json')
 
         ia_call(['ia', 'upload', 'nasa', '--status-check'], expected_exit_code=1)
-        out, err = capsys.readouterr()
+        _out, err = capsys.readouterr()
         assert ('warning: nasa is over limit, and not accepting requests. '
                 'Expect 503 SlowDown errors.') in err
 
@@ -65,7 +65,7 @@ def test_ia_upload_debug(capsys, tmpdir_ch, nasa_mocker):
         fh.write('foo')
 
     ia_call(['ia', 'upload', '--debug', 'nasa', 'test.txt'])
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert 'User-Agent' in err
     assert 's3.us.archive.org/nasa/test.txt' in err
     assert 'Accept:*/*' in err
@@ -95,13 +95,13 @@ def test_ia_upload_403(capsys):
                  content_type='text/plain')
         ia_call(['ia', 'upload', 'nasa', __file__], expected_exit_code=1)
 
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert 'error uploading test_ia_upload.py' in err
 
 
 def test_ia_upload_invalid_cmd(capsys):
     ia_call(['ia', 'upload', 'nasa', 'nofile.txt'], expected_exit_code=2)
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
 
     assert "'nofile.txt' is not a valid file or directory" in err
 
@@ -111,7 +111,7 @@ def test_ia_upload_size_hint(capsys, tmpdir_ch, nasa_mocker):
         fh.write('foo')
 
     ia_call(['ia', 'upload', '--debug', '--size-hint', '30', 'nasa', 'test.txt'])
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert 'User-Agent' in err
     assert 's3.us.archive.org/nasa/test.txt' in err
     assert 'x-archive-size-hint:30' in err
@@ -129,7 +129,7 @@ def test_ia_upload_automatic_size_hint_files(capsys, tmpdir_ch, nasa_mocker):
         fh.write('bar')
 
     ia_call(['ia', 'upload', '--debug', 'nasa', 'foo', 'bar'])
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert 'x-archive-size-hint:6' in err
 
 def test_ia_upload_automatic_size_hint_dir(capsys, tmpdir_ch, nasa_mocker):
@@ -139,7 +139,7 @@ def test_ia_upload_automatic_size_hint_dir(capsys, tmpdir_ch, nasa_mocker):
         fh.write('bar')
 
     ia_call(['ia', 'upload', '--debug', 'nasa', '.'], expected_exit_code=2)
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert 'x-archive-size-hint:115' in err
 
 
@@ -200,7 +200,7 @@ def test_ia_upload_stdin(tmpdir_ch, caplog):
 
 def test_ia_upload_inexistent_file(tmpdir_ch, capsys, caplog):
     ia_call(['ia', 'upload', 'foo', 'test.txt'], expected_exit_code=2)
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert "'test.txt' is not a valid file or directory" in err
 
 
@@ -224,7 +224,7 @@ def test_ia_upload_spreadsheet(tmpdir_ch, capsys):
                  content_type='text/plain')
         ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'])
 
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert 'uploading foo.txt' in err
     assert 'uploading bar.txt' in err
 
@@ -243,7 +243,7 @@ def test_ia_upload_spreadsheet_item_column(tmpdir_ch, capsys):
                  content_type='text/plain')
         ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'])
 
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert 'uploading test.txt' in err
 
 
@@ -269,7 +269,7 @@ def test_ia_upload_spreadsheet_item_and_identifier_column(tmpdir_ch, capsys):
         assert 'x-archive-meta00-identifier' not in putCalls[0].request.headers
         assert 'x-archive-meta00-item' not in putCalls[0].request.headers
 
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert 'uploading test.txt' in err
 
 
@@ -312,7 +312,7 @@ def test_ia_upload_spreadsheet_bom(tmpdir_ch, capsys):
                  content_type='text/plain')
         ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'])
 
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert 'uploading test.txt' in err
 
 

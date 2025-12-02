@@ -82,7 +82,7 @@ Release History
 - Added ``--print-auth-header`` option to ``ia configure``.
 
 **Bugfixes**
-- Corrected behavior of ``ia_copy`` to avoid dropping path prefixes, fixing ``ia_move`` to properly delete moved files in subdirectories (via :gh:`693`).
+- Corrected behavior of ``ia_copy`` to avoid dropping path prefixes, fixing ``ia_move`` to properly delete moved files in subdirectories (via `PR #693 <https://github.com/jjjake/internetarchive/pull/693>`_).
 - Fixed bug where hardcoded test comment was being sent with every request.
 - Fixed issue where ``ia reviews --index/--noindex`` only worked for configured user.
 

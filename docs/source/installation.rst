@@ -10,7 +10,7 @@ The ``internetarchive`` library is a Python tool for interacting with the Intern
 **Note**: If you only need the command-line tool and don’t plan to use the Python library, you can download a binary instead. See the :ref:`binaries` section below for more information.
 
 What is ``pipx``?
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 ``pipx`` is a tool for installing and running Python applications in isolated environments. It ensures that the tools you install don’t interfere with other Python projects or system-wide packages. It’s perfect for CLI tools like ``internetarchive``.
 
 Prerequisites

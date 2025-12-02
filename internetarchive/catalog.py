@@ -99,6 +99,7 @@ class Catalog:
         :param identifier: Item identifier.
 
         :param params: Query parameters, refer to
+
         `Tasks API <https://archive.org/services/docs/api/tasks.html>`_
         for available parameters.
 
@@ -186,6 +187,7 @@ class Catalog:
                            other criteria provided in params.
 
         :param params: Query parameters, refer to
+
         `Tasks API <https://archive.org/services/docs/api/tasks.html>`_
         for available parameters.
 

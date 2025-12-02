@@ -25,7 +25,7 @@ Before installing ``internetarchive``, you’ll need:
    If Python is not installed, download it from `python.org <https://www.python.org/downloads/>`_.
    On MacOS, you can install a `supported version of Python <https://devguide.python.org/versions/>`_ with `Homebrew <https://brew.sh/>`_ (e.g. ``brew install python3``).
 
-2. **`pipx`**: If you don’t have ``pipx`` installed, please refer to the `pipx documentation <https://pipx.pypa.io/stable/installation/>`_ for installation instructions.
+2. **`pipx`**: If you don’t have ``pipx`` installed, please refer to the `pipx installation documentation <https://pipx.pypa.io/stable/installation/>`_ for installation instructions.
 
 Installing ``internetarchive``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,3 +1,5 @@
+.. _parallel:
+
 Using GNU Parallel with ia
 ==========================
 

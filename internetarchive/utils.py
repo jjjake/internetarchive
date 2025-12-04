@@ -614,7 +614,7 @@ def sanitize_filepath(filepath: str, avoid_colon: bool = False) -> str:
     Args:
         filepath (str): The full file path to sanitize.
         avoid_colon (bool): If True, colon ':' in the filename will be percent-encoded
-            for macOS compatibility. Defaults to False.
+        for macOS compatibility. Defaults to False.
 
     Returns:
         str: The sanitized file path with the filename portion percent-encoded as needed.

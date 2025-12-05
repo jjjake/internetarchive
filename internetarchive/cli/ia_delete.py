@@ -122,21 +122,11 @@ def delete_files(files, args, item, verbose):
     """
     errors = False
 
-    # Files that cannot be deleted via S3.
-    no_delete = [
-        "_meta.xml",
-        "_files.xml",
-        "_meta.sqlite"
-        "_reviews.xml",
-    ]
-
     for f in files:
         if not f:
             if verbose:
                 print(f" error: '{f.name}' does not exist", file=sys.stderr)
             errors = True
-            continue
-        if any(f.name.endswith(s) for s in no_delete):
             continue
         if args.dry_run:
             if args.cascade:

@@ -23,6 +23,7 @@ import argparse
 import sys
 
 import requests.exceptions
+from requests.exceptions import HTTPError
 
 from internetarchive.cli.cli_utils import (
     FlattenListAction,
@@ -122,21 +123,11 @@ def delete_files(files, args, item, verbose):
     """
     errors = False
 
-    # Files that cannot be deleted via S3.
-    no_delete = [
-        "_meta.xml",
-        "_files.xml",
-        "_meta.sqlite"
-        "_reviews.xml",
-    ]
-
     for f in files:
         if not f:
             if verbose:
                 print(f" error: '{f.name}' does not exist", file=sys.stderr)
             errors = True
-            continue
-        if any(f.name.endswith(s) for s in no_delete):
             continue
         if args.dry_run:
             if args.cascade:
@@ -153,6 +144,13 @@ def delete_files(files, args, item, verbose):
         except requests.exceptions.RetryError:
             print(f" error: max retries exceeded for {f.name}", file=sys.stderr)
             errors = True
+            continue
+        except HTTPError as exc:
+            errors = True
+            msg = get_s3_xml_text(exc.response.content)
+            if not msg or msg == str(exc.response.content):
+                msg = str(exc)
+            print(f" error: {msg} ({exc.response.status_code})", file=sys.stderr)
             continue
 
         if resp.status_code != 204:

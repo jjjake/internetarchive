@@ -23,6 +23,7 @@ import argparse
 import sys
 
 import requests.exceptions
+from requests.exceptions import HTTPError
 
 from internetarchive.cli.cli_utils import (
     FlattenListAction,
@@ -143,6 +144,13 @@ def delete_files(files, args, item, verbose):
         except requests.exceptions.RetryError:
             print(f" error: max retries exceeded for {f.name}", file=sys.stderr)
             errors = True
+            continue
+        except HTTPError as exc:
+            errors = True
+            msg = get_s3_xml_text(exc.response.content)
+            if not msg or msg == str(exc.response.content):
+                msg = str(exc)
+            print(f" error: {msg} ({exc.response.status_code})", file=sys.stderr)
             continue
 
         if resp.status_code != 204:

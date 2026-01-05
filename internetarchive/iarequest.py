@@ -461,6 +461,10 @@ def _process_non_indexed_keys(metadata, source, prepared, append, append_list):
                 existing = [existing]
             prepared[current_key] = existing + [value]
         elif append and source.get(current_key):
+            if isinstance(source[current_key], list):
+                raise ValueError(
+                    "Cannot append to list metadata with 'append' flag; "
+                    "use 'append_list' instead.")
             prepared[current_key] = f'{source[current_key]} {value}'
         else:
             prepared[current_key] = value

@@ -1221,14 +1221,39 @@ class Item(BaseItem):
             except ConnectionResetError as exc:
                 # Capture diagnostic information about the failed connection.
                 ip = "unknown"
+                src_ip_port = "unknown"
+                dst_ip_port = "unknown"
+                http_path = "unknown"
                 connection_header_value = "unknown"
                 pool_status = "unknown"
 
                 try:
-                    # Resolve the actual IP address that was connected.
-                    hostname = urlparse(prepared_request.url).hostname
+                    # Parse URL for hostname and path
+                    parsed_url = urlparse(prepared_request.url)
+                    hostname = parsed_url.hostname
+                    http_path = parsed_url.path
+                    port = parsed_url.port or (443 if parsed_url.scheme == 'https' else 80)
+
                     if hostname:
                         ip = socket.gethostbyname(hostname)
+                        dst_ip_port = f"{ip}:{port}"
+
+                    # Try to get source IP from socket (local machine)
+                    try:
+                        # Get local IP address
+                        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        # This doesn't actually connect, just sets up for getsockname
+                        s.connect((ip, port))
+                        src_ip = s.getsockname()[0]
+                        s.close()
+
+                        # For source port, we can only get an estimate since the
+                        # actual ephemeral port isn't known without the actual
+                        # connection object
+                        src_ip_port = f"{src_ip}:<ephemeral>"
+                    except Exception:
+                        log.debug("ConnectionResetError diagnostics failed. "
+                                  "Raising original exception.")
 
                     # Check what Connection header was actually sent in the request.
                     connection_header_value = prepared_request.headers.get('Connection', 'not-set')
@@ -1250,7 +1275,8 @@ class Item(BaseItem):
 
                 # Construct enhanced error message with clear diagnostic context.
                 error_msg = (f'Connection reset by peer while uploading {key} to '
-                             f'{self.identifier} (IP: {ip}, UTC: {datetime.utcnow().isoformat()}, '
+                             f'{self.identifier} (src: {src_ip_port}, dst: {dst_ip_port}, '
+                             f'path: {http_path}, UTC: {datetime.utcnow().isoformat()}, '
                              f'Connection: {connection_header_value}, Pool: {pool_status})')
                 log.error(error_msg)
                 if verbose:

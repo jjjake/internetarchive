@@ -1219,10 +1219,19 @@ class Item(BaseItem):
                 response.close()
                 return response
             except ConnectionResetError as exc:
-                # Capture diagnostic information about the failed connection.
+                # Get connection info from thread-local storage
+                conn_info = self.session.get_connection_info()
+
+                # Extract connection details
+                src_ip_port = conn_info.get('src', 'unknown')
+                dst_ip_port = conn_info.get('dst', 'unknown')
+                src_ip = conn_info.get('src_ip', 'unknown')
+                src_port = conn_info.get('src_port', 'unknown')
+                dst_ip = conn_info.get('dst_ip', 'unknown')
+                dst_port = conn_info.get('dst_port', 'unknown')
+
+                # Get other diagnostic info
                 ip = "unknown"
-                src_ip_port = "unknown"
-                dst_ip_port = "unknown"
                 http_path = "unknown"
                 connection_header_value = "unknown"
                 pool_status = "unknown"
@@ -1230,35 +1239,19 @@ class Item(BaseItem):
                 try:
                     # Parse URL for hostname and path
                     parsed_url = urlparse(prepared_request.url)
-                    hostname = parsed_url.hostname
                     http_path = parsed_url.path
-                    port = parsed_url.port or (443 if parsed_url.scheme == 'https' else 80)
 
-                    if hostname:
+                    # Use resolved destination IP if available
+                    if dst_ip and dst_ip != 'unknown':
+                        ip = dst_ip
+                    elif parsed_url.hostname:
+                        hostname = parsed_url.hostname
                         ip = socket.gethostbyname(hostname)
-                        dst_ip_port = f"{ip}:{port}"
 
-                    # Try to get source IP from socket (local machine)
-                    try:
-                        # Get local IP address
-                        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                        # This doesn't actually connect, just sets up for getsockname
-                        s.connect((ip, port))
-                        src_ip = s.getsockname()[0]
-                        s.close()
-
-                        # For source port, we can only get an estimate since the
-                        # actual ephemeral port isn't known without the actual
-                        # connection object
-                        src_ip_port = f"{src_ip}:<ephemeral>"
-                    except Exception:
-                        log.debug("ConnectionResetError diagnostics failed. "
-                                  "Raising original exception.")
-
-                    # Check what Connection header was actually sent in the request.
+                    # Check what Connection header was actually sent
                     connection_header_value = prepared_request.headers.get('Connection', 'not-set')
 
-                    # Check if urllib3 pooled the connection for this host.
+                    # Check if urllib3 pooled the connection for this host
                     adapter = self.session.get_adapter(prepared_request.url)
                     if hasattr(adapter, 'poolmanager'):
                         pool_key = adapter.poolmanager._get_pool_key(prepared_request.url, None)  # noqa
@@ -1269,11 +1262,11 @@ class Item(BaseItem):
                             pool_status = "no-pool"
                     else:
                         pool_status = "no-poolmanager"
-                except Exception:  # noqa
-                    # Never let diagnostics break the actual error handling.
-                    pass
+                except Exception:
+                    log.debug('error gathering diagnostic info for connection reset error, '
+                              'Raising original exception.')
 
-                # Construct enhanced error message with clear diagnostic context.
+                # Construct enhanced error message with clear diagnostic context
                 error_msg = (f'Connection reset by peer while uploading {key} to '
                              f'{self.identifier} (src: {src_ip_port}, dst: {dst_ip_port}, '
                              f'path: {http_path}, UTC: {datetime.utcnow().isoformat()}, '
@@ -1282,7 +1275,7 @@ class Item(BaseItem):
                 if verbose:
                     print(f' error: {error_msg}', file=sys.stderr)
 
-                # Re-raise with enhanced message while preserving original traceback.
+                # Re-raise with enhanced message while preserving original traceback
                 raise ConnectionResetError(error_msg) from exc
             except HTTPError as exc:
                 try:

@@ -28,7 +28,7 @@ from collections import defaultdict
 from copy import copy
 from typing import Mapping
 
-from requests import Response
+from requests import Request, Response
 
 from internetarchive import item
 from internetarchive.cli.cli_utils import MetadataAction, QueryStringAction
@@ -134,16 +134,30 @@ def modify_metadata(item: item.Item,
     append = bool(args.append)
     append_list = bool(args.append_list)
     insert = bool(args.insert)
+
     try:
         r = item.modify_metadata(metadata, target=args.target, append=append,
                                  expect=args.expect, priority=args.priority,
                                  append_list=append_list, headers=args.header,
                                  insert=insert, reduced_priority=args.reduced_priority,
                                  timeout=args.timeout)
-        assert isinstance(r, Response)  # mypy: modify_metadata() -> Request | Response
     except ItemLocateError as exc:
         print(f"{item.identifier} - error: {exc}", file=sys.stderr)
         sys.exit(1)
+    except ValueError as exc:
+        if "append to list" in str(exc):
+            error_msg = ("cannot append string to list metadata with '--append'; "
+                         "use '--append-list' instead.")
+            print(f"{item.identifier} - error: {error_msg}", file=sys.stderr)
+            sys.exit(1)
+
+    if isinstance(r, Request):
+        # TODO: modify_metadata can return a Request object in some cases,
+        # but it does NOT currently in the CLI. If that changes, i.e. if
+        # debug is implemented, handle this here. This exception should
+        # never be raised, but it keeps mypy happy.
+        raise NotImplementedError("Request handling not yet implemented")
+
     if not r.json()["success"]:
         error_msg = r.json()["error"]
         etype = "warning" if "no changes" in r.text else "error"

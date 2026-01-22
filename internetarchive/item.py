@@ -28,14 +28,16 @@ from __future__ import annotations
 import io
 import math
 import os
+import socket
 import sys
 from copy import deepcopy
+from datetime import datetime
 from fnmatch import fnmatch
 from functools import total_ordering
 from logging import getLogger
 from time import sleep
 from typing import Mapping, MutableMapping, Optional
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 from xml.parsers.expat import ExpatError
 
 from requests import Request, Response
@@ -919,7 +921,7 @@ class Item(BaseItem):
     def delete_flag(
             self,
             category: str,
-            user: Optional[str] = None,  # noqa: UP045
+            user: str | None = None,
     ) -> Response:
         if user is None:
             user = f"@{self.session.config.get('general', {}).get('screenname')}"
@@ -932,7 +934,7 @@ class Item(BaseItem):
     def add_flag(
             self,
             category: str,
-            user: Optional[str] = None,  # noqa: UP045
+            user: str | None = None,
     ) -> Response:
         if user is None:
             user = f"@{self.session.config.get('general', {}).get('screenname')}"
@@ -967,7 +969,7 @@ class Item(BaseItem):
         r = self.session.post(self.urls.metadata, data=data)  # type: ignore
         return r
 
-    def upload_file(self, body,  # noqa: PLR0915 TODO: Refactor this method to reduce complexity
+    def upload_file(self, body,  # noqa: PLR0915, C901 TODO: Refactor this method to reduce complexity
                     key: str | None = None,
                     metadata: Mapping | None = None,
                     file_metadata: Mapping | None = None,
@@ -1054,7 +1056,8 @@ class Item(BaseItem):
             request_kwargs['timeout'] = 120
         md5_sum = None
 
-        _headers = headers.copy()
+        _headers = self.session.headers.copy()
+        _headers.update(headers)
 
         if not hasattr(body, 'read'):
             filename = body
@@ -1137,7 +1140,6 @@ class Item(BaseItem):
             else:
                 data = body
 
-            _headers.update(self.session.headers)
             request = S3Request(method='PUT',
                                 url=url,
                                 headers=_headers,
@@ -1216,6 +1218,65 @@ class Item(BaseItem):
                     os.remove(filename)
                 response.close()
                 return response
+            except ConnectionResetError as exc:
+                # Get connection info from thread-local storage
+                conn_info = self.session.get_connection_info()
+
+                # Extract connection details
+                src_ip_port = conn_info.get('src', 'unknown')
+                dst_ip_port = conn_info.get('dst', 'unknown')
+                src_ip = conn_info.get('src_ip', 'unknown')
+                src_port = conn_info.get('src_port', 'unknown')
+                dst_ip = conn_info.get('dst_ip', 'unknown')
+                dst_port = conn_info.get('dst_port', 'unknown')
+
+                # Get other diagnostic info
+                ip = "unknown"
+                http_path = "unknown"
+                connection_header_value = "unknown"
+                pool_status = "unknown"
+
+                try:
+                    # Parse URL for hostname and path
+                    parsed_url = urlparse(prepared_request.url)
+                    http_path = parsed_url.path
+
+                    # Use resolved destination IP if available
+                    if dst_ip and dst_ip != 'unknown':
+                        ip = dst_ip
+                    elif parsed_url.hostname:
+                        hostname = parsed_url.hostname
+                        ip = socket.gethostbyname(hostname)
+
+                    # Check what Connection header was actually sent
+                    connection_header_value = prepared_request.headers.get('Connection', 'not-set')
+
+                    # Check if urllib3 pooled the connection for this host
+                    adapter = self.session.get_adapter(prepared_request.url)
+                    if hasattr(adapter, 'poolmanager'):
+                        pool_key = adapter.poolmanager._get_pool_key(prepared_request.url, None)  # noqa
+                        pool = adapter.poolmanager.pools.get(pool_key)
+                        if pool:
+                            pool_status = f"requests={pool.num_requests}"
+                        else:
+                            pool_status = "no-pool"
+                    else:
+                        pool_status = "no-poolmanager"
+                except Exception:
+                    log.debug('error gathering diagnostic info for connection reset error, '
+                              'Raising original exception.')
+
+                # Construct enhanced error message with clear diagnostic context
+                error_msg = (f'Connection reset by peer while uploading {key} to '
+                             f'{self.identifier} (src: {src_ip_port}, dst: {dst_ip_port}, '
+                             f'path: {http_path}, UTC: {datetime.utcnow().isoformat()}, '
+                             f'Connection: {connection_header_value}, Pool: {pool_status})')
+                log.error(error_msg)
+                if verbose:
+                    print(f' error: {error_msg}', file=sys.stderr)
+
+                # Re-raise with enhanced message while preserving original traceback
+                raise ConnectionResetError(error_msg) from exc
             except HTTPError as exc:
                 try:
                     msg = get_s3_xml_text(exc.response.content)  # type: ignore

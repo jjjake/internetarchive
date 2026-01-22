@@ -3,6 +3,13 @@
 Release History
 ---------------
 
+5.7.2 (?)
++++++++++
+
+**Bugfixes**
+
+- Fixed bug where metadata append was not working correctly when source metadata field was a list, and failing with obscure messages in some cases.
+
 5.7.1 (2025-10-29)
 ++++++++++++++++++
 

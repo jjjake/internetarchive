@@ -60,7 +60,7 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 
 ## Code Style
 
-- Line length: 90 characters
+- Line length: 102 characters
 - Linter: ruff (configured in `pyproject.toml`)
 - Formatter: black
 - Type checking: mypy (type stubs in `options.extras_require` under `types`)
@@ -77,3 +77,8 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 - PRs require tests and must pass ruff linting
 - Avoid introducing new dependencies
 - Support Python 3.9+
+- Update HISTORY.rst for any user-facing changes under the appropriate section:
+  - **Breaking changes** - API or behavior changes that break existing usage
+  - **Features and Improvements** - New functionality or enhancements
+  - **Bugfixes** - Bug fixes
+  - **Security** - Security-related fixes

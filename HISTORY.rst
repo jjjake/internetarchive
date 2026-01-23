@@ -6,9 +6,16 @@ Release History
 5.7.2 (?)
 +++++++++
 
+**Features and Improvements**
+
+- Added ``--print-curl`` and ``--print-curl-auth`` global CLI options to output equivalent curl commands for debugging. The former redacts authentication, the latter exposes secrets.
+
 **Bugfixes**
 
 - Fixed bug where metadata append was not working correctly when source metadata field was a list, and failing with obscure messages in some cases.
+- Fixed bug in ``File.download()`` where the headers dict was being overwritten instead of updated when adding the Range header for resumed downloads.
+- Removed unnecessary ``.encode('utf-8')`` calls on file paths in ``File.download()``, a Python 2 compatibility pattern no longer needed.
+- Added early check in ``Item.modify_metadata()`` to raise ``ItemLocateError`` when item is dark or does not exist, preventing confusing KeyError exceptions.
 
 5.7.1 (2025-10-29)
 ++++++++++++++++++

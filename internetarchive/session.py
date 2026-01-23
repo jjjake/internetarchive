@@ -52,7 +52,7 @@ from internetarchive import __version__, auth, catalog
 from internetarchive.config import get_config
 from internetarchive.item import Collection, Item
 from internetarchive.search import Search
-from internetarchive.utils import parse_dict_cookies, reraise_modify
+from internetarchive.utils import parse_dict_cookies, request_to_curl, reraise_modify
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,9 @@ class ArchiveSession(requests.sessions.Session):
                  config: Mapping | None = None,
                  config_file: str = "",
                  debug: bool = False,
-                 http_adapter_kwargs: MutableMapping | None = None):
+                 http_adapter_kwargs: MutableMapping | None = None,
+                 print_curl: bool = False,
+                 print_curl_auth: bool = False):
         """Initialize :class:`ArchiveSession <ArchiveSession>` object with config.
 
         :param config: A config dict used for initializing the
@@ -93,11 +95,18 @@ class ArchiveSession(requests.sessions.Session):
                                     :class:`requests.adapters.HTTPAdapter <HTTPAdapter>`
                                     object.
 
+        :param print_curl: Print curl command for each request (with auth redacted).
+
+        :param print_curl_auth: Print curl command with full auth (including secrets).
+
         :returns: :class:`ArchiveSession` object.
         """
         super().__init__()
         http_adapter_kwargs = http_adapter_kwargs or {}
         debug = bool(debug)
+
+        self.print_curl = print_curl
+        self.print_curl_auth = print_curl_auth
 
         self.config = get_config(config, config_file)
         self.config_file = config_file
@@ -614,6 +623,23 @@ class ArchiveSession(requests.sessions.Session):
         return catalog.CatalogTask.get_task_log(task_id, self, request_kwargs)
 
     def send(self, request, **kwargs) -> Response:
+        # Print curl command if requested.
+        if self.print_curl or self.print_curl_auth:
+            redact = not self.print_curl_auth
+            curl_cmd = request_to_curl(request, redact_auth=redact)
+
+            # Allow metadata GETs to execute (needed to construct subsequent requests),
+            # but don't execute any other requests - just print the curl command.
+            is_metadata_get = (
+                request.method == 'GET'
+                and '/metadata/' in request.url
+            )
+            if is_metadata_get:
+                print(curl_cmd, file=sys.stderr)
+            else:
+                print(curl_cmd)
+                sys.exit(0)
+
         # Catch urllib3 warnings for HTTPS related errors.
         insecure = False
         with warnings.catch_warnings(record=True) as w:

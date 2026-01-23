@@ -100,6 +100,12 @@ def main():
                         action="store",
                         help=("host to connect to "
                               "(doesn't work for requests made to s3.us.archive.org)"))
+    parser.add_argument("--print-curl",
+                        action="store_true",
+                        help="print curl commands for all requests (auth redacted)")
+    parser.add_argument("--print-curl-auth",
+                        action="store_true",
+                        help="print curl commands with full auth (EXPOSES SECRETS)")
 
     subparsers = parser.add_subparsers(title="commands",
                                        dest="command",
@@ -140,7 +146,9 @@ def main():
 
     args.session = get_session(config_file=args.config_file,
                                config=config,
-                               debug=args.debug)
+                               debug=args.debug,
+                               print_curl=args.print_curl,
+                               print_curl_auth=args.print_curl_auth)
 
     # Check if any arguments were provided
     if len(sys.argv) == 1:

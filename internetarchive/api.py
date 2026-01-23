@@ -43,6 +43,8 @@ def get_session(
     config_file: str | None = None,
     debug: bool = False,
     http_adapter_kwargs: MutableMapping | None = None,
+    print_curl: bool = False,
+    print_curl_auth: bool = False,
 ) -> session.ArchiveSession:
     """Return a new :class:`ArchiveSession` object. The :class:`ArchiveSession`
     object is the main interface to the ``internetarchive`` lib. It allows you to
@@ -56,6 +58,10 @@ def get_session(
 
     :param http_adapter_kwargs: Keyword arguments that
                                 :py:class:`requests.adapters.HTTPAdapter` takes.
+
+    :param print_curl: Print curl command for each request (with auth redacted).
+
+    :param print_curl_auth: Print curl command with full auth (including secrets).
 
     :returns: To persist certain parameters across tasks.
 
@@ -76,7 +82,8 @@ def get_session(
         >>> s.get_tasks(task_ids=31643513)[0].server
         'ia311234'
     """
-    return session.ArchiveSession(config, config_file or "", debug, http_adapter_kwargs)
+    return session.ArchiveSession(config, config_file or "", debug, http_adapter_kwargs,
+                                  print_curl, print_curl_auth)
 
 
 def get_item(

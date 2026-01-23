@@ -31,6 +31,7 @@ import hashlib
 import os
 import platform
 import re
+import shlex
 import sys
 import warnings
 from collections.abc import Mapping
@@ -727,3 +728,64 @@ def sanitize_filename_posix(name: str, avoid_colon: bool = False) -> str:
         return f'%{ord(match.group()):02X}'
 
     return re.sub(pattern, encode_char, name)
+
+
+def request_to_curl(request, redact_auth: bool = True) -> str:
+    """Convert a requests PreparedRequest to a curl command string.
+
+    :param request: A requests.PreparedRequest object.
+
+    :param redact_auth: If True, redact sensitive authentication information
+                        including Authorization headers, cookies, and S3 keys.
+                        Defaults to True.
+
+    :returns: A curl command string.
+    """
+    # Headers that contain sensitive authentication info
+    sensitive_headers = {'authorization', 'cookie'}
+
+    parts = ['curl', '-X', request.method]
+
+    # Track if we need --compressed flag
+    has_accept_encoding = False
+
+    # Add headers
+    for key, value in request.headers.items():
+        header_lower = key.lower()
+        if header_lower == 'accept-encoding':
+            has_accept_encoding = True
+        if redact_auth and header_lower in sensitive_headers:
+            value = '[REDACTED]'
+        parts.extend(['-H', f'{key}: {value}'])
+
+    # Add --compressed if Accept-Encoding is present so curl handles decompression
+    if has_accept_encoding:
+        parts.append('--compressed')
+
+    # Add data/body if present
+    if request.body:
+        body = request.body
+        if isinstance(body, bytes):
+            try:
+                body = body.decode('utf-8')
+            except UnicodeDecodeError:
+                body = '<binary data>'
+        if redact_auth:
+            # Redact common auth patterns in body
+            body = re.sub(
+                r'(access|secret|access[_-]?key|secret[_-]?key|password|token)(["\']?\s*[:=]\s*["\']?)([^"\'&\s]+)',
+                r'\1\2[REDACTED]',
+                body,
+                flags=re.IGNORECASE
+            )
+        parts.extend(['-d', body])
+
+    # Add URL
+    parts.append(request.url)
+
+    # Use shlex.join for proper shell escaping (Python 3.8+)
+    try:
+        return shlex.join(parts)
+    except AttributeError:
+        # Fallback for older Python versions
+        return ' '.join(shlex.quote(p) for p in parts)

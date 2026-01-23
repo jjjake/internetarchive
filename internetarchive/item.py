@@ -888,6 +888,12 @@ class Item(BaseItem):
         _headers = self.session.headers.copy()
         _headers.update(headers)
 
+        # Check if item is dark or does not exist.
+        if self.is_dark:
+            raise exceptions.ItemLocateError(f'{self.identifier} is dark and cannot be modified.')
+        if not self.exists:
+            raise exceptions.ItemLocateError(f'{self.identifier} does not exist.')
+
         url = f'{self.session.protocol}//{self.session.host}/metadata/{self.identifier}'
         # TODO: currently files and metadata targets do not support dict's,
         # but they might someday?? refactor this check.

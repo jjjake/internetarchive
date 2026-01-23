@@ -123,7 +123,7 @@ class File(BaseFile):
         url_parts = {
             'protocol': item.session.protocol,
             'id': self.identifier,
-            'name': quote(name.encode('utf-8')),
+            'name': quote(name),
             'host': item.session.host,
         }
         self.url = '{protocol}//{host}/download/{id}/{name}'.format(**url_parts)
@@ -276,7 +276,7 @@ class File(BaseFile):
                 print(f' warning: long path may cause issues: {file_path}', file=sys.stderr)
 
         # Check if we should skip...
-        if not return_responses and os.path.exists(file_path.encode('utf-8')):
+        if not return_responses and os.path.exists(file_path):
             if checksum_archive:
                 checksum_archive_filename = '_checksum_archive.txt'
                 if not os.path.exists(checksum_archive_filename):
@@ -323,10 +323,10 @@ class File(BaseFile):
                 if not return_responses \
                         and not ignore_existing \
                         and self.name != f'{self.identifier}_files.xml' \
-                        and os.path.exists(file_path.encode('utf-8')):
-                    st = os.stat(file_path.encode('utf-8'))
+                        and os.path.exists(file_path):
+                    st = os.stat(file_path)
                     if st.st_size != self.size and not (checksum or checksum_archive):
-                        headers = {"Range": f"bytes={st.st_size}-"}
+                        headers.update({"Range": f"bytes={st.st_size}-"})
 
                 response = self.item.session.get(
                     self.url,
@@ -347,8 +347,8 @@ class File(BaseFile):
                 response.raise_for_status()
 
                 # Check if we should skip based on last modified time...
-                if not fileobj and not return_responses and os.path.exists(file_path.encode('utf-8')):
-                    st = os.stat(file_path.encode('utf-8'))
+                if not fileobj and not return_responses and os.path.exists(file_path):
+                    st = os.stat(file_path)
                     if st.st_mtime == last_mod_mtime:
                         if self.name == f'{self.identifier}_files.xml' or (st.st_size == self.size):
                             msg = (f'skipping {file_path}, file already exists based on '
@@ -377,9 +377,9 @@ class File(BaseFile):
                     fileobj = os.fdopen(sys.stdout.fileno(), 'wb', closefd=False)
                 if not fileobj or retrying:
                     if 'Range' in headers:
-                        fileobj = open(file_path.encode('utf-8'), 'rb+')
+                        fileobj = open(file_path, 'rb+')
                     else:
-                        fileobj = open(file_path.encode('utf-8'), 'wb')
+                        fileobj = open(file_path, 'wb')
 
                 with fileobj, progress_bar as bar:
                     if 'Range' in headers:
@@ -402,7 +402,7 @@ class File(BaseFile):
                                "checksums do not match. "
                                "Remote file may have been modified, "
                                "retry download.")
-                        os.remove(file_path.encode('utf-8'))
+                        os.remove(file_path)
                         raise exceptions.InvalidChecksumError(msg)
                 break
             except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout,
@@ -433,7 +433,7 @@ class File(BaseFile):
         if not no_change_timestamp:
             # If we want to set the timestamp to that of the original archive...
             with suppress(OSError):  # Probably file-like object, e.g. sys.stdout.
-                os.utime(file_path.encode('utf-8'), (0,last_mod_mtime))
+                os.utime(file_path, (0,last_mod_mtime))
 
         msg = f'downloaded {self.identifier}/{self.name} to {file_path}'
         log.info(msg)

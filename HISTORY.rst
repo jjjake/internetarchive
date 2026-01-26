@@ -9,6 +9,7 @@ Release History
 **Bugfixes**
 
 - Fixed bug where metadata append was not working correctly when source metadata field was a list, and failing with obscure messages in some cases.
+- Fixed inverted logic for ``--download-history`` flag in ``ia download`` where passing the flag would ignore history files instead of downloading them (`#735 <https://github.com/jjjake/internetarchive/issues/735>`_).
 
 5.7.1 (2025-10-29)
 ++++++++++++++++++

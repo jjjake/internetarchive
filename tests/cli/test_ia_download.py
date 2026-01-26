@@ -4,7 +4,15 @@ import time
 
 import pytest
 
-from tests.conftest import NASA_EXPECTED_FILES, call_cmd, files_downloaded
+from internetarchive import get_item
+from internetarchive.utils import json
+from tests.conftest import (
+    NASA_EXPECTED_FILES,
+    IaRequestsMock,
+    call_cmd,
+    files_downloaded,
+    load_test_data_file,
+)
 
 
 def test_no_args(tmpdir_ch):
@@ -148,3 +156,34 @@ def test_no_change_timestamp(tmpdir_ch):
         for f in filenames:
             p = os.path.join(path, f)
             assert os.stat(p).st_mtime >= now
+
+
+def test_download_history_flag(capsys):
+    """Test that --download-history correctly includes/excludes history files.
+
+    Regression test for https://github.com/jjjake/internetarchive/issues/735
+    The bug was that --download-history was being passed directly to ignore_history_dir
+    without negation, causing the opposite behavior.
+    """
+    # Add a history file to the nasa metadata
+    nasa_data = json.loads(load_test_data_file('metadata/nasa.json'))
+    nasa_data['files'].append({
+        'name': 'history/files/old_file.txt',
+        'source': 'original',
+        'size': '100',
+        'format': 'Text',
+    })
+
+    with IaRequestsMock() as mocker:
+        mocker.add_metadata_mock('nasa', body=json.dumps(nasa_data))
+        item = get_item('nasa')
+
+        # Without --download-history (ignore_history_dir=True), history files excluded
+        item.download(dry_run=True, ignore_history_dir=True)
+        stdout_without = capsys.readouterr().out
+        assert 'history/files/old_file.txt' not in stdout_without
+
+        # With --download-history (ignore_history_dir=False), history files included
+        item.download(dry_run=True, ignore_history_dir=False)
+        stdout_with = capsys.readouterr().out
+        assert 'history/files/old_file.txt' in stdout_with

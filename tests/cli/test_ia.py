@@ -13,12 +13,14 @@ def test_ia(capsys):
     assert "invalid choice: 'nocmd'" in err
 
 
-def test_user_agent_option():
-    """Test that --user-agent option sets the User-Agent header."""
-    custom_ua = 'TestCLIAgent/1.0'
+def test_user_agent_suffix_option():
+    """Test that --user-agent-suffix option appends to the default User-Agent."""
+    custom_suffix = 'TestCLIAgent/1.0'
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        ia_call(['ia', '--user-agent', custom_ua, 'metadata', 'nasa'])
-        # Check that our custom user agent was sent in the request
-        assert rsps.calls[0].request.headers['User-Agent'] == custom_ua
+        ia_call(['ia', '--user-agent-suffix', custom_suffix, 'metadata', 'nasa'])
+        # Check that the user agent starts with default and ends with custom suffix
+        ua = rsps.calls[0].request.headers['User-Agent']
+        assert ua.startswith('internetarchive/')
+        assert ua.endswith(custom_suffix)

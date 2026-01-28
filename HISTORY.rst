@@ -8,11 +8,16 @@ Release History
 
 **Features and Improvements**
 
-- Added support for setting a custom global User-Agent string via:
+- Added support for appending a custom suffix to the User-Agent string.
+  The default User-Agent (including access key) is always sent to ensure
+  proper request tracking.
 
-  - CLI: ``ia --user-agent "MyApp/1.0" <command>``
-  - Config file: ``user_agent = MyApp/1.0`` in ``[general]`` section
-  - Python API: ``get_session(config={'general': {'user_agent': 'MyApp/1.0'}})``
+  Example: With ``user_agent_suffix = MyApp/1.0``, the full User-Agent becomes:
+  ``internetarchive/5.7.2 (Darwin x86_64; N; en; ACCESS_KEY) Python/3.9.0 MyApp/1.0``
+
+  - CLI: ``ia --user-agent-suffix "MyApp/1.0" <command>``
+  - Config file: ``user_agent_suffix = MyApp/1.0`` in ``[general]`` section
+  - Python API: ``get_session(config={'general': {'user_agent_suffix': 'MyApp/1.0'}})``
 
 **Bugfixes**
 

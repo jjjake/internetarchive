@@ -124,20 +124,24 @@ def test_s3_is_overloaded():
         assert r is True
 
 
-def test_custom_user_agent():
-    """Test that a custom user agent can be set via config."""
-    custom_ua = 'MyCustomApp/1.0 (test bot)'
+def test_user_agent_suffix():
+    """Test that a custom user agent suffix is appended to the default UA."""
+    custom_suffix = 'MyCustomApp/1.0 (test bot)'
     config = {
         's3': {
             'access': 'test_access',
             'secret': 'test_secret',
         },
         'general': {
-            'user_agent': custom_ua,
+            'user_agent_suffix': custom_suffix,
         },
     }
     s = internetarchive.session.ArchiveSession(config)
-    assert s.headers['User-Agent'] == custom_ua
+    # Verify the UA starts with the default and ends with the custom suffix
+    assert s.headers['User-Agent'].startswith(f'internetarchive/{__version__}')
+    assert s.headers['User-Agent'].endswith(custom_suffix)
+    # Verify access key is present in the UA
+    assert 'test_access' in s.headers['User-Agent']
 
 
 def test_default_user_agent_when_not_specified():
@@ -152,16 +156,16 @@ def test_default_user_agent_when_not_specified():
     assert s.headers['user-agent'].startswith(f'internetarchive/{__version__}')
 
 
-def test_custom_user_agent_in_requests():
-    """Test that the custom user agent is actually sent in requests."""
-    custom_ua = 'TestAgent/2.0'
+def test_user_agent_suffix_in_requests():
+    """Test that the user agent suffix is appended and sent in requests."""
+    custom_suffix = 'TestAgent/2.0'
     config = {
         's3': {
             'access': 'test_access',
             'secret': 'test_secret',
         },
         'general': {
-            'user_agent': custom_ua,
+            'user_agent_suffix': custom_suffix,
         },
     }
 
@@ -169,7 +173,24 @@ def test_custom_user_agent_in_requests():
         rsps.add(responses.GET, f'{PROTOCOL}//archive.org')
         s = internetarchive.session.ArchiveSession(config)
         r = s.get(f'{PROTOCOL}//archive.org')
-        assert r.request.headers['User-Agent'] == custom_ua
+        # Verify the UA starts with the default and ends with the custom suffix
+        assert r.request.headers['User-Agent'].startswith(f'internetarchive/{__version__}')
+        assert r.request.headers['User-Agent'].endswith(custom_suffix)
+        # Verify access key is present in the UA
+        assert 'test_access' in r.request.headers['User-Agent']
+
+
+def test_access_key_always_in_user_agent():
+    """Test that the access key is always present in the User-Agent."""
+    config = {
+        's3': {
+            'access': 'MY_ACCESS_KEY',
+            'secret': 'test_secret',
+        },
+    }
+    s = internetarchive.session.ArchiveSession(config)
+    assert 'MY_ACCESS_KEY' in s.headers['User-Agent']
+    assert s.headers['User-Agent'].startswith(f'internetarchive/{__version__}')
 
 
 def test_cookies():

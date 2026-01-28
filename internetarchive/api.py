@@ -51,7 +51,8 @@ def get_session(
     :param config: A dictionary used to configure your session. Supports the following
                    keys in the ``general`` section:
 
-                   - ``user_agent``: Custom User-Agent string for all requests.
+                   - ``user_agent_suffix``: Custom string to append to the default
+                     User-Agent. The default (including access key) is always sent.
                    - ``secure``: Use HTTPS (default: True).
                    - ``host``: Host to connect to (default: archive.org).
 
@@ -72,12 +73,12 @@ def get_session(
         >>> s.access_key
         'foo'
 
-        Set a custom User-Agent:
+        Append a custom User-Agent suffix:
 
-        >>> config = {'general': {'user_agent': 'MyApp/1.0'}}
+        >>> config = {'general': {'user_agent_suffix': 'MyApp/1.0'}}
         >>> s = get_session(config)
         >>> s.headers['User-Agent']
-        'MyApp/1.0'
+        'internetarchive/5.7.2 (Darwin x86_64; N; en; ACCESS_KEY) Python/3.9.0 MyApp/1.0'
 
     From the session object, you can access all of the functionality of the
     ``internetarchive`` lib:

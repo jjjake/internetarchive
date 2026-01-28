@@ -6,6 +6,14 @@ Release History
 5.7.2 (?)
 +++++++++
 
+**Features and Improvements**
+
+- Added support for setting a custom global User-Agent string via:
+
+  - CLI: ``ia --user-agent "MyApp/1.0" <command>``
+  - Config file: ``user_agent = MyApp/1.0`` in ``[general]`` section
+  - Python API: ``get_session(config={'general': {'user_agent': 'MyApp/1.0'}})``
+
 **Bugfixes**
 
 - Fixed bug where metadata append was not working correctly when source metadata field was a list, and failing with obscure messages in some cases.

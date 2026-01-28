@@ -85,6 +85,11 @@ class ArchiveSession(requests.sessions.Session):
 
         :param config: A config dict used for initializing the
                        :class:`ArchiveSession <ArchiveSession>` object.
+                       Supports the following keys in the ``general`` section:
+
+                       - ``user_agent``: Custom User-Agent string for all requests.
+                       - ``secure``: Use HTTPS (default: True).
+                       - ``host``: Host to connect to (default: archive.org).
 
         :param config_file: Path to config file used for initializing the
                             :class:`ArchiveSession <ArchiveSession>` object.
@@ -126,7 +131,11 @@ class ArchiveSession(requests.sessions.Session):
         self.http_adapter_kwargs: MutableMapping = http_adapter_kwargs or {}
 
         self.headers = default_headers()  # type: ignore[assignment]
-        self.headers.update({'User-Agent': self._get_user_agent_string()})
+        custom_user_agent = self.config.get('general', {}).get('user_agent')
+        if custom_user_agent:
+            self.headers.update({'User-Agent': custom_user_agent})
+        else:
+            self.headers.update({'User-Agent': self._get_user_agent_string()})
         self.headers.update({'Connection': 'close'})
 
         self.mount_http_adapter()

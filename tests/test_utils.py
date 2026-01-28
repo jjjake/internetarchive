@@ -185,3 +185,101 @@ def test_sanitize_filepath():
     with patch('internetarchive.utils.is_windows', return_value=True):
         result = internetarchive.utils.sanitize_filepath('/path/to/con.txt')
         assert result == '/path/to/con.txt'  # Reserved name sanitized
+
+
+class MockPreparedRequest:
+    """Mock requests.PreparedRequest for testing request_to_curl."""
+    def __init__(self, method='GET', url='https://example.com', headers=None, body=None):
+        self.method = method
+        self.url = url
+        self.headers = headers or {}
+        self.body = body
+
+
+def test_request_to_curl_basic():
+    """Test basic curl command generation."""
+    request = MockPreparedRequest(
+        method='GET',
+        url='https://archive.org/metadata/test',
+        headers={'User-Agent': 'test-agent', 'Accept': '*/*'},
+    )
+    curl = internetarchive.utils.request_to_curl(request, redact_auth=False)
+
+    assert curl.startswith('curl -X GET')
+    assert 'https://archive.org/metadata/test' in curl
+    assert "-H 'User-Agent: test-agent'" in curl
+    assert "-H 'Accept: */*'" in curl
+
+
+def test_request_to_curl_auth_redaction():
+    """Test that sensitive headers are redacted."""
+    request = MockPreparedRequest(
+        method='GET',
+        url='https://archive.org/metadata/test',
+        headers={
+            'Authorization': 'LOW access:secret',
+            'Cookie': 'logged-in-user=test@example.com; logged-in-sig=abc123',
+        },
+    )
+
+    # With redaction (default)
+    curl_redacted = internetarchive.utils.request_to_curl(request, redact_auth=True)
+    assert '[REDACTED]' in curl_redacted
+    assert 'LOW access:secret' not in curl_redacted
+    assert 'logged-in-user' not in curl_redacted
+
+    # Without redaction
+    curl_full = internetarchive.utils.request_to_curl(request, redact_auth=False)
+    assert 'LOW access:secret' in curl_full
+    assert 'logged-in-user=test@example.com' in curl_full
+
+
+def test_request_to_curl_body_redaction():
+    """Test that access/secret in body are redacted."""
+    request = MockPreparedRequest(
+        method='POST',
+        url='https://archive.org/metadata/test',
+        headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        body='access=myaccesskey&secret=mysecretkey&data=value',
+    )
+
+    curl_redacted = internetarchive.utils.request_to_curl(request, redact_auth=True)
+    assert 'access=[REDACTED]' in curl_redacted
+    assert 'secret=[REDACTED]' in curl_redacted
+    assert 'myaccesskey' not in curl_redacted
+    assert 'mysecretkey' not in curl_redacted
+
+    curl_full = internetarchive.utils.request_to_curl(request, redact_auth=False)
+    assert 'myaccesskey' in curl_full
+    assert 'mysecretkey' in curl_full
+
+
+def test_request_to_curl_compressed():
+    """Test that --compressed is added when Accept-Encoding is present."""
+    request_with_encoding = MockPreparedRequest(
+        method='GET',
+        url='https://archive.org/metadata/test',
+        headers={'Accept-Encoding': 'gzip, deflate'},
+    )
+    curl = internetarchive.utils.request_to_curl(request_with_encoding)
+    assert '--compressed' in curl
+
+    request_without_encoding = MockPreparedRequest(
+        method='GET',
+        url='https://archive.org/metadata/test',
+        headers={},
+    )
+    curl = internetarchive.utils.request_to_curl(request_without_encoding)
+    assert '--compressed' not in curl
+
+
+def test_request_to_curl_binary_body():
+    """Test handling of binary body data."""
+    request = MockPreparedRequest(
+        method='POST',
+        url='https://archive.org/upload/test',
+        headers={},
+        body=b'\x00\x01\x02\xff\xfe',  # Non-UTF8 binary data
+    )
+    curl = internetarchive.utils.request_to_curl(request)
+    assert '<binary data>' in curl

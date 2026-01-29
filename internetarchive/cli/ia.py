@@ -100,6 +100,11 @@ def main():
                         action="store",
                         help=("host to connect to "
                               "(doesn't work for requests made to s3.us.archive.org)"))
+    parser.add_argument("--user-agent-suffix",
+                        action="store",
+                        metavar="STRING",
+                        help="custom string to append to the default User-Agent "
+                             "(default with access key is always included)")
 
     subparsers = parser.add_subparsers(title="commands",
                                        dest="command",
@@ -137,6 +142,11 @@ def main():
             config["general"]["host"] = args.host
         else:
             config["general"] = {"host": args.host}
+    if args.user_agent_suffix:
+        if config.get("general"):
+            config["general"]["user_agent_suffix"] = args.user_agent_suffix
+        else:
+            config["general"] = {"user_agent_suffix": args.user_agent_suffix}
 
     args.session = get_session(config_file=args.config_file,
                                config=config,

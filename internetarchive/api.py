@@ -48,7 +48,13 @@ def get_session(
     object is the main interface to the ``internetarchive`` lib. It allows you to
     persist certain parameters across tasks.
 
-    :param config: A dictionary used to configure your session.
+    :param config: A dictionary used to configure your session. Supports the following
+                   keys in the ``general`` section:
+
+                   - ``user_agent_suffix``: Custom string to append to the default
+                     User-Agent. The default (including access key) is always sent.
+                   - ``secure``: Use HTTPS (default: True).
+                   - ``host``: Host to connect to (default: archive.org).
 
     :param config_file: A path to a config file used to configure your session.
 
@@ -66,6 +72,13 @@ def get_session(
         >>> s = get_session(config)
         >>> s.access_key
         'foo'
+
+        Append a custom User-Agent suffix:
+
+        >>> config = {'general': {'user_agent_suffix': 'MyApp/1.0'}}
+        >>> s = get_session(config)
+        >>> s.headers['User-Agent']
+        'internetarchive/5.7.2 (Darwin x86_64; N; en; ACCESS_KEY) Python/3.9.0 MyApp/1.0'
 
     From the session object, you can access all of the functionality of the
     ``internetarchive`` lib:

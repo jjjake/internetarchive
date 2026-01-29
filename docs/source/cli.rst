@@ -35,6 +35,8 @@ Check out the help menu to see all available commands:
       -d, --debug           enable debugging
       -i, --insecure        allow insecure connections
       -H HOST, --host HOST  host to connect to (doesn't work for requests made to s3.us.archive.org)
+      --user-agent-suffix SUFFIX
+                            append SUFFIX to the default User-Agent header
 
     commands:
       {command}

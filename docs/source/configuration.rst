@@ -51,6 +51,7 @@ Below is an example of a config file with the required sections and keys, as wel
 
    [general]
    screenname = <Archive.org Screenname>
+   user_agent_suffix = MyApp/1.0
    custom-var = foo
 
    [custom]
@@ -73,6 +74,7 @@ The config above would generate the following configuration dictionary when load
         'logged-in-sig': '<logged-in-sig Cookie>'},
      'general': {
         'screenname': '<Archive.org Screenname>',
+        'user_agent_suffix': 'MyApp/1.0',
         'custom-var': 'foo'
      },
      'custom': {
@@ -90,3 +92,36 @@ Alternatively, you can set the following environment variables with your S3 cred
    - ``IA_SECRET_ACCESS_KEY``: Your IA-S3 secret key
 
 *Note: Both environment variables must be set together. If only one is set, a* :class:`ValueError` *will be raised. If both are set, they will take precedence over the config file.*
+
+
+Advanced Configuration Options
+------------------------------
+
+User-Agent Suffix
+~~~~~~~~~~~~~~~~~
+
+You can customize the User-Agent header sent with requests by setting a suffix that gets appended to the default User-Agent string. This is useful for identifying your application in archive.org server logs.
+
+**Config file:**
+
+.. code-block:: ini
+
+   [general]
+   user_agent_suffix = MyApp/1.0
+
+**Python:**
+
+.. code-block:: python
+
+    >>> from internetarchive import get_session
+    >>> s = get_session(config={'general': {'user_agent_suffix': 'MyApp/1.0'}})
+    >>> print(s.headers['User-Agent'])
+    'internetarchive/5.7.2 (Linux x86_64; Python 3.11.4) MyApp/1.0'
+
+**Command-line:**
+
+.. code-block:: console
+
+    $ ia --user-agent-suffix 'MyApp/1.0' metadata nasa
+
+The suffix is appended to the default User-Agent, which includes the library version, platform, and Python version.

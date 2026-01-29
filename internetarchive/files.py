@@ -126,15 +126,9 @@ class File(BaseFile):
     """
     def __init__(self, item, name, file_metadata=None):
         """
-        :type item: Item
         :param item: The item that the file is part of.
-
-        :type name: str
         :param name: The filename of the file.
-
-        :type file_metadata: dict
-        :param file_metadata: (optional) a dict of metadata for the
-                              given file.
+        :param file_metadata: A dict of metadata for the given file.
         """
         super().__init__(item.item_metadata, name, file_metadata)
         self.item = item
@@ -179,62 +173,32 @@ class File(BaseFile):
     ):
         """Download the file into the current working directory.
 
-        :type file_path: str
         :param file_path: Download file to the given file_path.
-
-        :type verbose: bool
-        :param verbose: (optional) Turn on verbose output.
-
-        :type ignore_existing: bool
-        :param ignore_existing: Overwrite local files if they already
-                                exist.
-
-        :type checksum: bool
-        :param checksum: (optional) Skip downloading file based on checksum.
-
-        :type checksum_archive: bool
-        :param checksum_archive: (optional) Skip downloading file based on checksum, and
+        :param verbose: Turn on verbose output.
+        :param ignore_existing: Overwrite local files if they already exist.
+        :param checksum: Skip downloading file based on checksum.
+        :param checksum_archive: Skip downloading file based on checksum, and
                                  skip checksum validation if it already succeeded
                                  (will create and use _checksum_archive.txt).
-
-        :type destdir: str
-        :param destdir: (optional) The directory to download files to.
-
-        :type retries: int
-        :param retries: (optional) The number of times to retry on failed
-                        requests.
-
-        :type ignore_errors: bool
-        :param ignore_errors: (optional) Don't fail if a single file fails to
+        :param destdir: The directory to download files to.
+        :param retries: The number of times to retry on failed requests.
+        :param ignore_errors: Don't fail if a single file fails to
                               download, continue to download other files.
-
-        :type fileobj: file-like object
-        :param fileobj: (optional) Write data to the given file-like object
-                         (e.g. sys.stdout).
-
-        :type return_responses: bool
-        :param return_responses: (optional) Rather than downloading files to disk, return
+        :param fileobj: Write data to the given file-like object
+                        (e.g. sys.stdout).
+        :param return_responses: Rather than downloading files to disk, return
                                  a list of response objects.
-
-        :type no_change_timestamp: bool
-        :param no_change_timestamp: (optional) If True, leave the time stamp as the
-                                    current time instead of changing it to that given in
-                                    the original archive.
-
-        :type stdout: bool
-        :param stdout: (optional) Print contents of file to stdout instead of downloading
-                       to file.
-
-        :type ors: bool
-        :param ors: (optional) Append a newline or $ORS to the end of file.
+        :param no_change_timestamp: If True, leave the time stamp as the
+                                    current time instead of changing it to
+                                    that given in the original archive.
+        :param stdout: Print contents of file to stdout instead of
+                       downloading to file.
+        :param ors: Append a newline or $ORS to the end of file.
                     This is mainly intended to be used internally with `stdout`.
+        :param params: URL parameters to send with download request
+                       (e.g. ``cnt=0``).
 
-        :type params: dict
-        :param params: (optional) URL parameters to send with
-                       download request (e.g. `cnt=0`).
-
-        :rtype: bool
-        :returns: True if file was successfully downloaded.
+        :returns: ``True`` if file was successfully downloaded.
         """
         verbose = False if verbose is None else verbose
         ignore_existing = False if ignore_existing is None else ignore_existing
@@ -459,28 +423,17 @@ class File(BaseFile):
 
     def delete(self, cascade_delete=None, access_key=None, secret_key=None, verbose=None,
                debug=None, retries=None, headers=None):
-        """Delete a file from the Archive. Note: Some files -- such as
-        <itemname>_meta.xml -- cannot be deleted.
+        """Delete a file from the Archive.
 
-        :type cascade_delete: bool
-        :param cascade_delete: (optional) Delete all files associated with the specified
+        Note: Some files -- such as ``<itemname>_meta.xml`` -- cannot be deleted.
+
+        :param cascade_delete: Delete all files associated with the specified
                                file, including upstream derivatives and the original.
-
-        :type access_key: str
-        :param access_key: (optional) IA-S3 access_key to use when making the given
-                           request.
-
-        :type secret_key: str
-        :param secret_key: (optional) IA-S3 secret_key to use when making the given
-                           request.
-
-        :type verbose: bool
-        :param verbose: (optional) Print actions to stdout.
-
-        :type debug: bool
-        :param debug: (optional) Set to True to print headers to stdout and exit
+        :param access_key: IA-S3 access_key to use when making the given request.
+        :param secret_key: IA-S3 secret_key to use when making the given request.
+        :param verbose: Print actions to stdout.
+        :param debug: Set to True to print headers to stdout and exit
                       without sending the delete request.
-
         """
         cascade_delete = '0' if not cascade_delete else '1'
         access_key = self.item.session.access_key if not access_key else access_key
@@ -535,13 +488,11 @@ class File(BaseFile):
 
 
 class OnTheFlyFile(File):
+    """A file that is generated on-the-fly by Archive.org (e.g., EPUB, MOBI)."""
+
     def __init__(self, item, name):
         """
-        :type item: Item
         :param item: The item that the file is part of.
-
-        :type name: str
         :param name: The filename of the file.
-
         """
         super().__init__(item.item_metadata, name)

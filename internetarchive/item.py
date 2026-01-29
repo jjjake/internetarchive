@@ -1111,8 +1111,7 @@ class Item(BaseItem):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
-        :type body: Filepath or file-like object.
-        :param body: File or data to be uploaded.
+        :param body: File or data to be uploaded (filepath or file-like object).
 
         :param key: Remote filename.
 
@@ -1435,8 +1434,8 @@ class Item(BaseItem):
         r"""Upload files to an item. The item will be created if it
         does not exist.
 
-        :type files: str, file, list, tuple, dict
-        :param files: The filepaths or file-like objects to upload.
+        :param files: The filepaths or file-like objects to upload
+                     (str, file, list, tuple, or dict).
 
         :param \*\*kwargs: Optional arguments that :func:`Item.upload_file()` takes.
 

@@ -80,6 +80,14 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 - Avoid introducing new dependencies
 - Support Python 3.9+
 
+## Versioning
+
+After a release, bump the version to a dev suffix (e.g., `5.7.3.dev0`) to indicate development builds. The version in `internetarchive/__version__.py` should always be either:
+- A release version (e.g., `5.7.2`) - only during the release process
+- A dev version (e.g., `5.7.3.dev0`) - at all other times
+
+When merging new features to master, increment the dev number if needed (e.g., `5.7.3.dev0` → `5.7.3.dev1`).
+
 ## Releasing
 
 To release a new version (must be on master with clean working directory):

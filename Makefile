@@ -1,6 +1,6 @@
 .PHONY: docs clean clean-dist test binary test-binary check-release check-version \
         build tag push-tag upload-pypi publish-binary-upload github-release \
-        publish publish-all publish-binary docs-init init pep8-test
+        publish publish-all publish-binary docs-init init pep8-test prepare-release
 
 VERSION=$(shell grep -m1 __version__ internetarchive/__version__.py | cut -d\' -f2)
 
@@ -41,6 +41,20 @@ test-binary: binary
 	./ia-$(VERSION)-py3-none-any.pex --help > /dev/null
 	./ia-$(VERSION)-py3-none-any.pex metadata --help > /dev/null
 	@echo "Pex binary tests passed!"
+
+# ============ Release Preparation ============
+# Usage: make prepare-release RELEASE=5.7.2
+prepare-release:
+ifndef RELEASE
+	$(error RELEASE is required. Usage: make prepare-release RELEASE=5.7.2)
+endif
+	@if echo "$(RELEASE)" | grep -q 'dev'; then \
+		echo "Error: RELEASE should not contain 'dev'"; exit 1; \
+	fi
+	sed -i '' "s/__version__ = '.*'/__version__ = '$(RELEASE)'/" internetarchive/__version__.py
+	sed -i '' "s/^$(RELEASE) (?)$$/$(RELEASE) ($$(date +%Y-%m-%d))/" HISTORY.rst
+	@echo "Updated to version $(RELEASE) with date $$(date +%Y-%m-%d)"
+	@echo "Review changes and commit when ready"
 
 # ============ Release Validation ============
 check-release:

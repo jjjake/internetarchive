@@ -96,9 +96,9 @@ publish-binary-upload:
 # Extract changelog and create GitHub release
 github-release:
 	@echo "Extracting changelog for v$(VERSION)..."
-	@awk '/^$(VERSION) /{found=1; next} found && /^[0-9]+\.[0-9]+\.[0-9]+ /{exit} found' HISTORY.rst > /tmp/ia-release-notes-$(VERSION).md
+	@awk '/^$(VERSION) /{found=1; next} found && /^\++$$/{next} found && /^[0-9]+\.[0-9]+\.[0-9]+ /{exit} found' HISTORY.rst > /tmp/ia-release-notes-$(VERSION).md
 	gh release create v$(VERSION) \
-		--title "v$(VERSION)" \
+		--title "Version $(VERSION)" \
 		--notes-file /tmp/ia-release-notes-$(VERSION).md
 	@rm -f /tmp/ia-release-notes-$(VERSION).md
 	@echo "GitHub release created!"

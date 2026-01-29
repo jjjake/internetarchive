@@ -76,6 +76,7 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 
 - All new features should be developed on a feature branch, not directly on master
 - PRs require tests and must pass ruff linting
+- New features must include documentation updates (see `docs/source/`)
 - Avoid introducing new dependencies
 - Support Python 3.9+
 

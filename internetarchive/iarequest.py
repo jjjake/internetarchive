@@ -40,6 +40,20 @@ logger = logging.getLogger(__name__)
 
 
 class S3Request(requests.models.Request):
+    """A Request object for IA-S3 uploads.
+
+    Extends :class:`requests.Request` to handle Archive.org S3-like
+    upload requests, including metadata headers and derive queue settings.
+
+    :param metadata: Item-level metadata to set on upload.
+    :param file_metadata: File-level metadata for the uploaded file.
+    :param queue_derive: Whether to queue derivation after upload.
+                        Defaults to ``True``.
+    :param access_key: IA-S3 access key for authentication.
+    :param secret_key: IA-S3 secret key for authentication.
+    :param kwargs: Additional arguments passed to :class:`requests.Request`.
+    """
+
     def __init__(self,
                  metadata=None,
                  file_metadata=None,
@@ -122,6 +136,26 @@ class S3PreparedRequest(requests.models.PreparedRequest):
 
 
 class MetadataRequest(requests.models.Request):
+    """A Request object for metadata modifications.
+
+    Extends :class:`requests.Request` to handle Archive.org Metadata API
+    requests. Automatically generates JSON Patch operations from the
+    provided metadata.
+
+    :param metadata: Metadata dict to apply to the item.
+    :param source_metadata: Current item metadata (fetched automatically if not provided).
+    :param target: Metadata target (e.g., ``'metadata'``, ``'files/foo.txt'``).
+    :param priority: Task priority (-10 to 10).
+    :param access_key: IA-S3 access key for authentication.
+    :param secret_key: IA-S3 secret key for authentication.
+    :param append: Append values to existing string fields.
+    :param expect: Dict of expectations for server-side validation.
+    :param append_list: Append values to existing list fields.
+    :param insert: Insert values at specific list indices.
+    :param reduced_priority: Submit at reduced priority to avoid rate limiting.
+    :param kwargs: Additional arguments passed to :class:`requests.Request`.
+    """
+
     def __init__(self,
                  metadata=None,
                  source_metadata=None,

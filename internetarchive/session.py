@@ -181,8 +181,22 @@ class ArchiveSession(requests.sessions.Session):
 
         socket.socket.connect = instrumented_connect  # type: ignore[method-assign]
 
-    def get_connection_info(self):
-        """Get connection info for current thread"""
+    def get_connection_info(self) -> dict:
+        """Get connection info for the current thread.
+
+        Returns diagnostic information about the most recent socket connection
+        made by this thread, useful for debugging connection issues.
+
+        :returns: A dict containing connection details:
+                  - ``src``: Source IP:port string
+                  - ``dst``: Destination IP:port string
+                  - ``src_ip``: Source IP address
+                  - ``src_port``: Source port number
+                  - ``dst_ip``: Destination IP address
+                  - ``dst_port``: Destination port number
+
+                  Returns an empty dict if no connection info is available.
+        """
         return getattr(self._connection_info_local, 'info', {})
 
     def _get_user_agent_string(self) -> str:
@@ -198,7 +212,15 @@ class ArchiveSession(requests.sessions.Session):
                 f'Python/{py_version}')
 
     def rebuild_auth(self, prepared_request, response):
-        """Never rebuild auth for archive.org URLs.
+        """Rebuild authentication for redirects, except for archive.org URLs.
+
+        This override prevents stripping authentication headers when following
+        redirects to archive.org domains. For other domains, the default
+        requests behavior is used (which removes auth headers on redirect
+        to a different host for security).
+
+        :param prepared_request: The redirected request being prepared.
+        :param response: The response that triggered the redirect.
         """
         u = urlparse(prepared_request.url)
         if u.netloc.endswith('archive.org'):
@@ -424,7 +446,20 @@ class ArchiveSession(requests.sessions.Session):
                       request_kwargs=request_kwargs,
                       max_retries=max_retries)
 
-    def s3_is_overloaded(self, identifier=None, access_key=None, request_kwargs=None):
+    def s3_is_overloaded(self, identifier=None, access_key=None, request_kwargs=None) -> bool:
+        """Check if IA-S3 is currently overloaded for the given access key.
+
+        This is used to implement backoff/retry logic for uploads. When S3
+        is overloaded, uploads should be delayed to avoid 503 errors.
+
+        :param identifier: Optional item identifier (bucket) to check.
+        :param access_key: Optional access key to check limits for.
+                          Defaults to the session's access key.
+        :param request_kwargs: Optional keyword arguments for the request.
+
+        :returns: ``True`` if S3 is overloaded and uploads should be delayed,
+                  ``False`` if uploads can proceed.
+        """
         request_kwargs = request_kwargs or {}
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12
@@ -442,7 +477,17 @@ class ArchiveSession(requests.sessions.Session):
             return True
         return j.get('over_limit') != 0
 
-    def get_tasks_api_rate_limit(self, cmd: str = 'derive.php', request_kwargs: dict | None = None):
+    def get_tasks_api_rate_limit(
+        self, cmd: str = 'derive.php', request_kwargs: dict | None = None
+    ) -> dict:
+        """Get the current rate limit status for the Tasks API.
+
+        :param cmd: The task command to check rate limits for.
+                   Defaults to ``'derive.php'``.
+        :param request_kwargs: Optional keyword arguments for the request.
+
+        :returns: A dict containing rate limit information from the Tasks API.
+        """
         return catalog.Catalog(self, request_kwargs).get_rate_limit(cmd=cmd)
 
     def submit_task(self,

@@ -162,7 +162,13 @@ class Catalog:
                 break
             params['cursor'] = j['value']['cursor']
 
-    def get_rate_limit(self, cmd: str = 'derive.php'):
+    def get_rate_limit(self, cmd: str = 'derive.php') -> dict:
+        """Get the current rate limit status for a task command.
+
+        :param cmd: The task command to check (e.g., ``'derive.php'``).
+
+        :returns: A dict containing rate limit information.
+        """
         params = {'rate_limits': 1, 'cmd': cmd}
         r = self.make_tasks_request(params)
         line = ''

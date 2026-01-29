@@ -48,6 +48,24 @@ log = logging.getLogger(__name__)
 
 
 class BaseFile:
+    """Base class for Archive.org file objects.
+
+    This class provides common attributes for file objects. It extracts
+    file metadata from item metadata and provides access to file properties
+    like size, format, checksums, and modification time.
+
+    Attributes:
+        identifier: The item identifier this file belongs to.
+        name: The filename.
+        size: File size in bytes.
+        source: File source (``'original'``, ``'derivative'``, ``'metadata'``).
+        format: File format (e.g., ``'JPEG'``, ``'Ogg Vorbis'``).
+        md5: MD5 checksum of the file.
+        sha1: SHA1 checksum of the file.
+        mtime: Modification time as a Unix timestamp.
+        crc32: CRC32 checksum of the file.
+        exists: ``True`` if the file exists in the item's metadata.
+    """
 
     def __init__(self, item_metadata, name, file_metadata=None):
         if file_metadata is None:

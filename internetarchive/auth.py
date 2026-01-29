@@ -33,7 +33,22 @@ from internetarchive.exceptions import AuthenticationError
 
 
 class S3Auth(AuthBase):
-    """Attaches S3 Basic Authentication to the given Request object."""
+    """Authentication handler for IA-S3 requests.
+
+    Attaches ``LOW`` authorization header to requests, which is
+    Archive.org's S3-compatible authentication scheme.
+
+    :param access_key: Your IA-S3 access key.
+    :param secret_key: Your IA-S3 secret key.
+
+    :raises AuthenticationError: If credentials are missing when called.
+
+    Usage::
+
+        >>> auth = S3Auth('my_access_key', 'my_secret_key')
+        >>> response = requests.get(url, auth=auth)
+    """
+
     def __init__(self, access_key: str | None = None, secret_key: str | None = None):
         self.access_key = access_key
         self.secret_key = secret_key
@@ -57,7 +72,15 @@ class S3Auth(AuthBase):
 
 
 class S3PostAuth(AuthBase):
-    """Attaches S3 Basic Authentication to the given Request object."""
+    """Authentication handler for IA-S3 POST requests (metadata writes).
+
+    Appends credentials to the request body as form parameters rather
+    than using the Authorization header. Used for the Metadata Write API.
+
+    :param access_key: Your IA-S3 access key.
+    :param secret_key: Your IA-S3 secret key.
+    """
+
     def __init__(self, access_key: str | None = None, secret_key: str | None = None):
         self.access_key = access_key
         self.secret_key = secret_key

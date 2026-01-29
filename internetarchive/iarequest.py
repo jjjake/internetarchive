@@ -356,6 +356,16 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
 
 def prepare_patch(metadata, source_metadata, append, expect=None,
                   append_list=None, insert=None):
+    """Create a JSON Patch from metadata changes.
+
+    :param metadata: New metadata to apply (dict or list).
+    :param source_metadata: Current metadata from the item.
+    :param append: If ``True``, append string values to existing values.
+    :param expect: Dict of expectations for server-side validation.
+    :param append_list: If ``True``, append to existing list values.
+    :param insert: If ``True``, insert at specific list indices.
+    :returns: A list of JSON Patch operations.
+    """
     destination = source_metadata.copy()
     if isinstance(metadata, list):
         prepared_metadata = metadata
@@ -400,6 +410,17 @@ def _create_patch_tests(expect):
 
 def prepare_target_patch(metadata, source_metadata, append, target,
                          append_list, insert, expect):
+    """Create a JSON Patch for a specific metadata target path.
+
+    :param metadata: New metadata to apply.
+    :param source_metadata: Current metadata from the item.
+    :param append: If ``True``, append string values to existing values.
+    :param target: The metadata target path (e.g., ``'metadata/collection'``).
+    :param append_list: If ``True``, append to existing list values.
+    :param insert: If ``True``, insert at specific list indices.
+    :param expect: Dict of expectations for server-side validation.
+    :returns: A list of JSON Patch operations.
+    """
     def get_nested_value(data, parts):
         current = data
         for part in parts:
@@ -424,6 +445,17 @@ def prepare_target_patch(metadata, source_metadata, append, target,
 
 def prepare_files_patch(metadata, files_metadata, target, append,
                         append_list, insert, expect):
+    """Create a JSON Patch for file-level metadata.
+
+    :param metadata: New metadata to apply to the file.
+    :param files_metadata: List of file metadata dicts from the item.
+    :param target: The target path (e.g., ``'files/foo.txt'``).
+    :param append: If ``True``, append string values to existing values.
+    :param append_list: If ``True``, append to existing list values.
+    :param insert: If ``True``, insert at specific list indices.
+    :param expect: Dict of expectations for server-side validation.
+    :returns: A list of JSON Patch operations, or empty list if file not found.
+    """
     filename = target.split('/')[1]
     for file_meta in files_metadata:
         if file_meta.get('name') == filename:
@@ -440,21 +472,17 @@ def prepare_files_patch(metadata, files_metadata, target, append,
 
 def prepare_metadata(metadata, source_metadata=None, append=False,
                      append_list=False, insert=False):
-    """
-    Normalize and merge metadata before building JSON Patch.
+    """Normalize and merge metadata before building JSON Patch.
 
     Handles both plain key/value metadata and "indexed" keys like
-    `subject[0]`, `subject[1]`, etc. that represent list elements.
+    ``subject[0]``, ``subject[1]``, etc. that represent list elements.
 
-    Args:
-        metadata (dict): New metadata to apply.
-        source_metadata (dict, optional): Existing metadata from the item.
-        append (bool): If True, append values for existing keys (concatenate strings).
-        append_list (bool): If True, append values to lists.
-        insert (bool): If True, insert elements instead of overwriting.
-
-    Returns:
-        dict: Prepared metadata dictionary ready for patch generation.
+    :param metadata: New metadata to apply.
+    :param source_metadata: Existing metadata from the item.
+    :param append: If ``True``, append values for existing keys (concatenate strings).
+    :param append_list: If ``True``, append values to lists.
+    :param insert: If ``True``, insert elements instead of overwriting.
+    :returns: Prepared metadata dictionary ready for patch generation.
     """
     # Deep copy source to avoid mutating input
     source = copy.deepcopy(source_metadata) if source_metadata else {}
@@ -505,25 +533,21 @@ def _process_non_indexed_keys(metadata, source, prepared, append, append_list):
 
 
 def _process_indexed_keys(metadata, source, prepared, insert):
-    """
-    Process indexed metadata keys such as 'subject[0]', 'subject[1]', etc.
+    """Process indexed metadata keys such as ``subject[0]``, ``subject[1]``, etc.
 
-    Builds list values in `prepared` based on these indexed keys.
-    Merges with any existing list data from `source`, optionally
-    inserting new values when `insert=True` (otherwise existing values are
-    overwritten at given index).
+    Builds list values in ``prepared`` based on these indexed keys.
+    Merges with any existing list data from ``source``, optionally
+    inserting new values when ``insert=True`` (otherwise existing values
+    are overwritten at the given index).
 
-    Also filters out None and 'REMOVE_TAG' placeholders, which
+    Also filters out ``None`` and ``'REMOVE_TAG'`` placeholders, which
     indicate that a list element should be deleted.
 
-    Args:
-        metadata (dict): Input metadata possibly containing indexed keys.
-        source (dict): Existing metadata for the item.
-        prepared (dict): Dict being built up by prepare_metadata().
-        insert (bool): If True, insert elements instead of overwriting.
-
-    Returns:
-        dict: Mapping of base keys to original list lengths (for reference).
+    :param metadata: Input metadata possibly containing indexed keys.
+    :param source: Existing metadata for the item.
+    :param prepared: Dict being built up by :func:`prepare_metadata`.
+    :param insert: If ``True``, insert elements instead of overwriting.
+    :returns: Mapping of base keys to original list lengths (for reference).
     """
     indexed_keys = {}
     # Track explicit indexes to delete (where value is REMOVE_TAG)

@@ -670,6 +670,17 @@ class ArchiveSession(requests.sessions.Session):
         return catalog.CatalogTask.get_task_log(task_id, self, request_kwargs)
 
     def send(self, request, **kwargs) -> Response:
+        """Send a prepared request, handling HTTPS security warnings.
+
+        Overrides :meth:`requests.Session.send` to catch and handle
+        urllib3 warnings about insecure HTTPS connections.
+
+        :param request: The :class:`PreparedRequest` to send.
+        :param kwargs: Additional arguments passed to the parent ``send()`` method.
+        :returns: The :class:`Response` object.
+        :raises requests.exceptions.RequestException: If the platform has insecure
+                                                      HTTPS configuration.
+        """
         # Catch urllib3 warnings for HTTPS related errors.
         insecure = False
         with warnings.catch_warnings(record=True) as w:

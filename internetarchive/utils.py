@@ -49,6 +49,15 @@ except ImportError:
 
 
 def deep_update(d: dict, u: Mapping) -> dict:
+    """Recursively update a dictionary with another mapping.
+
+    Unlike ``dict.update()``, this function merges nested dictionaries
+    rather than replacing them entirely.
+
+    :param d: The dictionary to update in place.
+    :param u: The mapping containing updates to apply.
+    :returns: The updated dictionary ``d``.
+    """
     for k, v in u.items():
         if isinstance(v, Mapping):
             r = deep_update(d.get(k, {}), v)
@@ -63,6 +72,17 @@ class InvalidIdentifierException(Exception):
 
 
 def validate_s3_identifier(string: str) -> bool:
+    """Validate that a string is a legal Archive.org S3 identifier.
+
+    Identifiers must be 3-100 characters, contain only alphanumeric
+    characters, periods, underscores, or dashes, and cannot begin
+    with a period, underscore, or dash. User item identifiers may
+    start with ``@``.
+
+    :param string: The identifier string to validate.
+    :returns: ``True`` if the identifier is valid.
+    :raises InvalidIdentifierException: If the identifier is invalid.
+    """
     legal_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-'
     # periods, underscores, and dashes are legal, but may not be the first
     # character!
@@ -88,6 +108,13 @@ def validate_s3_identifier(string: str) -> bool:
 
 
 def needs_quote(s: str) -> bool:
+    """Check if a string needs URI quoting for use in HTTP headers.
+
+    A string needs quoting if it contains non-ASCII characters or whitespace.
+
+    :param s: The string to check.
+    :returns: ``True`` if the string needs quoting, ``False`` otherwise.
+    """
     try:
         s.encode('ascii')
     except (UnicodeDecodeError, UnicodeEncodeError):
@@ -96,6 +123,14 @@ def needs_quote(s: str) -> bool:
 
 
 def norm_filepath(fp: bytes | str) -> str:
+    """Normalize a file path for use in Archive.org URLs.
+
+    Converts bytes to string, replaces OS path separators with forward
+    slashes, and ensures the path starts with a leading slash.
+
+    :param fp: The file path to normalize (bytes or string).
+    :returns: The normalized file path string.
+    """
     if isinstance(fp, bytes):
         fp = fp.decode('utf-8')
     fp = fp.replace(os.path.sep, '/')
@@ -105,6 +140,14 @@ def norm_filepath(fp: bytes | str) -> str:
 
 
 def get_md5(file_object) -> str:
+    """Calculate the MD5 hash of a file object.
+
+    Reads the file in chunks to handle large files efficiently.
+    The file position is reset to the beginning after reading.
+
+    :param file_object: A file-like object opened in binary mode.
+    :returns: The hexadecimal MD5 digest string.
+    """
     m = hashlib.md5()
     while True:
         data = file_object.read(8192)
@@ -116,6 +159,12 @@ def get_md5(file_object) -> str:
 
 
 def chunk_generator(fp, chunk_size: int):
+    """Generate chunks from a file object.
+
+    :param fp: A file-like object to read from.
+    :param chunk_size: The size of each chunk in bytes.
+    :yields: Chunks of data from the file.
+    """
     while True:
         chunk = fp.read(chunk_size)
         if not chunk:
@@ -139,6 +188,18 @@ def suppress_keyboard_interrupt_message() -> None:
 
 
 class IterableToFileAdapter:
+    """Adapter that wraps an iterable to provide a file-like interface.
+
+    This is useful for streaming uploads with progress bars, where the
+    data source is an iterator (e.g., from tqdm) but the HTTP library
+    expects a file-like object with ``read()`` and ``__len__()`` methods.
+
+    :param iterable: The iterable to wrap.
+    :param size: The total size in bytes (used for Content-Length header).
+    :param pre_encode: If ``True``, encode output as ISO-8859-1 for HTTP.
+                       Needed when wrapping TextIO objects in iterators.
+    """
+
     def __init__(self, iterable, size: int, pre_encode: bool = False):
         self.iterator = iter(iterable)
         self.length = size
@@ -163,7 +224,13 @@ class IterableToFileAdapter:
 
 
 class IdentifierListAsItems:
-    """This class is a lazily-loaded list of Items, accessible by index or identifier.
+    """A lazily-loaded list of Items, accessible by index or identifier.
+
+    Items are fetched from Archive.org only when accessed, allowing
+    efficient handling of large identifier lists.
+
+    :param id_list_or_single_id: A single identifier string or list of identifiers.
+    :param session: An :class:`ArchiveSession` to use for fetching items.
     """
 
     def __init__(self, id_list_or_single_id, session):
@@ -193,6 +260,15 @@ class IdentifierListAsItems:
 
 
 def get_s3_xml_text(xml_str: str) -> str:
+    """Extract human-readable error text from an S3 XML response.
+
+    Parses the XML to extract Message and Resource elements,
+    combining them into a readable error string.
+
+    :param xml_str: The XML response string from S3.
+    :returns: A human-readable error message extracted from the XML,
+              or the original string if parsing fails.
+    """
     def _get_tag_text(tag_name, xml_obj):
         text = ''
         elements = xml_obj.getElementsByTagName(tag_name)
@@ -217,6 +293,15 @@ def get_s3_xml_text(xml_str: str) -> str:
 
 
 def get_file_size(file_obj) -> int | None:
+    """Get the size of a file or file-like object.
+
+    For file-like objects, seeks to the end to determine size and
+    then resets position. For path-like objects, uses ``os.stat()``.
+
+    :param file_obj: A file path or file-like object.
+    :returns: The file size in bytes, or ``None`` if size cannot be determined
+              or exceeds ``sys.maxsize``.
+    """
     if is_filelike_obj(file_obj):
         try:
             file_obj.seek(0, os.SEEK_END)
@@ -243,8 +328,12 @@ def iter_directory(directory: str):
 
 
 def recursive_file_count_and_size(files, item=None, checksum=False):
-    """Given a filepath or list of filepaths, return the total number and size of files.
-    If `checksum` is `True`, skip over files whose MD5 hash matches any file in the `item`.
+    """Count files and calculate total size, recursing into directories.
+
+    :param files: A filepath, list of filepaths, or dict mapping keys to filepaths.
+    :param item: An :class:`Item` object used for checksum comparison.
+    :param checksum: If ``True``, skip files whose MD5 matches any file in ``item``.
+    :returns: A tuple of (total_file_count, total_size_in_bytes).
     """
     if not isinstance(files, (list, set)):
         files = [files]
@@ -363,6 +452,14 @@ def reraise_modify(
 
 
 def remove_none(obj):
+    """Recursively remove None values from a data structure.
+
+    For lists/tuples/sets, removes falsy values and deduplicates dicts.
+    For dicts, removes entries where key or value is None.
+
+    :param obj: The data structure to process (list, tuple, set, dict, or scalar).
+    :returns: A copy of the data structure with None values removed.
+    """
     if isinstance(obj, (list, tuple, set)):
         lst = type(obj)(remove_none(x) for x in obj if x)
         try:
@@ -397,6 +494,15 @@ def delete_items_from_dict(d: dict | list, to_delete):
 
 
 def is_valid_metadata_key(name: str) -> bool:
+    """Check if a string is a valid Archive.org metadata key.
+
+    Valid keys must start with a letter, followed by alphanumeric
+    characters, periods, dashes, or underscores. An optional index
+    in square brackets (e.g., ``[0]``) is allowed at the end.
+
+    :param name: The metadata key name to validate.
+    :returns: ``True`` if the key is valid, ``False`` otherwise.
+    """
     # According to the documentation a metadata key
     # has to be a valid XML tag name.
     #
@@ -444,6 +550,15 @@ def merge_dictionaries(
 
 
 def parse_dict_cookies(value: str) -> dict[str, str | None]:
+    """Parse a cookie string into a dictionary.
+
+    Handles cookie attributes like domain and path, providing
+    Archive.org defaults if not specified.
+
+    :param value: A cookie string in the format ``name=value; attr=val``.
+    :returns: A dict with cookie name/value and attributes. Defaults to
+              ``domain='.archive.org'`` and ``path='/'`` if not specified.
+    """
     result: dict[str, str | None] = {}
     for item in value.split(';'):
         item = item.strip()
@@ -462,6 +577,13 @@ def parse_dict_cookies(value: str) -> dict[str, str | None]:
 
 
 def is_valid_email(email):
+    """Check if a string is a valid email address format.
+
+    Uses a simple regex that requires a TLD of at least 2 characters.
+
+    :param email: The email address string to validate.
+    :returns: ``True`` if the email format is valid, ``False`` otherwise.
+    """
     # Regular expression pattern for a valid email address
     # Ensures the TLD has at least 2 characters
     pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$'
@@ -597,6 +719,10 @@ def sanitize_windows_relpath(rel_path: str, verbose: bool = False, printer=None)
     return result_path, modified_any
 
 def is_windows() -> bool:
+    """Check if the current platform is Windows.
+
+    :returns: ``True`` if running on Windows, ``False`` otherwise.
+    """
     return (
         platform.system().lower() == "windows"
         or sys.platform.startswith("win")
@@ -604,20 +730,17 @@ def is_windows() -> bool:
 
 
 def sanitize_filepath(filepath: str, avoid_colon: bool = False) -> str:
-    """
-    Sanitizes only the filename part of a full file path, leaving the directory path intact.
+    """Sanitize only the filename part of a full file path.
 
-    This is useful when you need to ensure the filename is safe for filesystem use
-    without modifying the directory structure. Typically used before creating files
-    or directories to prevent invalid filename characters.
+    Leaves the directory path intact while ensuring the filename is safe
+    for filesystem use. Typically used before creating files or directories
+    to prevent invalid filename characters.
 
-    Args:
-        filepath (str): The full file path to sanitize.
-        avoid_colon (bool): If True, colon ':' in the filename will be percent-encoded
-        for macOS compatibility. Defaults to False.
-
-    Returns:
-        str: The sanitized file path with the filename portion percent-encoded as needed.
+    :param filepath: The full file path to sanitize.
+    :param avoid_colon: If ``True``, colon ``:`` in the filename will be
+                        percent-encoded for macOS compatibility.
+    :returns: The sanitized file path with the filename portion percent-encoded
+              as needed.
     """
     parent_dir = os.path.dirname(filepath)
     filename = os.path.basename(filepath)
@@ -626,16 +749,13 @@ def sanitize_filepath(filepath: str, avoid_colon: bool = False) -> str:
 
 
 def sanitize_filename(name: str, avoid_colon: bool = False) -> str:
-    """
-    Sanitizes a filename by replacing invalid characters with percent-encoded values.
+    """Sanitize a filename by replacing invalid characters with percent-encoded values.
+
     This function is designed to be compatible with both Windows and POSIX systems.
 
-    Args:
-        name (str): The original string to sanitize.
-        avoid_colon (bool): If True, colon ':' will be percent-encoded.
-
-    Returns:
-        str: A sanitized version of the filename.
+    :param name: The original filename string to sanitize.
+    :param avoid_colon: If ``True``, colon ``:`` will be percent-encoded.
+    :returns: A sanitized version of the filename.
     """
     original = name
     if is_windows():
@@ -654,15 +774,12 @@ def sanitize_filename(name: str, avoid_colon: bool = False) -> str:
 
 
 def unsanitize_filename(name: str) -> str:
-    """
-    Reverses percent-encoding of the form %XX back to original characters.
-    Works for filenames sanitized by sanitize_filename (Windows or POSIX).
+    """Reverse percent-encoding of the form %XX back to original characters.
 
-    Args:
-        name (str): Sanitized filename string with %XX encodings.
+    Works for filenames sanitized by :func:`sanitize_filename` (Windows or POSIX).
 
-    Returns:
-        str: Original filename with all %XX sequences decoded.
+    :param name: Sanitized filename string with ``%XX`` encodings.
+    :returns: Original filename with all ``%XX`` sequences decoded.
     """
     if '%' in name:
         if re.search(r'%[0-9A-Fa-f]{2}', name):
@@ -679,15 +796,12 @@ def unsanitize_filename(name: str) -> str:
 
 
 def sanitize_filename_windows(name: str) -> str:
-    r"""
-    Replaces Windows-invalid filename characters with percent-encoded values.
-    Characters replaced: < > : " / \ | ? * %
+    r"""Replace Windows-invalid filename characters with percent-encoded values.
 
-    Args:
-        name (str): The original string.
+    Characters replaced: ``< > : " / \ | ? * %``
 
-    Returns:
-        str: A sanitized version safe for filesystem use.
+    :param name: The original filename string.
+    :returns: A sanitized version safe for Windows filesystem use.
     """
     # Encode `%` so that it's possible to round-trip (i.e. via `unsanitize_filename`)
     invalid_chars = r'[<>:"/\\|?*\x00-\x1F%]'
@@ -703,18 +817,14 @@ def sanitize_filename_windows(name: str) -> str:
 
 
 def sanitize_filename_posix(name: str, avoid_colon: bool = False) -> str:
-    """
-    Sanitizes filenames for Linux, BSD, and Unix-like systems.
+    """Sanitize filenames for Linux, BSD, and Unix-like systems.
 
-    - Percent-encodes forward slash '/' (always)
-    - Optionally percent-encodes colon ':' for macOS compatibility
+    Percent-encodes forward slash ``/`` (always), and optionally
+    percent-encodes colon ``:`` for macOS compatibility.
 
-    Args:
-        name (str): Original filename string.
-        avoid_colon (bool): If True, colon ':' will be encoded.
-
-    Returns:
-        str: Sanitized filename safe for POSIX systems.
+    :param name: Original filename string.
+    :param avoid_colon: If ``True``, colon ``:`` will be encoded.
+    :returns: Sanitized filename safe for POSIX systems.
     """
     # Build regex pattern dynamically
     chars_to_encode = r'/'

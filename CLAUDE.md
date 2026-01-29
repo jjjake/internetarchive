@@ -64,6 +64,7 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 - Linter: ruff (configured in `pyproject.toml`)
 - Formatter: black
 - Type checking: mypy (type stubs in `options.extras_require` under `types`)
+- Docstrings: Always add or update docstrings when editing or adding code. Use Sphinx-style format with `:param:`, `:returns:`, and `:raises:` sections
 
 ## Key Dependencies
 

@@ -74,6 +74,7 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 
 ## Contributing Notes
 
+- All new features should be developed on a feature branch, not directly on master
 - PRs require tests and must pass ruff linting
 - Avoid introducing new dependencies
 - Support Python 3.9+

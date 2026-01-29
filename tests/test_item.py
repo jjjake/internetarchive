@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import sys
 import types
 from copy import deepcopy
 
@@ -34,12 +33,10 @@ EXPECTED_S3_HEADERS = {
     'x-archive-auto-make-bucket': '1',
     'authorization': 'LOW a:b',
     'accept': '*/*',
-    'accept-encoding': 'gzip, deflate',
     'connection': 'close',
 }
-# `compression.zstd` is added to the Standard Library in Python >= 3.14.
-if sys.version_info >= (3, 14):
-    EXPECTED_S3_HEADERS['accept-encoding'] += ', zstd'
+# Accept-Encoding varies by urllib3/requests version, so we check it separately
+EXPECTED_ACCEPT_ENCODING_PREFIX = 'gzip, deflate'
 
 
 def test_get_item(nasa_metadata, nasa_item, session):
@@ -335,6 +332,9 @@ def test_upload(nasa_item):
             headers = {k.lower(): str(v) for k, v in request.headers.items()}
             assert 'user-agent' in headers
             del headers['user-agent']
+            # Check accept-encoding starts with expected prefix (may have additional encodings)
+            assert headers['accept-encoding'].startswith(EXPECTED_ACCEPT_ENCODING_PREFIX)
+            del headers['accept-encoding']
             assert headers == EXPECTED_S3_HEADERS
             assert request.url == f'{PROTOCOL}//s3.us.archive.org/nasa/nasa.json'
 
@@ -408,6 +408,9 @@ def test_upload_metadata(nasa_item):
             headers = {k.lower(): str(v) for k, v in request.headers.items()}
             assert 'user-agent' in headers
             del headers['user-agent']
+            # Check accept-encoding starts with expected prefix (may have additional encodings)
+            assert headers['accept-encoding'].startswith(EXPECTED_ACCEPT_ENCODING_PREFIX)
+            del headers['accept-encoding']
             assert headers == _expected_headers
 
 
@@ -499,6 +502,9 @@ def test_upload_queue_derive(nasa_item):
             headers = {k.lower(): str(v) for k, v in resp.request.headers.items()}
             assert 'user-agent' in headers
             del headers['user-agent']
+            # Check accept-encoding starts with expected prefix (may have additional encodings)
+            assert headers['accept-encoding'].startswith(EXPECTED_ACCEPT_ENCODING_PREFIX)
+            del headers['accept-encoding']
             assert headers == _expected_headers
 
 
@@ -609,7 +615,7 @@ def test_upload_automatic_size_hint(tmpdir, nasa_item):
             fh.write('cccc')
         files.append(os.path.join(tmpdir, 'dir'))
 
-        with open(os.path.join(tmpdir, 'obj'), 'wb') as fh:
+        with open(os.path.join(tmpdir, 'obj'), 'w+b') as fh:
             fh.write(b'dddddddd')
             fh.seek(0, os.SEEK_SET)
             files.append(fh)

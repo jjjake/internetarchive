@@ -78,3 +78,33 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 - PRs require tests and must pass ruff linting
 - Avoid introducing new dependencies
 - Support Python 3.9+
+
+## Releasing
+
+To release a new version (must be on master with clean working directory):
+
+```bash
+# 1. Prepare release (updates __version__.py and HISTORY.rst date)
+make prepare-release RELEASE=X.Y.Z
+
+# 2. Review and commit version changes
+git diff
+git add -A && git commit -m "Bump version to X.Y.Z"
+
+# 3. Publish to PyPI + archive.org + GitHub
+make publish-all
+```
+
+Individual release targets:
+- `make publish` - PyPI + GitHub release (no binary)
+- `make publish-all` - PyPI + pex binary + GitHub release
+- `make publish-binary` - pex binary only (after PyPI release)
+
+The release process will:
+- Run tests and linting
+- Build the package
+- Build and test the pex binary
+- Create and push a git tag
+- Upload to PyPI
+- Upload binary to archive.org
+- Create a GitHub release with changelog from HISTORY.rst

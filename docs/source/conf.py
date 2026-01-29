@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information ----------------------------------------------------
 project = 'internetarchive'
-copyright = '2015, Internet Archive'
+copyright = '2015-2026, Internet Archive'
 
 # The short X.Y version
 version = __version__

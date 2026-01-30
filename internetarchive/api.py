@@ -1,7 +1,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2024 Internet Archive
+# Copyright (C) 2012-2026 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -468,6 +468,18 @@ def get_tasks(
     :param params: The URL parameters to send with each request sent to the
                    Archive.org catalog API.
 
+    :param config: A dictionary used to configure your session.
+
+    :param config_file: A path to a config file used to configure your session.
+
+    :param archive_session: An :class:`ArchiveSession` object to use for requests.
+
+    :param http_adapter_kwargs: Keyword arguments that
+                                :py:class:`requests.adapters.HTTPAdapter` takes.
+
+    :param request_kwargs: Keyword arguments that
+                           :py:class:`requests.Request` takes.
+
     :returns: A set of :class:`CatalogTask` objects.
     """
     if not archive_session:
@@ -509,7 +521,9 @@ def search_items(
                     Search API in dsl (i.e. do not prepend ``!L `` to the
                     ``full_text_search`` query [default: False].
 
-    :param secure: Configuration options for session.
+    :param archive_session: An :class:`ArchiveSession` object to use for requests.
+
+    :param config: A dictionary used to configure your session.
 
     :param config_file: A path to a config file used to configure your session.
 
@@ -559,6 +573,10 @@ def configure(  # nosec: hardcoded_password_default
     :param username: The email address associated with your Archive.org account.
 
     :param password: Your Archive.org password.
+
+    :param config_file: Path to write the config file. Uses default location if empty.
+
+    :param host: The Archive.org host to authenticate against.
 
     :returns: The config file path.
 

@@ -1,7 +1,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2024 Internet Archive
+# Copyright (C) 2012-2026 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -39,6 +39,17 @@ from internetarchive.utils import deep_update
 
 
 def get_auth_config(email: str, password: str, host: str = 'archive.org') -> dict:
+    """Authenticate with Archive.org and retrieve configuration credentials.
+
+    :param email: The email address associated with your Archive.org account.
+    :param password: Your Archive.org password.
+    :param host: The Archive.org host to authenticate against.
+                Defaults to ``'archive.org'``.
+
+    :returns: A dict containing S3 keys, cookies, and general config.
+
+    :raises AuthenticationError: If authentication fails.
+    """
     u = f'https://{host}/services/xauthn/'
     p = {'op': 'login'}
     d = {'email': email, 'password': password}
@@ -73,7 +84,19 @@ def get_auth_config(email: str, password: str, host: str = 'archive.org') -> dic
     return auth_config
 
 
-def write_config_file(auth_config: Mapping, config_file=None):
+def write_config_file(auth_config: Mapping, config_file=None) -> str:
+    """Write authentication configuration to a config file.
+
+    Merges the provided auth config with any existing config file,
+    preserving custom settings while updating credentials.
+
+    :param auth_config: A dict containing authentication configuration
+                       with ``s3``, ``cookies``, and ``general`` sections.
+    :param config_file: Optional path to the config file.
+                       If not provided, uses the default location.
+
+    :returns: The path to the config file that was written.
+    """
     config_file, is_xdg, config = parse_config_file(config_file)
 
     # S3 Keys.
@@ -109,7 +132,22 @@ def write_config_file(auth_config: Mapping, config_file=None):
     return config_file
 
 
-def parse_config_file(config_file=None):
+def parse_config_file(config_file=None) -> tuple:
+    """Parse an internetarchive config file.
+
+    Searches for config files in the following order:
+    1. ``IA_CONFIG_FILE`` environment variable
+    2. ``$XDG_CONFIG_HOME/internetarchive/ia.ini``
+    3. ``~/.config/ia.ini``
+    4. ``~/.ia``
+
+    If no config file exists, defaults to the XDG location.
+
+    :param config_file: Optional explicit path to a config file.
+
+    :returns: A tuple of ``(config_file_path, is_xdg, config_parser)``
+             where ``is_xdg`` indicates if the XDG config path is used.
+    """
     config = RawConfigParser()
 
     is_xdg = False
@@ -150,7 +188,7 @@ def parse_config_file(config_file=None):
     if config.has_section('general'):
         for k, _v in config.items('general'):
             if k in ['secure']:
-                config.set('general', k, config.getboolean('general', k))
+                config.set('general', k, str(config.getboolean('general', k)))
         if not config.get('general', 'screenname'):
             config.set('general', 'screenname', None)
     else:
@@ -161,6 +199,20 @@ def parse_config_file(config_file=None):
 
 
 def get_config(config=None, config_file=None) -> dict:
+    """Get the merged configuration from file, environment, and provided config.
+
+    Configuration is loaded in the following order (later sources override earlier):
+    1. Config file (``~/.config/internetarchive/ia.ini`` or ``~/.ia``)
+    2. Environment variables (``IA_ACCESS_KEY_ID``, ``IA_SECRET_ACCESS_KEY``)
+    3. Provided ``config`` dict
+
+    :param config: Optional dict to merge with file/environment config.
+    :param config_file: Optional path to a specific config file.
+
+    :returns: A dict containing the merged configuration.
+
+    :raises ValueError: If only one of the S3 environment variables is set.
+    """
     _config = config or {}
     config_file, _is_xdg, config_parser = parse_config_file(config_file)
 

@@ -1,7 +1,7 @@
 The Internet Archive Python Library
 ===================================
 
-Release v\ |version|. (:ref:`Installation <install>`)
+Release v\ |version|. (:ref:`Installation <installation>`)
 
 |tox|
 |versions|
@@ -40,7 +40,7 @@ Documentation
 For more detailed information, including installing the command-line tool and Python library, please refer to the following sections:
 
 Setup & Configuration
-_____________________
+---------------------
 
 Get the tools running on your system:
 
@@ -115,7 +115,7 @@ Complete reference documentation for all modules:
    modules
 
 Authors
--------
+=======
 
 .. toctree::
    :maxdepth: 2
@@ -126,4 +126,5 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
+* :ref:`modindex`
 * :ref:`search`

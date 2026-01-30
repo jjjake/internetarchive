@@ -65,20 +65,14 @@ class Account:
         data: Dict[str, str],
         session: Optional[ArchiveSession] = None
     ) -> requests.Response:
-        """
-        Helper method to make API requests.
+        """Make a POST request to the Account API.
 
-        Args:
-            endpoint: The API endpoint to call.
-            params: Query parameters for the request.
-            data: Data to send in the request body.
-            session: Optional session to use for the request. Defaults to self.session.
-
-        Returns:
-            The response from the API.
-
-        Raises:
-            requests.exceptions.RequestException: If the API request fails.
+        :param endpoint: The API endpoint to call.
+        :param params: Query parameters for the request.
+        :param data: Data to send in the request body.
+        :param session: Optional session to use. Defaults to ``self.session``.
+        :returns: The response from the API.
+        :raises requests.exceptions.RequestException: If the API request fails.
         """
         session = session or self.session
         url = f'https://{session.host}{endpoint}'  # type: ignore[attr-defined]
@@ -93,16 +87,12 @@ class Account:
         identifier: str,
         session: Optional[ArchiveSession] = None
     ) -> "Account":
-        """
-        Factory method to initialize an Account using an identifier type and value.
+        """Create an Account by looking up an identifier.
 
-        Args:
-            identifier_type: The type of identifier (e.g., 'email', 'screenname').
-            identifier: The value of the identifier (e.g., 'foo@example.com').
-            session: Optional session to use for the request.
-
-        Returns:
-            An instance of Account.
+        :param identifier_type: The type of identifier (e.g., ``'email'``, ``'screenname'``).
+        :param identifier: The value of the identifier (e.g., ``'foo@example.com'``).
+        :param session: Optional session to use for the request.
+        :returns: An instance of Account.
         """
         json_data = cls._fetch_account_data_from_api(identifier_type, identifier, session)
         return cls.from_json(json_data, session)
@@ -114,20 +104,14 @@ class Account:
         identifier: str,
         session: Optional[ArchiveSession] = None
     ) -> Dict:
-        """
-        Fetches account data from the API using an identifier type and value.
+        """Fetch account data from the API using an identifier.
 
-        Args:
-            identifier_type: The type of identifier (e.g., 'email', 'screenname').
-            identifier: The value of the identifier (e.g., 'foo@example.com').
-            session: Optional session to use for the request.
-
-        Returns:
-            A dictionary containing the account data.
-
-        Raises:
-            requests.exceptions.RequestException: If the API request fails.
-            ValueError: If the API response is invalid or missing required data.
+        :param identifier_type: The type of identifier (e.g., ``'email'``, ``'screenname'``).
+        :param identifier: The value of the identifier (e.g., ``'foo@example.com'``).
+        :param session: Optional session to use for the request.
+        :returns: A dictionary containing the account data.
+        :raises requests.exceptions.RequestException: If the API request fails.
+        :raises AccountAPIError: If the API response is invalid or missing required data.
         """
         data = {identifier_type: identifier}
         session = session or get_session()
@@ -153,18 +137,13 @@ class Account:
         json_data: Dict,
         session: Optional[ArchiveSession] = None
     ) -> "Account":
-        """
-        Factory method to initialize an Account using JSON data.
+        """Create an Account from JSON data.
 
-        Args:
-            json_data: A dictionary containing account data.
-            session: Optional session to use for the request.
-
-        Returns:
-            An instance of Account.
-
-        Raises:
-            ValueError: If required fields are missing in the JSON data.
+        :param json_data: A dictionary containing account data.
+        :param session: Optional session to use for the request.
+        :returns: An instance of Account.
+        :raises ValueError: If required fields are missing in the JSON data.
+        :raises TypeError: If session is not an ArchiveSession.
         """
         required_fields = [
             "canonical_email",
@@ -205,15 +184,11 @@ class Account:
     def lock(self,
              comment: Optional[str] = None,
              session: Optional[ArchiveSession] = None) -> requests.Response:
-        """
-        Lock the account.
+        """Lock the account.
 
-        Args:
-            comment: An optional comment for the lock operation.
-            session: Optional session to use for the request.
-
-        Returns:
-            The response from the API.
+        :param comment: An optional comment for the lock operation.
+        :param session: Optional session to use for the request.
+        :returns: The response from the API.
         """
         data = {'itemname': self.itemname, 'is_lock': '1'}
         if comment:
@@ -228,15 +203,11 @@ class Account:
     def unlock(self,
                comment: Optional[str] = None,
                session: Optional[ArchiveSession] = None) -> requests.Response:
-        """
-        Unlock the account.
+        """Unlock the account.
 
-        Args:
-            comment: An optional comment for the unlock operation.
-            session: Optional session to use for the request.
-
-        Returns:
-            The response from the API.
+        :param comment: An optional comment for the unlock operation.
+        :param session: Optional session to use for the request.
+        :returns: The response from the API.
         """
         data = {'itemname': self.itemname, 'is_lock': '0'}
         if comment:
@@ -249,11 +220,9 @@ class Account:
         )
 
     def to_dict(self) -> Dict:
-        """
-        Converts the Account instance to a dictionary.
+        """Convert the Account instance to a dictionary.
 
-        Returns:
-            A dictionary representation of the Account instance.
+        :returns: A dictionary representation of the Account instance.
         """
         return {
             "locked": self.locked,

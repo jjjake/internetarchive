@@ -1,7 +1,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2024 Internet Archive
+# Copyright (C) 2012-2026 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -59,6 +59,21 @@ class Search:
                  dsl_fts=None,
                  request_kwargs=None,
                  max_retries=None):
+        """Initialize a Search object.
+
+        :param archive_session: An :class:`ArchiveSession` object.
+        :param query: The search query string. Refer to
+                     https://archive.org/advancedsearch.php#raw for query syntax.
+        :param fields: List of metadata fields to return in search results.
+                      Defaults to returning only the ``identifier`` field.
+        :param sorts: List of sort fields (e.g., ``['downloads desc']``).
+        :param params: Additional URL parameters for the search API.
+        :param full_text_search: Enable full-text search (beta).
+        :param dsl_fts: Use DSL mode for full-text search queries.
+        :param request_kwargs: Keyword arguments passed to requests.
+        :param max_retries: Maximum number of retries for failed requests.
+                           Defaults to 5.
+        """
         params = params or {}
 
         self.session = archive_session
@@ -271,9 +286,32 @@ class Search:
         return self.session.get_item(search_result['identifier'])
 
     def iter_as_results(self):
+        """Iterate over search results as raw result dicts.
+
+        :returns: A :class:`SearchIterator` yielding result dicts.
+
+        Usage::
+
+            >>> search = session.search_items('collection:nasa')
+            >>> for result in search.iter_as_results():
+            ...     print(result['identifier'])
+        """
         return SearchIterator(self, self._make_results_generator())
 
     def iter_as_items(self):
+        """Iterate over search results as :class:`Item` objects.
+
+        Each result is automatically fetched as a full Item object,
+        which may result in additional API calls.
+
+        :returns: A :class:`SearchIterator` yielding :class:`Item` objects.
+
+        Usage::
+
+            >>> search = session.search_items('collection:nasa')
+            >>> for item in search.iter_as_items():
+            ...     print(item.metadata.get('title'))
+        """
         _map = map(self._get_item_from_search_result, self._make_results_generator())
         return SearchIterator(self, _map)
 

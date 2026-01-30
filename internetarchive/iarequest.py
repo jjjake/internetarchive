@@ -1,7 +1,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2024 Internet Archive
+# Copyright (C) 2012-2026 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -40,6 +40,20 @@ logger = logging.getLogger(__name__)
 
 
 class S3Request(requests.models.Request):
+    """A Request object for IA-S3 uploads.
+
+    Extends :class:`requests.Request` to handle Archive.org S3-like
+    upload requests, including metadata headers and derive queue settings.
+
+    :param metadata: Item-level metadata to set on upload.
+    :param file_metadata: File-level metadata for the uploaded file.
+    :param queue_derive: Whether to queue derivation after upload.
+                        Defaults to ``True``.
+    :param access_key: IA-S3 access key for authentication.
+    :param secret_key: IA-S3 secret key for authentication.
+    :param kwargs: Additional arguments passed to :class:`requests.Request`.
+    """
+
     def __init__(self,
                  metadata=None,
                  file_metadata=None,
@@ -122,6 +136,26 @@ class S3PreparedRequest(requests.models.PreparedRequest):
 
 
 class MetadataRequest(requests.models.Request):
+    """A Request object for metadata modifications.
+
+    Extends :class:`requests.Request` to handle Archive.org Metadata API
+    requests. Automatically generates JSON Patch operations from the
+    provided metadata.
+
+    :param metadata: Metadata dict to apply to the item.
+    :param source_metadata: Current item metadata (fetched automatically if not provided).
+    :param target: Metadata target (e.g., ``'metadata'``, ``'files/foo.txt'``).
+    :param priority: Task priority (-10 to 10).
+    :param access_key: IA-S3 access key for authentication.
+    :param secret_key: IA-S3 secret key for authentication.
+    :param append: Append values to existing string fields.
+    :param expect: Dict of expectations for server-side validation.
+    :param append_list: Append values to existing list fields.
+    :param insert: Insert values at specific list indices.
+    :param reduced_priority: Submit at reduced priority to avoid rate limiting.
+    :param kwargs: Additional arguments passed to :class:`requests.Request`.
+    """
+
     def __init__(self,
                  metadata=None,
                  source_metadata=None,
@@ -322,6 +356,16 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
 
 def prepare_patch(metadata, source_metadata, append, expect=None,
                   append_list=None, insert=None):
+    """Create a JSON Patch from metadata changes.
+
+    :param metadata: New metadata to apply (dict or list).
+    :param source_metadata: Current metadata from the item.
+    :param append: If ``True``, append string values to existing values.
+    :param expect: Dict of expectations for server-side validation.
+    :param append_list: If ``True``, append to existing list values.
+    :param insert: If ``True``, insert at specific list indices.
+    :returns: A list of JSON Patch operations.
+    """
     destination = source_metadata.copy()
     if isinstance(metadata, list):
         prepared_metadata = metadata
@@ -366,6 +410,17 @@ def _create_patch_tests(expect):
 
 def prepare_target_patch(metadata, source_metadata, append, target,
                          append_list, insert, expect):
+    """Create a JSON Patch for a specific metadata target path.
+
+    :param metadata: New metadata to apply.
+    :param source_metadata: Current metadata from the item.
+    :param append: If ``True``, append string values to existing values.
+    :param target: The metadata target path (e.g., ``'metadata/collection'``).
+    :param append_list: If ``True``, append to existing list values.
+    :param insert: If ``True``, insert at specific list indices.
+    :param expect: Dict of expectations for server-side validation.
+    :returns: A list of JSON Patch operations.
+    """
     def get_nested_value(data, parts):
         current = data
         for part in parts:
@@ -390,6 +445,17 @@ def prepare_target_patch(metadata, source_metadata, append, target,
 
 def prepare_files_patch(metadata, files_metadata, target, append,
                         append_list, insert, expect):
+    """Create a JSON Patch for file-level metadata.
+
+    :param metadata: New metadata to apply to the file.
+    :param files_metadata: List of file metadata dicts from the item.
+    :param target: The target path (e.g., ``'files/foo.txt'``).
+    :param append: If ``True``, append string values to existing values.
+    :param append_list: If ``True``, append to existing list values.
+    :param insert: If ``True``, insert at specific list indices.
+    :param expect: Dict of expectations for server-side validation.
+    :returns: A list of JSON Patch operations, or empty list if file not found.
+    """
     filename = target.split('/')[1]
     for file_meta in files_metadata:
         if file_meta.get('name') == filename:
@@ -406,21 +472,17 @@ def prepare_files_patch(metadata, files_metadata, target, append,
 
 def prepare_metadata(metadata, source_metadata=None, append=False,
                      append_list=False, insert=False):
-    """
-    Normalize and merge metadata before building JSON Patch.
+    """Normalize and merge metadata before building JSON Patch.
 
     Handles both plain key/value metadata and "indexed" keys like
-    `subject[0]`, `subject[1]`, etc. that represent list elements.
+    ``subject[0]``, ``subject[1]``, etc. that represent list elements.
 
-    Args:
-        metadata (dict): New metadata to apply.
-        source_metadata (dict, optional): Existing metadata from the item.
-        append (bool): If True, append values for existing keys (concatenate strings).
-        append_list (bool): If True, append values to lists.
-        insert (bool): If True, insert elements instead of overwriting.
-
-    Returns:
-        dict: Prepared metadata dictionary ready for patch generation.
+    :param metadata: New metadata to apply.
+    :param source_metadata: Existing metadata from the item.
+    :param append: If ``True``, append values for existing keys (concatenate strings).
+    :param append_list: If ``True``, append values to lists.
+    :param insert: If ``True``, insert elements instead of overwriting.
+    :returns: Prepared metadata dictionary ready for patch generation.
     """
     # Deep copy source to avoid mutating input
     source = copy.deepcopy(source_metadata) if source_metadata else {}
@@ -471,25 +533,21 @@ def _process_non_indexed_keys(metadata, source, prepared, append, append_list):
 
 
 def _process_indexed_keys(metadata, source, prepared, insert):
-    """
-    Process indexed metadata keys such as 'subject[0]', 'subject[1]', etc.
+    """Process indexed metadata keys such as ``subject[0]``, ``subject[1]``, etc.
 
-    Builds list values in `prepared` based on these indexed keys.
-    Merges with any existing list data from `source`, optionally
-    inserting new values when `insert=True` (otherwise existing values are
-    overwritten at given index).
+    Builds list values in ``prepared`` based on these indexed keys.
+    Merges with any existing list data from ``source``, optionally
+    inserting new values when ``insert=True`` (otherwise existing values
+    are overwritten at the given index).
 
-    Also filters out None and 'REMOVE_TAG' placeholders, which
+    Also filters out ``None`` and ``'REMOVE_TAG'`` placeholders, which
     indicate that a list element should be deleted.
 
-    Args:
-        metadata (dict): Input metadata possibly containing indexed keys.
-        source (dict): Existing metadata for the item.
-        prepared (dict): Dict being built up by prepare_metadata().
-        insert (bool): If True, insert elements instead of overwriting.
-
-    Returns:
-        dict: Mapping of base keys to original list lengths (for reference).
+    :param metadata: Input metadata possibly containing indexed keys.
+    :param source: Existing metadata for the item.
+    :param prepared: Dict being built up by :func:`prepare_metadata`.
+    :param insert: If ``True``, insert elements instead of overwriting.
+    :returns: Mapping of base keys to original list lengths (for reference).
     """
     indexed_keys = {}
     # Track explicit indexes to delete (where value is REMOVE_TAG)

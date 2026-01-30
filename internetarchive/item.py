@@ -1,7 +1,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2024 Internet Archive
+# Copyright (C) 2012-2026 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -68,6 +68,17 @@ log = getLogger(__name__)
 
 @total_ordering
 class BaseItem:
+    """Base class for Archive.org items.
+
+    This class provides common functionality for both :class:`Item` and
+    :class:`Collection` classes. It handles loading and storing item
+    metadata from the Archive.org Metadata API.
+
+    .. note::
+        This class should not be instantiated directly. Use :class:`Item`
+        or :class:`Collection` instead.
+    """
+
     EXCLUDED_ITEM_METADATA_KEYS = ('workable_servers', 'server')
 
     def __init__(
@@ -104,6 +115,15 @@ class BaseItem:
         return f'{self.__class__.__name__}(identifier={self.identifier!r}{notloaded})'
 
     def load(self, item_metadata: Mapping | None = None) -> None:
+        """Load or reload item metadata.
+
+        Populates the item's attributes from the metadata dict. This is
+        called automatically during initialization and can be called
+        again to refresh the item's state.
+
+        :param item_metadata: Optional new metadata dict to load.
+                             If not provided, uses the existing metadata.
+        """
         if item_metadata:
             self.item_metadata = item_metadata
 
@@ -231,6 +251,16 @@ class Item(BaseItem):
             return f'URLs ({", ".join(self._paths)}) for {self._itm_obj.identifier}'
 
     def refresh(self, item_metadata: Mapping | None = None, **kwargs) -> None:
+        """Refresh the item's metadata from Archive.org.
+
+        Fetches the latest metadata from the Archive.org Metadata API and
+        reloads the item's attributes.
+
+        :param item_metadata: Optional metadata dict to use instead of
+                             fetching from Archive.org.
+        :param kwargs: Additional keyword arguments passed to
+                      :meth:`ArchiveSession.get_metadata`.
+        """
         if not item_metadata:
             item_metadata = self.session.get_metadata(self.identifier, **kwargs)
         self.load(item_metadata)
@@ -488,6 +518,11 @@ class Item(BaseItem):
         return r
 
     def get_review(self) -> Response:
+        """Get reviews for this item.
+
+        :returns: :class:`requests.Response` containing review data as JSON.
+        :raises HTTPError: If the request fails.
+        """
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = {'identifier': self.identifier}
         a = S3Auth(self.session.access_key, self.session.secret_key)
@@ -496,6 +531,18 @@ class Item(BaseItem):
         return r
 
     def index_review(self, username=None, screenname=None, itemname=None) -> Response:
+        """Mark a review as indexable (visible in search results).
+
+        Specify exactly one of ``username``, ``screenname``, or ``itemname``
+        to identify which review to index.
+
+        :param username: The username of the reviewer.
+        :param screenname: The screen name of the reviewer.
+        :param itemname: The item name associated with the review.
+
+        :returns: :class:`requests.Response`
+        :raises HTTPError: If the request fails.
+        """
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = {'identifier': self.identifier}
         d = {'noindex': '0'}
@@ -511,6 +558,18 @@ class Item(BaseItem):
         return r
 
     def noindex_review(self, username=None, screenname=None, itemname=None) -> Response:
+        """Mark a review as non-indexable (hidden from search results).
+
+        Specify exactly one of ``username``, ``screenname``, or ``itemname``
+        to identify which review to hide.
+
+        :param username: The username of the reviewer.
+        :param screenname: The screen name of the reviewer.
+        :param itemname: The item name associated with the review.
+
+        :returns: :class:`requests.Response`
+        :raises HTTPError: If the request fails.
+        """
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = {'identifier': self.identifier}
         d = {'noindex': '1'}
@@ -526,6 +585,18 @@ class Item(BaseItem):
         return r
 
     def delete_review(self, username=None, screenname=None, itemname=None) -> Response:
+        """Delete a review from this item.
+
+        Specify exactly one of ``username``, ``screenname``, or ``itemname``
+        to identify which review to delete.
+
+        :param username: The username of the reviewer.
+        :param screenname: The screen name of the reviewer.
+        :param itemname: The item name associated with the review.
+
+        :returns: :class:`requests.Response`
+        :raises HTTPError: If the request fails.
+        """
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = {'identifier': self.identifier}
         d = None
@@ -541,6 +612,15 @@ class Item(BaseItem):
         return r
 
     def review(self, title, body, stars=None) -> Response:
+        """Submit a review for this item.
+
+        :param title: The title of the review.
+        :param body: The body text of the review.
+        :param stars: Optional star rating (typically 1-5).
+
+        :returns: :class:`requests.Response`
+        :raises HTTPError: If the request fails.
+        """
         u = f'{self.session.protocol}//{self.session.host}/services/reviews.php'
         p = {'identifier': self.identifier}
         d = {'title': title, 'body': body}
@@ -567,6 +647,28 @@ class Item(BaseItem):
                   glob_pattern: str | list[str] | None = None,
                   exclude_pattern: str | list[str] | None = None,
                   on_the_fly: bool = False):
+        """Get files from the item, optionally filtered by various criteria.
+
+        :param files: Only return files matching these filenames.
+        :param formats: Only return files matching these formats
+                       (e.g., ``'JPEG'``, ``'Ogg Vorbis'``).
+        :param glob_pattern: Only return files matching this glob pattern
+                            (e.g., ``'*.mp4'``). Multiple patterns can be
+                            separated by ``|`` or passed as a list.
+        :param exclude_pattern: Exclude files matching this glob pattern.
+                               Multiple patterns can be separated by ``|``
+                               or passed as a list.
+        :param on_the_fly: Include on-the-fly derivative files (EPUB, MOBI,
+                          DAISY, MARCXML) that are generated on request.
+
+        :yields: :class:`File` objects matching the specified criteria.
+
+        Usage::
+
+            >>> item = get_item('nasa')
+            >>> for f in item.get_files(formats='JPEG'):
+            ...     print(f.name)
+        """
         files = files or []
         formats = formats or []
         exclude_pattern = exclude_pattern or ''
@@ -923,6 +1025,14 @@ class Item(BaseItem):
             category: str,
             user: str | None = None,
     ) -> Response:
+        """Delete a flag from this item.
+
+        :param category: The flag category to delete.
+        :param user: The user who set the flag. Defaults to the current
+                    user's screenname prefixed with ``@``.
+
+        :returns: :class:`requests.Response`
+        """
         if user is None:
             user = f"@{self.session.config.get('general', {}).get('screenname')}"
         url = f'{self.session.protocol}//{self.session.host}/services/flags/admin.php'
@@ -936,6 +1046,14 @@ class Item(BaseItem):
             category: str,
             user: str | None = None,
     ) -> Response:
+        """Add a flag to this item.
+
+        :param category: The flag category to add.
+        :param user: The user adding the flag. Defaults to the current
+                    user's screenname prefixed with ``@``.
+
+        :returns: :class:`requests.Response`
+        """
         if user is None:
             user = f"@{self.session.config.get('general', {}).get('screenname')}"
         url = f'{self.session.protocol}//{self.session.host}/services/flags/admin.php'
@@ -945,6 +1063,10 @@ class Item(BaseItem):
         return r
 
     def get_flags(self) -> Response:
+        """Get all flags for this item.
+
+        :returns: :class:`requests.Response` containing flag data as JSON.
+        """
         url = f'{self.session.protocol}//{self.session.host}/services/flags/admin.php'
         headers = {'Accept': 'text/json'}  # must be text/json specifically
         params = {'identifier': self.identifier}
@@ -989,8 +1111,7 @@ class Item(BaseItem):
         """Upload a single file to an item. The item will be created
         if it does not exist.
 
-        :type body: Filepath or file-like object.
-        :param body: File or data to be uploaded.
+        :param body: File or data to be uploaded (filepath or file-like object).
 
         :param key: Remote filename.
 
@@ -1313,8 +1434,8 @@ class Item(BaseItem):
         r"""Upload files to an item. The item will be created if it
         does not exist.
 
-        :type files: str, file, list, tuple, dict
-        :param files: The filepaths or file-like objects to upload.
+        :param files: The filepaths or file-like objects to upload
+                     (str, file, list, tuple, or dict).
 
         :param \*\*kwargs: Optional arguments that :func:`Item.upload_file()` takes.
 

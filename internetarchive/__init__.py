@@ -1,7 +1,7 @@
 #
 # The internetarchive module is a Python/CLI interface to Archive.org.
 #
-# Copyright (C) 2012-2024 Internet Archive
+# Copyright (C) 2012-2026 Internet Archive
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -36,7 +36,7 @@ Usage::
 __title__ = 'internetarchive'
 __author__ = 'Jacob M. Johnson'
 __license__ = 'AGPL 3'
-__copyright__ = 'Copyright (C) 2012-2024 Internet Archive'
+__copyright__ = 'Copyright (C) 2012-2026 Internet Archive'
 
 from .__version__ import __version__  # isort:skip
 from internetarchive.api import (

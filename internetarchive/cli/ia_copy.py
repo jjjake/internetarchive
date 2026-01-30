@@ -54,21 +54,22 @@ def setup(subparsers):
     # Options
     parser.add_argument("-m", "--metadata",
                         metavar="KEY:VALUE",
-                        nargs="+",
+                        nargs=1,
                         default={},
                         action=MetadataAction,
                         help=("Metadata to add to your new item, if you are moving the "
-                              "file to a new item"))
+                              "file to a new item. Can be specified multiple times."))
     parser.add_argument("--replace-metadata",
                         action="store_true",
                         help=("Only use metadata specified as argument, do not copy any "
                               "from the source item"))
     parser.add_argument("-H", "--header",
                         metavar="KEY:VALUE",
-                        nargs="+",
+                        nargs=1,
                         default={},
                         action=QueryStringAction,
-                        help="S3 HTTP headers to send with your request")
+                        help="S3 HTTP headers to send with your request. "
+                             "Can be specified multiple times.")
     parser.add_argument("--ignore-file-metadata",
                         action="store_true",
                         help="Do not copy file metadata")

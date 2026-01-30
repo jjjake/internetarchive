@@ -39,7 +39,7 @@ def setup(subparsers):
         "identifier",
         nargs="?",
         type=str,
-        help="Identifier for the upload",
+        help="Identifier of the item",
     )
     parser.add_argument(
         "-u",

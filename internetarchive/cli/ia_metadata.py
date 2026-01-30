@@ -50,49 +50,55 @@ def setup(subparsers):
     parser.add_argument("identifier",
                         nargs="?",
                         type=str,
-                        help="Identifier for the upload")
+                        help="Identifier of the item")
 
     # Mutually exclusive group for metadata modification options
     modify_group = parser.add_mutually_exclusive_group()
     modify_group.add_argument("-m", "--modify",
-                              nargs="+",
+                              nargs=1,
                               action=MetadataAction,
                               metavar="KEY:VALUE",
-                              help="Modify the metadata of an item")
+                              help="Modify the metadata of an item. "
+                                   "Can be specified multiple times.")
     modify_group.add_argument("-r", "--remove",
-                              nargs="+",
+                              nargs=1,
                               action=MetadataAction,
                               metavar="KEY:VALUE",
-                              help="Remove KEY:VALUE from a metadata element")
+                              help="Remove KEY:VALUE from a metadata element. "
+                                   "Can be specified multiple times.")
     modify_group.add_argument("-a", "--append",
-                              nargs="+",
+                              nargs=1,
                               action=MetadataAction,
                               metavar="KEY:VALUE",
-                              help="Append a string to a metadata element")
+                              help="Append a string to a metadata element. "
+                                   "Can be specified multiple times.")
     modify_group.add_argument("-A", "--append-list",
-                              nargs="+",
+                              nargs=1,
                               action=MetadataAction,
                               metavar="KEY:VALUE",
-                              help="Append a field to a metadata element")
+                              help="Append a field to a metadata element. "
+                                   "Can be specified multiple times.")
     modify_group.add_argument("-i", "--insert",
-                              nargs="+",
+                              nargs=1,
                               action=MetadataAction,
                               metavar="KEY:VALUE",
                               help=("Insert a value into a multi-value field given "
-                                    "an index (e.g. `--insert=collection[0]:foo`)"))
+                                    "an index (e.g. `--insert=collection[0]:foo`). "
+                                    "Can be specified multiple times."))
 
     # Additional options
     parser.add_argument("-E", "--expect",
-                        nargs="+",
+                        nargs=1,
                         action=MetadataAction,
                         metavar="KEY:VALUE",
                         help=("Test an expectation server-side before applying patch "
-                              "to item metadata"))
+                              "to item metadata. Can be specified multiple times."))
     parser.add_argument("-H", "--header",
-                        nargs="+",
+                        nargs=1,
                         action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        help="S3 HTTP headers to send with your request")
+                        help="S3 HTTP headers to send with your request. "
+                             "Can be specified multiple times.")
     parser.add_argument("-t", "--target",
                         metavar="target",
                         default="metadata",
@@ -116,10 +122,11 @@ def setup(subparsers):
                         action="store_true",
                         help="Submit task at a reduced priority.")
     parser.add_argument("-P", "--parameters",
-                        nargs="+",
+                        nargs=1,
                         action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        help="Parameters to send with your query.")
+                        help="Parameters to send with your query. "
+                             "Can be specified multiple times.")
 
     parser.set_defaults(func=lambda args: main(args, parser))
 

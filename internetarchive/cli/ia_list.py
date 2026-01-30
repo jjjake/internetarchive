@@ -37,32 +37,33 @@ def setup(subparsers):
     """
     parser = subparsers.add_parser("list",
                                    aliases=["ls"],
-                                   help="list files from archive.org items")
+                                   help="List files from archive.org items")
 
     # Positional arguments
     parser.add_argument("identifier",
                         type=validate_identifier,
-                        help="identifier of the item")
+                        help="Identifier of the item")
 
     # Options
     parser.add_argument("-v", "--verbose",
                         action="store_true",
-                        help="print column headers")
+                        help="Print column headers")
     parser.add_argument("-a", "--all",
                         action="store_true",
-                        help="list all information available for files")
+                        help="List all information available for files")
     parser.add_argument("-l", "--location",
                         action="store_true",
-                        help="print full URL for each file")
+                        help="Print full URL for each file")
     parser.add_argument("-c", "--columns",
                         action="append",
                         type=prepare_columns,
-                        help="list specified file information")
+                        help="List specified file information")
     parser.add_argument("-g", "--glob",
-                        help="only return files matching the given pattern")
+                        metavar="PATTERN",
+                        help="Only return files matching the given glob pattern")
     parser.add_argument("-f", "--format",
                         action="append",
-                        help="return files matching FORMAT")
+                        help="Return files matching FORMAT. Can be specified multiple times.")
 
     parser.set_defaults(func=main)
 

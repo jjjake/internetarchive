@@ -34,26 +34,26 @@ def setup(subparsers):
     """
     parser = subparsers.add_parser("reviews",
                                    aliases=["re"],
-                                   help="submit and modify reviews for archive.org items")
+                                   help="Submit and modify reviews for archive.org items")
 
     # Positional arguments
     parser.add_argument("identifier",
                         type=str,
-                        help="identifier of the item")
+                        help="Identifier of the item")
 
     # Options
     parser.add_argument("-d", "--delete",
                         action="store_true",
-                        help="delete your review")
+                        help="Delete your review")
     parser.add_argument("-t", "--title",
                         type=str,
-                        help="the title of your review")
+                        help="The title of your review")
     parser.add_argument("-b", "--body",
                         type=str,
-                        help="the body of your review")
+                        help="The body of your review")
     parser.add_argument("-s", "--stars",
                         type=int,
-                        help="the number of stars for your review")
+                        help="The number of stars for your review")
     parser.add_argument("-i", "--index",
                         action="store_true",
                         help="Index a review")
@@ -67,13 +67,13 @@ def setup(subparsers):
                                               "the --delete flag"))
     delete_group.add_argument("-u", "--username",
                               type=str,
-                              help="delete reviews for a specific user given USERNAME")
+                              help="Delete reviews for a specific user given USERNAME")
     delete_group.add_argument("-S", "--screenname",
                               type=str,
-                              help="delete reviews for a specific user given SCREENNAME")
+                              help="Delete reviews for a specific user given SCREENNAME")
     delete_group.add_argument("-I", "--itemname",
                               type=str,
-                              help="delete reviews for a specific user given ITEMNAME")
+                              help="Delete reviews for a specific user given ITEMNAME")
 
     parser.set_defaults(func=lambda args: main(args, parser))
 

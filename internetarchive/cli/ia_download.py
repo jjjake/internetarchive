@@ -48,7 +48,7 @@ def setup(subparsers):
     parser.add_argument("identifier",
                         nargs="?",
                         type=str,
-                        help="Identifier for the upload")
+                        help="Identifier of the item to download")
     parser.add_argument("file",
                         nargs="*",
                         help="Files to download (only allowed with identifier)")
@@ -81,10 +81,11 @@ def setup(subparsers):
     parser.add_argument("-S", "--search",
                         help="Download items returned from a specified search query")
     parser.add_argument("-P", "--search-parameters",
-                        nargs="+",
+                        nargs=1,
                         action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        help="Parameters to send with your --search query")
+                        help="Parameters to send with your --search query. "
+                             "Can be specified multiple times.")
     parser.add_argument("-g", "--glob",
                         help=("Only download files whose filename matches "
                              "the given glob pattern. You can provide multiple "
@@ -95,13 +96,12 @@ def setup(subparsers):
                              "patterns separated by a pipe symbol `|`. You can only "
                              "use this option in conjunction with --glob"))
     parser.add_argument("-f", "--format",
-                        nargs="+",
+                        nargs=1,
                         action="extend",
                         help=("Only download files of the specified format. "
-                             "Use this option multiple times to download "
-                             "multiple formats. You can use the following command to "
-                             "retrieve a list of file formats contained within a "
-                             "given item: ia metadata --formats <identifier>"))
+                             "Can be specified multiple times. You can use the following "
+                             "command to retrieve a list of file formats contained within "
+                             "a given item: ia metadata --formats <identifier>"))
     parser.add_argument("--on-the-fly",
                         action="store_true",
                         help=("Download on-the-fly files, as well as other "
@@ -123,23 +123,26 @@ def setup(subparsers):
                         help=("Don't change the timestamp of downloaded files to reflect "
                              "the source material"))
     parser.add_argument("-p", "--parameters",
-                        nargs="+",
+                        nargs=1,
                         action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        help="Parameters to send with your download request (e.g. `cnt=0`)")
+                        help="Parameters to send with your download request (e.g. `cnt=0`). "
+                             "Can be specified multiple times.")
     parser.add_argument("-a", "--download-history",
                         action="store_true",
                         help="Also download files from the history directory")
     parser.add_argument("--source",
-                        nargs="+",
+                        nargs=1,
                         action="extend",
                         help=("Filter files based on their source value in files.xml "
-                             "(i.e. `original`, `derivative`, `metadata`)"))
+                             "(i.e. `original`, `derivative`, `metadata`). "
+                             "Can be specified multiple times."))
     parser.add_argument("--exclude-source",
-                        nargs="+",
+                        nargs=1,
                         action="extend",
-                        help=("Filter files based on their source value in files.xml "
-                             "(i.e. `original`, `derivative`, `metadata`)"))
+                        help=("Exclude files based on their source value in files.xml "
+                             "(i.e. `original`, `derivative`, `metadata`). "
+                             "Can be specified multiple times."))
     parser.add_argument("-t", "--timeout",
                         type=float,
                         help=("Set a timeout for download requests. "

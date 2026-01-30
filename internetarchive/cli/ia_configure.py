@@ -39,7 +39,7 @@ def setup(subparsers):
     """
     parser = subparsers.add_parser("configure",
                                    aliases=["co"],
-                                   help=("configure 'ia' with your "
+                                   help=("Configure 'ia' with your "
                                          "archive.org credentials"))
     config_action_group = parser.add_mutually_exclusive_group()
 
@@ -51,14 +51,14 @@ def setup(subparsers):
                               "providing it interactively"))
     parser.add_argument("--netrc", "-n",
                         action="store_true",
-                        help="use netrc file for login")
+                        help="Use netrc file for login")
     config_action_group.add_argument("--show", "-s",
                                      action="store_true",
                                      help=("print the current configuration in JSON format, "
                                            "redacting secrets and cookies"))
     config_action_group.add_argument("--check", "-C",
                                      action="store_true",
-                                     help="validate IA-S3 keys (exits 0 if valid, 1 otherwise)")
+                                     help="Validate IA-S3 keys (exits 0 if valid, 1 otherwise)")
     config_action_group.add_argument("--whoami", "-w",
                                      action="store_true",
                                      help=("uses your IA-S3 keys to retrieve account "
@@ -66,10 +66,10 @@ def setup(subparsers):
                                           "about the associated account"))
     parser.add_argument("--print-cookies", "-c",
                         action="store_true",
-                        help="print archive.org logged-in-* cookies")
+                        help="Print archive.org logged-in-* cookies")
     parser.add_argument("--print-auth-header", "-a",
                         action="store_true",
-                        help="print an Authorization header with your IA-S3 keys")
+                        help="Print an Authorization header with your IA-S3 keys")
 
     parser.set_defaults(func=main)
 

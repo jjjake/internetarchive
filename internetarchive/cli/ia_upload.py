@@ -79,11 +79,11 @@ def setup(subparsers):
                         help=("When uploading data from stdin, "
                              "this option sets the remote filename"))
     parser.add_argument("-m", "--metadata",
-                        nargs="+",
+                        nargs=1,
                         action=MetadataAction,
                         metavar="KEY:VALUE",
                         default={},
-                        help="Metadata to add to your item")
+                        help="Metadata to add to your item. Can be specified multiple times.")
     parser.add_argument("--spreadsheet",
                         type=argparse.FileType("r", encoding="utf-8-sig"),
                         help="Bulk uploading")
@@ -91,10 +91,12 @@ def setup(subparsers):
                         type=argparse.FileType("r"),
                         help="Upload files with file-level metadata via a file_md.jsonl file")
     parser.add_argument("-H", "--header",
-                        nargs="+",
+                        nargs=1,
                         action=QueryStringAction,
                         default={},
-                        help="S3 HTTP headers to send with your request")
+                        metavar="KEY:VALUE",
+                        help="S3 HTTP headers to send with your request. "
+                             "Can be specified multiple times.")
     parser.add_argument("-c", "--checksum",
                         action="store_true",
                         help="Skip based on checksum")

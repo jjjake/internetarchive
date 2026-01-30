@@ -56,16 +56,17 @@ def setup(subparsers):
     # Optional arguments
     parser.add_argument("-q", "--quiet",
                         action="store_true",
-                        help="Print status to stdout.")
+                        help="Suppress output.")
     parser.add_argument("-c", "--cascade",
                         action="store_true",
                         help="Delete all associated files including derivatives and the original.")
     parser.add_argument("-H", "--header",
-                        nargs="+",
+                        nargs=1,
                         action=QueryStringAction,
                         default={},
                         metavar="KEY:VALUE",
-                        help="S3 HTTP headers to send with your request.")
+                        help="S3 HTTP headers to send with your request. "
+                             "Can be specified multiple times.")
     parser.add_argument("-a", "--all",
                         action="store_true",
                         help="Delete all files in the given item. Some files cannot be deleted.")
@@ -75,12 +76,14 @@ def setup(subparsers):
                               "but don't actually delete them."))
     parser.add_argument("-g", "--glob",
                         type=str,
-                        help="Only delete files matching the given pattern.")
+                        metavar="PATTERN",
+                        help="Only delete files matching the given glob pattern.")
     parser.add_argument("-f", "--format",
                         type=str,
-                        nargs="+",
+                        nargs=1,
                         action=FlattenListAction,
-                        help="Only delete files matching the specified formats.")
+                        help="Only delete files matching the specified format. "
+                             "Can be specified multiple times.")
     parser.add_argument("-R", "--retries",
                         type=int,
                         default=2,

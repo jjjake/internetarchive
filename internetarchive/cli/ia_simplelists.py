@@ -40,7 +40,7 @@ def setup(subparsers):
         "identifier",
         nargs="?",
         type=str,
-        help="Identifier for the upload"
+        help="Identifier of the item"
     )
 
     group = parser.add_argument_group("List operations")

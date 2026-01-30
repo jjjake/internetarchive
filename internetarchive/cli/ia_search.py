@@ -50,15 +50,17 @@ def setup(subparsers):
 
     # Optional arguments
     parser.add_argument("-p", "--parameters",
-                        nargs="+",
+                        nargs=1,
                         action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        help="Parameters to send with your query.")
+                        help="Parameters to send with your query. "
+                             "Can be specified multiple times.")
     parser.add_argument("-H", "--header",
-                        nargs="+",
+                        nargs=1,
                         action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        help="Add custom headers to your search request.")
+                        help="Add custom headers to your search request. "
+                             "Can be specified multiple times.")
     parser.add_argument("-s", "--sort",
                         action="append",
                         help=("Sort search results by specified fields. "
@@ -69,9 +71,9 @@ def setup(subparsers):
                         action="store_true",
                         help="Output identifiers only.")
     parser.add_argument("-f", "--field",
-                        nargs="+",
+                        nargs=1,
                         action=FlattenListAction,
-                        help="Metadata fields to return.")
+                        help="Metadata field to return. Can be specified multiple times.")
     parser.add_argument("-n", "--num-found",
                         action="store_true",
                         help="Print the number of results to stdout.")

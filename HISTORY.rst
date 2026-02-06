@@ -3,8 +3,27 @@
 Release History
 ---------------
 
+5.8.0 (2026-02-06)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- Rewrote ``PostDataAction`` in CLI to accept both JSON strings and ``key:value`` format.
+  Previously only JSON was accepted; now ``key:value`` pairs are also supported.
+- Added "can be specified multiple times" hints to repeatable CLI flags.
+- Standardized CLI help text capitalization across all subcommands.
+
+**Bugfixes**
+
+- Fixed CLI argument parsing bug where ``nargs="+"`` on options like ``--header``,
+  ``--metadata``, and ``--spread`` would greedily consume subsequent positional
+  arguments (e.g. the identifier). Changed to ``nargs=1`` with ``action="append"``.
+- Fixed mutable ``default={}`` bug in custom argparse actions (``PostDataAction``,
+  ``QueryStringAction``, ``MetadataAction``, ``FlattenListAction``) that caused state
+  leakage when parsers were reused across multiple invocations.
+
 5.7.2 (2026-01-29)
-+++++++++
+++++++++++++++++++
 
 **Features and Improvements**
 

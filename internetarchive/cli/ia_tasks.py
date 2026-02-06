@@ -46,7 +46,7 @@ def setup(subparsers):
     parser.add_argument("-p", "--parameter",
                         nargs=1,
                         action=QueryStringAction,
-                        default={},
+                        default=None,
                         metavar="KEY:VALUE",
                         help="URL parameters passed to catalog.php. "
                              "Can be specified multiple times.")
@@ -62,7 +62,7 @@ def setup(subparsers):
     parser.add_argument("-a", "--task-args",
                         nargs=1,
                         action=QueryStringAction,
-                        default={},
+                        default=None,
                         metavar="KEY:VALUE",
                         help="Args to submit to the Tasks API. "
                              "Can be specified multiple times.")
@@ -70,7 +70,7 @@ def setup(subparsers):
                         nargs=1,
                         action=PostDataAction,
                         metavar="DATA",
-                        default={},
+                        default=None,
                         help="Additional data to send when submitting a task. "
                              "Accepts 'key:value', 'key=value', or a JSON object. "
                              "Can be specified multiple times.")
@@ -106,6 +106,10 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for 'ia tasks'.
     """
+    args.parameter = args.parameter or {}
+    args.task_args = args.task_args or {}
+    args.data = args.data or {}
+
     # Tasks write API.
     if args.cmd:
         if args.get_rate_limit:

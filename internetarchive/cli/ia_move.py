@@ -57,7 +57,7 @@ def setup(subparsers):
                         metavar="KEY:VALUE",
                         nargs=1,
                         action=QueryStringAction,
-                        default={},
+                        default=None,
                         help="S3 HTTP headers to send with your request. "
                              "Can be specified multiple times.")
     parser.add_argument("--replace-metadata",
@@ -82,6 +82,8 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for ia move command.
     """
+    args.header = args.header or {}
+
     # Add keep-old-version by default.
     if not args.header.get("x-archive-keep-old-version") and not args.no_backup:
         args.header["x-archive-keep-old-version"] = "1"

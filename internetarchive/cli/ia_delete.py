@@ -63,7 +63,7 @@ def setup(subparsers):
     parser.add_argument("-H", "--header",
                         nargs=1,
                         action=QueryStringAction,
-                        default={},
+                        default=None,
                         metavar="KEY:VALUE",
                         help="S3 HTTP headers to send with your request. "
                              "Can be specified multiple times.")
@@ -168,6 +168,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser):
     """
     Main entry point for 'ia delete'.
     """
+    args.header = args.header or {}
     verbose = not args.quiet
     item = args.session.get_item(args.identifier)
     if not item.exists:

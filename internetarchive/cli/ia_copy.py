@@ -55,7 +55,7 @@ def setup(subparsers):
     parser.add_argument("-m", "--metadata",
                         metavar="KEY:VALUE",
                         nargs=1,
-                        default={},
+                        default=None,
                         action=MetadataAction,
                         help=("Metadata to add to your new item, if you are moving the "
                               "file to a new item. Can be specified multiple times."))
@@ -66,7 +66,7 @@ def setup(subparsers):
     parser.add_argument("-H", "--header",
                         metavar="KEY:VALUE",
                         nargs=1,
-                        default={},
+                        default=None,
                         action=QueryStringAction,
                         help="S3 HTTP headers to send with your request. "
                              "Can be specified multiple times.")
@@ -103,6 +103,9 @@ def main(args: argparse.Namespace,
     """
     Main entry point for 'ia copy'.
     """
+    args.metadata = args.metadata or {}
+    args.header = args.header or {}
+
     SRC_FILE = None
 
     if args.source == args.destination:

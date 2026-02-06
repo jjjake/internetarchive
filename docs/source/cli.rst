@@ -152,7 +152,7 @@ Once you're ready to submit your changes, you can submit them like so:
 
     $ ia metadata --spreadsheet=metadata.csv
 
-See ``ia help metadata`` for more details.
+See ``ia metadata -- help`` for more details.
 
 .. _cli-upload:
 
@@ -205,7 +205,7 @@ Bulk Uploading Special Columns
 
 You can set a remote filename that differs from your local filename by specifying a remote filename in a column named ``REMOTE_NAME`` (Added to ``ia`` in ``v2.0.0``).
 
-See ``ia help upload`` for more details.
+See ``ia upload --help`` for more details.
 
 Setting File-Level Metadata on Upload
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -291,7 +291,7 @@ Download from an itemlist:
 
     $ ia download --itemlist itemlist.txt
 
-See ``ia help download`` for more details.
+See ``ia download --help`` for more details.
 
 
 Downloading On-The-Fly Files
@@ -331,7 +331,7 @@ The files are named in the format ``$key.~N~``.
 These files can be deleted like normal files.
 You can also prevent the backup from happening on deletes by adding ``-H x-archive-keep-old-version:0`` to your command.
 
-See ``ia help delete`` for more details.
+See ``ia delete --help`` for more details.
 
 
 .. _cli-search:
@@ -366,7 +366,7 @@ You can pipe your itemlist into a GNU Parallel command to download items concurr
 
     $ ia search 'collection:glasgowschoolofart' --itemlist | parallel 'ia download {}'
 
-See ``ia help search`` for more details.
+See ``ia search --help`` for more details.
 
 
 Tasks
@@ -385,7 +385,7 @@ View all of your queued and running archive.org tasks:
 
     $ ia tasks
 
-See ``ia help tasks`` for more details.
+See ``ia tasks --help`` for more details.
 
 
 List
@@ -397,7 +397,7 @@ You can list files in an item like so:
 
     $ ia list goodytwoshoes00newyiala
 
-See ``ia help list`` for more details.
+See ``ia list --help`` for more details.
 
 
 Copy

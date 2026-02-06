@@ -27,7 +27,6 @@ from requests.exceptions import HTTPError
 
 from internetarchive.cli.cli_utils import (
     FlattenListAction,
-    MetadataAction,
     QueryStringAction,
     validate_identifier,
 )

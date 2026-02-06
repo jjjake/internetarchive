@@ -1,5 +1,5 @@
 """
-interneratchive.cli.cli_utils
+internetarchive.cli.cli_utils
 
 """
 
@@ -23,11 +23,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import signal
 import sys
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Mapping
 from urllib.parse import parse_qsl
 
 from internetarchive.utils import InvalidIdentifierException, validate_s3_identifier

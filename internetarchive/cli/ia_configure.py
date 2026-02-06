@@ -82,7 +82,6 @@ def main(args: argparse.Namespace) -> None:
         secret = args.session.config.get("s3", {}).get("secret")
         access = args.session.config.get("s3", {}).get("access")
         if not secret or not access:
-            print('hi')
             if not access:
                 print("error: 'access' key not found in config file, try reconfiguring.",
                       file=sys.stderr)

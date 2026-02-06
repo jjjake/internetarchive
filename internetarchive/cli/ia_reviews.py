@@ -27,7 +27,7 @@ from requests.exceptions import HTTPError
 
 def setup(subparsers):
     """
-    Setup args for list command.
+    Setup args for reviews command.
 
     Args:
         subparsers: subparser object passed from ia.py

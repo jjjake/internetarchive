@@ -47,7 +47,7 @@ from internetarchive.utils import (
 
 def setup(subparsers):
     """
-    Setup args for copy command.
+    Setup args for upload command.
 
     Args:
         subparsers: subparser object passed from ia.py
@@ -79,11 +79,11 @@ def setup(subparsers):
                         help=("When uploading data from stdin, "
                              "this option sets the remote filename"))
     parser.add_argument("-m", "--metadata",
-                        nargs="+",
+                        nargs=1,
                         action=MetadataAction,
                         metavar="KEY:VALUE",
-                        default={},
-                        help="Metadata to add to your item")
+                        default=None,
+                        help="Metadata to add to your item. Can be specified multiple times.")
     parser.add_argument("--spreadsheet",
                         type=argparse.FileType("r", encoding="utf-8-sig"),
                         help="Bulk uploading")
@@ -91,10 +91,12 @@ def setup(subparsers):
                         type=argparse.FileType("r"),
                         help="Upload files with file-level metadata via a file_md.jsonl file")
     parser.add_argument("-H", "--header",
-                        nargs="+",
+                        nargs=1,
                         action=QueryStringAction,
-                        default={},
-                        help="S3 HTTP headers to send with your request")
+                        default=None,
+                        metavar="KEY:VALUE",
+                        help="S3 HTTP headers to send with your request. "
+                             "Can be specified multiple times.")
     parser.add_argument("-c", "--checksum",
                         action="store_true",
                         help="Skip based on checksum")
@@ -199,6 +201,9 @@ def main(args, parser): # noqa: PLR0912,C901
     """
     Main entry point for 'ia upload'.
     """
+    args.metadata = args.metadata or {}
+    args.header = args.header or {}
+
     check_if_file_arg_required(args, parser)
 
     if uploading_from_stdin(args) and not args.remote_name:

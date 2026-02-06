@@ -48,16 +48,18 @@ def setup(subparsers):
     # Options
     parser.add_argument("-m", "--metadata",
                         metavar="KEY:VALUE",
-                        nargs="+",
+                        nargs=1,
                         action=MetadataAction,
                         help=("Metadata to add to your new item, "
-                              "if you are moving the file to a new item"))
+                              "if you are moving the file to a new item. "
+                              "Can be specified multiple times."))
     parser.add_argument("-H", "--header",
                         metavar="KEY:VALUE",
-                        nargs="+",
+                        nargs=1,
                         action=QueryStringAction,
-                        default={},
-                        help="S3 HTTP headers to send with your request")
+                        default=None,
+                        help="S3 HTTP headers to send with your request. "
+                             "Can be specified multiple times.")
     parser.add_argument("--replace-metadata",
                         action="store_true",
                         help=("Only use metadata specified as argument, do not copy any "
@@ -80,6 +82,8 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for ia move command.
     """
+    args.header = args.header or {}
+
     # Add keep-old-version by default.
     if not args.header.get("x-archive-keep-old-version") and not args.no_backup:
         args.header["x-archive-keep-old-version"] = "1"

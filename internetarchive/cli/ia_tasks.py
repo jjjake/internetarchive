@@ -44,11 +44,12 @@ def setup(subparsers):
     parser.add_argument("-G", "--get-task-log",
                         help="Return the given tasks task log.")
     parser.add_argument("-p", "--parameter",
-                        nargs="+",
+                        nargs=1,
                         action=QueryStringAction,
-                        default={},
+                        default=None,
                         metavar="KEY:VALUE",
-                        help="URL parameters passed to catalog.php.")
+                        help="URL parameters passed to catalog.php. "
+                             "Can be specified multiple times.")
     parser.add_argument("-T", "--tab-output",
                         action="store_true",
                         help="Output task info in tab-delimited columns.")
@@ -59,17 +60,20 @@ def setup(subparsers):
                         type=str,
                         help="A reasonable explanation for why a task is being submitted.")
     parser.add_argument("-a", "--task-args",
-                        nargs="+",
+                        nargs=1,
                         action=QueryStringAction,
-                        default={},
+                        default=None,
                         metavar="KEY:VALUE",
-                        help="Args to submit to the Tasks API.")
+                        help="Args to submit to the Tasks API. "
+                             "Can be specified multiple times.")
     parser.add_argument("-d", "--data",
-                        nargs="+",
+                        nargs=1,
                         action=PostDataAction,
-                        metavar="KEY:VALUE",
-                        default={},
-                        help="Additional data to send when submitting a task.")
+                        metavar="DATA",
+                        default=None,
+                        help="Additional data to send when submitting a task. "
+                             "Accepts 'key:value', 'key=value', or a JSON object. "
+                             "Can be specified multiple times.")
     parser.add_argument("-r", "--reduced-priority",
                         action="store_true",
                         help="Submit task at a reduced priority.")
@@ -102,6 +106,10 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for 'ia tasks'.
     """
+    args.parameter = args.parameter or {}
+    args.task_args = args.task_args or {}
+    args.data = args.data or {}
+
     # Tasks write API.
     if args.cmd:
         if args.get_rate_limit:

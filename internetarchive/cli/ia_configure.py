@@ -39,37 +39,37 @@ def setup(subparsers):
     """
     parser = subparsers.add_parser("configure",
                                    aliases=["co"],
-                                   help=("configure 'ia' with your "
+                                   help=("Configure 'ia' with your "
                                          "archive.org credentials"))
     config_action_group = parser.add_mutually_exclusive_group()
 
     parser.add_argument("--username", "-u",
-                        help=("provide username as an option rather than "
+                        help=("Provide username as an option rather than "
                               "providing it interactively"))
     parser.add_argument("--password", "-p",
-                        help=("provide password as an option rather than "
+                        help=("Provide password as an option rather than "
                               "providing it interactively"))
     parser.add_argument("--netrc", "-n",
                         action="store_true",
-                        help="use netrc file for login")
+                        help="Use netrc file for login")
     config_action_group.add_argument("--show", "-s",
                                      action="store_true",
-                                     help=("print the current configuration in JSON format, "
+                                     help=("Print the current configuration in JSON format, "
                                            "redacting secrets and cookies"))
     config_action_group.add_argument("--check", "-C",
                                      action="store_true",
-                                     help="validate IA-S3 keys (exits 0 if valid, 1 otherwise)")
+                                     help="Validate IA-S3 keys (exits 0 if valid, 1 otherwise)")
     config_action_group.add_argument("--whoami", "-w",
                                      action="store_true",
-                                     help=("uses your IA-S3 keys to retrieve account "
+                                     help=("Uses your IA-S3 keys to retrieve account "
                                           "information from archive.org "
                                           "about the associated account"))
     parser.add_argument("--print-cookies", "-c",
                         action="store_true",
-                        help="print archive.org logged-in-* cookies")
+                        help="Print archive.org logged-in-* cookies")
     parser.add_argument("--print-auth-header", "-a",
                         action="store_true",
-                        help="print an Authorization header with your IA-S3 keys")
+                        help="Print an Authorization header with your IA-S3 keys")
 
     parser.set_defaults(func=main)
 
@@ -82,7 +82,6 @@ def main(args: argparse.Namespace) -> None:
         secret = args.session.config.get("s3", {}).get("secret")
         access = args.session.config.get("s3", {}).get("access")
         if not secret or not access:
-            print('hi')
             if not access:
                 print("error: 'access' key not found in config file, try reconfiguring.",
                       file=sys.stderr)

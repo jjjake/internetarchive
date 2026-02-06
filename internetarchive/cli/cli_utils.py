@@ -1,5 +1,5 @@
 """
-interneratchive.cli.cli_utils
+internetarchive.cli.cli_utils
 
 """
 
@@ -23,11 +23,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import signal
 import sys
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Mapping
 from urllib.parse import parse_qsl
 
 from internetarchive.utils import InvalidIdentifierException, validate_s3_identifier
@@ -97,34 +95,45 @@ class FlattenListAction(argparse.Action):
 
 
 class PostDataAction(argparse.Action):
+    """
+    Parse post data as either JSON or key:value format.
+
+    Accepts:
+    - JSON objects: '{"key": "value"}'
+    - Key-value pairs: 'key:value' or 'key=value'
+
+    Multiple invocations are merged into a single dict.
+    """
     def __call__(self, parser, namespace, values, option_string=None):
-        current_value = getattr(namespace, self.dest, None)
+        # Initialize as empty dict if not set
+        if getattr(namespace, self.dest, None) is None:
+            setattr(namespace, self.dest, {})
 
-        # Split values into individual JSON objects (if needed) and parse them
-        all_values = []
-        for value in values:
-            try:
-                obj = json.loads(value)
-                all_values.append(obj)
-            except json.JSONDecodeError as e:
-                parser.error(f"Invalid JSON format for post data: {value}")
+        current = getattr(namespace, self.dest)
 
-        # If there is no current value (first argument), initialize it as an object or list
-        if current_value is None:
-            # If there's only one value, don't wrap it in a list
-            if len(all_values) == 1:
-                post_data = all_values[0]
+        # Handle nargs=1 (values is a single-element list)
+        value = values[0] if isinstance(values, list) else values
+
+        # Try JSON first
+        try:
+            obj = json.loads(value)
+            if isinstance(obj, dict):
+                current.update(obj)
             else:
-                post_data = all_values
-        elif isinstance(current_value, list):
-            # If it's already a list, append the new values to it
-            post_data = current_value + all_values
-        else:
-            # If it's a single object (first argument), convert it into a list and append new data
-            post_data = [current_value] + all_values
+                parser.error(f"{option_string} JSON must be an object, not {type(obj).__name__}")
+            return
+        except json.JSONDecodeError:
+            pass
 
-        # Set the final value back to the namespace
-        setattr(namespace, self.dest, post_data)
+        # Fall back to key:value or key=value
+        if ":" in value:
+            key, val = value.split(":", 1)
+            current[key] = val
+        elif "=" in value:
+            key, val = value.split("=", 1)
+            current[key] = val
+        else:
+            parser.error(f"{option_string} must be a JSON object or 'key:value' format")
 
 
 class QueryStringAction(argparse.Action):
@@ -145,6 +154,9 @@ class QueryStringAction(argparse.Action):
             for key, value in key_value_pairs:
                 current_dict = getattr(namespace, self.dest)
                 if key in current_dict:
+                    # Handle case where value was flattened to string in previous call
+                    if not isinstance(current_dict[key], list):
+                        current_dict[key] = [current_dict[key]]
                     current_dict[key].append(value)
                 else:
                     current_dict[key] = [value]

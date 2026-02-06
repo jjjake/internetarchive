@@ -64,6 +64,15 @@ class TestParserReuseIsolation:
         assert args1.param == {"a": "1"}
         assert args2.param == {"b": "2"}
 
+    def test_post_data_action_parser_reuse(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--data", nargs=1, action=PostDataAction,
+                            default=None)
+        args1 = parser.parse_args(["--data", '{"a": 1}'])
+        args2 = parser.parse_args(["--data", '{"b": 2}'])
+        assert args1.data == {"a": 1}
+        assert args2.data == {"b": 2}
+
 
 class TestQueryStringAction:
     """Tests for QueryStringAction edge cases."""
@@ -83,6 +92,16 @@ class TestQueryStringAction:
                             default=None)
         with pytest.raises(SystemExit):
             parser.parse_args(["--param", "noequalssign"])
+
+    def test_repeated_key_accumulates(self):
+        """Repeated same key across multiple --param flags."""
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--param", nargs=1, action=QueryStringAction,
+                            default=None)
+        args = parser.parse_args(
+            ["--param", "a=1", "--param", "a=2"]
+        )
+        assert args.param == {"a": ["1", "2"]}
 
 
 class TestMetadataAction:
@@ -139,3 +158,57 @@ class TestPostDataAction:
                             default=None)
         with pytest.raises(SystemExit):
             parser.parse_args(["--data", "nocolonorequals"])
+
+
+class TestMetadataSubcommandParsing:
+    """Tests for ia metadata argument parsing."""
+
+    def _make_parser(self):
+        """Create a parser mimicking ia metadata's setup."""
+        parser = argparse.ArgumentParser()
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
+            "-m", "--modify", nargs=1,
+            action=MetadataAction, default=None,
+        )
+        group.add_argument(
+            "-r", "--remove", nargs=1,
+            action=MetadataAction, default=None,
+        )
+        group.add_argument(
+            "-a", "--append", nargs=1,
+            action=MetadataAction, default=None,
+        )
+        group.add_argument(
+            "-A", "--append-list", nargs=1,
+            action=MetadataAction, default=None,
+        )
+        group.add_argument(
+            "-i", "--insert", nargs=1,
+            action=MetadataAction, default=None,
+        )
+        parser.add_argument(
+            "-E", "--expect", nargs=1,
+            action=MetadataAction, default=None,
+        )
+        parser.add_argument(
+            "-H", "--header", nargs=1,
+            action=QueryStringAction, default=None,
+        )
+        return parser
+
+    def test_modify_with_header(self):
+        parser = self._make_parser()
+        args = parser.parse_args([
+            "--modify", "title:New Title",
+            "--header", "x-custom:val",
+        ])
+        assert args.modify == {"title": "New Title"}
+        assert args.header == {"x-custom": "val"}
+
+    def test_mutually_exclusive_flags(self):
+        parser = self._make_parser()
+        with pytest.raises(SystemExit):
+            parser.parse_args([
+                "--modify", "a:b", "--remove", "c:d",
+            ])

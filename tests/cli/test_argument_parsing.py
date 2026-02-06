@@ -140,25 +140,25 @@ class TestPostDataAction:
 
     def test_json_object(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("--data", nargs=1, action=PostDataAction, default={})
+        parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
         args = parser.parse_args(["--data", '{"priority": 10}'])
         assert args.data == {"priority": 10}
 
     def test_key_value_colon(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("--data", nargs=1, action=PostDataAction, default={})
+        parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
         args = parser.parse_args(["--data", "priority:10"])
         assert args.data == {"priority": "10"}
 
     def test_key_value_equals(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("--data", nargs=1, action=PostDataAction, default={})
+        parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
         args = parser.parse_args(["--data", "priority=10"])
         assert args.data == {"priority": "10"}
 
     def test_multiple_json_flags(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("--data", nargs=1, action=PostDataAction, default={})
+        parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
         args = parser.parse_args([
             "--data", '{"priority": 10}',
             "--data", '{"comment": "test"}'
@@ -167,13 +167,13 @@ class TestPostDataAction:
 
     def test_multiple_key_value_flags(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("--data", nargs=1, action=PostDataAction, default={})
+        parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
         args = parser.parse_args(["--data", "a:1", "--data", "b:2"])
         assert args.data == {"a": "1", "b": "2"}
 
     def test_mixed_json_and_key_value(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("--data", nargs=1, action=PostDataAction, default={})
+        parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
         args = parser.parse_args([
             "--data", '{"priority": 10}',
             "--data", "comment:test"
@@ -182,7 +182,7 @@ class TestPostDataAction:
 
     def test_json_overwrites_key(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("--data", nargs=1, action=PostDataAction, default={})
+        parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
         args = parser.parse_args([
             "--data", "priority:5",
             "--data", '{"priority": 10}'
@@ -191,7 +191,7 @@ class TestPostDataAction:
 
     def test_flag_before_positional(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("--data", nargs=1, action=PostDataAction, default={})
+        parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
         parser.add_argument("identifier", nargs="?")
         args = parser.parse_args(["--data", "key:value", "myitem"])
         assert args.data == {"key": "value"}
@@ -199,13 +199,13 @@ class TestPostDataAction:
 
     def test_invalid_format_error(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("--data", nargs=1, action=PostDataAction, default={})
+        parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
         with pytest.raises(SystemExit):
             parser.parse_args(["--data", "invalid"])
 
     def test_json_array_error(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("--data", nargs=1, action=PostDataAction, default={})
+        parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
         with pytest.raises(SystemExit):
             parser.parse_args(["--data", "[1, 2, 3]"])
 
@@ -293,7 +293,7 @@ class TestUploadArgParsing:
         self.parser.add_argument("identifier", nargs="?")
         self.parser.add_argument("file", nargs="*")
         self.parser.add_argument("--metadata", "-m", nargs=1, action=MetadataAction,
-                                 default={})
+                                 default=None)
 
     def test_metadata_after_identifier(self):
         args = self.parser.parse_args([

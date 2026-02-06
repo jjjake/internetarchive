@@ -85,25 +85,25 @@ def main():
                         action="store",
                         type=validate_config_path,
                         metavar="FILE",
-                        help="path to configuration file")
+                        help="Path to configuration file")
     parser.add_argument("-l", "--log",
                         action="store_true",
                         default=False,
-                        help="enable logging")
+                        help="Enable logging")
     parser.add_argument("-d", "--debug",
                         action="store_true",
-                        help="enable debugging")
+                        help="Enable debugging")
     parser.add_argument("-i", "--insecure",
                         action="store_true",
-                        help="allow insecure connections")
+                        help="Allow insecure connections")
     parser.add_argument("-H", "--host",
                         action="store",
-                        help=("host to connect to "
+                        help=("Host to connect to "
                               "(doesn't work for requests made to s3.us.archive.org)"))
     parser.add_argument("--user-agent-suffix",
                         action="store",
                         metavar="STRING",
-                        help="custom string to append to the default User-Agent "
+                        help="Custom string to append to the default User-Agent "
                              "(default with access key is always included)")
 
     subparsers = parser.add_subparsers(title="commands",

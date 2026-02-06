@@ -166,6 +166,9 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for 'ia search'.
     """
+    args.parameters = args.parameters or {}
+    args.header = args.header or {}
+
     try:
         # Prepare fields and sorts.
         fields = prepare_values(args.field)

@@ -257,6 +257,15 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for 'ia metadata'.
     """
+    args.modify = args.modify or {}
+    args.remove = args.remove or {}
+    args.append = args.append or {}
+    args.append_list = args.append_list or {}
+    args.insert = args.insert or {}
+    args.expect = args.expect or {}
+    args.header = args.header or {}
+    args.parameters = args.parameters or {}
+
     formats = set()
     responses: list[bool | Response] = []
 

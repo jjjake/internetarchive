@@ -169,6 +169,9 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for 'ia download'.
     """
+    args.search_parameters = args.search_parameters or {}
+    args.parameters = args.parameters or {}
+
     ids: list[File | str] | Search | TextIO
     validate_args(args, parser)
 

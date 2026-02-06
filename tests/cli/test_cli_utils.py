@@ -1,7 +1,10 @@
 import argparse
 
+import pytest
+
 from internetarchive.cli.cli_utils import (
     MetadataAction,
+    PostDataAction,
     QueryStringAction,
     get_args_dict,
 )
@@ -60,3 +63,79 @@ class TestParserReuseIsolation:
         args2 = parser.parse_args(["--param", "b=2"])
         assert args1.param == {"a": "1"}
         assert args2.param == {"b": "2"}
+
+
+class TestQueryStringAction:
+    """Tests for QueryStringAction edge cases."""
+
+    def test_equals_in_value(self):
+        """Values containing '=' should be preserved."""
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--param", nargs="+", action=QueryStringAction,
+                            default=None)
+        args = parser.parse_args(["--param", "key=a=b"])
+        assert args.param == {"key": "a=b"}
+
+    def test_invalid_input_rejected(self):
+        """Input without key=value format should error."""
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--param", nargs="+", action=QueryStringAction,
+                            default=None)
+        with pytest.raises(SystemExit):
+            parser.parse_args(["--param", "noequalssign"])
+
+
+class TestMetadataAction:
+    """Tests for MetadataAction edge cases."""
+
+    def test_empty_value(self):
+        """Empty values (key:) should be accepted."""
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--metadata", nargs="+", action=MetadataAction,
+                            default=None)
+        args = parser.parse_args(["--metadata", "key:"])
+        assert args.metadata == {"key": ""}
+
+    def test_equals_syntax(self):
+        """MetadataAction should accept '=' as separator too."""
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--metadata", nargs="+", action=MetadataAction,
+                            default=None)
+        args = parser.parse_args(["--metadata", "key=value"])
+        assert args.metadata == {"key": "value"}
+
+    def test_invalid_input_rejected(self):
+        """Input without key:value or key=value format should error."""
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--metadata", nargs="+", action=MetadataAction,
+                            default=None)
+        with pytest.raises(SystemExit):
+            parser.parse_args(["--metadata", "nocolonorequals"])
+
+
+class TestPostDataAction:
+    """Tests for PostDataAction edge cases."""
+
+    def test_json_with_colons_in_value(self):
+        """JSON values containing colons should parse correctly."""
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--data", nargs="+", action=PostDataAction,
+                            default=None)
+        args = parser.parse_args(["--data", '{"url":"http://example.com"}'])
+        assert args.data == {"url": "http://example.com"}
+
+    def test_key_value_input_accepted(self):
+        """PostDataAction accepts key:value format as fallback."""
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--data", nargs="+", action=PostDataAction,
+                            default=None)
+        args = parser.parse_args(["--data", "key:value"])
+        assert args.data == {"key": "value"}
+
+    def test_invalid_input_rejected(self):
+        """Input without JSON, colon, or equals should error."""
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--data", nargs="+", action=PostDataAction,
+                            default=None)
+        with pytest.raises(SystemExit):
+            parser.parse_args(["--data", "nocolonorequals"])

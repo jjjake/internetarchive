@@ -47,7 +47,7 @@ from internetarchive.utils import (
 
 def setup(subparsers):
     """
-    Setup args for copy command.
+    Setup args for upload command.
 
     Args:
         subparsers: subparser object passed from ia.py
@@ -82,7 +82,7 @@ def setup(subparsers):
                         nargs=1,
                         action=MetadataAction,
                         metavar="KEY:VALUE",
-                        default={},
+                        default=None,
                         help="Metadata to add to your item. Can be specified multiple times.")
     parser.add_argument("--spreadsheet",
                         type=argparse.FileType("r", encoding="utf-8-sig"),
@@ -93,7 +93,7 @@ def setup(subparsers):
     parser.add_argument("-H", "--header",
                         nargs=1,
                         action=QueryStringAction,
-                        default={},
+                        default=None,
                         metavar="KEY:VALUE",
                         help="S3 HTTP headers to send with your request. "
                              "Can be specified multiple times.")
@@ -201,6 +201,9 @@ def main(args, parser): # noqa: PLR0912,C901
     """
     Main entry point for 'ia upload'.
     """
+    args.metadata = args.metadata or {}
+    args.header = args.header or {}
+
     check_if_file_arg_required(args, parser)
 
     if uploading_from_stdin(args) and not args.remote_name:

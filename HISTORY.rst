@@ -16,8 +16,8 @@ Release History
 **Bugfixes**
 
 - Fixed CLI argument parsing bug where ``nargs="+"`` on options like ``--header``,
-  ``--metadata``, and ``--spread`` would greedily consume subsequent positional
-  arguments (e.g. the identifier). Changed to ``nargs=1`` with ``action="append"``.
+  ``--metadata``, and ``--format`` would greedily consume subsequent positional
+  arguments (e.g. the identifier). Changed to ``nargs=1`` with repeated flags.
 - Fixed mutable ``default={}`` bug in custom argparse actions (``PostDataAction``,
   ``QueryStringAction``, ``MetadataAction``, ``FlattenListAction``) that caused state
   leakage when parsers were reused across multiple invocations.

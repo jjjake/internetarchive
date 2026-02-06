@@ -44,24 +44,24 @@ def setup(subparsers):
     config_action_group = parser.add_mutually_exclusive_group()
 
     parser.add_argument("--username", "-u",
-                        help=("provide username as an option rather than "
+                        help=("Provide username as an option rather than "
                               "providing it interactively"))
     parser.add_argument("--password", "-p",
-                        help=("provide password as an option rather than "
+                        help=("Provide password as an option rather than "
                               "providing it interactively"))
     parser.add_argument("--netrc", "-n",
                         action="store_true",
                         help="Use netrc file for login")
     config_action_group.add_argument("--show", "-s",
                                      action="store_true",
-                                     help=("print the current configuration in JSON format, "
+                                     help=("Print the current configuration in JSON format, "
                                            "redacting secrets and cookies"))
     config_action_group.add_argument("--check", "-C",
                                      action="store_true",
                                      help="Validate IA-S3 keys (exits 0 if valid, 1 otherwise)")
     config_action_group.add_argument("--whoami", "-w",
                                      action="store_true",
-                                     help=("uses your IA-S3 keys to retrieve account "
+                                     help=("Uses your IA-S3 keys to retrieve account "
                                           "information from archive.org "
                                           "about the associated account"))
     parser.add_argument("--print-cookies", "-c",

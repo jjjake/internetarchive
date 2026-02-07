@@ -148,21 +148,80 @@ def setup(subparsers):
                         help=("Set a timeout for download requests. "
                              "This sets both connect and read timeout"))
 
+    # Bulk download options.
+    parser.add_argument(
+        "-w", "--workers",
+        type=int,
+        default=1,
+        help=("Number of concurrent download workers "
+              "(default: 1). When > 1, enables bulk mode"))
+    parser.add_argument(
+        "--joblog",
+        type=str,
+        default=None,
+        help=("Path to a JSONL job log for tracking "
+              "progress and enabling resume"))
+    parser.add_argument(
+        "--destdirs",
+        nargs="+",
+        default=None,
+        help=("Destination directories for bulk downloads. "
+              "Items are routed to the first directory "
+              "with sufficient free space"))
+    parser.add_argument(
+        "--disk-margin",
+        type=str,
+        default="1G",
+        help=("Minimum free space to maintain on each "
+              "disk (default: 1G). "
+              "Accepts K, M, G, T suffixes"))
+    parser.add_argument(
+        "--no-disk-check",
+        action="store_true",
+        help="Disable disk space checking")
+    parser.add_argument(
+        "--status",
+        action="store_true",
+        help=("Print job log summary and exit. "
+              "Requires --joblog"))
+    parser.add_argument(
+        "--verify",
+        action="store_true",
+        help=("Verify on-disk completeness of "
+              "downloaded items. Requires --joblog"))
+
     parser.set_defaults(func=lambda args: main(args, parser))
 
 
 def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    # --status and --verify do not require an identifier.
+    if getattr(args, "status", False):
+        return
+    if getattr(args, "verify", False):
+        return
+
     if args.itemlist and args.search:
-        parser.error("--itemlist and --search cannot be used together")
+        parser.error(
+            "--itemlist and --search cannot be used together"
+        )
 
     if args.itemlist or args.search:
         if args.identifier:
-            parser.error("Cannot specify an identifier with --itemlist/--search")
+            parser.error(
+                "Cannot specify an identifier "
+                "with --itemlist/--search"
+            )
         if args.file:
-            parser.error("Cannot specify files with --itemlist/--search")
+            parser.error(
+                "Cannot specify files "
+                "with --itemlist/--search"
+            )
     else:
         if not args.identifier:
-            parser.error("Identifier is required when not using --itemlist/--search")
+            parser.error(
+                "Identifier is required when not "
+                "using --itemlist/--search"
+            )
 
 
 def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
@@ -174,6 +233,30 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
 
     ids: list[File | str] | Search | TextIO
     validate_args(args, parser)
+
+    # --status: inspect joblog and exit.
+    if getattr(args, "status", False):
+        if not args.joblog:
+            parser.error("--status requires --joblog")
+        from internetarchive.bulk.commands import bulk_status  # noqa: PLC0415
+        return bulk_status(args.joblog)
+
+    # --verify: check on-disk completeness and exit.
+    if getattr(args, "verify", False):
+        from internetarchive.bulk.commands import bulk_verify  # noqa: PLC0415
+        return bulk_verify(args)
+
+    # Bulk mode: workers > 1 and multi-item input.
+    if (
+        getattr(args, "workers", 1) > 1
+        and (
+            args.search
+            or args.itemlist
+            or args.identifier == "-"
+        )
+    ):
+        from internetarchive.bulk.commands import bulk_download  # noqa: PLC0415
+        return bulk_download(args)
 
     if args.itemlist:
         ids = [x.strip() for x in args.itemlist if x.strip()]

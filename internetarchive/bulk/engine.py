@@ -92,6 +92,11 @@ class BulkEngine:
         self._skipped = 0
         self._total_bytes = 0
 
+        # Worker ID mapping: thread ident → worker index.
+        self._worker_ids: dict[int | None, int] = {}
+        self._worker_id_lock = threading.Lock()
+        self._next_worker_id = 0
+
         # Flow control.
         self._stop_requested = threading.Event()
         self._pause_event = threading.Event()
@@ -152,6 +157,15 @@ class BulkEngine:
 
     # -- Internal --------------------------------------------------
 
+    def _get_worker_id(self) -> int:
+        """Map the current thread to a stable worker index (0..N-1)."""
+        tid = threading.current_thread().ident
+        with self._worker_id_lock:
+            if tid not in self._worker_ids:
+                self._worker_ids[tid] = self._next_worker_id
+                self._next_worker_id += 1
+            return self._worker_ids[tid]
+
     def _process_queue(
         self,
         queue: list[tuple[str, int, int]],
@@ -159,12 +173,10 @@ class BulkEngine:
     ) -> None:
         """Submit items from *queue* to a thread pool.
 
-        Uses a semaphore to limit outstanding submissions to
-        ``num_workers``, ensuring the stop/pause checks in the
-        submission loop are effective.
+        Size estimation and disk routing happen inside worker
+        threads so the main thread can submit items rapidly
+        without blocking on HTTP calls.
         """
-        # Semaphore limits in-flight submissions so the loop
-        # blocks when all worker slots are occupied.
         slots = threading.Semaphore(self._num_workers)
 
         retry_queue: list[tuple[str, int, int]] = []
@@ -185,30 +197,6 @@ class BulkEngine:
 
                     self._pause_event.wait()
 
-                    est = self._worker.estimate_size(ident)
-                    destdir = self._disk_pool.route(est)
-                    if destdir is None:
-                        self._job_log.log_skipped(
-                            ident,
-                            op=self._op,
-                            reason="no_disk_space",
-                        )
-                        self._emit(UIEvent(
-                            kind="item_skipped",
-                            identifier=ident,
-                            worker=0,
-                            item_index=item_idx,
-                            error="no_disk_space",
-                        ))
-                        with self._lock:
-                            self._skipped += 1
-                        continue
-
-                    est_for_release = (
-                        est if est is not None
-                        else 2 * 1024**3
-                    )
-
                     # Block until a worker slot is free.
                     slots.acquire()
                     if self._stop_requested.is_set():
@@ -216,13 +204,11 @@ class BulkEngine:
                         break
 
                     fut = pool.submit(
-                        self._run_one_and_release,
+                        self._run_item,
                         ident,
-                        destdir,
                         retry,
                         item_idx,
                         total,
-                        est_for_release,
                         slots,
                         retry_queue,
                         retry_lock,
@@ -238,23 +224,58 @@ class BulkEngine:
                     queue = list(retry_queue)
                     retry_queue.clear()
 
-    def _run_one_and_release(
+    def _run_item(
         self,
         identifier: str,
-        destdir: str,
         retry: int,
         item_index: int,
         total: int,
-        est_for_release: int,
         slots: threading.Semaphore,
         retry_queue: list[tuple[str, int, int]],
         retry_lock: threading.Lock,
     ) -> None:
-        """Wrapper that releases the semaphore and disk reservation
-        after :meth:`_run_one` finishes."""
+        """Execute a single item in a worker thread.
+
+        Handles size estimation, disk routing, execution, retry
+        scheduling, and cleanup.  The semaphore slot is always
+        released in the ``finally`` block.
+        """
+        worker_id = self._get_worker_id()
+        destdir: str | None = None
+        est_for_release = 0
         try:
+            est = self._worker.estimate_size(identifier)
+            destdir = self._disk_pool.route(est)
+
+            if destdir is None:
+                self._job_log.log_skipped(
+                    identifier,
+                    op=self._op,
+                    reason="no_disk_space",
+                )
+                self._emit(UIEvent(
+                    kind="item_skipped",
+                    identifier=identifier,
+                    worker=worker_id,
+                    item_index=item_index,
+                    error="no_disk_space",
+                ))
+                with self._lock:
+                    self._skipped += 1
+                return
+
+            est_for_release = (
+                est if est is not None else 2 * 1024**3
+            )
+
             success = self._run_one(
-                identifier, destdir, retry, item_index, total,
+                identifier,
+                destdir,
+                retry,
+                item_index,
+                total,
+                worker_id,
+                est,
             )
             if not success:
                 retries_left = self._job_retries - retry - 1
@@ -264,7 +285,8 @@ class BulkEngine:
                             (identifier, retry + 1, item_index)
                         )
         finally:
-            self._disk_pool.release(destdir, est_for_release)
+            if destdir is not None:
+                self._disk_pool.release(destdir, est_for_release)
             slots.release()
 
     def _run_one(
@@ -274,6 +296,8 @@ class BulkEngine:
         retry: int,
         item_index: int,
         total: int,
+        worker_id: int,
+        est: int | None,
     ) -> bool:
         """Execute a single item operation in a worker thread.
 
@@ -281,7 +305,6 @@ class BulkEngine:
         """
         thread_name = threading.current_thread().name
 
-        est = self._worker.estimate_size(identifier)
         self._job_log.log_started(
             identifier,
             op=self._op,
@@ -293,8 +316,9 @@ class BulkEngine:
         self._emit(UIEvent(
             kind="item_started",
             identifier=identifier,
-            worker=0,
+            worker=worker_id,
             item_index=item_index,
+            bytes_total=est,
         ))
 
         t0 = time.monotonic()
@@ -315,7 +339,7 @@ class BulkEngine:
             self._emit(UIEvent(
                 kind="item_failed",
                 identifier=identifier,
-                worker=0,
+                worker=worker_id,
                 item_index=item_index,
                 error=error_msg,
                 elapsed=elapsed,
@@ -341,9 +365,10 @@ class BulkEngine:
             self._emit(UIEvent(
                 kind="item_completed",
                 identifier=identifier,
-                worker=0,
+                worker=worker_id,
                 item_index=item_index,
                 bytes_done=result.bytes_transferred,
+                bytes_total=est,
                 files_ok=result.files_ok,
                 elapsed=elapsed,
             ))
@@ -362,7 +387,7 @@ class BulkEngine:
             self._emit(UIEvent(
                 kind="item_failed",
                 identifier=identifier,
-                worker=0,
+                worker=worker_id,
                 item_index=item_index,
                 error=result.error,
                 elapsed=elapsed,

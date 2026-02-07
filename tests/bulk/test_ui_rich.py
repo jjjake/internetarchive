@@ -235,9 +235,11 @@ class TestRichTUIRenderHelpers:
         state.total_bytes = 1024
         text = RichTUI._render_summary(state)
         plain = text.plain
-        assert "10/50" in plain
+        # done = completed + failed + skipped = 15
+        assert "15/50" in plain
         assert "Failed: 2" in plain
         assert "Skipped: 3" in plain
+        assert "Elapsed:" in plain
 
     def test_render_summary_without_total(self):
         from internetarchive.bulk.ui.tui import TUIState
@@ -264,12 +266,12 @@ class TestRichTUIRenderHelpers:
             "bytes_total": 2048,
             "bytes_done": 1024,
             "filename": "file.txt",
+            "started_at": None,
         }
         text = RichTUI._render_worker(state, 0)
         plain = text.plain
         assert "my-item" in plain
-        assert "file.txt" in plain
-        assert "50.0%" in plain
+        assert "2.0 KB" in plain
 
     def test_render_worker_no_total_bytes(self):
         from internetarchive.bulk.ui.tui import TUIState

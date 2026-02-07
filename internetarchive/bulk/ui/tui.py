@@ -84,6 +84,7 @@ class TUIState:
         self.total_bytes: int = 0
         self.active_workers: dict[int, dict] = {}
         self.recent: deque[dict] = deque(maxlen=10)
+        self.start_time: float = time.time()
 
     def handle_event(self, event: UIEvent) -> None:
         """Dispatch an event to the appropriate handler.
@@ -106,6 +107,7 @@ class TUIState:
             "bytes_total": event.bytes_total,
             "bytes_done": 0,
             "filename": None,
+            "started_at": time.time(),
         }
 
     def _on_item_completed(self, event: UIEvent) -> None:

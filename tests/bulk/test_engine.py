@@ -557,3 +557,25 @@ class TestEngineConcurrency:
 
         # All items should eventually complete.
         assert result["completed"] == 3
+
+    def test_worker_ids_are_distinct(self, job_log, disk_pool):
+        """Each thread gets a unique worker ID in UI events."""
+        events: list[UIEvent] = []
+        worker = SlowWorker(delay=0.05, size=100)
+        engine = BulkEngine(
+            worker=worker,
+            job_log=job_log,
+            disk_pool=disk_pool,
+            num_workers=4,
+            op="download",
+            ui_handler=events.append,
+        )
+        engine.run([f"item-{i}" for i in range(8)])
+
+        started = [
+            e for e in events if e.kind == "item_started"
+        ]
+        worker_ids = {e.worker for e in started}
+        # With 4 workers and 8 items, we should see 4 distinct IDs.
+        assert len(worker_ids) == 4
+        assert worker_ids == {0, 1, 2, 3}

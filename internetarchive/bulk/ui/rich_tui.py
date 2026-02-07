@@ -28,6 +28,8 @@ Rich-based live TUI for bulk operations.
 """
 from __future__ import annotations
 
+import time
+
 try:
     from rich.console import Console
     from rich.live import Live
@@ -47,6 +49,14 @@ _STATUS_STYLES: dict[str, tuple[str, str]] = {
     "failed": ("X", "red bold"),
     "skipped": ("o", "yellow"),
 }
+
+
+def _format_elapsed(seconds: float) -> str:
+    """Format seconds as H:MM:SS or M:SS."""
+    s = int(seconds)
+    if s >= 3600:
+        return f"{s // 3600}:{(s % 3600) // 60:02d}:{s % 60:02d}"
+    return f"{s // 60}:{s % 60:02d}"
 
 
 class RichTUI:
@@ -82,7 +92,7 @@ class RichTUI:
         self._live = Live(
             self._render(),
             console=self._console,
-            refresh_per_second=2,
+            refresh_per_second=4,
         )
         self._live.start()
 
@@ -114,13 +124,14 @@ class RichTUI:
 
         # -- summary row ---------------------------------------------
         table.add_row(self._render_summary(s))
+        table.add_row("")  # blank separator
 
         # -- worker rows ---------------------------------------------
         for wid in range(s.num_workers):
             table.add_row(self._render_worker(s, wid))
 
         # -- recent items --------------------------------------------
-        recent = list(s.recent)[-4:]
+        recent = list(s.recent)[-6:]
         if recent:
             table.add_row("")  # blank separator
             table.add_row(
@@ -137,9 +148,8 @@ class RichTUI:
         parts: list[str] = []
 
         if s.total_items is not None:
-            parts.append(
-                f"Items: {s.completed}/{s.total_items}"
-            )
+            done = s.completed + s.failed + s.skipped
+            parts.append(f"Items: {done}/{s.total_items}")
         else:
             parts.append(f"Completed: {s.completed}")
 
@@ -153,6 +163,13 @@ class RichTUI:
         if s.total_bytes:
             parts.append(_format_bytes(s.total_bytes))
 
+        elapsed = time.time() - s.start_time
+        parts.append(f"Elapsed: {_format_elapsed(elapsed)}")
+
+        if s.total_bytes and elapsed > 0:
+            rate = s.total_bytes / elapsed
+            parts.append(f"{_format_bytes(int(rate))}/s")
+
         return Text("  ".join(parts), style="bold")
 
     @staticmethod
@@ -163,29 +180,17 @@ class RichTUI:
             return Text(f"  W{wid}: idle", style="dim")
 
         ident = info["identifier"]
-        fname = info.get("filename") or ""
-        done = info.get("bytes_done", 0) or 0
         total = info.get("bytes_total", 0) or 0
-
-        # Truncate long filenames.
-        if fname and len(fname) > 20:
-            fname = "..." + fname[-17:]
-
-        # Build progress string.
-        if total > 0:
-            pct = done / total * 100
-            progress = (
-                f"{_format_bytes(done)}"
-                f"/{_format_bytes(total)}"
-                f" ({pct:.1f}%)"
-            )
-        else:
-            progress = _format_bytes(done)
+        started_at = info.get("started_at")
 
         text = f"  W{wid}: {ident}"
-        if fname:
-            text += f"  {fname}"
-        text += f"  {progress}"
+
+        if total > 0:
+            text += f"  ({_format_bytes(total)})"
+
+        if started_at is not None:
+            elapsed = time.time() - started_at
+            text += f"  {_format_elapsed(elapsed)}"
 
         return Text(text, style="cyan")
 
@@ -195,14 +200,24 @@ class RichTUI:
         status = entry.get("status", "")
         sym, style = _STATUS_STYLES.get(status, ("?", ""))
         ident = entry.get("identifier", "???")
-        detail = ""
+
+        parts = [f"  {sym} {ident}"]
+
         if status == "failed":
             err = entry.get("error", "")
             if err:
-                detail = f" ({err})"
+                parts.append(f"({err})")
         elif status == "completed":
             bt = entry.get("bytes_total")
             if bt is not None:
-                detail = f" {_format_bytes(bt)}"
+                parts.append(_format_bytes(bt))
+            el = entry.get("elapsed")
+            if el is not None:
+                parts.append(f"{el:.1f}s")
+            fok = entry.get("files_ok")
+            if fok is not None:
+                parts.append(
+                    f"{fok} file{'s' if fok != 1 else ''}"
+                )
 
-        return Text(f"  {sym} {ident}{detail}", style=style)
+        return Text("  ".join(parts), style=style)

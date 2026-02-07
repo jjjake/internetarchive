@@ -39,7 +39,7 @@ import time
 from internetarchive.bulk.disk import DiskPool, parse_size
 from internetarchive.bulk.engine import BulkEngine
 from internetarchive.bulk.jobs import JobLog
-from internetarchive.bulk.ui.plain import PlainUI
+from internetarchive.bulk.ui.plain import PlainUI, _format_bytes
 from internetarchive.workers.download import DownloadWorker
 
 
@@ -145,6 +145,52 @@ def _make_session_factory(args: argparse.Namespace):
     return factory
 
 
+def _select_ui(args, num_workers, total_count):
+    """Select the appropriate UI backend.
+
+    Resolution order:
+    - ``--no-ui`` → :class:`PlainUI`
+    - ``--ui`` or stderr is a TTY → try :class:`RichTUI`
+      → try :class:`CursesTUI` → fall back to :class:`PlainUI`
+    - Otherwise → :class:`PlainUI`
+    """
+    if getattr(args, "no_ui", False):
+        return PlainUI(
+            total_items=total_count, num_workers=num_workers,
+        )
+
+    use_tui = getattr(args, "ui", False) or sys.stderr.isatty()
+
+    if use_tui:
+        try:
+            from internetarchive.bulk.ui.rich_tui import (  # noqa: PLC0415
+                HAS_RICH,
+                RichTUI,
+            )
+            if HAS_RICH:
+                return RichTUI(
+                    num_workers=num_workers,
+                    total_items=total_count,
+                )
+        except ImportError:  # pragma: no cover
+            pass
+
+        try:
+            from internetarchive.bulk.ui.tui import (  # noqa: PLC0415
+                CursesTUI,
+            )
+            return CursesTUI(
+                num_workers=num_workers,
+                total_items=total_count,
+            )
+        except ImportError:  # pragma: no cover
+            pass
+
+    return PlainUI(
+        total_items=total_count, num_workers=num_workers,
+    )
+
+
 def bulk_download(args: argparse.Namespace) -> None:
     """Entry point for bulk download mode.
 
@@ -194,10 +240,11 @@ def bulk_download(args: argparse.Namespace) -> None:
 
     # UI.
     num_workers = getattr(args, "workers", 1)
-    ui = PlainUI(
-        total_items=total_count,
-        num_workers=num_workers,
-    )
+    ui = _select_ui(args, num_workers, total_count)
+
+    has_lifecycle = hasattr(ui, "start")
+    if has_lifecycle:
+        ui.start()
 
     engine = BulkEngine(
         worker=worker,
@@ -208,20 +255,35 @@ def bulk_download(args: argparse.Namespace) -> None:
     )
 
     t0 = time.time()
-    result = engine.run(ids)
+    try:
+        result = engine.run(ids)
+    finally:
+        if has_lifecycle:
+            ui.stop()
+
     elapsed = time.time() - t0
 
     # Get total bytes from job log status.
     status = job_log.status()
     total_bytes = status.get("total_bytes", 0)
 
-    ui.print_summary(
-        completed=result["completed"],
-        failed=result["failed"],
-        skipped=result["skipped"],
-        total_bytes=total_bytes,
-        elapsed=elapsed,
-    )
+    if hasattr(ui, "print_summary"):
+        ui.print_summary(
+            completed=result["completed"],
+            failed=result["failed"],
+            skipped=result["skipped"],
+            total_bytes=total_bytes,
+            elapsed=elapsed,
+        )
+    else:
+        summary = (
+            f"Summary: {result['completed']} completed, "
+            f"{result['failed']} failed, "
+            f"{result['skipped']} skipped, "
+            f"{_format_bytes(total_bytes)} "
+            f"in {elapsed:.1f}s"
+        )
+        print(summary, file=sys.stderr)
 
     job_log.close()
 

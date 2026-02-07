@@ -189,6 +189,18 @@ def setup(subparsers):
         action="store_true",
         help=("Verify on-disk completeness of "
               "downloaded items. Requires --joblog"))
+    parser.add_argument(
+        "--ui",
+        action="store_true",
+        default=False,
+        help="Force TUI mode (rich if installed, "
+             "else curses)")
+    parser.add_argument(
+        "--no-ui",
+        action="store_true",
+        default=False,
+        help="Force plain text output "
+             "(disable TUI auto-detection)")
 
     parser.set_defaults(func=lambda args: main(args, parser))
 

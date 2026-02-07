@@ -27,8 +27,10 @@ import pytest
 from internetarchive.bulk.commands import (
     _build_download_kwargs,
     _get_identifiers,
+    _select_ui,
     bulk_status,
 )
+from internetarchive.bulk.ui.plain import PlainUI
 from internetarchive.cli.ia_download import setup
 
 
@@ -322,3 +324,43 @@ class TestBulkCommands:
         fh.close()
         assert ids == []
         assert total == 0
+
+
+class TestSelectUI:
+    """Test _select_ui TUI resolution logic."""
+
+    def test_no_ui_flag_returns_plain(self):
+        args = argparse.Namespace(no_ui=True, ui=False)
+        ui = _select_ui(args, 4, 100)
+        assert isinstance(ui, PlainUI)
+
+    def test_no_flags_non_tty_returns_plain(self, monkeypatch):
+        args = argparse.Namespace(no_ui=False, ui=False)
+        monkeypatch.setattr("sys.stderr", type("F", (), {
+            "isatty": lambda self: False,
+            "write": lambda self, s: None,
+            "flush": lambda self: None,
+        })())
+        ui = _select_ui(args, 4, 100)
+        assert isinstance(ui, PlainUI)
+
+    def test_ui_flag_tries_rich_then_curses(self, monkeypatch):
+        args = argparse.Namespace(no_ui=False, ui=True)
+        ui = _select_ui(args, 2, 50)
+        # Should return either RichTUI, CursesTUI, or PlainUI
+        # depending on what's available. Just verify it succeeds.
+        assert hasattr(ui, "handle_event")
+
+    def test_ui_flag_args_parsed(self):
+        parser = _make_parser()
+        args = parser.parse_args(
+            ["download", "--ui", "test-id"]
+        )
+        assert args.ui is True
+
+    def test_no_ui_flag_args_parsed(self):
+        parser = _make_parser()
+        args = parser.parse_args(
+            ["download", "--no-ui", "test-id"]
+        )
+        assert args.no_ui is True

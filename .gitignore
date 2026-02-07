@@ -1,3 +1,5 @@
+.worktrees/
+plans/
 .cache
 .coverage
 .DS_Store

@@ -169,6 +169,7 @@ class File(BaseFile):
         stdout=None,
         ors=None,
         timeout=None,
+        progress_callback=None,
         headers=None,
     ):
         """Download the file into the current working directory.
@@ -371,6 +372,8 @@ class File(BaseFile):
                             size = fileobj.write(chunk)
                             if bar is not None:
                                 bar.update(size)
+                            if progress_callback is not None:
+                                progress_callback(size)
                     if ors:
                         fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
 

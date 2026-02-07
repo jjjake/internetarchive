@@ -32,6 +32,28 @@ def test_file_download_sanitizes_filename(tmpdir, nasa_item):
             assert os.path.exists(expected_path)
 
 
+def test_file_download_progress_callback(tmpdir, nasa_item):
+    tmpdir.chdir()
+    body = b'x' * 4096
+    received_sizes = []
+
+    def callback(size):
+        received_sizes.append(size)
+
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body=body,
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
+        file_obj = nasa_item.get_file('nasa_meta.xml')
+        file_obj.download(
+            file_path='nasa_meta.xml',
+            destdir=str(tmpdir),
+            progress_callback=callback,
+        )
+    assert sum(received_sizes) == len(body)
+    assert all(s > 0 for s in received_sizes)
+
+
 def test_file_download_prevents_directory_traversal(tmpdir, nasa_item):
     tmpdir.chdir()
     # Don't mock the request since it won't be made due to the security check

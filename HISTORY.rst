@@ -12,6 +12,16 @@ Release History
   Previously only JSON was accepted; now ``key:value`` pairs are also supported.
 - Added "can be specified multiple times" hints to repeatable CLI flags.
 - Standardized CLI help text capitalization across all subcommands.
+- Added built-in bulk download engine to ``ia download``.
+  Use ``-w N`` / ``--workers N`` with ``--search``,
+  ``--itemlist``, or stdin to download multiple items
+  concurrently.
+  New options include ``--joblog`` for resume support,
+  ``--destdirs`` for multi-disk routing,
+  ``--disk-margin`` for disk space safety margins,
+  ``--no-disk-check`` to disable space monitoring,
+  ``--status`` to inspect job log progress, and
+  ``--verify`` to check on-disk completeness.
 
 **Bugfixes**
 

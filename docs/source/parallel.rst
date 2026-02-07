@@ -3,6 +3,14 @@
 Using GNU Parallel with ia
 ==========================
 
+.. note::
+
+   For bulk *downloads*, ``ia`` now includes a built-in concurrent
+   download engine with resume support and multi-disk routing.
+   See :ref:`bulk-download` for details. GNU Parallel remains
+   useful for other operations like metadata writes or uploads,
+   and for users who prefer its flexibility.
+
 `GNU Parallel <https://www.gnu.org/software/parallel/>`_ is a shell tool for executing jobs in parallel.
 It is a very useful tool to use with ``ia`` for bulk jobs.
 It can be installed via many OS package managers.

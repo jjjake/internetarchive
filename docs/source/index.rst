@@ -69,6 +69,7 @@ Optimize your workflows:
 .. toctree::
    :maxdepth: 2
 
+   bulk-download
    parallel
 
 Development & Community

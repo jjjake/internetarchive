@@ -294,6 +294,57 @@ Download from an itemlist:
 See ``ia download --help`` for more details.
 
 
+Bulk Downloading
+^^^^^^^^^^^^^^^^
+
+``ia download`` includes a built-in bulk download engine for
+downloading many items concurrently. Bulk mode is activated
+when ``--workers`` (``-w``) is greater than 1 with a
+multi-item source (``--search``, ``--itemlist``, or stdin).
+
+Download items from a search query with 4 concurrent workers:
+
+.. code:: bash
+
+    $ ia download --search 'collection:nasa' \
+        -w 4 --joblog nasa.jsonl
+
+Download items from an item list, resuming automatically if
+interrupted:
+
+.. code:: bash
+
+    $ ia download --itemlist items.txt \
+        -w 8 --joblog batch.jsonl
+
+Spread downloads across multiple disks:
+
+.. code:: bash
+
+    $ ia download --search 'collection:large' \
+        -w 4 \
+        --destdirs /mnt/disk1 /mnt/disk2 /mnt/disk3 \
+        --joblog large.jsonl --disk-margin 2G
+
+Read identifiers from stdin (pipe from ``ia search``):
+
+.. code:: bash
+
+    $ ia search 'collection:books' --itemlist \
+        | ia download - -w 4 --joblog books.jsonl
+
+Check job status or verify downloads:
+
+.. code:: bash
+
+    $ ia download --status --joblog nasa.jsonl
+    $ ia download --verify --itemlist items.txt \
+        --joblog batch.jsonl
+
+For full details including multi-disk routing, resume
+semantics, and job log format, see :ref:`bulk-download`.
+
+
 Downloading On-The-Fly Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -435,8 +486,13 @@ You can also prevent the backup from happening on clobbers or deletes by adding 
 Performance Tips
 ----------------
 
-For downloading or processing many items, see :ref:`using GNU Parallel <parallel>`
-for concurrent operations.
+For downloading many items concurrently, use the built-in
+:ref:`bulk download engine <bulk-download>` with
+``ia download -w N``.
+
+For other bulk operations (metadata writes, uploads, etc.),
+see :ref:`using GNU Parallel <parallel>` for concurrent
+execution.
 
 Getting Help
 ------------

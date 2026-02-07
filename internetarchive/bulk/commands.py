@@ -233,16 +233,21 @@ def bulk_download(args: argparse.Namespace) -> None:
     # Download kwargs.
     download_kwargs = _build_download_kwargs(args)
 
-    worker = DownloadWorker(
-        session_factory=_make_session_factory(args),
-        download_kwargs=download_kwargs,
-    )
-
     # UI.
     num_workers = getattr(args, "workers", 1)
     ui = _select_ui(args, num_workers, total_count)
 
     has_lifecycle = hasattr(ui, "start")
+
+    # Suppress Item.download() verbose output when a TUI is
+    # active — the TUI displays progress via its own events.
+    if has_lifecycle:
+        download_kwargs["verbose"] = False
+
+    worker = DownloadWorker(
+        session_factory=_make_session_factory(args),
+        download_kwargs=download_kwargs,
+    )
     if has_lifecycle:
         ui.start()
 

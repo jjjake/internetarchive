@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import signal
 import sys
+import threading
 import time
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from threading import Event
@@ -52,7 +53,6 @@ class BulkEngine:
         self._cancel = Event()
         self._completed = 0
         self._failed = 0
-        self._skipped = 0
         self._total = 0
 
     def _emit(self, event: UIEvent) -> None:
@@ -102,14 +102,20 @@ class BulkEngine:
         :param op: Operation name.
         :returns: Exit code (0 = all succeeded, 1 = any failed).
         """
-        # Install signal handler for graceful shutdown
-        original_sigint = signal.getsignal(signal.SIGINT)
-        signal.signal(signal.SIGINT, self._handle_sigint)
+        # Install signal handler for graceful shutdown (only
+        # allowed from the main thread).
+        is_main = (
+            threading.current_thread() is threading.main_thread()
+        )
+        if is_main:
+            original_sigint = signal.getsignal(signal.SIGINT)
+            signal.signal(signal.SIGINT, self._handle_sigint)
 
         try:
             return self._run(jobs, total, op)
         finally:
-            signal.signal(signal.SIGINT, original_sigint)
+            if is_main:
+                signal.signal(signal.SIGINT, original_sigint)
             self.joblog.close()
 
     def _run(
@@ -166,6 +172,7 @@ class BulkEngine:
             backoff_active = False
             job_iter = iter(pending_jobs)
             exhausted = False
+            submit_count = 0
 
             while True:
                 if self._cancel.is_set() and not futures:
@@ -191,7 +198,8 @@ class BulkEngine:
 
                     seq = job["seq"]
                     identifier = job.get("id", "")
-                    worker_idx = len(futures) % self.max_workers
+                    worker_idx = submit_count % self.max_workers
+                    submit_count += 1
 
                     self.joblog.write_event(
                         "started", seq=seq, worker=worker_idx

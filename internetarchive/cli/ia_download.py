@@ -276,11 +276,11 @@ def _run_bulk(
                 )
             total = len(items)
             jobs = iter(
-                [{"identifier": x} for x in items]
+                [{"id": x} for x in items]
             )
         elif args.identifier:
             total = 1
-            jobs = iter([{"identifier": args.identifier}])
+            jobs = iter([{"id": args.identifier}])
         else:
             parser.error(
                 "Identifier, --itemlist, or --search is required "

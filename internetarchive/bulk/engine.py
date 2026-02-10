@@ -70,8 +70,8 @@ class BulkEngine:
 
         On resume, this is skipped — jobs are already in the log.
 
-        :param jobs: Iterator yielding dicts with at least an
-            ``"identifier"`` key.
+        :param jobs: Iterator yielding dicts. Each dict must have
+            an ``"id"`` key used as the job identifier in the log.
         :param total: Total number of items expected.
         :param op: Operation name (e.g. ``"download"``).
         :param resume: If ``True``, skip writing job lines.
@@ -83,8 +83,8 @@ class BulkEngine:
             if self._cancel.is_set():
                 break
             seq += 1
-            identifier = item.get("identifier", item.get("id", ""))
-            self.joblog.write_job(seq, identifier, op)
+            job_id = item.get("id", item.get("identifier", ""))
+            self.joblog.write_job(seq, job_id, op)
 
     def run(
         self,
@@ -206,7 +206,6 @@ class BulkEngine:
 
                     future = pool.submit(
                         self.worker.execute,
-                        identifier,
                         job,
                         self._cancel,
                     )

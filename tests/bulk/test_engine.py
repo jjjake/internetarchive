@@ -15,7 +15,8 @@ from internetarchive.bulk.worker import BaseWorker, WorkerResult
 class SuccessWorker(BaseWorker):
     """Worker that always succeeds."""
 
-    def execute(self, identifier, job, cancel_event):
+    def execute(self, job, cancel_event):
+        identifier = job.get("id", "")
         return WorkerResult(
             success=True,
             identifier=identifier,
@@ -26,7 +27,8 @@ class SuccessWorker(BaseWorker):
 class FailWorker(BaseWorker):
     """Worker that always fails with retry."""
 
-    def execute(self, identifier, job, cancel_event):
+    def execute(self, job, cancel_event):
+        identifier = job.get("id", "")
         return WorkerResult(
             success=False,
             identifier=identifier,
@@ -38,7 +40,8 @@ class FailWorker(BaseWorker):
 class PermanentFailWorker(BaseWorker):
     """Worker that fails permanently (no retry)."""
 
-    def execute(self, identifier, job, cancel_event):
+    def execute(self, job, cancel_event):
+        identifier = job.get("id", "")
         return WorkerResult(
             success=False,
             identifier=identifier,
@@ -53,7 +56,8 @@ class BackoffWorker(BaseWorker):
     def __init__(self):
         self.call_count = 0
 
-    def execute(self, identifier, job, cancel_event):
+    def execute(self, job, cancel_event):
+        identifier = job.get("id", "")
         self.call_count += 1
         if self.call_count == 1:
             return WorkerResult(
@@ -71,14 +75,15 @@ class BackoffWorker(BaseWorker):
 class ExceptionWorker(BaseWorker):
     """Worker that raises an exception."""
 
-    def execute(self, identifier, job, cancel_event):
+    def execute(self, job, cancel_event):
         raise RuntimeError("unexpected crash")
 
 
 class CancelAwareWorker(BaseWorker):
     """Worker that respects cancel_event."""
 
-    def execute(self, identifier, job, cancel_event):
+    def execute(self, job, cancel_event):
+        identifier = job.get("id", "")
         for _ in range(10):
             if cancel_event.is_set():
                 return WorkerResult(
@@ -103,7 +108,7 @@ class EventCollector(UIHandler):
 
 def _make_jobs(identifiers):
     """Create job dicts from identifiers."""
-    return iter([{"identifier": i} for i in identifiers])
+    return iter([{"id": i} for i in identifiers])
 
 
 class TestBulkEngine:
@@ -330,7 +335,8 @@ class TestBulkEngine:
             def __init__(self):
                 self.attempts = {}
 
-            def execute(self, identifier, job, cancel_event):
+            def execute(self, job, cancel_event):
+                identifier = job.get("id", "")
                 count = self.attempts.get(identifier, 0) + 1
                 self.attempts[identifier] = count
                 if count == 1:

@@ -19,7 +19,8 @@ class CountingWorker(BaseWorker):
     def __init__(self):
         self.processed = []
 
-    def execute(self, identifier, job, cancel_event):
+    def execute(self, job, cancel_event):
+        identifier = job.get("id", "")
         self.processed.append(identifier)
         return WorkerResult(
             success=True,
@@ -35,7 +36,8 @@ class FailThenSucceedWorker(BaseWorker):
         self.fail_count = fail_count
         self.attempts = {}
 
-    def execute(self, identifier, job, cancel_event):
+    def execute(self, job, cancel_event):
+        identifier = job.get("id", "")
         count = self.attempts.get(identifier, 0) + 1
         self.attempts[identifier] = count
         if count <= self.fail_count:
@@ -73,7 +75,7 @@ class TestEndToEnd:
         )
 
         jobs = [
-            {"identifier": f"item-{i}"} for i in range(5)
+            {"id": f"item-{i}"} for i in range(5)
         ]
         rc = engine1.run(
             jobs=iter(jobs), total=5, op="download"
@@ -122,7 +124,7 @@ class TestEndToEnd:
         )
 
         rc = engine.run(
-            jobs=iter([{"identifier": "retry-item"}]),
+            jobs=iter([{"id": "retry-item"}]),
             total=1,
             op="download",
         )
@@ -135,7 +137,8 @@ class TestEndToEnd:
         path = str(tmp_path / "perm.jsonl")
 
         class DarkWorker(BaseWorker):
-            def execute(self, identifier, job, cancel_event):
+            def execute(self, job, cancel_event):
+                identifier = job.get("id", "")
                 return WorkerResult(
                     success=False,
                     identifier=identifier,
@@ -151,7 +154,7 @@ class TestEndToEnd:
         )
 
         rc = engine.run(
-            jobs=iter([{"identifier": "dark-item"}]),
+            jobs=iter([{"id": "dark-item"}]),
             total=1,
             op="download",
         )
@@ -176,8 +179,8 @@ class TestEndToEnd:
 
         engine.run(
             jobs=iter([
-                {"identifier": "a"},
-                {"identifier": "b"},
+                {"id": "a"},
+                {"id": "b"},
             ]),
             total=2,
             op="download",
@@ -204,7 +207,7 @@ class TestEndToEnd:
             log, worker, max_workers=4, ui=collector
         )
 
-        ids = [{"identifier": f"item-{i}"} for i in range(20)]
+        ids = [{"id": f"item-{i}"} for i in range(20)]
         rc = engine.run(jobs=iter(ids), total=20, op="download")
 
         assert rc == 0
@@ -221,7 +224,8 @@ class TestEndToEnd:
             def __init__(self):
                 self.count = 0
 
-            def execute(self, identifier, job, cancel_event):
+            def execute(self, job, cancel_event):
+                identifier = job.get("id", "")
                 self.count += 1
                 if self.count % 3 == 0:
                     return WorkerResult(
@@ -241,7 +245,7 @@ class TestEndToEnd:
         )
 
         engine.run(
-            jobs=iter([{"identifier": f"i-{i}"} for i in range(9)]),
+            jobs=iter([{"id": f"i-{i}"} for i in range(9)]),
             total=9,
             op="download",
         )

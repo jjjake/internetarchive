@@ -10,7 +10,8 @@ from internetarchive.bulk.worker import BaseWorker, WorkerResult
 class DummyWorker(BaseWorker):
     """Minimal worker implementation for testing the contract."""
 
-    def execute(self, identifier, job, cancel_event):
+    def execute(self, job, cancel_event):
+        identifier = job.get("id", "")
         return WorkerResult(
             success=True,
             identifier=identifier,
@@ -21,7 +22,8 @@ class DummyWorker(BaseWorker):
 class FailingWorker(BaseWorker):
     """Worker that always fails."""
 
-    def execute(self, identifier, job, cancel_event):
+    def execute(self, job, cancel_event):
+        identifier = job.get("id", "")
         return WorkerResult(
             success=False,
             identifier=identifier,
@@ -55,7 +57,7 @@ def test_worker_result_failure():
 
 def test_dummy_worker_execute():
     worker = DummyWorker()
-    result = worker.execute("foo", {"op": "download"}, Event())
+    result = worker.execute({"id": "foo", "op": "download"}, Event())
     assert result.success is True
     assert result.identifier == "foo"
     assert result.extra == {"key": "value"}
@@ -63,7 +65,7 @@ def test_dummy_worker_execute():
 
 def test_failing_worker_execute():
     worker = FailingWorker()
-    result = worker.execute("bar", {"op": "download"}, Event())
+    result = worker.execute({"id": "bar", "op": "download"}, Event())
     assert result.success is False
     assert result.error == "something went wrong"
     assert result.retry is False

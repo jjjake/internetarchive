@@ -68,18 +68,17 @@ class DownloadWorker(BaseWorker):
 
     def execute(  # noqa: PLR0911
         self,
-        identifier: str,
         job: dict,
         cancel_event: Event,
     ) -> WorkerResult:
         """Download an item.
 
-        :param identifier: Archive.org item identifier.
-        :param job: Job dict from the joblog (unused beyond
-            identifier).
+        :param job: Job dict from the joblog. Uses ``job["id"]``
+            as the Archive.org item identifier.
         :param cancel_event: Event set on graceful shutdown.
         :returns: ``WorkerResult`` with download outcome.
         """
+        identifier = job.get("id", "")
         if cancel_event.is_set():
             return WorkerResult(
                 success=False,

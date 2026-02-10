@@ -45,7 +45,7 @@ class TestDownloadWorker:
         worker._local = MagicMock()  # noqa: SLF001
         worker._local.session = session  # noqa: SLF001
 
-        result = worker.execute("test-item", {}, Event())
+        result = worker.execute({"id": "test-item"}, Event())
         assert result.success is True
         assert result.identifier == "test-item"
         item.download.assert_called_once()
@@ -59,7 +59,7 @@ class TestDownloadWorker:
         worker._local = MagicMock()  # noqa: SLF001
         worker._local.session = session  # noqa: SLF001
 
-        result = worker.execute("dark-item", {}, Event())
+        result = worker.execute({"id": "dark-item"}, Event())
         assert result.success is False
         assert result.error == "item is dark"
         assert result.retry is False
@@ -73,7 +73,7 @@ class TestDownloadWorker:
         worker._local = MagicMock()  # noqa: SLF001
         worker._local.session = session  # noqa: SLF001
 
-        result = worker.execute("no-item", {}, Event())
+        result = worker.execute({"id": "no-item"}, Event())
         assert result.success is False
         assert result.error == "item does not exist"
         assert result.retry is False
@@ -87,7 +87,7 @@ class TestDownloadWorker:
         worker._local = MagicMock()  # noqa: SLF001
         worker._local.session = session  # noqa: SLF001
 
-        result = worker.execute("test-item", {}, Event())
+        result = worker.execute({"id": "test-item"}, Event())
         assert result.success is False
         assert "2 file(s) failed" in result.error
         assert result.retry is True
@@ -99,7 +99,7 @@ class TestDownloadWorker:
         cancel = Event()
         cancel.set()
 
-        result = worker.execute("test-item", {}, cancel)
+        result = worker.execute({"id": "test-item"}, cancel)
         assert result.success is False
         assert result.error == "cancelled"
         assert result.retry is False
@@ -112,7 +112,7 @@ class TestDownloadWorker:
         worker._local = MagicMock()  # noqa: SLF001
         worker._local.session = session  # noqa: SLF001
 
-        result = worker.execute("fail-item", {}, Event())
+        result = worker.execute({"id": "fail-item"}, Event())
         assert result.success is False
         assert "network error" in result.error
         assert result.retry is True
@@ -127,7 +127,7 @@ class TestDownloadWorker:
         worker._local = MagicMock()  # noqa: SLF001
         worker._local.session = session  # noqa: SLF001
 
-        result = worker.execute("test-item", {}, Event())
+        result = worker.execute({"id": "test-item"}, Event())
         assert result.success is False
         assert "write error" in result.error
         assert result.retry is True
@@ -141,7 +141,7 @@ class TestDownloadWorker:
         worker._local = MagicMock()  # noqa: SLF001
         worker._local.session = session  # noqa: SLF001
 
-        result = worker.execute("test-item", {}, Event())
+        result = worker.execute({"id": "test-item"}, Event())
         assert result.success is True
         call_kwargs = item.download.call_args[1]
         assert call_kwargs["destdir"] == "/mnt/data"
@@ -157,7 +157,7 @@ class TestDownloadWorker:
         worker._local = MagicMock()  # noqa: SLF001
         worker._local.session = session  # noqa: SLF001
 
-        result = worker.execute("test-item", {}, Event())
+        result = worker.execute({"id": "test-item"}, Event())
         assert result.success is True
         call_kwargs = item.download.call_args[1]
         assert call_kwargs["glob_pattern"] == "*.txt"
@@ -178,7 +178,7 @@ class TestDownloadWorker:
         worker._local = MagicMock()  # noqa: SLF001
         worker._local.session = session  # noqa: SLF001
 
-        result = worker.execute("test-item", {}, Event())
+        result = worker.execute({"id": "test-item"}, Event())
         assert result.success is True
         call_kwargs = item.download.call_args[1]
         assert call_kwargs["destdir"] == str(tmp_path)
@@ -194,7 +194,7 @@ class TestDownloadWorker:
         worker._local = MagicMock()  # noqa: SLF001
         worker._local.session = session  # noqa: SLF001
 
-        result = worker.execute("test-item", {}, Event())
+        result = worker.execute({"id": "test-item"}, Event())
         assert result.success is False
         assert result.backoff is True
         assert "all disks full" in result.error

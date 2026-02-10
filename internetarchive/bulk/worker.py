@@ -48,16 +48,15 @@ class BaseWorker(ABC):
     @abstractmethod
     def execute(
         self,
-        identifier: str,
         job: dict,
         cancel_event: Event,
     ) -> WorkerResult:
         """Execute a single job.
 
-        :param identifier: The Archive.org item identifier.
-        :param job: The full job dict from the joblog. Contains
-            operation-specific data that the engine passes through
-            opaquely.
+        :param job: The full job dict from the joblog. Workers
+            extract whatever fields they need (e.g. ``job["id"]``
+            for identifier-based operations). The engine passes
+            the dict through opaquely.
         :param cancel_event: Threading event set when the engine
             wants to shut down gracefully. Workers should check
             this periodically and return early if set.

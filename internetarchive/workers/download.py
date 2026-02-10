@@ -66,7 +66,7 @@ class DownloadWorker(BaseWorker):
             )
         return self._local.session
 
-    def execute(  # noqa: PLR0911
+    def execute(
         self,
         identifier: str,
         job: dict,
@@ -107,11 +107,32 @@ class DownloadWorker(BaseWorker):
         session = self._get_session()
 
         try:
+            return self._do_download(
+                session, identifier, destdir, cancel_event,
+                estimated_bytes,
+            )
+        finally:
+            if self._disk_pool and routed_path:
+                self._disk_pool.release(
+                    routed_path, estimated_bytes
+                )
+
+    def _do_download(
+        self,
+        session,
+        identifier: str,
+        destdir: str | None,
+        cancel_event: Event,
+        estimated_bytes: int,
+    ) -> WorkerResult:
+        """Run the download, returning a result.
+
+        Disk reservation release is handled by the caller's
+        ``finally`` block.
+        """
+        try:
             item = session.get_item(identifier)
         except Exception as exc:
-            if self._disk_pool and routed_path:
-                self._disk_pool.release(routed_path, estimated_bytes)
-            # Dark or nonexistent items should not be retried
             error_msg = str(exc)
             is_permanent = (
                 "dark" in error_msg.lower()
@@ -125,8 +146,6 @@ class DownloadWorker(BaseWorker):
             )
 
         if item.is_dark:
-            if self._disk_pool and routed_path:
-                self._disk_pool.release(routed_path, estimated_bytes)
             return WorkerResult(
                 success=False,
                 identifier=identifier,
@@ -135,8 +154,6 @@ class DownloadWorker(BaseWorker):
             )
 
         if item.metadata == {}:
-            if self._disk_pool and routed_path:
-                self._disk_pool.release(routed_path, estimated_bytes)
             return WorkerResult(
                 success=False,
                 identifier=identifier,
@@ -153,17 +170,12 @@ class DownloadWorker(BaseWorker):
                 **self._download_kwargs,
             )
         except Exception as exc:
-            if self._disk_pool and routed_path:
-                self._disk_pool.release(routed_path, estimated_bytes)
             return WorkerResult(
                 success=False,
                 identifier=identifier,
                 error=str(exc),
                 retry=True,
             )
-        finally:
-            if self._disk_pool and routed_path:
-                self._disk_pool.release(routed_path, estimated_bytes)
 
         if errors:
             return WorkerResult(

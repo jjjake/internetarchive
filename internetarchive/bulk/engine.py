@@ -160,7 +160,7 @@ class BulkEngine:
         with ThreadPoolExecutor(
             max_workers=self.max_workers
         ) as pool:
-            futures: dict[Future, dict] = {}
+            futures: dict[Future, tuple[dict, float]] = {}
             job_retries: dict[int, int] = {}
             # Separate queue for retried/backoff jobs so we never
             # re-iterate already-processed items from pending_jobs.
@@ -212,7 +212,7 @@ class BulkEngine:
                         job,
                         self._cancel,
                     )
-                    futures[future] = job
+                    futures[future] = (job, time.monotonic())
 
                 if not futures:
                     break
@@ -221,10 +221,9 @@ class BulkEngine:
                 done, _ = wait(futures, timeout=0.5)
 
                 for future in done:
-                    job = futures.pop(future)
+                    job, submit_time = futures.pop(future)
                     seq = job["seq"]
                     identifier = job.get("id", "")
-                    start_time = time.monotonic()
 
                     try:
                         result: WorkerResult = future.result()
@@ -234,7 +233,7 @@ class BulkEngine:
                         )
                         continue
 
-                    elapsed = time.monotonic() - start_time
+                    elapsed = time.monotonic() - submit_time
 
                     if result.success:
                         self.joblog.write_event(

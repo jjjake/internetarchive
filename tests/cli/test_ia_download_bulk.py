@@ -183,6 +183,7 @@ def _make_bulk_args(tmp_path, **overrides):
         "retries": 5,
         "destdir": None,
         "disk_margin": "1G",
+        "quiet": False,
         "no_disk_check": True,
         "session": session,
     }
@@ -337,3 +338,28 @@ class TestRunBulkIntegration:
         assert "done-item" not in called_ids
         assert "pending-item" in called_ids
         assert "also-pending" in called_ids
+
+    @patch("internetarchive.get_session")
+    def test_quiet_suppresses_output(
+        self, mock_get_session, tmp_path, capsys
+    ):
+        """--quiet should use NullUI, producing no stderr output."""
+        item = MagicMock()
+        item.is_dark = False
+        item.metadata = {"title": "Test"}
+        item.item_size = 512
+        item.download.return_value = []
+
+        mock_session = MagicMock()
+        mock_session.config = {}
+        mock_session.config_file = None
+        mock_session.get_item.return_value = item
+        mock_get_session.return_value = mock_session
+
+        args, parser = _make_bulk_args(tmp_path, quiet=True)
+        with pytest.raises(SystemExit) as exc_info:
+            _run_bulk(args, parser)
+        assert exc_info.value.code == 0
+
+        captured = capsys.readouterr()
+        assert captured.err == ""

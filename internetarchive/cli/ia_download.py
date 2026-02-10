@@ -245,7 +245,7 @@ def _run_bulk(
     from internetarchive.bulk.disk import DiskPool  # noqa: PLC0415
     from internetarchive.bulk.engine import BulkEngine  # noqa: PLC0415
     from internetarchive.bulk.joblog import JobLog  # noqa: PLC0415
-    from internetarchive.bulk.ui import PlainUI  # noqa: PLC0415
+    from internetarchive.bulk.ui import NullUI, PlainUI  # noqa: PLC0415
     from internetarchive.workers.download import (  # noqa: PLC0415
         DownloadWorker,
     )
@@ -372,7 +372,7 @@ def _run_bulk(
         worker=worker,
         max_workers=args.workers,
         retries=args.batch_retries,
-        ui=PlainUI(),
+        ui=NullUI() if args.quiet else PlainUI(),
     )
 
     rc = engine.run(jobs=jobs, total=total, op="download")

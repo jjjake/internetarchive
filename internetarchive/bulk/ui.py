@@ -62,6 +62,16 @@ class UIHandler(ABC):
         ...
 
 
+class NullUI(UIHandler):
+    """UI handler that silently discards all events."""
+
+    def handle(self, event: UIEvent) -> None:
+        """Discard the event.
+
+        :param event: The event to discard.
+        """
+
+
 def _format_bytes(n: int) -> str:
     """Format byte count as human-readable string."""
     if n < 1024:

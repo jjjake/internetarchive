@@ -127,7 +127,7 @@ def main():
         "Concurrent bulk operations (supported by: download)"
     )
     batch_group.add_argument(
-        "--workers",
+        "-w", "--workers",
         type=int,
         default=1,
         metavar="N",

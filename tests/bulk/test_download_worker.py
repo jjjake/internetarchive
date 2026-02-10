@@ -185,6 +185,8 @@ class TestDownloadWorker:
 
     def test_disk_pool_full_triggers_backoff(self):
         session = _mock_session()
+        item = _mock_item(item_size=5000)
+        session.get_item.return_value = item
         pool = MagicMock()
         pool.route.return_value = None
 
@@ -196,3 +198,5 @@ class TestDownloadWorker:
         assert result.success is False
         assert result.backoff is True
         assert "all disks full" in result.error
+        # Verify route was called with the actual item size
+        pool.route.assert_called_once_with(5000)

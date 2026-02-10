@@ -66,7 +66,7 @@ class DownloadWorker(BaseWorker):
             )
         return self._local.session
 
-    def execute(
+    def execute(  # noqa: PLR0911
         self,
         identifier: str,
         job: dict,
@@ -88,48 +88,10 @@ class DownloadWorker(BaseWorker):
                 retry=False,
             )
 
-        # Determine destination directory
-        destdir = self._destdir
-        estimated_bytes = 0
-        routed_path = None
-
-        if self._disk_pool is not None:
-            routed_path = self._disk_pool.route(estimated_bytes)
-            if routed_path is None:
-                return WorkerResult(
-                    success=False,
-                    identifier=identifier,
-                    error="all disks full",
-                    backoff=True,
-                )
-            destdir = routed_path
-
         session = self._get_session()
 
-        try:
-            return self._do_download(
-                session, identifier, destdir, cancel_event,
-                estimated_bytes,
-            )
-        finally:
-            if self._disk_pool and routed_path:
-                self._disk_pool.release(
-                    routed_path, estimated_bytes
-                )
-
-    def _do_download(
-        self,
-        session,
-        identifier: str,
-        destdir: str | None,
-        cancel_event: Event,
-        estimated_bytes: int,
-    ) -> WorkerResult:
-        """Run the download, returning a result.
-
-        Disk reservation release is handled by the caller's
-        ``finally`` block.
-        """
+        # Fetch item metadata first so we know the size for
+        # disk pool reservation.
         try:
             item = session.get_item(identifier)
         except Exception as exc:
@@ -161,6 +123,22 @@ class DownloadWorker(BaseWorker):
                 retry=False,
             )
 
+        # Route to a disk with enough space for this item.
+        destdir = self._destdir
+        estimated_bytes = item.item_size or 0
+        routed_path = None
+
+        if self._disk_pool is not None:
+            routed_path = self._disk_pool.route(estimated_bytes)
+            if routed_path is None:
+                return WorkerResult(
+                    success=False,
+                    identifier=identifier,
+                    error="all disks full",
+                    backoff=True,
+                )
+            destdir = routed_path
+
         try:
             errors = item.download(
                 destdir=destdir,
@@ -176,6 +154,11 @@ class DownloadWorker(BaseWorker):
                 error=str(exc),
                 retry=True,
             )
+        finally:
+            if self._disk_pool and routed_path:
+                self._disk_pool.release(
+                    routed_path, estimated_bytes
+                )
 
         if errors:
             return WorkerResult(
@@ -189,5 +172,5 @@ class DownloadWorker(BaseWorker):
         return WorkerResult(
             success=True,
             identifier=identifier,
-            extra={"item_size": item.item_size or 0},
+            extra={"item_size": estimated_bytes},
         )

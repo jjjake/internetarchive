@@ -176,12 +176,29 @@ def _parse_size(size_str: str) -> int:
 
     :param size_str: Size string like ``"1G"``, ``"500M"``, ``"2T"``.
     :returns: Size in bytes.
+    :raises argparse.ArgumentTypeError: If the string is empty,
+        negative, or not a valid size.
     """
     suffixes = {"K": 1024, "M": 1024**2, "G": 1024**3, "T": 1024**4}
     size_str = size_str.strip().upper()
-    if size_str[-1] in suffixes:
-        return int(float(size_str[:-1]) * suffixes[size_str[-1]])
-    return int(size_str)
+    if not size_str:
+        raise argparse.ArgumentTypeError(
+            "size cannot be empty"
+        )
+    try:
+        if size_str[-1] in suffixes:
+            value = float(size_str[:-1]) * suffixes[size_str[-1]]
+        else:
+            value = float(size_str)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"invalid size: {size_str!r}"
+        )
+    if value < 0:
+        raise argparse.ArgumentTypeError(
+            f"size must be non-negative, got {size_str!r}"
+        )
+    return int(value)
 
 
 def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
@@ -235,6 +252,21 @@ def _run_bulk(
 
     args.search_parameters = args.search_parameters or {}
     args.parameters = args.parameters or {}
+
+    # Reject options that are not supported in bulk mode.
+    if args.dry_run:
+        parser.error(
+            "--dry-run is not supported in bulk mode"
+        )
+    if args.stdout:
+        parser.error(
+            "--stdout is not supported in bulk mode"
+        )
+    if args.file:
+        parser.error(
+            "file arguments are not supported in bulk mode "
+            "(use --glob to filter files)"
+        )
 
     # Joblog path is required for bulk mode
     if not args.joblog:

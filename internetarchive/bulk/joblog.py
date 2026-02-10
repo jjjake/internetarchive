@@ -232,6 +232,52 @@ class JobLog:
             "pending": total - len(done),
         }
 
+    def load(self) -> dict:
+        """Single-pass scan that computes all resume state at once.
+
+        :returns: Dict with keys ``max_seq``, ``bitmap``,
+            ``pending``, ``status``.
+
+        Much faster than calling ``get_max_seq()``,
+        ``build_resume_bitmap()``, ``iter_pending_jobs()``, and
+        ``status()`` separately (which each re-read the file).
+        """
+        max_seq = 0
+        total = 0
+        bitmap = Bitmap()
+        jobs: list[dict] = []
+        completed = set()
+        permanently_failed = set()
+
+        for record in self._iter_records():
+            event = record.get("event")
+            if event == "job":
+                total += 1
+                seq = record.get("seq", 0)
+                max_seq = max(max_seq, seq)
+                jobs.append(record)
+            elif event == "completed":
+                bitmap.set(record["seq"])
+                completed.add(record["seq"])
+            elif event == "failed" and record.get("retry") is False:
+                bitmap.set(record["seq"])
+                permanently_failed.add(record["seq"])
+
+        pending = [j for j in jobs if j["seq"] not in bitmap]
+        done = completed | permanently_failed
+
+        return {
+            "max_seq": max_seq,
+            "bitmap": bitmap,
+            "pending": pending,
+            "status": {
+                "total": total,
+                "completed": len(completed),
+                "failed": len(permanently_failed),
+                "pending": total - len(done),
+            },
+        }
+
     def _iter_records(self) -> Iterator[dict]:
         """Iterate over all valid JSON records in the log file.
 

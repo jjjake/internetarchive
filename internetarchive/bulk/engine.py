@@ -119,18 +119,16 @@ class BulkEngine:
         op: str,
     ) -> int:
         """Internal run implementation."""
-        # Determine if this is a resume
-        existing_max = self.joblog.get_max_seq()
-        resume = existing_max > 0
+        # Determine if this is a resume (single-pass scan)
+        snapshot = self.joblog.load()
+        resume = snapshot["max_seq"] > 0
 
         if resume:
-            bitmap = self.joblog.build_resume_bitmap()
-            pending_jobs = list(self.joblog.iter_pending_jobs(bitmap))
-            status = self.joblog.status()
+            pending_jobs = snapshot["pending"]
+            status = snapshot["status"]
             self._total = status["total"]
             self._completed = status["completed"]
             self._failed = status["failed"]
-            self._skipped = status["completed"] + status["failed"]
         else:
             if jobs is None:
                 print("error: no jobs to process", file=sys.stderr)
@@ -138,8 +136,8 @@ class BulkEngine:
             # Resolve phase
             self.resolve(jobs, total, op)
             self._total = total if total else self.joblog.get_max_seq()
-            bitmap = self.joblog.build_resume_bitmap()
-            pending_jobs = list(self.joblog.iter_pending_jobs(bitmap))
+            snapshot = self.joblog.load()
+            pending_jobs = snapshot["pending"]
 
         if not pending_jobs:
             self._emit(UIEvent(

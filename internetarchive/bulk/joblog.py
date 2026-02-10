@@ -101,14 +101,22 @@ class JobLog:
             self._fh.close()
             self._fh = None
 
-    def _append(self, record: dict) -> None:
-        """Write a single JSON line, thread-safe with flush."""
+    def _append(self, record: dict, sync: bool = False) -> None:
+        """Write a single JSON line, thread-safe with flush.
+
+        :param record: Dict to serialize as JSON.
+        :param sync: If ``True``, call ``fsync`` after writing.
+            Used for event lines (started/completed/failed) where
+            crash recovery correctness matters. Job lines skip
+            fsync for performance during the resolve phase.
+        """
         line = json.dumps(record, separators=(",", ":"))
         with self._lock:
             fh = self._ensure_open()
             fh.write(line + "\n")
             fh.flush()
-            os.fsync(fh.fileno())
+            if sync:
+                os.fsync(fh.fileno())
 
     def write_job(
         self,
@@ -151,7 +159,7 @@ class JobLog:
         """
         record: dict = {"event": event, "seq": seq, "ts": _ts()}
         record.update(kwargs)
-        self._append(record)
+        self._append(record, sync=True)
 
     def build_resume_bitmap(self) -> Bitmap:
         """Scan the log and build a bitmap of completed sequences.

@@ -315,3 +315,51 @@ class TestBulkEngine:
             if e.kind == "job_started"
         ]
         assert len(started) == 0
+
+    def test_retry_after_iterator_exhaustion(self, tmp_path):
+        """Retried jobs must not be dropped when the job iterator
+        is already exhausted (regression test for #745 review #1).
+        """
+        path = str(tmp_path / "test.jsonl")
+        log = JobLog(path)
+        collector = EventCollector()
+
+        class FailOnceThenSucceed(BaseWorker):
+            """Fails the first attempt for each id, succeeds after."""
+
+            def __init__(self):
+                self.attempts = {}
+
+            def execute(self, identifier, job, cancel_event):
+                count = self.attempts.get(identifier, 0) + 1
+                self.attempts[identifier] = count
+                if count == 1:
+                    return WorkerResult(
+                        success=False,
+                        identifier=identifier,
+                        error="transient",
+                        retry=True,
+                    )
+                return WorkerResult(
+                    success=True, identifier=identifier
+                )
+
+        worker = FailOnceThenSucceed()
+        engine = BulkEngine(
+            log, worker, max_workers=4, retries=3, ui=collector
+        )
+
+        # 4 workers, 4 jobs — all submitted at once, iterator
+        # exhausted immediately. All fail on first try and need
+        # retry; those retries must not be silently dropped.
+        ids = [f"item-{i}" for i in range(4)]
+        rc = engine.run(
+            jobs=_make_jobs(ids), total=4, op="download"
+        )
+
+        assert rc == 0
+        completed = [
+            e for e in collector.events
+            if e.kind == "job_completed"
+        ]
+        assert len(completed) == 4

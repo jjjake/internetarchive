@@ -162,6 +162,9 @@ class BulkEngine:
         ) as pool:
             futures: dict[Future, dict] = {}
             job_retries: dict[int, int] = {}
+            # Separate queue for retried/backoff jobs so we never
+            # re-iterate already-processed items from pending_jobs.
+            retry_queue: list[dict] = []
             backoff_active = False
             job_iter = iter(pending_jobs)
             exhausted = False
@@ -170,17 +173,22 @@ class BulkEngine:
                 if self._cancel.is_set() and not futures:
                     break
 
-                # Submit new jobs up to max_workers
+                # Submit new jobs up to max_workers.
+                # Drain retry_queue first, then pull from job_iter.
                 while (
-                    not exhausted
-                    and not self._cancel.is_set()
+                    not self._cancel.is_set()
                     and not backoff_active
                     and len(futures) < self.max_workers
                 ):
-                    try:
-                        job = next(job_iter)
-                    except StopIteration:
-                        exhausted = True
+                    job = None
+                    if retry_queue:
+                        job = retry_queue.pop(0)
+                    elif not exhausted:
+                        try:
+                            job = next(job_iter)
+                        except StopIteration:
+                            exhausted = True
+                    if job is None:
                         break
 
                     seq = job["seq"]
@@ -223,7 +231,6 @@ class BulkEngine:
                     except Exception as exc:
                         self._handle_exception(
                             seq, identifier, exc,
-                            job_retries, pending_jobs,
                         )
                         continue
 
@@ -250,8 +257,8 @@ class BulkEngine:
                             kind="backoff_start",
                             error=result.error or "backoff requested",
                         ))
-                        # Re-queue this job
-                        pending_jobs.append(job)
+                        # Re-queue this job for retry after backoff
+                        retry_queue.append(job)
                     else:
                         attempt = job_retries.get(seq, 0) + 1
                         job_retries[seq] = attempt
@@ -273,7 +280,7 @@ class BulkEngine:
                                 max_retries=self.retries,
                             ))
                             # Re-queue for retry
-                            pending_jobs.append(job)
+                            retry_queue.append(job)
                         else:
                             self.joblog.write_event(
                                 "failed",
@@ -294,16 +301,6 @@ class BulkEngine:
                 if backoff_active and not futures:
                     backoff_active = False
                     self._emit(UIEvent(kind="backoff_end"))
-                    # Refresh exhausted state since we may
-                    # have re-queued jobs
-                    if pending_jobs:
-                        job_iter = iter(pending_jobs)
-                        pending_jobs = []
-                        exhausted = False
-
-                # If all jobs done and no futures pending
-                if exhausted and not futures and not pending_jobs:
-                    break
 
         return 0 if self._failed == 0 else 1
 
@@ -312,8 +309,6 @@ class BulkEngine:
         seq: int,
         identifier: str,
         exc: Exception,
-        job_retries: dict[int, int],
-        pending_jobs: list[dict],
     ) -> None:
         """Handle an unhandled exception from a worker."""
         error = str(exc)

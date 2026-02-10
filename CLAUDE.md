@@ -81,6 +81,12 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 - Avoid introducing new dependencies
 - Support Python 3.9+
 
+## Git Workflow
+
+- `main` is protected by GitHub rulesets — never push directly
+- Always create feature branches and open PRs
+- Required CI checks must pass before merge: `lint_python`, `pre-commit`, `install_internetarchive`, `tox`
+
 ## Versioning
 
 After a release, bump the version to a dev suffix (e.g., `5.7.3.dev0`) to indicate development builds. The version in `internetarchive/__version__.py` should always be either:
@@ -118,3 +124,8 @@ The release process will:
 - Upload to PyPI
 - Upload binary to archive.org
 - Create a GitHub release with changelog from HISTORY.rst
+
+## Related
+
+- [internet-archive-skills](https://github.com/internetarchive/internet-archive-skills) — AI-facing documentation for the `ia` CLI and Python library. Consult when working on upload, metadata, item creation, or search logic — it documents Archive.org platform constraints (item size/file limits, metadata schema, identifier rules, rate limiting). Update if CLI or API interfaces change.
+- Latest skill docs: https://raw.githubusercontent.com/internetarchive/internet-archive-skills/main/SKILL.md

@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from internetarchive.bulk.disk import DiskPool
+from internetarchive.exceptions import DownloadCancelled
 from internetarchive.workers.download import DownloadWorker
 
 
@@ -200,3 +201,19 @@ class TestDownloadWorker:
         assert "all disks full" in result.error
         # Verify route was called with the actual item size
         pool.route.assert_called_once_with(5000)
+
+    def test_download_cancelled_not_retried(self):
+        """DownloadCancelled should not be retried."""
+        session = _mock_session()
+        item = _mock_item()
+        item.download.side_effect = DownloadCancelled("cancelled")
+        session.get_item.return_value = item
+
+        worker = DownloadWorker(session)
+        worker._local = MagicMock()  # noqa: SLF001
+        worker._local.session = session  # noqa: SLF001
+
+        result = worker.execute({"id": "test-item"}, Event())
+        assert result.success is False
+        assert result.error == "cancelled"
+        assert result.retry is False

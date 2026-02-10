@@ -17,6 +17,7 @@ import threading
 from typing import TYPE_CHECKING
 
 from internetarchive.bulk.worker import BaseWorker, WorkerResult
+from internetarchive.exceptions import DownloadCancelled
 
 if TYPE_CHECKING:
     from threading import Event
@@ -145,6 +146,13 @@ class DownloadWorker(BaseWorker):
                 ignore_errors=True,
                 cancel_event=cancel_event,
                 **self._download_kwargs,
+            )
+        except DownloadCancelled:
+            return WorkerResult(
+                success=False,
+                identifier=identifier,
+                error="cancelled",
+                retry=False,
             )
         except Exception as exc:
             return WorkerResult(

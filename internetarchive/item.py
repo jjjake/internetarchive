@@ -738,7 +738,8 @@ class Item(BaseItem):
                  exclude_source: str | list[str] | None = None,
                  stdout: bool = False,
                  params: Mapping | None = None,
-                 timeout: float | tuple[int, float] | None = None
+                 timeout: float | tuple[int, float] | None = None,
+                 cancel_event=None,
                  ) -> list[Request | Response]:
         """Download files from an item.
 
@@ -895,7 +896,8 @@ class Item(BaseItem):
             try:
                 r = f.download(path, verbose, ignore_existing, checksum, checksum_archive,
                                destdir, retries, ignore_errors, fileobj, return_responses,
-                               no_change_timestamp, params, None, stdout, ors, timeout)
+                               no_change_timestamp, params, None, stdout, ors, timeout,
+                               cancel_event=cancel_event)
             except exceptions.DirectoryTraversalError as exc:  # type: ignore
                 # Record error and continue; do not abort entire download batch.
                 msg = f'error: {exc}'

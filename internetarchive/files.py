@@ -170,6 +170,7 @@ class File(BaseFile):
         ors=None,
         timeout=None,
         headers=None,
+        cancel_event=None,
     ):
         """Download the file into the current working directory.
 
@@ -197,6 +198,9 @@ class File(BaseFile):
                     This is mainly intended to be used internally with `stdout`.
         :param params: URL parameters to send with download request
                        (e.g. ``cnt=0``).
+        :param cancel_event: A ``threading.Event`` checked during download.
+                             If set, the download is aborted and
+                             ``DownloadCancelled`` is raised.
 
         :returns: ``True`` if file was successfully downloaded.
         """
@@ -367,6 +371,10 @@ class File(BaseFile):
                     if 'Range' in headers:
                         fileobj.seek(st.st_size)
                     for chunk in response.iter_content(chunk_size=chunk_size):
+                        if cancel_event and cancel_event.is_set():
+                            raise exceptions.DownloadCancelled(
+                                f"download of {file_path} cancelled"
+                            )
                         if chunk:
                             size = fileobj.write(chunk)
                             if bar is not None:

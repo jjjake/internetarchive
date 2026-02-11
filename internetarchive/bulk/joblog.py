@@ -22,6 +22,8 @@ import threading
 from datetime import datetime, timezone
 from typing import IO, Iterator
 
+_MAX_SEQ = 100_000_000  # 100M items → ~12.5 MB bitmap
+
 
 class Bitmap:
     """Compact bit array for tracking completed job sequences.
@@ -36,10 +38,17 @@ class Bitmap:
     def set(self, n: int) -> None:
         """Mark bit *n* as set, growing the array if needed.
 
-        :raises ValueError: If *n* is negative.
+        :raises ValueError: If *n* is negative or exceeds
+            ``_MAX_SEQ``.
         """
         if n < 0:
-            raise ValueError(f"Bitmap index must be non-negative, got {n}")
+            raise ValueError(
+                f"Bitmap index must be non-negative, got {n}"
+            )
+        if n > _MAX_SEQ:
+            raise ValueError(
+                f"Bitmap index {n} exceeds maximum {_MAX_SEQ}"
+            )
         byte_idx = n >> 3
         if byte_idx >= len(self._data):
             self._data.extend(
@@ -179,13 +188,16 @@ class JobLog:
         """
         bitmap = Bitmap()
         for record in self._iter_records():
+            seq = record.get("seq", -1)
+            if seq < 0 or seq > _MAX_SEQ:
+                continue
             if record.get("event") == "completed":
-                bitmap.set(record["seq"])
+                bitmap.set(seq)
             elif (
                 record.get("event") == "failed"
                 and record.get("retry") is False
             ):
-                bitmap.set(record["seq"])
+                bitmap.set(seq)
         return bitmap
 
     def iter_pending_jobs(
@@ -258,17 +270,19 @@ class JobLog:
 
         for record in self._iter_records():
             event = record.get("event")
+            seq = record.get("seq", -1)
+            if seq < 0 or seq > _MAX_SEQ:
+                continue
             if event == "job":
                 total += 1
-                seq = record.get("seq", 0)
                 max_seq = max(max_seq, seq)
                 jobs.append(record)
             elif event == "completed":
-                bitmap.set(record["seq"])
-                completed.add(record["seq"])
+                bitmap.set(seq)
+                completed.add(seq)
             elif event == "failed" and record.get("retry") is False:
-                bitmap.set(record["seq"])
-                permanently_failed.add(record["seq"])
+                bitmap.set(seq)
+                permanently_failed.add(seq)
 
         pending = [j for j in jobs if j["seq"] not in bitmap]
         done = completed | permanently_failed

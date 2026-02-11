@@ -253,6 +253,14 @@ def _run_bulk(
         DownloadWorker,
     )
 
+    if args.workers > 20:
+        print(
+            f"warning: capping workers at 20"
+            f" (requested {args.workers})",
+            file=sys.stderr,
+        )
+        args.workers = 20
+
     args.search_parameters = args.search_parameters or {}
     args.parameters = args.parameters or {}
 

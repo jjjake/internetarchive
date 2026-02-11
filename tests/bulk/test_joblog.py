@@ -6,7 +6,7 @@ import threading
 
 import pytest
 
-from internetarchive.bulk.joblog import Bitmap, JobLog
+from internetarchive.bulk.joblog import _MAX_SEQ, Bitmap, JobLog
 
 
 class TestBitmap:
@@ -58,6 +58,35 @@ class TestBitmap:
         b = Bitmap(16)
         assert -1 not in b
         assert -100 not in b
+
+    def test_max_seq_guard(self):
+        """Bitmap.set() rejects indices above _MAX_SEQ."""
+        b = Bitmap()
+        b.set(_MAX_SEQ)  # exactly at limit is OK
+        assert _MAX_SEQ in b
+        with pytest.raises(ValueError, match="exceeds maximum"):
+            b.set(_MAX_SEQ + 1)
+
+    def test_load_skips_out_of_range_seq(self, tmp_path):
+        """load() silently skips records with out-of-range seq."""
+        path = str(tmp_path / "test.jsonl")
+        log = JobLog(path)
+        log.write_job(1, "good", "download")
+        log.write_event("completed", seq=1)
+        log.close()
+
+        # Manually append a record with a bogus seq
+        with open(path, "a") as f:
+            f.write(
+                '{"event":"completed","seq":999999999,'
+                '"ts":"20260101T000000Z"}\n'
+            )
+
+        state = log.load()
+        assert 1 in state["bitmap"]
+        # The out-of-range seq should not be in the bitmap
+        assert 999999999 not in state["bitmap"]
+        assert state["status"]["completed"] == 1
 
 
 class TestJobLog:

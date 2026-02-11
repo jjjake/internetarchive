@@ -1,8 +1,10 @@
 """Tests for BulkEngine."""
 
+import argparse
 import io
 import time
 from threading import Event
+from unittest.mock import patch
 
 import pytest
 
@@ -10,6 +12,7 @@ from internetarchive.bulk.engine import BulkEngine
 from internetarchive.bulk.joblog import JobLog
 from internetarchive.bulk.ui import PlainUI, UIEvent, UIHandler
 from internetarchive.bulk.worker import BaseWorker, WorkerResult
+from internetarchive.cli.ia_download import _run_bulk
 
 
 class SuccessWorker(BaseWorker):
@@ -513,3 +516,52 @@ class TestBulkEngine:
                 active[ev.worker] = ev.identifier
             elif ev.kind == "job_completed":
                 active.pop(ev.worker, None)
+
+    def test_resolve_skips_empty_id(self, tmp_path, capsys):
+        """Jobs with empty identifiers are skipped with a warning."""
+        path = str(tmp_path / "test.jsonl")
+        log = JobLog(path)
+        collector = EventCollector()
+        engine = BulkEngine(
+            log, SuccessWorker(), max_workers=1, ui=collector
+        )
+
+        jobs = iter([
+            {"id": "good-item"},
+            {"id": ""},
+            {"identifier": ""},
+            {"id": "also-good"},
+        ])
+        rc = engine.run(jobs=jobs, total=4, op="download")
+
+        assert rc == 0
+        completed = [
+            e for e in collector.events
+            if e.kind == "job_completed"
+        ]
+        # Only 2 valid jobs should have been processed
+        assert len(completed) == 2
+
+        stderr = capsys.readouterr().err
+        assert "skipping job with no identifier" in stderr
+
+
+class TestWorkersCap:
+    def test_workers_capped_at_20(self, capsys):
+        """--workers > 20 is capped with a warning."""
+        args = argparse.Namespace(
+            workers=50,
+            search_parameters=None,
+            parameters=None,
+            dry_run=True,  # triggers early exit via parser.error
+        )
+        parser = argparse.ArgumentParser()
+
+        with pytest.raises(SystemExit):
+            _run_bulk(args, parser)
+
+        # workers should have been capped before the error
+        assert args.workers == 20
+        stderr = capsys.readouterr().err
+        assert "capping workers at 20" in stderr
+        assert "requested 50" in stderr

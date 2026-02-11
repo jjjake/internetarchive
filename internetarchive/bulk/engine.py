@@ -84,8 +84,15 @@ class BulkEngine:
         for item in jobs:
             if self._cancel.is_set():
                 break
-            seq += 1
             job_id = item.get("id", item.get("identifier", ""))
+            if not job_id:
+                print(
+                    f"warning: skipping job with no identifier"
+                    f" (seq {seq + 1})",
+                    file=sys.stderr,
+                )
+                continue
+            seq += 1
             self.joblog.write_job(seq, job_id, op)
 
     def run(
@@ -337,6 +344,7 @@ class BulkEngine:
                 if backoff_active and not futures:
                     backoff_active = False
                     self._emit(UIEvent(kind="backoff_end"))
+                    time.sleep(30)
 
         # Clean up UI bars (no-op for handlers without close).
         if hasattr(self.ui, 'close'):

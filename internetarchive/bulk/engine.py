@@ -13,6 +13,7 @@ joblog. Workers handle the actual operation logic.
 
 from __future__ import annotations
 
+import os
 import signal
 import sys
 import threading
@@ -180,7 +181,11 @@ class BulkEngine:
             backoff_active = False
             job_iter = iter(pending_jobs)
             exhausted = False
-            submit_count = 0
+            # Track which visual slots are free so each
+            # in-flight job gets its own UI row.
+            free_slots: set[int] = set(
+                range(self.max_workers)
+            )
 
             while True:
                 if self._cancel.is_set() and not futures:
@@ -206,8 +211,8 @@ class BulkEngine:
 
                     seq = job["seq"]
                     identifier = job.get("id", "")
-                    worker_idx = submit_count % self.max_workers
-                    submit_count += 1
+                    worker_idx = min(free_slots)
+                    free_slots.discard(worker_idx)
 
                     self.joblog.write_event(
                         "started", seq=seq, worker=worker_idx
@@ -239,6 +244,8 @@ class BulkEngine:
                     job, submit_time = futures.pop(future)
                     seq = job["seq"]
                     identifier = job.get("id", "")
+                    worker_idx = job.get("_worker_idx", 0)
+                    free_slots.add(worker_idx)
 
                     try:
                         result: WorkerResult = future.result()
@@ -249,6 +256,7 @@ class BulkEngine:
                         if not self._cancel.is_set():
                             self._handle_exception(
                                 seq, identifier, exc,
+                                worker_idx,
                             )
                         continue
 
@@ -266,6 +274,7 @@ class BulkEngine:
                             seq=seq,
                             total=self._total,
                             identifier=identifier,
+                            worker=worker_idx,
                             extra=result.extra or {},
                             elapsed=elapsed,
                         ))
@@ -299,6 +308,7 @@ class BulkEngine:
                                 seq=seq,
                                 total=self._total,
                                 identifier=identifier,
+                                worker=worker_idx,
                                 error=result.error or "",
                                 retry=attempt,
                                 max_retries=self.retries,
@@ -318,6 +328,7 @@ class BulkEngine:
                                 seq=seq,
                                 total=self._total,
                                 identifier=identifier,
+                                worker=worker_idx,
                                 error=result.error or "",
                             ))
 
@@ -337,6 +348,7 @@ class BulkEngine:
         seq: int,
         identifier: str,
         exc: Exception,
+        worker: int = 0,
     ) -> None:
         """Handle an unhandled exception from a worker."""
         error = str(exc)
@@ -349,18 +361,18 @@ class BulkEngine:
             seq=seq,
             total=self._total,
             identifier=identifier,
+            worker=worker,
             error=error,
         ))
 
     def _handle_sigint(self, signum, frame) -> None:
         """Handle SIGINT for graceful shutdown."""
         if not self._cancel.is_set():
-            print(
-                "\nShutting down gracefully... "
-                "(waiting for in-flight jobs to finish)",
-                file=sys.stderr,
-            )
+            self._emit(UIEvent(kind="shutdown"))
             self._cancel.set()
         else:
-            # Second Ctrl+C: force exit
-            sys.exit(1)
+            # Second Ctrl+C: force exit immediately.
+            # os._exit bypasses ThreadPoolExecutor cleanup
+            # which can hang; partially downloaded files are
+            # retried on resume via the joblog.
+            os._exit(1)

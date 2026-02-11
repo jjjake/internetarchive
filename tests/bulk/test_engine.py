@@ -369,3 +369,147 @@ class TestBulkEngine:
             if e.kind == "job_completed"
         ]
         assert len(completed) == 4
+
+    def test_completed_events_carry_worker_idx(self, tmp_path):
+        """job_completed events must carry the worker index."""
+        path = str(tmp_path / "test.jsonl")
+        log = JobLog(path)
+        collector = EventCollector()
+        engine = BulkEngine(
+            log, SuccessWorker(), max_workers=2, ui=collector
+        )
+
+        ids = ["item-1", "item-2"]
+        rc = engine.run(
+            jobs=_make_jobs(ids), total=2, op="download"
+        )
+
+        assert rc == 0
+        completed = [
+            e for e in collector.events
+            if e.kind == "job_completed"
+        ]
+        assert len(completed) == 2
+        # Workers are assigned round-robin: 0, 1
+        workers = {e.worker for e in completed}
+        assert workers == {0, 1}
+
+    def test_failed_events_carry_worker_idx(self, tmp_path):
+        """job_failed events must carry the worker index."""
+        path = str(tmp_path / "test.jsonl")
+        log = JobLog(path)
+        collector = EventCollector()
+        engine = BulkEngine(
+            log, PermanentFailWorker(), max_workers=1,
+            ui=collector,
+        )
+
+        rc = engine.run(
+            jobs=_make_jobs(["bad-item"]), total=1,
+            op="download",
+        )
+
+        assert rc == 1
+        failed = [
+            e for e in collector.events
+            if e.kind == "job_failed"
+        ]
+        assert len(failed) == 1
+        assert failed[0].worker == 0
+
+    def test_exception_events_carry_worker_idx(self, tmp_path):
+        """job_failed from unhandled exceptions must carry worker."""
+        path = str(tmp_path / "test.jsonl")
+        log = JobLog(path)
+        collector = EventCollector()
+        engine = BulkEngine(
+            log, ExceptionWorker(), max_workers=1,
+            ui=collector,
+        )
+
+        rc = engine.run(
+            jobs=_make_jobs(["crash-item"]), total=1,
+            op="download",
+        )
+
+        assert rc == 1
+        failed = [
+            e for e in collector.events
+            if e.kind == "job_failed"
+        ]
+        assert len(failed) == 1
+        assert failed[0].worker == 0
+
+    def test_shutdown_event_emitted(self, tmp_path):
+        """_handle_sigint emits shutdown UIEvent."""
+        path = str(tmp_path / "test.jsonl")
+        log = JobLog(path)
+        collector = EventCollector()
+        engine = BulkEngine(
+            log, SuccessWorker(), max_workers=1,
+            ui=collector,
+        )
+
+        # Simulate first ctrl-c
+        engine._handle_sigint(None, None)  # noqa: SLF001
+
+        shutdown = [
+            e for e in collector.events
+            if e.kind == "shutdown"
+        ]
+        assert len(shutdown) == 1
+        assert engine._cancel.is_set()  # noqa: SLF001
+
+    def test_worker_slots_never_collide(self, tmp_path):
+        """Each in-flight job must use a unique visual slot.
+
+        With a slow worker that holds slots 2 and 3 while fast
+        jobs cycle through 0 and 1, the old round-robin counter
+        would assign new jobs to occupied slots. The free-slot
+        pool should prevent this.
+        """
+        path = str(tmp_path / "test.jsonl")
+        log = JobLog(path)
+        collector = EventCollector()
+
+        class SlowThenFastWorker(BaseWorker):
+            """Slots 2-3 are slow; 0-1 cycle fast."""
+
+            def execute(self, job, cancel_event):
+                idx = job.get("_worker_idx", 0)
+                if idx >= 2:
+                    time.sleep(0.15)
+                return WorkerResult(
+                    success=True,
+                    identifier=job.get("id", ""),
+                )
+
+        engine = BulkEngine(
+            log, SlowThenFastWorker(), max_workers=4,
+            ui=collector,
+        )
+
+        # 8 jobs, 4 workers.  Initial batch fills slots 0-3.
+        # Jobs on 0,1 finish fast → refill.  The new jobs must
+        # NOT reuse slots 2 or 3 (still occupied).
+        ids = [f"item-{i}" for i in range(8)]
+        rc = engine.run(
+            jobs=_make_jobs(ids), total=8, op="download"
+        )
+
+        assert rc == 0
+
+        # Build a timeline of slot occupancy.  A slot is
+        # "occupied" between job_started and job_completed
+        # for that worker index.
+        active: dict[int, str] = {}
+        for ev in collector.events:
+            if ev.kind == "job_started":
+                assert ev.worker not in active, (
+                    f"slot {ev.worker} already occupied by "
+                    f"{active[ev.worker]} when "
+                    f"{ev.identifier} started"
+                )
+                active[ev.worker] = ev.identifier
+            elif ev.kind == "job_completed":
+                active.pop(ev.worker, None)

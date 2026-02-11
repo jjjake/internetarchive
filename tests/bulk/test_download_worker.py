@@ -217,3 +217,54 @@ class TestDownloadWorker:
         assert result.success is False
         assert result.error == "cancelled"
         assert result.retry is False
+
+    def test_job_routed_emitted_with_destdir(self):
+        """Worker emits job_routed event after routing."""
+        session = _mock_session()
+        item = _mock_item()
+        session.get_item.return_value = item
+
+        events = []
+        worker = DownloadWorker(
+            session,
+            destdir="/mnt/data",
+            progress_emitter=events.append,
+        )
+        worker._local = MagicMock()  # noqa: SLF001
+        worker._local.session = session  # noqa: SLF001
+
+        result = worker.execute(
+            {"id": "test-item", "_worker_idx": 2}, Event()
+        )
+        assert result.success is True
+        routed = [
+            e for e in events if e.kind == "job_routed"
+        ]
+        assert len(routed) == 1
+        assert routed[0].extra["destdir"] == "/mnt/data"
+        assert routed[0].worker == 2
+        assert routed[0].identifier == "test-item"
+
+    def test_job_routed_default_destdir(self):
+        """job_routed event uses '.' when destdir is None."""
+        session = _mock_session()
+        item = _mock_item()
+        session.get_item.return_value = item
+
+        events = []
+        worker = DownloadWorker(
+            session,
+            progress_emitter=events.append,
+        )
+        worker._local = MagicMock()  # noqa: SLF001
+        worker._local.session = session  # noqa: SLF001
+
+        result = worker.execute(
+            {"id": "test-item", "_worker_idx": 0}, Event()
+        )
+        assert result.success is True
+        routed = [
+            e for e in events if e.kind == "job_routed"
+        ]
+        assert len(routed) == 1
+        assert routed[0].extra["destdir"] == "."

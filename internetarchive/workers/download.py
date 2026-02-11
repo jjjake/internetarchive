@@ -147,11 +147,22 @@ class DownloadWorker(BaseWorker):
                 )
             destdir = routed_path
 
+        # Hoist worker_idx so it's available for both the
+        # routing event and the file-progress closures below.
+        worker_idx = job.get("_worker_idx", 0)
+
+        if self._progress_emitter is not None:
+            self._progress_emitter(UIEvent(
+                kind="job_routed",
+                identifier=identifier,
+                worker=worker_idx,
+                extra={"destdir": destdir or "."},
+            ))
+
         # Build progress closures when the emitter is wired.
         progress_cb = None
         file_cb = None
         if self._progress_emitter is not None:
-            worker_idx = job.get("_worker_idx", 0)
             emitter = self._progress_emitter
 
             def _on_chunk(bytes_written):

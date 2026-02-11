@@ -1,10 +1,21 @@
-"""Tests for UIEvent, UIHandler, and PlainUI."""
+"""Tests for UIEvent, UIHandler, PlainUI, and ProgressBarUI."""
 
 import io
 
 import pytest
 
-from internetarchive.bulk.ui import PlainUI, UIEvent, UIHandler, _format_bytes
+from internetarchive.bulk.ui import (
+    _ARROW,
+    _SYM_ACTIVE,
+    _SYM_DONE,
+    _SYM_FAIL,
+    PlainUI,
+    ProgressBarUI,
+    UIEvent,
+    UIHandler,
+    _format_bytes,
+    _truncate,
+)
 
 
 class TestUIEvent:
@@ -50,7 +61,8 @@ class TestPlainUI:
             worker=2,
         ))
         output = buf.getvalue()
-        assert "foo-item: started (worker 2)" in output
+        assert "foo-item: started" in output
+        assert "(worker" not in output
         assert "[1/100]" in output
 
     def test_job_completed_with_bytes(self):
@@ -142,9 +154,227 @@ class TestPlainUI:
         assert "]" in output
 
 
+    def test_job_routed(self):
+        buf, ui = self._capture()
+        ui.handle(UIEvent(
+            kind="job_routed",
+            seq=1,
+            total=100,
+            identifier="foo-item",
+            worker=0,
+            extra={"destdir": "/mnt/disk1"},
+        ))
+        output = buf.getvalue()
+        assert "foo-item:" in output
+        assert _ARROW in output
+        assert "/mnt/disk1" in output
+
+    def test_shutdown(self):
+        buf, ui = self._capture()
+        ui.handle(UIEvent(kind="shutdown"))
+        output = buf.getvalue()
+        assert "shutting down gracefully" in output
+
+
 class TestFormatBytes:
     def test_bytes(self):
         assert _format_bytes(500) == "500 B"
         assert _format_bytes(1024) == "1.0 KB"
         assert _format_bytes(1024 * 1024) == "1.0 MB"
         assert _format_bytes(1024 * 1024 * 1024) == "1.0 GB"
+
+
+class TestProgressBarUI:
+    """Tests for the two-bar-per-worker ProgressBarUI."""
+
+    def _make_ui(self, max_workers=2):
+        """Create a ProgressBarUI with a non-tty file stream.
+
+        Returns (ui, file) where file is a StringIO.
+        """
+        f = io.StringIO()
+        ui = ProgressBarUI(
+            total=10, max_workers=max_workers, file=f
+        )
+        return ui, f
+
+    def test_two_bars_created_per_worker(self):
+        ui, _ = self._make_ui(max_workers=2)
+        ui.handle(UIEvent(
+            kind="job_started",
+            seq=1, total=10,
+            identifier="item-a",
+            worker=0,
+        ))
+        ui.handle(UIEvent(
+            kind="job_started",
+            seq=2, total=10,
+            identifier="item-b",
+            worker=1,
+        ))
+        assert 0 in ui._header_bars  # noqa: SLF001
+        assert 0 in ui._progress_bars  # noqa: SLF001
+        assert 1 in ui._header_bars  # noqa: SLF001
+        assert 1 in ui._progress_bars  # noqa: SLF001
+        ui.close()
+
+    def test_job_started_sets_header_and_progress(self):
+        ui, _ = self._make_ui()
+        ui.handle(UIEvent(
+            kind="job_started",
+            seq=1, total=10,
+            identifier="test-item",
+            worker=0,
+        ))
+        hbar = ui._header_bars[0]  # noqa: SLF001
+        # Header should contain the active symbol and
+        # identifier (no ANSI since StringIO is not a tty).
+        assert _SYM_ACTIVE in hbar.desc
+        assert "test-item" in hbar.desc
+        ui.close()
+
+    def test_job_routed_updates_header_with_destdir(self):
+        ui, _ = self._make_ui()
+        ui.handle(UIEvent(
+            kind="job_started",
+            seq=1, total=10,
+            identifier="test-item",
+            worker=0,
+        ))
+        ui.handle(UIEvent(
+            kind="job_routed",
+            identifier="test-item",
+            worker=0,
+            extra={"destdir": "/mnt/disk1"},
+        ))
+        hbar = ui._header_bars[0]  # noqa: SLF001
+        assert "/mnt/disk1" in hbar.desc
+        assert _ARROW in hbar.desc
+        # Worker state should be updated
+        assert ui._worker_state[0]["destdir"] == "/mnt/disk1"  # noqa: SLF001
+        ui.close()
+
+    def test_job_completed_shows_done_symbol(self):
+        ui, _ = self._make_ui()
+        ui.handle(UIEvent(
+            kind="job_started",
+            seq=1, total=10,
+            identifier="done-item",
+            worker=0,
+        ))
+        ui.handle(UIEvent(
+            kind="job_routed",
+            identifier="done-item",
+            worker=0,
+            extra={"destdir": "/mnt/disk2"},
+        ))
+        ui.handle(UIEvent(
+            kind="job_completed",
+            seq=1, total=10,
+            identifier="done-item",
+            worker=0,
+            extra={"item_size": 1024},
+        ))
+        hbar = ui._header_bars[0]  # noqa: SLF001
+        assert _SYM_DONE in hbar.desc
+        assert "/mnt/disk2" in hbar.desc
+        ui.close()
+
+    def test_job_failed_shows_fail_symbol(self):
+        ui, _ = self._make_ui()
+        ui.handle(UIEvent(
+            kind="job_started",
+            seq=1, total=10,
+            identifier="fail-item",
+            worker=0,
+        ))
+        ui.handle(UIEvent(
+            kind="job_routed",
+            identifier="fail-item",
+            worker=0,
+            extra={"destdir": "/mnt/disk1"},
+        ))
+        ui.handle(UIEvent(
+            kind="job_failed",
+            seq=1, total=10,
+            identifier="fail-item",
+            worker=0,
+            error="item is dark",
+        ))
+        hbar = ui._header_bars[0]  # noqa: SLF001
+        assert _SYM_FAIL in hbar.desc
+        assert "/mnt/disk1" in hbar.desc
+        ui.close()
+
+    def test_file_started_updates_progress_bar(self):
+        ui, _ = self._make_ui()
+        ui.handle(UIEvent(
+            kind="job_started",
+            seq=1, total=10,
+            identifier="item-a",
+            worker=0,
+        ))
+        ui.handle(UIEvent(
+            kind="file_started",
+            identifier="item-a",
+            worker=0,
+            extra={"file_name": "data.zip", "file_size": 5000},
+        ))
+        pbar = ui._progress_bars[0]  # noqa: SLF001
+        assert "data.zip" in pbar.desc
+        # Reset should be pending
+        assert 0 in ui._pending_reset  # noqa: SLF001
+        ui.close()
+
+    def test_shutdown_changes_overall_desc(self):
+        ui, _ = self._make_ui()
+        # Ensure overall bar exists
+        ui.handle(UIEvent(
+            kind="job_started",
+            seq=1, total=10,
+            identifier="x",
+            worker=0,
+        ))
+        ui.handle(UIEvent(kind="shutdown"))
+        # tqdm.set_description appends ": " to desc
+        assert "Shutting down..." in ui._overall_bar.desc  # noqa: SLF001
+        ui.close()
+
+    def test_close_clears_all_bars(self):
+        ui, _ = self._make_ui()
+        ui.handle(UIEvent(
+            kind="job_started",
+            seq=1, total=10,
+            identifier="x",
+            worker=0,
+        ))
+        assert len(ui._header_bars) == 1  # noqa: SLF001
+        assert len(ui._progress_bars) == 1  # noqa: SLF001
+        ui.close()
+        assert len(ui._header_bars) == 0  # noqa: SLF001
+        assert len(ui._progress_bars) == 0  # noqa: SLF001
+        assert ui._overall_bar is None  # noqa: SLF001
+
+    def test_no_ansi_on_non_tty(self):
+        """StringIO is not a tty — ANSI codes should be absent."""
+        ui, _ = self._make_ui()
+        assert ui._use_color is False  # noqa: SLF001
+        result = ui._ansi("\033[1m", "text")  # noqa: SLF001
+        assert "\033[" not in result
+        assert result == "text"
+        ui.close()
+
+    def test_no_w_prefix_in_descriptions(self):
+        """Worker bars should not have W{idx} prefixes."""
+        ui, _ = self._make_ui()
+        ui.handle(UIEvent(
+            kind="job_started",
+            seq=1, total=10,
+            identifier="item-a",
+            worker=0,
+        ))
+        hbar = ui._header_bars[0]  # noqa: SLF001
+        pbar = ui._progress_bars[0]  # noqa: SLF001
+        assert not hbar.desc.startswith("W0")
+        assert not pbar.desc.startswith("W0")
+        ui.close()

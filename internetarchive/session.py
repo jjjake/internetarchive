@@ -56,6 +56,10 @@ from internetarchive.utils import parse_dict_cookies, reraise_modify
 
 logger = logging.getLogger(__name__)
 
+_ORIGINAL_SOCKET_CONNECT = socket.socket.connect
+_SOCKET_ALREADY_PATCHED = False
+_active_session_local = threading.local()   # shared thread-local for all sessions
+
 
 class ArchiveSession(requests.sessions.Session):
     """The :class:`ArchiveSession <internetarchive.ArchiveSession>`
@@ -156,30 +160,33 @@ class ArchiveSession(requests.sessions.Session):
                                          logging_config.get('file', 'internetarchive.log'),
                                          'urllib3')
 
-        # Thread-local storage for connection info
-        self._connection_info_local = threading.local()
-
-        # Monkey-patch socket.connect
-        self._original_connect = socket.socket.connect
-
-        def instrumented_connect(sock, address):
-            result = self._original_connect(sock, address)
-            try:
-                src_ip, src_port = sock.getsockname()
-                dst_ip, dst_port = address
-                self._connection_info_local.info = {
-                    'src': f"{src_ip}:{src_port}",
-                    'dst': f"{dst_ip}:{dst_port}",
-                    'src_ip': src_ip,
-                    'src_port': src_port,
-                    'dst_ip': dst_ip,
-                    'dst_port': dst_port
-                }
-            except Exception:
-                self._connection_info_local.info = {}
-            return result
-
-        socket.socket.connect = instrumented_connect  # type: ignore[method-assign]
+        # Monkey-patch socket.connect only once.  The guard prevents re-patching on every
+        # ArchiveSession instantiation.  Without it, each new session would re-capture
+        # socket.socket.connect — which is by then already the instrumented version — as
+        # its "_original", producing infinite mutual recursion the first time a socket is used.
+        global _SOCKET_ALREADY_PATCHED
+        if not _SOCKET_ALREADY_PATCHED:
+            def instrumented_connect(sock, address):
+                # _ORIGINAL_SOCKET_CONNECT is the real unpatched method, captured at
+                # module import time.  Calling it directly (not via self) guarantees
+                # we never end up calling the patched version accidentally.
+                result = _ORIGINAL_SOCKET_CONNECT(sock, address)
+                try:
+                    src_ip, src_port = sock.getsockname()
+                    dst_ip, dst_port = address
+                    _active_session_local.info = {
+                        'src': f"{src_ip}:{src_port}",
+                        'dst': f"{dst_ip}:{dst_port}",
+                        'src_ip': src_ip,
+                        'src_port': src_port,
+                        'dst_ip': dst_ip,
+                        'dst_port': dst_port,
+                    }
+                except Exception:
+                    _active_session_local.info = {}
+                return result
+            socket.socket.connect = instrumented_connect  # type: ignore[method-assign]
+            _SOCKET_ALREADY_PATCHED = True
 
     def get_connection_info(self) -> dict:
         """Get connection info for the current thread.
@@ -197,7 +204,7 @@ class ArchiveSession(requests.sessions.Session):
 
                   Returns an empty dict if no connection info is available.
         """
-        return getattr(self._connection_info_local, 'info', {})
+        return getattr(_active_session_local, 'info', {})
 
     def _get_user_agent_string(self) -> str:
         """Generate a User-Agent string to be sent with every request."""

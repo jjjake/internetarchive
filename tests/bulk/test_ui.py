@@ -6,6 +6,9 @@ import pytest
 
 from internetarchive.bulk.ui import (
     _ARROW,
+    _BOLD,
+    _DIM,
+    _RESET,
     _SYM_ACTIVE,
     _SYM_DONE,
     _SYM_FAIL,
@@ -15,6 +18,7 @@ from internetarchive.bulk.ui import (
     UIHandler,
     _format_bytes,
     _truncate,
+    _visible_len,
 )
 
 
@@ -174,6 +178,56 @@ class TestPlainUI:
         ui.handle(UIEvent(kind="shutdown"))
         output = buf.getvalue()
         assert "shutting down gracefully" in output
+
+
+class TestVisibleLen:
+    def test_plain_text(self):
+        assert _visible_len("hello") == 5
+
+    def test_ansi_not_counted(self):
+        assert _visible_len(f"{_BOLD}hello{_RESET}") == 5
+
+    def test_multiple_ansi(self):
+        text = f"{_DIM}foo{_RESET} {_BOLD}bar{_RESET}"
+        assert _visible_len(text) == 7
+
+    def test_empty(self):
+        assert _visible_len("") == 0
+
+    def test_only_ansi(self):
+        assert _visible_len(f"{_BOLD}{_RESET}") == 0
+
+
+class TestTruncate:
+    def test_no_truncation_needed(self):
+        assert _truncate("short", 10) == "short"
+
+    def test_plain_truncation(self):
+        result = _truncate("hello world", 6)
+        assert result == "hello\u2026"
+        assert _visible_len(result) == 6
+
+    def test_ansi_not_counted_toward_width(self):
+        text = f"{_BOLD}hello world{_RESET}"
+        result = _truncate(text, 6)
+        # Should fit 5 visible chars + ellipsis = 6
+        assert _visible_len(result) == 6
+        # Should contain RESET before ellipsis (to close BOLD)
+        assert _RESET in result
+
+    def test_no_reset_when_no_ansi(self):
+        result = _truncate("hello world", 6)
+        assert _RESET not in result
+
+    def test_width_one(self):
+        result = _truncate("hello", 1)
+        assert result == "\u2026"
+
+    def test_empty_string(self):
+        assert _truncate("", 10) == ""
+
+    def test_exact_width(self):
+        assert _truncate("hello", 5) == "hello"
 
 
 class TestFormatBytes:

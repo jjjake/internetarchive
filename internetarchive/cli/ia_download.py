@@ -338,7 +338,6 @@ def _run_bulk(
 
     # Build download kwargs
     download_kwargs = {}
-    ignore_history_dir = not args.download_history
     if args.glob:
         download_kwargs["glob_pattern"] = args.glob
     if args.exclude:
@@ -360,7 +359,7 @@ def _run_bulk(
     if args.parameters:
         download_kwargs["params"] = args.parameters
     if not args.download_history:
-        download_kwargs["ignore_history_dir"] = ignore_history_dir
+        download_kwargs["ignore_history_dir"] = True
     if args.source:
         download_kwargs["source"] = args.source
     if args.exclude_source:

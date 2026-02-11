@@ -161,6 +161,14 @@ class BulkEngine:
 
     def _execute(self, pending_jobs: list[dict]) -> int:
         """Execute phase: process pending jobs with thread pool."""
+        # Auto-connect the worker's progress emitter if it has one
+        # and it hasn't been set explicitly.
+        if (
+            hasattr(self.worker, '_progress_emitter')
+            and self.worker._progress_emitter is None  # noqa: SLF001
+        ):
+            self.worker._progress_emitter = self._emit  # noqa: SLF001
+
         with ThreadPoolExecutor(
             max_workers=self.max_workers
         ) as pool:
@@ -212,6 +220,8 @@ class BulkEngine:
                         worker=worker_idx,
                     ))
 
+                    job["_worker_idx"] = worker_idx
+
                     future = pool.submit(
                         self.worker.execute,
                         job,
@@ -233,9 +243,13 @@ class BulkEngine:
                     try:
                         result: WorkerResult = future.result()
                     except Exception as exc:
-                        self._handle_exception(
-                            seq, identifier, exc,
-                        )
+                        # During shutdown, don't record failures —
+                        # jobs stay as "started" and are retried on
+                        # resume.
+                        if not self._cancel.is_set():
+                            self._handle_exception(
+                                seq, identifier, exc,
+                            )
                         continue
 
                     elapsed = time.monotonic() - submit_time
@@ -263,6 +277,12 @@ class BulkEngine:
                         ))
                         # Re-queue this job for retry after backoff
                         retry_queue.append(job)
+                    elif self._cancel.is_set():
+                        # Shutdown in progress — don't record the
+                        # failure or burn a retry.  The job keeps
+                        # its "started" status in the log and will
+                        # be pending on the next resume.
+                        continue
                     else:
                         attempt = job_retries.get(seq, 0) + 1
                         job_retries[seq] = attempt
@@ -305,6 +325,10 @@ class BulkEngine:
                 if backoff_active and not futures:
                     backoff_active = False
                     self._emit(UIEvent(kind="backoff_end"))
+
+        # Clean up UI bars (no-op for handlers without close).
+        if hasattr(self.ui, 'close'):
+            self.ui.close()
 
         return 0 if self._failed == 0 else 1
 

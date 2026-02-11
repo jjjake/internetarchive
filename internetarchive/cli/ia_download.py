@@ -245,7 +245,10 @@ def _run_bulk(
     from internetarchive.bulk.disk import DiskPool  # noqa: PLC0415
     from internetarchive.bulk.engine import BulkEngine  # noqa: PLC0415
     from internetarchive.bulk.joblog import JobLog  # noqa: PLC0415
-    from internetarchive.bulk.ui import NullUI, PlainUI  # noqa: PLC0415
+    from internetarchive.bulk.ui import (  # noqa: PLC0415
+        NullUI,
+        ProgressBarUI,
+    )
     from internetarchive.workers.download import (  # noqa: PLC0415
         DownloadWorker,
     )
@@ -276,12 +279,14 @@ def _run_bulk(
 
     joblog = JobLog(args.joblog)
 
-    # Check if this is a resume (joblog has existing entries)
-    is_resume = joblog.get_max_seq() > 0
+    # Single-pass scan for resume detection and progress state.
+    snapshot = joblog.load()
+    is_resume = snapshot["max_seq"] > 0
 
     # Build jobs iterator and total count
     jobs = None
     total = 0
+    initial = 0
 
     if not is_resume:
         if args.search:
@@ -318,6 +323,10 @@ def _run_bulk(
                 "Identifier, --itemlist, or --search is required "
                 "for initial bulk download"
             )
+    else:
+        status = snapshot["status"]
+        total = status["total"]
+        initial = status["completed"] + status["failed"]
 
     # Configure DiskPool
     destdirs = args.destdir or ["."]
@@ -372,7 +381,10 @@ def _run_bulk(
         worker=worker,
         max_workers=args.workers,
         retries=args.batch_retries,
-        ui=NullUI() if args.quiet else PlainUI(),
+        ui=NullUI() if args.quiet else ProgressBarUI(
+            total=total, initial=initial,
+            max_workers=args.workers,
+        ),
     )
 
     rc = engine.run(jobs=jobs, total=total, op="download")

@@ -14,8 +14,9 @@ session management, and cancel event support.
 from __future__ import annotations
 
 import threading
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
+from internetarchive.bulk.ui import UIEvent
 from internetarchive.bulk.worker import BaseWorker, WorkerResult
 from internetarchive.exceptions import DownloadCancelled
 
@@ -35,6 +36,9 @@ class DownloadWorker(BaseWorker):
         If ``None``, downloads go to the first ``destdir`` or cwd.
     :param destdir: Default destination directory (used when
         ``disk_pool`` is ``None``).
+    :param progress_emitter: Optional callable that accepts a
+        ``UIEvent`` and forwards it to the UI handler. Set by the
+        engine to enable per-file progress reporting.
     :param download_kwargs: Extra keyword arguments passed through
         to ``Item.download()`` (e.g. ``glob_pattern``, ``checksum``,
         ``format``, ``retries``).
@@ -45,11 +49,15 @@ class DownloadWorker(BaseWorker):
         session: ArchiveSession,
         disk_pool: DiskPool | None = None,
         destdir: str | None = None,
+        progress_emitter: (
+            Callable[[UIEvent], None] | None
+        ) = None,
         **download_kwargs,
     ):
         self._session = session
         self._disk_pool = disk_pool
         self._destdir = destdir
+        self._progress_emitter = progress_emitter
         self._download_kwargs = download_kwargs
         self._local = threading.local()
 
@@ -139,12 +147,50 @@ class DownloadWorker(BaseWorker):
                 )
             destdir = routed_path
 
+        # Build progress closures when the emitter is wired.
+        progress_cb = None
+        file_cb = None
+        if self._progress_emitter is not None:
+            worker_idx = job.get("_worker_idx", 0)
+            emitter = self._progress_emitter
+
+            def _on_chunk(bytes_written):
+                emitter(UIEvent(
+                    kind="file_progress",
+                    identifier=identifier,
+                    worker=worker_idx,
+                    extra={"bytes": bytes_written},
+                ))
+
+            def _on_file(action, name, size, idx, count):
+                kind = (
+                    "file_started"
+                    if action == "start"
+                    else "file_completed"
+                )
+                emitter(UIEvent(
+                    kind=kind,
+                    identifier=identifier,
+                    worker=worker_idx,
+                    extra={
+                        "file_name": name,
+                        "file_size": size or 0,
+                        "file_index": idx,
+                        "file_count": count,
+                    },
+                ))
+
+            progress_cb = _on_chunk
+            file_cb = _on_file
+
         try:
             errors = item.download(
                 destdir=destdir,
                 verbose=False,
                 ignore_errors=True,
                 cancel_event=cancel_event,
+                progress_callback=progress_cb,
+                file_callback=file_cb,
                 **self._download_kwargs,
             )
         except DownloadCancelled:

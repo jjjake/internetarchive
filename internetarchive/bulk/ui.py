@@ -15,9 +15,11 @@ The engine emits ``UIEvent`` objects; handlers consume them.
 from __future__ import annotations
 
 import sys
+import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Any
 
 
 @dataclass
@@ -26,7 +28,8 @@ class UIEvent:
 
     :param kind: Event type (``job_started``, ``job_completed``,
         ``job_failed``, ``job_skipped``, ``backoff_start``,
-        ``backoff_end``, ``progress``).
+        ``backoff_end``, ``progress``, ``file_started``,
+        ``file_progress``, ``file_completed``).
     :param seq: Job sequence number (if applicable).
     :param total: Total number of jobs.
     :param identifier: Item identifier (if applicable).
@@ -160,3 +163,224 @@ class PlainUI(UIHandler):
             msg = f"{prefix} {event.kind}: {event.identifier}"
 
         print(msg, file=self._file)
+
+
+def _truncate(text: str, width: int) -> str:
+    """Truncate *text* to *width* characters with an ellipsis."""
+    if len(text) <= width:
+        return text
+    return text[: max(width - 1, 0)] + "\u2026"
+
+
+class ProgressBarUI(UIHandler):
+    """Multi-bar progress display using tqdm.
+
+    Shows an overall item-count bar at position 0 and one
+    per-worker bar (positions 1..N) that displays the file
+    currently being downloaded with byte-level progress.
+
+    :param total: Total number of jobs. If ``0``, the bar
+        total is set lazily from the first event's ``.total``.
+    :param initial: Number of already-finished jobs (for
+        resume).
+    :param max_workers: Number of concurrent download workers.
+    :param file: Writable stream for the progress bars
+        (default: ``sys.stderr``).
+    """
+
+    _DESC_WIDTH = 40
+
+    def __init__(
+        self,
+        total: int = 0,
+        initial: int = 0,
+        max_workers: int = 4,
+        file=None,
+    ):
+        from tqdm import tqdm  # noqa: PLC0415
+
+        self._file = file or sys.stderr
+        self._tqdm = tqdm
+        self._total = total
+        self._initial = initial
+        self._max_workers = max_workers
+        self._failed = 0
+        self._total_bytes = 0
+
+        # tqdm-stubs is incomplete — use Any for bar types.
+        self._overall_bar: Any = None
+        self._worker_bars: dict[int, Any] = {}
+        self._pending_reset: dict[int, int] = {}
+        self._lock = threading.Lock()
+
+    # -- lazy creation ------------------------------------------------
+
+    def _ensure_overall(self, total: int) -> None:
+        """Lazily create the overall bar once total is known."""
+        if self._overall_bar is not None:
+            return
+        self._overall_bar = self._tqdm(  # type: ignore[call-arg]
+            total=total,
+            initial=self._initial,
+            desc="Batch",
+            unit="item",
+            position=0,
+            file=self._file,
+            dynamic_ncols=True,
+        )
+
+    def _get_worker_bar(self, idx: int) -> Any:
+        """Get or create the tqdm bar for worker *idx*.
+
+        :param idx: Zero-based worker index.
+        :returns: A ``tqdm`` progress bar instance.
+        """
+        if idx not in self._worker_bars:
+            bar: Any = self._tqdm(  # type: ignore[call-arg]
+                total=0,
+                desc=f"W{idx} (idle)",
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+                position=idx + 1,
+                file=self._file,
+                dynamic_ncols=True,
+                leave=True,
+            )
+            self._worker_bars[idx] = bar
+        return self._worker_bars[idx]
+
+    # -- postfix helper -----------------------------------------------
+
+    def _refresh_overall_postfix(self) -> None:
+        """Update the overall bar postfix with byte totals."""
+        if self._overall_bar is None:
+            return
+        parts: dict[str, Any] = {}
+        if self._total_bytes:
+            parts["dl"] = _format_bytes(self._total_bytes)
+        if self._failed:
+            parts["fail"] = self._failed
+        if parts:
+            self._overall_bar.set_postfix(
+                **parts, refresh=False
+            )
+
+    # -- event dispatch -----------------------------------------------
+
+    def handle(self, event: UIEvent) -> None:
+        """Handle a UI event by updating progress bars.
+
+        :param event: The event to handle.
+        """
+        with self._lock:
+            self._handle(event)
+
+    def _handle(self, event: UIEvent) -> None:
+        """Dispatch a single event (called under lock).
+
+        :param event: The event to dispatch.
+        """
+        total = self._total or event.total
+        if total:
+            self._ensure_overall(total)
+
+        kind = event.kind
+
+        if kind == "job_started":
+            bar = self._get_worker_bar(event.worker)
+            desc = _truncate(
+                f"W{event.worker} {event.identifier}",
+                self._DESC_WIDTH,
+            )
+            bar.reset(total=0)
+            bar.set_description(desc)
+
+        elif kind == "file_started":
+            bar = self._get_worker_bar(event.worker)
+            fname = event.extra.get("file_name", "")
+            fsize = event.extra.get("file_size", 0)
+            desc = _truncate(
+                f"W{event.worker} "
+                f"{event.identifier}/{fname}",
+                self._DESC_WIDTH,
+            )
+            # Defer the bar reset until the first
+            # file_progress event so the previous file's
+            # 100% stays visible between files.
+            self._pending_reset[event.worker] = fsize
+            bar.set_description(desc)
+
+        elif kind == "file_progress":
+            bar = self._get_worker_bar(event.worker)
+            if event.worker in self._pending_reset:
+                new_total = self._pending_reset.pop(
+                    event.worker
+                )
+                bar.reset(total=new_total)
+            nbytes = event.extra.get("bytes", 0)
+            bar.update(nbytes)
+            self._total_bytes += nbytes
+            self._refresh_overall_postfix()
+
+        elif kind == "file_completed":
+            bar = self._get_worker_bar(event.worker)
+            if event.worker in self._pending_reset:
+                # No progress events (file was skipped).
+                fsize = self._pending_reset.pop(
+                    event.worker
+                )
+                bar.reset(total=fsize)
+            if bar.total:
+                bar.n = bar.total
+                bar.refresh()
+
+        elif kind == "job_completed":
+            if self._overall_bar is not None:
+                self._refresh_overall_postfix()
+                self._overall_bar.update(1)
+            bar = self._get_worker_bar(event.worker)
+            bar.reset(total=0)
+            bar.set_description(
+                f"W{event.worker} (idle)"
+            )
+
+        elif kind == "job_failed":
+            if not event.retry:
+                self._failed += 1
+                if self._overall_bar is not None:
+                    self._refresh_overall_postfix()
+                    self._overall_bar.update(1)
+            bar = self._get_worker_bar(event.worker)
+            bar.reset(total=0)
+            bar.set_description(
+                f"W{event.worker} (idle)"
+            )
+
+        elif kind == "job_skipped":
+            if self._overall_bar is not None:
+                self._overall_bar.update(1)
+
+        elif kind == "backoff_start":
+            if self._overall_bar is not None:
+                self._overall_bar.set_description(
+                    "backoff"
+                )
+
+        elif kind == "backoff_end":
+            if self._overall_bar is not None:
+                self._overall_bar.set_description("Batch")
+
+        elif kind == "progress":
+            self.close()
+
+    # -- cleanup ------------------------------------------------------
+
+    def close(self) -> None:
+        """Close all tqdm bars."""
+        for bar in self._worker_bars.values():
+            bar.close()
+        self._worker_bars.clear()
+        if self._overall_bar is not None:
+            self._overall_bar.close()
+            self._overall_bar = None

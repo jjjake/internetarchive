@@ -18,6 +18,7 @@ import signal
 import sys
 import threading
 import time
+from collections import deque
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from threading import Event
 from typing import Iterator
@@ -177,7 +178,7 @@ class BulkEngine:
             job_retries: dict[int, int] = {}
             # Separate queue for retried/backoff jobs so we never
             # re-iterate already-processed items from pending_jobs.
-            retry_queue: list[dict] = []
+            retry_queue: deque[dict] = deque()
             backoff_active = False
             job_iter = iter(pending_jobs)
             exhausted = False
@@ -200,7 +201,7 @@ class BulkEngine:
                 ):
                     job = None
                     if retry_queue:
-                        job = retry_queue.pop(0)
+                        job = retry_queue.popleft()
                     elif not exhausted:
                         try:
                             job = next(job_iter)

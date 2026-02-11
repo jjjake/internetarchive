@@ -185,7 +185,7 @@ class ArchiveSession(requests.sessions.Session):
                 except Exception:
                     _active_session_local.info = {}
                 return result
-            socket.socket.connect = instrumented_connect
+            socket.socket.connect = instrumented_connect  # type: ignore[method-assign]
             _SOCKET_ALREADY_PATCHED = True
 
     def get_connection_info(self) -> dict:

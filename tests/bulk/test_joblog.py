@@ -49,6 +49,16 @@ class TestBitmap:
             b.set(i)
             assert i in b
 
+    def test_negative_index_set_raises(self):
+        b = Bitmap(16)
+        with pytest.raises(ValueError, match="non-negative"):
+            b.set(-1)
+
+    def test_negative_index_contains(self):
+        b = Bitmap(16)
+        assert -1 not in b
+        assert -100 not in b
+
 
 class TestJobLog:
     def test_write_and_read_jobs(self, tmp_path):

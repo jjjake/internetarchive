@@ -34,7 +34,12 @@ class Bitmap:
         self._data = bytearray((size + 7) // 8) if size else bytearray()
 
     def set(self, n: int) -> None:
-        """Mark bit *n* as set, growing the array if needed."""
+        """Mark bit *n* as set, growing the array if needed.
+
+        :raises ValueError: If *n* is negative.
+        """
+        if n < 0:
+            raise ValueError(f"Bitmap index must be non-negative, got {n}")
         byte_idx = n >> 3
         if byte_idx >= len(self._data):
             self._data.extend(
@@ -48,6 +53,8 @@ class Bitmap:
         return len(self._data)
 
     def __contains__(self, n: int) -> bool:
+        if n < 0:
+            return False
         byte_idx = n >> 3
         if byte_idx >= len(self._data):
             return False

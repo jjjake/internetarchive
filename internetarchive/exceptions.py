@@ -58,3 +58,7 @@ class AccountAPIError(Exception):
 
 class DirectoryTraversalError(Exception):
     """Raised when a computed local file path escapes the intended destination directory."""
+
+
+class DownloadCancelled(Exception):
+    """Raised when a download is cancelled via cancel_event during graceful shutdown."""

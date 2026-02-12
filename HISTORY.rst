@@ -8,6 +8,11 @@ Release History
 
 **Features and Improvements**
 
+- Added bulk download engine with concurrent workers, JSONL job logging, resume
+  support, and multi-disk routing. Use ``ia --workers N --joblog PATH download``
+  for concurrent downloads from search results or item lists. Features include
+  automatic retry with backoff, graceful shutdown on Ctrl+C, and ``--status``
+  for job progress summaries.
 - Rewrote ``PostDataAction`` in CLI to accept both JSON strings and ``key:value`` format.
   Previously only JSON was accepted; now ``key:value`` pairs are also supported.
 - Added "can be specified multiple times" hints to repeatable CLI flags.

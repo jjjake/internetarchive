@@ -67,6 +67,21 @@ def validate_config_path(path):
     return path
 
 
+def _print_status(joblog_path):
+    """Print a summary of the joblog and exit.
+
+    :param joblog_path: Path to the JSONL job log file.
+    """
+    from internetarchive.bulk.joblog import JobLog  # noqa: PLC0415
+    log = JobLog(joblog_path)
+    status = log.status()
+    print(f"Job log: {joblog_path}")
+    print(f"  Total:     {status['total']}")
+    print(f"  Completed: {status['completed']}")
+    print(f"  Failed:    {status['failed']}")
+    print(f"  Pending:   {status['pending']}")
+
+
 def main():
     """
     Main entry point for the CLI.
@@ -105,6 +120,34 @@ def main():
                         metavar="STRING",
                         help="Custom string to append to the default User-Agent "
                              "(default with access key is always included)")
+
+    # Batch options (supported by: download)
+    batch_group = parser.add_argument_group(
+        "batch options",
+        "Concurrent bulk operations (supported by: download)"
+    )
+    batch_group.add_argument(
+        "-w", "--workers",
+        type=int,
+        default=1,
+        metavar="N",
+        help="Number of concurrent workers (default: 1)")
+    batch_group.add_argument(
+        "--joblog",
+        type=str,
+        metavar="PATH",
+        help="JSONL job log path for resume support")
+    batch_group.add_argument(
+        "--batch-retries",
+        type=int,
+        default=3,
+        metavar="N",
+        help="Per-job retry count in batch mode (default: 3)")
+    batch_group.add_argument(
+        "--status",
+        action="store_true",
+        default=False,
+        help="Print job log summary and exit (requires --joblog)")
 
     subparsers = parser.add_subparsers(title="commands",
                                        dest="command",
@@ -156,6 +199,22 @@ def main():
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
+
+    # Handle --status flag
+    if args.status:
+        if not args.joblog:
+            parser.error("--status requires --joblog")
+        _print_status(args.joblog)
+        sys.exit(0)
+
+    # Warn if batch options used with unsupported subcommand
+    _batch_supported = {"download", "do"}
+    if args.workers > 1 and args.command not in _batch_supported:
+        print(
+            f"warning: --workers is not supported by '{args.command}', "
+            "proceeding with single-item behavior",
+            file=sys.stderr,
+        )
 
     args.func(args)
 

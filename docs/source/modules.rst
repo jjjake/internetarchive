@@ -116,6 +116,63 @@ Modules for working with archive.org tasks and the catalog system.
    :special-members: __init__
    :noindex:
 
+.. _batch-modules:
+
+Batch Operations
+----------------
+
+Modules for concurrent batch operations with job logging, multi-disk
+routing, and graceful shutdown.
+
+.. automodule:: internetarchive.bulk
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+.. automodule:: internetarchive.bulk.engine
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :noindex:
+
+.. automodule:: internetarchive.bulk.joblog
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :noindex:
+
+.. automodule:: internetarchive.bulk.worker
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+.. automodule:: internetarchive.bulk.disk
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :noindex:
+
+.. automodule:: internetarchive.bulk.ui
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+Workers
+~~~~~~~
+
+.. automodule:: internetarchive.workers.download
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :noindex:
+
 Authentication and Configuration
 --------------------------------
 

@@ -170,6 +170,8 @@ class File(BaseFile):
         ors=None,
         timeout=None,
         headers=None,
+        cancel_event=None,
+        progress_callback=None,
     ):
         """Download the file into the current working directory.
 
@@ -195,8 +197,14 @@ class File(BaseFile):
                        downloading to file.
         :param ors: Append a newline or $ORS to the end of file.
                     This is mainly intended to be used internally with `stdout`.
+        :param progress_callback: Optional callable invoked with the
+            number of bytes written after each chunk. Used by the
+            bulk engine for per-worker progress reporting.
         :param params: URL parameters to send with download request
                        (e.g. ``cnt=0``).
+        :param cancel_event: A ``threading.Event`` checked during download.
+                             If set, the download is aborted and
+                             ``DownloadCancelled`` is raised.
 
         :returns: ``True`` if file was successfully downloaded.
         """
@@ -367,10 +375,16 @@ class File(BaseFile):
                     if 'Range' in headers:
                         fileobj.seek(st.st_size)
                     for chunk in response.iter_content(chunk_size=chunk_size):
+                        if cancel_event and cancel_event.is_set():
+                            raise exceptions.DownloadCancelled(
+                                f"download of {file_path} cancelled"
+                            )
                         if chunk:
                             size = fileobj.write(chunk)
                             if bar is not None:
                                 bar.update(size)
+                            if progress_callback is not None:
+                                progress_callback(size)
                     if ors:
                         fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
 

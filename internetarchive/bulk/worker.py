@@ -34,7 +34,7 @@ class WorkerResult:
     error: str | None = None
     backoff: bool = False
     retry: bool = True
-    extra: dict | None = field(default_factory=dict)
+    extra: dict = field(default_factory=dict)
 
 
 class BaseWorker(ABC):

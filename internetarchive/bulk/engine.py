@@ -283,7 +283,7 @@ class BulkEngine:
                             total=self._total,
                             identifier=identifier,
                             worker=worker_idx,
-                            extra=result.extra or {},
+                            extra=result.extra,
                             elapsed=elapsed,
                         ))
                     elif result.backoff:

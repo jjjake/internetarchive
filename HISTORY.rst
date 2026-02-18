@@ -3,7 +3,7 @@
 Release History
 ---------------
 
-5.8.0 (2026-02-06)
+5.8.0 (2026-02-18)
 ++++++++++++++++++
 
 **Features and Improvements**
@@ -21,6 +21,11 @@ Release History
 - Fixed mutable ``default={}`` bug in custom argparse actions (``PostDataAction``,
   ``QueryStringAction``, ``MetadataAction``, ``FlattenListAction``) that caused state
   leakage when parsers were reused across multiple invocations.
+- Fixed ``RecursionError`` caused by ``socket.connect`` being monkey-patched on every
+  ``ArchiveSession`` instantiation. Each new session would wrap the already-patched
+  function, causing infinite mutual recursion after ~980 sessions. The patch is now
+  applied once at module import time
+  (`#746 <https://github.com/jjjake/internetarchive/issues/746>`_).
 
 5.7.2 (2026-01-29)
 ++++++++++++++++++

@@ -16,8 +16,6 @@ from __future__ import annotations
 import threading
 from typing import TYPE_CHECKING, Callable
 
-from requests.exceptions import RequestException
-
 from internetarchive.bulk.ui import UIEvent
 from internetarchive.bulk.worker import BaseWorker, WorkerResult
 from internetarchive.exceptions import DownloadCancelled
@@ -104,7 +102,7 @@ class DownloadWorker(BaseWorker):
         # disk pool reservation.
         try:
             item = session.get_item(identifier)
-        except (RequestException, OSError, ValueError) as exc:
+        except Exception as exc:
             error_msg = str(exc)
             is_permanent = (
                 "dark" in error_msg.lower()
@@ -213,7 +211,7 @@ class DownloadWorker(BaseWorker):
                 error="cancelled",
                 retry=False,
             )
-        except (RequestException, OSError) as exc:
+        except Exception as exc:
             return WorkerResult(
                 success=False,
                 identifier=identifier,

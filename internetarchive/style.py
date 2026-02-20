@@ -95,6 +95,21 @@ def download_bar_kwargs(
     return kwargs
 
 
+def _truncate(text: str, width: int) -> str:
+    """Truncate *text* to *width* characters with an ellipsis.
+
+    :param text: The string to truncate.
+    :param width: Maximum visible width.
+    :returns: The original or truncated text.
+    """
+    if len(text) <= width:
+        return text
+    return text[: width - 1] + "\u2026"
+
+
+_DESC_WIDTH = 50
+
+
 def format_download_desc(
     filename: str,
     file: IO[str] = sys.stderr,
@@ -103,9 +118,10 @@ def format_download_desc(
 
     :param filename: The name of the file being downloaded.
     :param file: The output stream for colour detection.
-    :returns: A description string like ``' downloading myfile.zip'``.
+    :returns: A description string like ``'  myfile.zip'``.
     """
-    return f" downloading {dim(filename, file)}"
+    desc = _truncate(f"  {filename}", _DESC_WIDTH)
+    return dim(desc, file)
 
 
 def print_item_header(
@@ -148,5 +164,5 @@ def print_completed_bar(
     :param total_fmt: Human-readable total size string.
     :param file: Destination stream.
     """
-    line = f" downloading {filename} 100% {total_fmt} done"
+    line = f"  {filename} 100% {total_fmt} done"
     print(dim(line, file), file=file)

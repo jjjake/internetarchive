@@ -105,13 +105,21 @@ class TestFormatDownloadDesc:
     def test_non_tty_plain(self):
         buf = io.StringIO()
         result = format_download_desc("myfile.zip", buf)
-        assert result == " downloading myfile.zip"
+        assert result == "  myfile.zip"
 
     def test_tty_dims_filename(self):
         buf = FakeTTY()
         result = format_download_desc("myfile.zip", buf)
-        assert "downloading" in result
-        assert "\033[2mmyfile.zip\033[0m" in result
+        assert "\033[2m" in result
+        assert "myfile.zip" in result
+
+    def test_long_name_truncated(self):
+        buf = io.StringIO()
+        long_name = "a" * 80
+        result = format_download_desc(long_name, buf)
+        # 2-space indent + name, truncated to _DESC_WIDTH
+        assert len(result) == 50
+        assert result.endswith("\u2026")
 
 
 class TestPrintItemHeader:
@@ -157,7 +165,7 @@ class TestPrintCompletedBar:
         buf = io.StringIO()
         print_completed_bar("file.zip", "4.2KiB", file=buf)
         output = buf.getvalue()
-        assert "downloading file.zip" in output
+        assert "file.zip" in output
         assert "100%" in output
         assert "4.2KiB" in output
         assert "done" in output

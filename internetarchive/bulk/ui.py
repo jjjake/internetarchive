@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import sys
 import threading
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -144,10 +145,17 @@ class PlainUI(UIHandler):
             )
         elif event.kind == "job_completed":
             parts = []
-            if event.extra and event.extra.get("bytes"):
-                parts.append(_format_bytes(event.extra["bytes"]))
+            nbytes = (
+                event.extra.get("bytes", 0) if event.extra
+                else 0
+            )
+            if nbytes:
+                parts.append(_format_bytes(nbytes))
             if event.elapsed:
                 parts.append(f"{event.elapsed:.0f}s")
+            if nbytes and event.elapsed > 0:
+                speed = nbytes / event.elapsed
+                parts.append(f"{_format_bytes(int(speed))}/s")
             detail = f" ({', '.join(parts)})" if parts else ""
             msg = (
                 f"{prefix} {event.identifier}: "
@@ -261,6 +269,8 @@ class ProgressBarUI(UIHandler):
         self._worker_state: dict[int, dict] = {}
         self._lock = threading.Lock()
         self._saved_termios: list | None = None
+        self._start_time: float = time.monotonic()
+        self._last_overall_refresh: float = 0.0
 
     # -- ANSI helpers -------------------------------------------------
 
@@ -327,7 +337,8 @@ class ProgressBarUI(UIHandler):
                 "{desc} {percentage:3.0f}% "
                 "[{bar}] "
                 "{n_fmt}/{total_fmt} "
-                "[{elapsed}<{remaining}]{postfix}"
+                "[{elapsed}<{remaining}]"
+                "{postfix}"
             ),
             position=0,
             file=self._file,
@@ -458,18 +469,33 @@ class ProgressBarUI(UIHandler):
     # -- postfix helper -----------------------------------------------
 
     def _refresh_overall_postfix(self) -> None:
-        """Update the overall bar postfix with byte totals."""
+        """Update the overall bar postfix with byte totals
+        and aggregate throughput.
+
+        Uses a 1-second throttle to avoid excessive
+        terminal I/O from high-frequency chunk events.
+        """
         if self._overall_bar is None:
             return
+        now = time.monotonic()
+        if now - self._last_overall_refresh < 1.0:
+            return
+        self._last_overall_refresh = now
         parts: dict[str, Any] = {}
         if self._total_bytes:
             parts["dl"] = _format_bytes(self._total_bytes)
+            elapsed = now - self._start_time
+            if elapsed > 0:
+                speed = self._total_bytes / elapsed
+                parts["speed"] = (
+                    f"{_format_bytes(int(speed))}/s"
+                )
         if self._failed:
             parts["fail"] = self._failed
         if parts:
-            self._overall_bar.set_postfix(
-                **parts, refresh=False
-            )
+            self._overall_bar.set_postfix(**parts)
+        else:
+            self._overall_bar.refresh()
 
     # -- event dispatch -----------------------------------------------
 

@@ -235,7 +235,9 @@ class ArchiveSession(requests.sessions.Session):
         super().rebuild_auth(prepared_request, response)
 
     def mount_http_adapter(self, protocol: str | None = None, max_retries: int | None = None,
-                           status_forcelist: list | None = None, host: str | None = None) -> None:
+                           status_forcelist: list | None = None, host: str | None = None,
+                           pool_connections: int | None = None,
+                           pool_maxsize: int | None = None) -> None:
         """Mount an HTTP adapter to the
         :class:`ArchiveSession <ArchiveSession>` object.
 
@@ -247,6 +249,12 @@ class ArchiveSession(requests.sessions.Session):
         :param status_forcelist: A list of status codes (as int's) to retry on.
 
         :param host: The host to mount your adapter to.
+
+        :param pool_connections: Number of connection pools to cache
+            (passed to ``HTTPAdapter``).
+
+        :param pool_maxsize: Maximum number of connections to save in
+            the pool (passed to ``HTTPAdapter``).
         """
         protocol = protocol or self.protocol
         host = host or 'archive.org'
@@ -269,7 +277,12 @@ class ArchiveSession(requests.sessions.Session):
         else:
             self.http_adapter_kwargs['max_retries'] = max_retries
 
-        max_retries_adapter = HTTPAdapter(**self.http_adapter_kwargs)
+        adapter_kwargs = dict(self.http_adapter_kwargs)
+        if pool_connections is not None:
+            adapter_kwargs['pool_connections'] = pool_connections
+        if pool_maxsize is not None:
+            adapter_kwargs['pool_maxsize'] = pool_maxsize
+        max_retries_adapter = HTTPAdapter(**adapter_kwargs)
         # Don't mount on s3.us.archive.org, only archive.org!
         # IA-S3 requires a more complicated retry workflow.
         self.mount(f'{protocol}//{host}', max_retries_adapter)

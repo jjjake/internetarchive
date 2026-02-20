@@ -64,15 +64,49 @@ class DownloadWorker(BaseWorker):
     def _get_session(self) -> ArchiveSession:
         """Get or create a per-thread session.
 
+        Per-thread sessions use HTTP keep-alive and larger
+        connection pools to avoid the overhead of repeated
+        TCP+TLS handshakes across files within the same item.
+
         :returns: An ``ArchiveSession`` instance for the current
             thread.
         """
         if not hasattr(self._local, "session"):
             from internetarchive import get_session  # noqa: PLC0415
-            self._local.session = get_session(
+            session = get_session(
                 config=self._session.config,
                 config_file=self._session.config_file,
             )
+            # Enable HTTP keep-alive for bulk downloads.
+            # The default Connection: close header forces a
+            # new TCP+TLS handshake per request — wasteful
+            # when downloading many files from the same host.
+            session.headers.pop("Connection", None)
+            # Mount a pooled adapter on archive.org (for
+            # metadata/redirect requests).
+            session.mount_http_adapter(
+                pool_connections=10,
+                pool_maxsize=10,
+            )
+            # Downloads 302-redirect to ia*.us.archive.org,
+            # so replace the default https:// adapter with
+            # one that has a larger connection pool.
+            from requests.adapters import HTTPAdapter  # noqa: PLC0415
+            session.mount(
+                "https://",
+                HTTPAdapter(
+                    pool_connections=10,
+                    pool_maxsize=10,
+                ),
+            )
+            # CRITICAL: File.download() calls
+            # session.mount_http_adapter() on EVERY file,
+            # which creates a new HTTPAdapter and destroys
+            # the connection pool.  Prevent that.
+            session.mount_http_adapter = (  # type: ignore[method-assign]
+                lambda **kw: None
+            )
+            self._local.session = session
         return self._local.session
 
     def execute(  # noqa: PLR0911
@@ -164,16 +198,33 @@ class DownloadWorker(BaseWorker):
         file_cb = None
         if self._progress_emitter is not None:
             emitter = self._progress_emitter
+            # Buffer progress bytes and only emit every
+            # _REPORT_INTERVAL to avoid overwhelming the
+            # UI handler.  iter_content yields small TLS
+            # record-sized chunks (~16 KB), NOT full
+            # chunk_size reads — without throttling, 8
+            # workers generate ~768 callbacks/second.
+            _REPORT_INTERVAL = 2 * 1024 * 1024
+            _buf = [0]
+
+            def _flush_buf():
+                if _buf[0] > 0:
+                    emitter(UIEvent(
+                        kind="file_progress",
+                        identifier=identifier,
+                        worker=worker_idx,
+                        extra={"bytes": _buf[0]},
+                    ))
+                    _buf[0] = 0
 
             def _on_chunk(bytes_written):
-                emitter(UIEvent(
-                    kind="file_progress",
-                    identifier=identifier,
-                    worker=worker_idx,
-                    extra={"bytes": bytes_written},
-                ))
+                _buf[0] += bytes_written
+                if _buf[0] >= _REPORT_INTERVAL:
+                    _flush_buf()
 
             def _on_file(action, name, size, idx, count):
+                if action != "start":
+                    _flush_buf()
                 kind = (
                     "file_started"
                     if action == "start"

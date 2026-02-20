@@ -43,6 +43,12 @@ from requests.exceptions import (
 from tqdm import tqdm
 
 from internetarchive import auth, exceptions, iarequest, utils
+from internetarchive.style import (
+    download_bar_kwargs,
+    format_download_desc,
+    print_completed_bar,
+    print_status,
+)
 
 log = logging.getLogger(__name__)
 
@@ -281,13 +287,13 @@ class File(BaseFile):
                     )
                     log.info(msg)
                     if verbose:
-                        print(f' {msg}', file=sys.stderr)
+                        print_status(msg)
                     return
             if ignore_existing:
                 msg = f'skipping {file_path}, file already exists.'
                 log.info(msg)
                 if verbose:
-                    print(f' {msg}', file=sys.stderr)
+                    print_status(msg)
                 return
             elif checksum or checksum_archive:
                 with open(file_path, 'rb') as fp:
@@ -297,7 +303,7 @@ class File(BaseFile):
                     msg = f'skipping {file_path}, file already exists based on checksum.'
                     log.info(msg)
                     if verbose:
-                        print(f' {msg}', file=sys.stderr)
+                        print_status(msg)
                     if checksum_archive:
                         # add file to checksum_archive to skip it next time
                         with open(checksum_archive_filename, 'a', encoding='utf-8') as f:
@@ -345,19 +351,20 @@ class File(BaseFile):
                                     'length and date.')
                             log.info(msg)
                             if verbose:
-                                print(f' {msg}', file=sys.stderr)
+                                print_status(msg)
                             return
 
                 elif return_responses:
                     return response
 
                 if verbose:
-                    total = int(response.headers.get('content-length', 0)) or None
-                    progress_bar = tqdm(desc=f' downloading {self.name}',
-                                        total=total,
-                                        unit='iB',
-                                        unit_scale=True,
-                                        unit_divisor=1024)
+                    total = int(
+                        response.headers.get('content-length', 0)
+                    ) or None
+                    desc = format_download_desc(self.name)
+                    progress_bar = tqdm(
+                        **download_bar_kwargs(desc, total)
+                    )
                 else:
                     progress_bar = nullcontext()
 
@@ -387,6 +394,12 @@ class File(BaseFile):
                                 progress_callback(size)
                     if ors:
                         fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
+
+                if verbose and bar is not None:
+                    total_fmt = tqdm.format_sizeof(
+                        bar.n, "iB", 1024
+                    )
+                    print_completed_bar(self.name, total_fmt)
 
                 if 'Range' in headers:
                     with open(file_path, 'rb') as fh:

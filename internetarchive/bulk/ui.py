@@ -327,15 +327,17 @@ class ProgressBarUI(UIHandler):
         if self._overall_bar is not None:
             return
         self._suppress_echo()
+        colour = "green" if self._use_color else None
         self._overall_bar = self._tqdm(  # type: ignore[call-arg]
             total=total,
             initial=self._initial,
             desc="Batch",
             unit="item",
-            ascii=".#",
+            ascii=" -",
+            colour=colour,
             bar_format=(
                 "{desc} {percentage:3.0f}% "
-                "[{bar}] "
+                "{bar} "
                 "{n_fmt}/{total_fmt} "
                 "[{elapsed}<{remaining}]"
                 "{postfix}"
@@ -380,22 +382,24 @@ class ProgressBarUI(UIHandler):
                 d = _DIM
                 r = _RESET
                 bfmt = (
-                    f"{{desc}} {d}[{{bar}}]{r} "
+                    f"{{desc}} {d}{{bar}}{r} "
                     f"{d}{{n_fmt}}/{{total_fmt}}{r}"
                 )
             else:
                 bfmt = (
                     "{desc} "
-                    "[{bar}] "
+                    "{bar} "
                     "{n_fmt}/{total_fmt}"
                 )
+            colour = "green" if self._use_color else None
             bar: Any = self._tqdm(  # type: ignore[call-arg]
                 total=0,
                 desc="",
                 unit="B",
                 unit_scale=True,
                 unit_divisor=1024,
-                ascii=".#",
+                ascii=" -",
+                colour=colour,
                 bar_format=bfmt,
                 position=2 + idx * 2,
                 file=self._file,

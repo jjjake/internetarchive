@@ -48,6 +48,7 @@ from internetarchive import catalog, exceptions
 from internetarchive.auth import S3Auth
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
+from internetarchive.style import print_item_header, print_status
 from internetarchive.utils import (
     IdentifierListAsItems,
     IterableToFileAdapter,
@@ -842,21 +843,21 @@ class Item(BaseItem):
 
         if not dry_run:
             if item_index and verbose:
-                print(f'{self.identifier} ({item_index}):', file=sys.stderr)
+                print_item_header(self.identifier, item_index)
             elif item_index is None and verbose:
-                print(f'{self.identifier}:', file=sys.stderr)
+                print_item_header(self.identifier)
 
         if self.is_dark:
             msg = f'skipping {self.identifier}, item is dark'
             log.warning(msg)
             if verbose:
-                print(f' {msg}', file=sys.stderr)
+                print_status(msg)
             return []
         elif self.metadata == {}:
             msg = f'skipping {self.identifier}, item does not exist.'
             log.warning(msg)
             if verbose:
-                print(f' {msg}', file=sys.stderr)
+                print_status(msg)
             return []
 
         if files:
@@ -948,7 +949,7 @@ class Item(BaseItem):
             msg = f'skipping {self.identifier}, no matching files found.'
             log.info(msg)
             if verbose:
-                print(f' {msg}', file=sys.stderr)
+                print_status(msg)
             return []
 
         return responses if return_responses else errors

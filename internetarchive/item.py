@@ -48,6 +48,7 @@ from internetarchive import catalog, exceptions
 from internetarchive.auth import S3Auth
 from internetarchive.files import File
 from internetarchive.iarequest import MetadataRequest, S3Request
+from internetarchive.style import print_item_header, print_status
 from internetarchive.utils import (
     IdentifierListAsItems,
     IterableToFileAdapter,
@@ -715,7 +716,7 @@ class Item(BaseItem):
                             yield self.get_file(str(f.get('name')))
 
     # ruff: noqa: PLR0912
-    def download(self,
+    def download(self,  # noqa: PLR0913
                  files: File | list[File] | None = None,
                  formats: str | list[str] | None = None,
                  glob_pattern: str | None = None,
@@ -738,7 +739,10 @@ class Item(BaseItem):
                  exclude_source: str | list[str] | None = None,
                  stdout: bool = False,
                  params: Mapping | None = None,
-                 timeout: float | tuple[int, float] | None = None
+                 timeout: float | tuple[int, float] | None = None,
+                 cancel_event=None,
+                 progress_callback=None,
+                 file_callback=None,
                  ) -> list[Request | Response]:
         """Download files from an item.
 
@@ -803,6 +807,15 @@ class Item(BaseItem):
         :param ignore_history_dir: Do not download any files from the history
                                    dir. This param defaults to ``False``.
 
+        :param progress_callback: Optional callable invoked with the
+            number of bytes written after each chunk. Forwarded to
+            ``File.download()``.
+
+        :param file_callback: Optional callable invoked at the start
+            and end of each file download. Called with
+            ``(action, file_name, file_size, file_index, total_files)``
+            where *action* is ``"start"`` or ``"done"``.
+
         :returns: True if if all files have been downloaded successfully.
         """
         dry_run = bool(dry_run)
@@ -830,21 +843,21 @@ class Item(BaseItem):
 
         if not dry_run:
             if item_index and verbose:
-                print(f'{self.identifier} ({item_index}):', file=sys.stderr)
+                print_item_header(self.identifier, item_index)
             elif item_index is None and verbose:
-                print(f'{self.identifier}:', file=sys.stderr)
+                print_item_header(self.identifier)
 
         if self.is_dark:
             msg = f'skipping {self.identifier}, item is dark'
             log.warning(msg)
             if verbose:
-                print(f' {msg}', file=sys.stderr)
+                print_status(msg)
             return []
         elif self.metadata == {}:
             msg = f'skipping {self.identifier}, item does not exist.'
             log.warning(msg)
             if verbose:
-                print(f' {msg}', file=sys.stderr)
+                print_status(msg)
             return []
 
         if files:
@@ -859,8 +872,11 @@ class Item(BaseItem):
                 exclude_pattern=exclude_pattern,
                 on_the_fly=on_the_fly
             )
-        if stdout:
+        if stdout or file_callback:
             files = list(files)  # type: ignore
+        total_file_count = (
+            len(files) if isinstance(files, list) else None  # type: ignore
+        )
 
         errors = []
         downloaded = 0
@@ -892,10 +908,22 @@ class Item(BaseItem):
                 ors = True
             else:
                 ors = False
+            if file_callback:
+                file_callback(
+                    "start", f.name, f.size,
+                    file_count, total_file_count,
+                )
             try:
-                r = f.download(path, verbose, ignore_existing, checksum, checksum_archive,
-                               destdir, retries, ignore_errors, fileobj, return_responses,
-                               no_change_timestamp, params, None, stdout, ors, timeout)
+                r = f.download(
+                    path, verbose, ignore_existing,
+                    checksum, checksum_archive,
+                    destdir, retries, ignore_errors,
+                    fileobj, return_responses,
+                    no_change_timestamp, params, None,
+                    stdout, ors, timeout,
+                    cancel_event=cancel_event,
+                    progress_callback=progress_callback,
+                )
             except exceptions.DirectoryTraversalError as exc:  # type: ignore
                 # Record error and continue; do not abort entire download batch.
                 msg = f'error: {exc}'
@@ -911,12 +939,17 @@ class Item(BaseItem):
                 errors.append(f.name)
             else:
                 downloaded += 1
+                if file_callback:
+                    file_callback(
+                        "done", f.name, f.size,
+                        file_count, total_file_count,
+                    )
 
         if file_count == 0:
             msg = f'skipping {self.identifier}, no matching files found.'
             log.info(msg)
             if verbose:
-                print(f' {msg}', file=sys.stderr)
+                print_status(msg)
             return []
 
         return responses if return_responses else errors

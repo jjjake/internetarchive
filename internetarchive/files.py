@@ -43,6 +43,12 @@ from requests.exceptions import (
 from tqdm import tqdm
 
 from internetarchive import auth, exceptions, iarequest, utils
+from internetarchive.style import (
+    download_bar_kwargs,
+    format_download_desc,
+    print_completed_bar,
+    print_status,
+)
 
 log = logging.getLogger(__name__)
 
@@ -170,6 +176,8 @@ class File(BaseFile):
         ors=None,
         timeout=None,
         headers=None,
+        cancel_event=None,
+        progress_callback=None,
     ):
         """Download the file into the current working directory.
 
@@ -195,8 +203,14 @@ class File(BaseFile):
                        downloading to file.
         :param ors: Append a newline or $ORS to the end of file.
                     This is mainly intended to be used internally with `stdout`.
+        :param progress_callback: Optional callable invoked with the
+            number of bytes written after each chunk. Used by the
+            bulk engine for per-worker progress reporting.
         :param params: URL parameters to send with download request
                        (e.g. ``cnt=0``).
+        :param cancel_event: A ``threading.Event`` checked during download.
+                             If set, the download is aborted and
+                             ``DownloadCancelled`` is raised.
 
         :returns: ``True`` if file was successfully downloaded.
         """
@@ -273,13 +287,13 @@ class File(BaseFile):
                     )
                     log.info(msg)
                     if verbose:
-                        print(f' {msg}', file=sys.stderr)
+                        print_status(msg)
                     return
             if ignore_existing:
                 msg = f'skipping {file_path}, file already exists.'
                 log.info(msg)
                 if verbose:
-                    print(f' {msg}', file=sys.stderr)
+                    print_status(msg)
                 return
             elif checksum or checksum_archive:
                 with open(file_path, 'rb') as fp:
@@ -289,7 +303,7 @@ class File(BaseFile):
                     msg = f'skipping {file_path}, file already exists based on checksum.'
                     log.info(msg)
                     if verbose:
-                        print(f' {msg}', file=sys.stderr)
+                        print_status(msg)
                     if checksum_archive:
                         # add file to checksum_archive to skip it next time
                         with open(checksum_archive_filename, 'a', encoding='utf-8') as f:
@@ -337,19 +351,20 @@ class File(BaseFile):
                                     'length and date.')
                             log.info(msg)
                             if verbose:
-                                print(f' {msg}', file=sys.stderr)
+                                print_status(msg)
                             return
 
                 elif return_responses:
                     return response
 
                 if verbose:
-                    total = int(response.headers.get('content-length', 0)) or None
-                    progress_bar = tqdm(desc=f' downloading {self.name}',
-                                        total=total,
-                                        unit='iB',
-                                        unit_scale=True,
-                                        unit_divisor=1024)
+                    total = int(
+                        response.headers.get('content-length', 0)
+                    ) or None
+                    desc = format_download_desc(self.name)
+                    progress_bar = tqdm(
+                        **download_bar_kwargs(desc, total)
+                    )
                 else:
                     progress_bar = nullcontext()
 
@@ -367,12 +382,24 @@ class File(BaseFile):
                     if 'Range' in headers:
                         fileobj.seek(st.st_size)
                     for chunk in response.iter_content(chunk_size=chunk_size):
+                        if cancel_event and cancel_event.is_set():
+                            raise exceptions.DownloadCancelled(
+                                f"download of {file_path} cancelled"
+                            )
                         if chunk:
                             size = fileobj.write(chunk)
                             if bar is not None:
                                 bar.update(size)
+                            if progress_callback is not None:
+                                progress_callback(size)
                     if ors:
                         fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
+
+                if verbose and bar is not None:
+                    total_fmt = tqdm.format_sizeof(
+                        bar.n, "iB", 1024
+                    )
+                    print_completed_bar(self.name, total_fmt)
 
                 if 'Range' in headers:
                     with open(file_path, 'rb') as fh:

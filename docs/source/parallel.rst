@@ -7,6 +7,15 @@ Using GNU Parallel with ia
 It is a very useful tool to use with ``ia`` for bulk jobs.
 It can be installed via many OS package managers.
 
+.. note::
+
+    For **downloads**, consider using the built-in :ref:`batch engine
+    <batch>` instead (``--workers`` and ``--joblog``). It provides
+    concurrent downloads, automatic resume, multi-disk routing, and
+    graceful shutdown without requiring GNU Parallel. GNU Parallel
+    remains useful for uploads, metadata modifications, and other
+    operations not yet supported by the batch engine.
+
 For example, it can be installed via `homebrew <https://brew.sh/>`_ on Mac OS::
 
     brew install parallel
@@ -60,6 +69,12 @@ You can now retry any commands that failed by using the ``--retry-failed`` optio
 If there were no failed commands, nothing will be rerun.
 You can rerun this command until it exits with ``0``.
 You can check the exit code by running ``echo $?`` directly after the ``parallel`` command finishes.
+
+.. tip::
+
+    For downloads, the built-in ``--joblog`` flag provides similar
+    resume support without GNU Parallel. See :ref:`batch` for
+    details.
 
 Resources
 _________

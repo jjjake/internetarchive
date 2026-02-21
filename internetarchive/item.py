@@ -517,6 +517,17 @@ class Item(BaseItem):
         r.raise_for_status()
         return r
 
+    def rerun_task(self, task_id: int) -> Response:   # type: ignore
+        """Rerun a task.
+
+        :returns: :class:`requests.Response` if the task is found, otherwise None.
+        """
+        if isinstance(task_id, str):
+            task_id = int(task_id)
+        for t in self.get_catalog():
+            if t.task_id == task_id:  # type: ignore[attr-defined]
+                return t.rerun()
+
     def get_review(self) -> Response:
         """Get reviews for this item.
 

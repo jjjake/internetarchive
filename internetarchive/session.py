@@ -43,7 +43,6 @@ import requests
 import requests.sessions
 from requests import Response
 from requests.adapters import HTTPAdapter
-from requests.cookies import create_cookie
 from requests.exceptions import RequestException
 from requests.utils import default_headers
 from urllib3 import Retry
@@ -52,7 +51,7 @@ from internetarchive import __version__, auth, catalog
 from internetarchive.config import get_config
 from internetarchive.item import Collection, Item
 from internetarchive.search import Search
-from internetarchive.utils import parse_dict_cookies, reraise_modify
+from internetarchive.utils import reraise_modify
 
 logger = logging.getLogger(__name__)
 
@@ -111,15 +110,6 @@ class ArchiveSession(requests.sessions.Session):
 
         self.config = get_config(config, config_file)
         self.config_file = config_file
-        for ck, cv in self.config.get('cookies', {}).items():
-            raw_cookie = f'{ck}={cv}'
-            cookie_dict = parse_dict_cookies(raw_cookie)
-            if not cookie_dict.get(ck):
-                continue
-            cookie = create_cookie(ck, cookie_dict[ck],
-                                   domain=cookie_dict.get('domain', '.archive.org'),
-                                   path=cookie_dict.get('path', '/'))
-            self.cookies.set_cookie(cookie)
 
         self.secure: bool = self.config.get('general', {}).get('secure', True)
         self.host: str = self.config.get('general', {}).get('host', 'archive.org')

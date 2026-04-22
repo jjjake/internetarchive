@@ -310,6 +310,7 @@ class CatalogTask:
     def get_task_log(
         task_id: int | str | None,
         session: ia_session.ArchiveSession,
+        params: Mapping | None = None,
         request_kwargs: Mapping | None = None
     ) -> str:
         """Static method for getting a task log, given a task_id.
@@ -333,7 +334,9 @@ class CatalogTask:
         else:
             host = session.host
         url = f'{session.protocol}//{host}/services/tasks.php'
-        params = {'task_log': task_id}
-        r = session.get(url, params=params, auth=_auth, **request_kwargs)
+        _params = {'task_log': task_id}
+        if params:
+            _params.update(params)
+        r = session.get(url, params=_params, auth=_auth, **request_kwargs)
         r.raise_for_status()
         return r.content.decode('utf-8', errors='surrogateescape')

@@ -664,7 +664,10 @@ class ArchiveSession(requests.sessions.Session):
         params.update(_params)
         return self.get_tasks(params=params, request_kwargs=request_kwargs)
 
-    def get_task_log(self, task_id: str | int, request_kwargs: Mapping | None = None) -> str:
+    def get_task_log(self,
+                     task_id: str | int,
+                     params: Mapping | None = None,
+                     request_kwargs: Mapping | None = None) -> str:
         """Get a task log.
 
         :param task_id: The task id for the task log you'd like to fetch.
@@ -674,7 +677,8 @@ class ArchiveSession(requests.sessions.Session):
 
         :returns: The task log as a string.
         """
-        return catalog.CatalogTask.get_task_log(task_id, self, request_kwargs)
+        return catalog.CatalogTask.get_task_log(task_id, self, params=params,
+                                                request_kwargs=request_kwargs)
 
     def send(self, request, **kwargs) -> Response:
         """Send a prepared request, handling HTTPS security warnings.

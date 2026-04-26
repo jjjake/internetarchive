@@ -22,10 +22,14 @@ To automatically create a config file with your archive.org credentials, you can
     Email address: user@example.com
     Password:
 
-    Config saved to: /home/user/.config/ia.ini
+    Config saved to: /home/user/.config/internetarchive/ia.ini
 
-Your config file will be saved to ``$HOME/.config/ia.ini``, or ``$HOME/.ia`` if you do not have a ``.config`` directory in ``$HOME``.
-Alternatively, you can specify your own path to save the config to via ``ia --config-file '~/.ia-custom-config' configure``.
+By default, your config file will be saved to ``$XDG_CONFIG_HOME/internetarchive/ia.ini``.
+If ``XDG_CONFIG_HOME`` is not set or is not an absolute path, ``ia`` uses ``$HOME/.config/internetarchive/ia.ini``.
+On Windows, this typically expands to a path such as ``C:\Users\<username>\.config\internetarchive\ia.ini``.
+
+For compatibility with older installations, ``ia`` also checks for existing config files at ``$HOME/.config/ia.ini`` and ``$HOME/.ia``.
+Alternatively, you can specify your own path to save the config to via ``ia --config-file '~/.ia-custom-config' configure`` or the ``IA_CONFIG_FILE`` environment variable.
 
 If you have a netrc file with your archive.org credentials in it, you can simply run ``ia configure --netrc``.
 

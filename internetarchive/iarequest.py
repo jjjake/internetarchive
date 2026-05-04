@@ -521,7 +521,8 @@ def _process_non_indexed_keys(metadata, source, prepared, append, append_list):
             existing = source[current_key]
             if not isinstance(existing, list):
                 existing = [existing]
-            prepared[current_key] = existing + [value]
+            if value not in existing:
+                prepared[current_key] = existing + [value]
         elif append and source.get(current_key):
             if isinstance(source[current_key], list):
                 raise ValueError(

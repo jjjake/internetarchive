@@ -38,3 +38,13 @@ def test_ia_metadata_modify(capsys):
         ia_call(['ia', 'metadata', 'nasa', '--modify', f'{valid_key}:test_value'])
         _out, err = capsys.readouterr()
         assert err == 'nasa - success: https://catalogd.archive.org/log/447613301\n'
+
+def test_subject_semicolon_split_strips_whitespace(capsys):
+    md_rsp = '{"success":true,"task_id":1,"log":"https://catalogd.archive.org/log/1"}'
+    nasa_body = '{"metadata":{"subject":"foo; bar; baz"},"files":[]}'
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa', body=nasa_body, method=responses.GET)
+        rsps.add_metadata_mock('nasa', body=md_rsp, method=responses.POST)
+        ia_call(['ia', 'metadata', 'nasa', '--remove', 'subject:bar'])
+        _out, err = capsys.readouterr()
+        assert 'success' in err

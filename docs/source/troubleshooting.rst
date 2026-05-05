@@ -9,7 +9,7 @@ HTTPS Issues
 The ``internetarchive`` library uses the HTTPS protocol for making secure requests by default.
 If you run into problems with this, you can use HTTP to make insecure requests in one of the following ways:
 
-    + Adding the following lines to your ``ia.ini`` config file (usually located at ``~/.config/ia.ini`` or ``~/.ia.ini``):
+    + Adding the following lines to your ``ia.ini`` config file (usually located at ``~/.config/internetarchive/ia.ini``; older installations may use ``~/.config/ia.ini`` or ``~/.ia``):
 
         .. code:: bash
 

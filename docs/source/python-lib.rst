@@ -37,7 +37,7 @@ For more control and to persist configuration across operations, use a :class:`~
     from internetarchive import get_session
 
     # Create a session with your configuration
-    session = get_session(config_file='~/.config/ia.ini')
+    session = get_session(config_file='~/.config/internetarchive/ia.ini')
 
     # Use the session for all operations
     item = session.get_item('TripDown1905')
@@ -78,7 +78,7 @@ Creating a session:
     from internetarchive import get_session
 
     # From config file
-    session = get_session(config_file='~/.config/ia.ini')
+    session = get_session(config_file='~/.config/internetarchive/ia.ini')
 
     # From dictionary
     config = {

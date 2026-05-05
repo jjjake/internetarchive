@@ -202,7 +202,10 @@ def get_config(config=None, config_file=None) -> dict:
     """Get the merged configuration from file, environment, and provided config.
 
     Configuration is loaded in the following order (later sources override earlier):
-    1. Config file (``~/.config/internetarchive/ia.ini`` or ``~/.ia``)
+    1. Config file selected by :func:`parse_config_file`
+       (defaults to ``$XDG_CONFIG_HOME/internetarchive/ia.ini`` or
+       ``~/.config/internetarchive/ia.ini`` if ``XDG_CONFIG_HOME`` is unset;
+       legacy paths ``~/.config/ia.ini`` and ``~/.ia`` are also checked)
     2. Environment variables (``IA_ACCESS_KEY_ID``, ``IA_SECRET_ACCESS_KEY``)
     3. Provided ``config`` dict
 

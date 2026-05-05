@@ -256,6 +256,14 @@ def test_prepare_metadata_append_list():
     assert result["tags"] == ["foo", ["bar"]]
 
 
+def test_prepare_metadata_append_list_dedup():
+    """append_list=True should not add a value already in the list."""
+    source = {"subject": ["Math", "Science"]}
+    metadata = {"subject": "Science"}
+    result = prepare_metadata(metadata, source_metadata=source, append_list=True)
+    assert result == {}
+
+
 @pytest.mark.parametrize(("metadata", "source", "insert", "expected"), [
     # Multiple REMOVE_TAGs interleaved with inserts
     ({"tags[0]": "REMOVE_TAG", "tags[2]": "new", "tags[1]": "REMOVE_TAG"},

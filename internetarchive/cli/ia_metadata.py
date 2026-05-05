@@ -220,7 +220,7 @@ def remove_metadata(item: item.Item,
         if not isinstance(src_md, list):
             if key == "subject":
                 if isinstance(src_md, str):
-                    src_md = src_md.split(";")
+                    src_md = [v.strip() for v in src_md.split(";")]
             elif key == "collection":
                 print(f"{item.identifier} - error: all collections would be removed, "
                       "not submitting task.", file=sys.stderr)

@@ -3,6 +3,17 @@
 Release History
 ---------------
 
+5.9.0 (TBD)
+++++++++++++
+
+**Features and Improvements**
+
+- Added bulk download engine with concurrent workers, JSONL job logging, resume
+  support, and multi-disk routing. Use ``ia --workers N --joblog PATH download``
+  for concurrent downloads from search results or item lists. Features include
+  automatic retry with backoff, graceful shutdown on Ctrl+C, and ``--status``
+  for job progress summaries.
+
 5.8.0 (2026-02-18)
 ++++++++++++++++++
 

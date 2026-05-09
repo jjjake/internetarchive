@@ -86,6 +86,7 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 - `main` is protected by GitHub rulesets — never push directly
 - Always create feature branches and open PRs
 - Required CI checks must pass before merge: `lint_python`, `pre-commit`, `install_internetarchive`, `tox`
+- **NEVER push without running `ruff check && pytest` locally first and confirming all tests pass.** No exceptions.
 
 ## Versioning
 

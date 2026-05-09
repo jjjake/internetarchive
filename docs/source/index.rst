@@ -33,6 +33,7 @@ If you're new to Python or the command line interface (CLI), the easiest way to 
 1. :ref:`Download a binary <binaries>` of the ``ia`` command-line tool
 2. :ref:`Configure your environment <configuration>` with your Archive.org credentials
 3. :ref:`Visit the CLI documentation <cli>` to start exploring how to use the tool
+4. Working with many items? See the :ref:`Batch Operations <batch>` guide
 
 Documentation
 =============

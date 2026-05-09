@@ -113,8 +113,12 @@ def setup(subparsers):
                              "Do not create item directories"))
     parser.add_argument("--destdir",
                         type=validate_dir_path,
+                        nargs=1,
+                        action="extend",
                         help=("The destination directory to download files "
-                             "and item directories to"))
+                             "and item directories to. "
+                             "Can be specified multiple times for "
+                             "multi-disk routing in bulk mode"))
     parser.add_argument("-s", "--stdout",
                         action="store_true",
                         help="Write file contents to stdout")
@@ -148,10 +152,65 @@ def setup(subparsers):
                         help=("Set a timeout for download requests. "
                              "This sets both connect and read timeout"))
 
+    # Bulk mode options
+    bulk_group = parser.add_argument_group(
+        "bulk mode options",
+        "Options for multi-disk routing (use with --workers)"
+    )
+    bulk_group.add_argument(
+        "--disk-margin",
+        type=str,
+        default="1G",
+        help=("Minimum free space to maintain on each disk "
+              "(default: 1G). Supports K, M, G, T suffixes"))
+    bulk_group.add_argument(
+        "--no-disk-check",
+        action="store_true",
+        help="Disable disk space checking")
+
     parser.set_defaults(func=lambda args: main(args, parser))
 
 
+def _parse_size(size_str: str) -> int:
+    """Parse a human-readable size string to bytes.
+
+    :param size_str: Size string like ``"1G"``, ``"500M"``, ``"2T"``.
+    :returns: Size in bytes.
+    :raises argparse.ArgumentTypeError: If the string is empty,
+        negative, or not a valid size.
+    """
+    suffixes = {"K": 1024, "M": 1024**2, "G": 1024**3, "T": 1024**4}
+    size_str = size_str.strip().upper()
+    if not size_str:
+        raise argparse.ArgumentTypeError(
+            "size cannot be empty"
+        )
+    try:
+        if size_str[-1] in suffixes:
+            value = float(size_str[:-1]) * suffixes[size_str[-1]]
+        else:
+            value = float(size_str)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"invalid size: {size_str!r}"
+        )
+    if value < 0:
+        raise argparse.ArgumentTypeError(
+            f"size must be non-negative, got {size_str!r}"
+        )
+    return int(value)
+
+
 def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    """Validate download command arguments.
+
+    :param args: Parsed arguments namespace.
+    :param parser: Argument parser for error reporting.
+    """
+    # In bulk resume mode, identifier/search/itemlist not required
+    if args.joblog and not args.identifier and not args.search and not args.itemlist:
+        return
+
     if args.itemlist and args.search:
         parser.error("--itemlist and --search cannot be used together")
 
@@ -165,12 +224,196 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
             parser.error("Identifier is required when not using --itemlist/--search")
 
 
-def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+def _use_bulk_mode(args: argparse.Namespace) -> bool:
+    """Determine whether to use the bulk engine.
+
+    :param args: Parsed arguments namespace.
+    :returns: ``True`` if bulk mode should be used.
     """
-    Main entry point for 'ia download'.
+    return args.workers > 1 or bool(args.joblog)
+
+
+def _run_bulk(
+    args: argparse.Namespace,
+    parser: argparse.ArgumentParser,
+) -> None:
+    """Run download in bulk mode using the BulkEngine.
+
+    :param args: Parsed arguments namespace.
+    :param parser: Argument parser for error reporting.
     """
+    from internetarchive.bulk.disk import DiskPool  # noqa: PLC0415
+    from internetarchive.bulk.engine import BulkEngine  # noqa: PLC0415
+    from internetarchive.bulk.joblog import JobLog  # noqa: PLC0415
+    from internetarchive.bulk.ui import (  # noqa: PLC0415
+        NullUI,
+        ProgressBarUI,
+    )
+    from internetarchive.workers.download import (  # noqa: PLC0415
+        DownloadWorker,
+    )
+
+    if args.workers > 20:
+        print(
+            f"warning: capping workers at 20"
+            f" (requested {args.workers})",
+            file=sys.stderr,
+        )
+        args.workers = 20
+
     args.search_parameters = args.search_parameters or {}
     args.parameters = args.parameters or {}
+
+    # Reject options that are not supported in bulk mode.
+    if args.dry_run:
+        parser.error(
+            "--dry-run is not supported in bulk mode"
+        )
+    if args.stdout:
+        parser.error(
+            "--stdout is not supported in bulk mode"
+        )
+    if args.file:
+        parser.error(
+            "file arguments are not supported in bulk mode "
+            "(use --glob to filter files)"
+        )
+
+    # Joblog path is required for bulk mode
+    if not args.joblog:
+        parser.error(
+            "--joblog is required when using --workers > 1"
+        )
+
+    joblog = JobLog(args.joblog)
+
+    # Single-pass scan for resume detection and progress state.
+    snapshot = joblog.load()
+    is_resume = snapshot["max_seq"] > 0
+
+    # Build jobs iterator and total count
+    jobs = None
+    total = 0
+    initial = 0
+
+    if not is_resume:
+        if args.search:
+            _search = args.session.search_items(
+                args.search, params=args.search_parameters
+            )
+            total = _search.num_found
+            if total == 0:
+                print(
+                    f"error: the query '{args.search}' "
+                    "returned no results",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+            jobs = _search
+        elif args.itemlist:
+            items = [
+                x.strip() for x in args.itemlist if x.strip()
+            ]
+            if not items:
+                parser.error(
+                    "--itemlist file is empty or contains "
+                    "only whitespace"
+                )
+            total = len(items)
+            jobs = iter(
+                [{"id": x} for x in items]
+            )
+        elif args.identifier:
+            total = 1
+            jobs = iter([{"id": args.identifier}])
+        else:
+            parser.error(
+                "Identifier, --itemlist, or --search is required "
+                "for initial bulk download"
+            )
+    else:
+        status = snapshot["status"]
+        total = status["total"]
+        initial = status["completed"] + status["failed"]
+
+    # Configure DiskPool
+    destdirs = args.destdir or ["."]
+    disk_pool = DiskPool(
+        paths=destdirs,
+        margin=_parse_size(args.disk_margin),
+        check_space=not args.no_disk_check,
+    )
+
+    # Build download kwargs
+    download_kwargs = {}
+    if args.glob:
+        download_kwargs["glob_pattern"] = args.glob
+    if args.exclude:
+        download_kwargs["exclude_pattern"] = args.exclude
+    if args.format:
+        download_kwargs["formats"] = args.format
+    if args.checksum:
+        download_kwargs["checksum"] = True
+    if args.checksum_archive:
+        download_kwargs["checksum_archive"] = True
+    if args.ignore_existing:
+        download_kwargs["ignore_existing"] = True
+    if args.no_directories:
+        download_kwargs["no_directory"] = True
+    if args.on_the_fly:
+        download_kwargs["on_the_fly"] = True
+    if args.no_change_timestamp:
+        download_kwargs["no_change_timestamp"] = True
+    if args.parameters:
+        download_kwargs["params"] = args.parameters
+    if not args.download_history:
+        download_kwargs["ignore_history_dir"] = True
+    if args.source:
+        download_kwargs["source"] = args.source
+    if args.exclude_source:
+        download_kwargs["exclude_source"] = args.exclude_source
+    if args.timeout:
+        download_kwargs["timeout"] = args.timeout
+    if args.retries:
+        download_kwargs["retries"] = args.retries
+
+    worker = DownloadWorker(
+        session=args.session,
+        disk_pool=disk_pool,
+        **download_kwargs,
+    )
+
+    engine = BulkEngine(
+        joblog=joblog,
+        worker=worker,
+        max_workers=args.workers,
+        retries=args.batch_retries,
+        ui=NullUI() if args.quiet else ProgressBarUI(
+            total=total, initial=initial,
+            max_workers=args.workers,
+        ),
+    )
+
+    rc = engine.run(jobs=jobs, total=total, op="download")
+    sys.exit(rc)
+
+
+def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    """Main entry point for 'ia download'.
+
+    :param args: Parsed arguments namespace.
+    :param parser: Argument parser for error reporting.
+    """
+    # Dispatch to bulk mode if applicable
+    if _use_bulk_mode(args):
+        _run_bulk(args, parser)
+        return
+
+    args.search_parameters = args.search_parameters or {}
+    args.parameters = args.parameters or {}
+
+    # Normalize destdir: list → single value for single-item mode
+    destdir = args.destdir[0] if args.destdir else None
 
     ids: list[File | str] | Search | TextIO
     validate_args(args, parser)
@@ -243,7 +486,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             ignore_existing=args.ignore_existing,
             checksum=args.checksum,
             checksum_archive=args.checksum_archive,
-            destdir=args.destdir,
+            destdir=destdir,
             no_directory=args.no_directories,
             retries=args.retries,
             item_index=item_index,

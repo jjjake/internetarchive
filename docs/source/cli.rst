@@ -38,6 +38,14 @@ Check out the help menu to see all available commands:
       --user-agent-suffix SUFFIX
                             append SUFFIX to the default User-Agent header
 
+    batch options:
+      Concurrent bulk operations (supported by: download)
+
+      -w N, --workers N     number of concurrent workers (default: 1)
+      --joblog PATH         JSONL job log path for resume support
+      --batch-retries N     per-job retry count in batch mode (default: 3)
+      --status              print job log summary and exit (requires --joblog)
+
     commands:
       {command}
         account (ac)        Manage an archive.org account. Note: requires admin privileges
@@ -304,6 +312,66 @@ Some files on archive.org are generated on-the-fly as requested. This currently 
     $ ia download goodytwoshoes00newyiala --on-the-fly
 
 
+.. _cli-batch-download:
+
+Batch Downloading
+^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 5.8
+
+Download many items concurrently using the built-in batch engine.
+Enable batch mode by setting ``--workers`` above 1.
+
+Download items from a search query with four workers:
+
+.. code:: console
+
+    $ ia --workers 4 --joblog session.jsonl \
+        download --search 'collection:prelinger'
+
+Download items from an itemlist with multi-disk routing:
+
+.. code:: console
+
+    $ ia --workers 4 --joblog session.jsonl \
+        download --itemlist items.txt \
+        --destdir /mnt/disk1 --destdir /mnt/disk2
+
+Resume an interrupted download:
+
+.. code:: console
+
+    $ ia --workers 4 --joblog session.jsonl download
+
+Check progress of a job log:
+
+.. code:: console
+
+    $ ia --joblog session.jsonl --status
+
+Use filters with batch mode:
+
+.. code:: console
+
+    $ ia --workers 4 --joblog session.jsonl \
+        download --search 'collection:prelinger' \
+        --glob "*.mp4" --checksum
+
+.. note::
+
+    ``--dry-run``, ``--stdout``, and positional file arguments are
+    not supported in batch mode. Use ``--glob`` to filter files
+    within items.
+
+See :ref:`batch` for the full guide, including multi-disk routing,
+graceful shutdown, and tuning advice.
+
+.. toctree::
+   :hidden:
+
+   batch
+
+
 Delete
 ------
 
@@ -435,8 +503,10 @@ You can also prevent the backup from happening on clobbers or deletes by adding 
 Performance Tips
 ----------------
 
-For downloading or processing many items, see :ref:`using GNU Parallel <parallel>`
-for concurrent operations.
+For downloading many items concurrently, use the built-in
+:ref:`batch engine <batch>` with ``--workers`` and ``--joblog``.
+For uploads, metadata modifications, and other operations, see
+:ref:`using GNU Parallel <parallel>`.
 
 Getting Help
 ------------

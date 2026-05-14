@@ -89,16 +89,14 @@ def setup(subparsers):
     parser.add_argument("-g", "--glob",
                         nargs=1,
                         action="extend",
-                        help=("Only download files whose filename matches "
-                             "the given glob pattern. Can be specified multiple "
-                             "times; patterns may also be combined with `|`."))
+                        help=("Only download files matching the given glob "
+                             "pattern. Can be specified multiple times."))
     parser.add_argument("-e", "--exclude",
                         nargs=1,
                         action="extend",
-                        help=("Exclude files whose filename matches "
-                             "the given glob pattern. Can be specified multiple "
-                             "times; patterns may also be combined with `|`. "
-                             "Can only be used in conjunction with --glob."))
+                        help=("Exclude files matching the given glob pattern. "
+                             "Can be specified multiple times. Can only be "
+                             "used in conjunction with --glob."))
     parser.add_argument("-f", "--format",
                         nargs=1,
                         action="extend",

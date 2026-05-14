@@ -78,8 +78,7 @@ def setup(subparsers):
                         action="extend",
                         metavar="PATTERN",
                         help="Only delete files matching the given glob pattern. "
-                             "Can be specified multiple times; patterns may also "
-                             "be combined with `|`.")
+                             "Can be specified multiple times.")
     parser.add_argument("-f", "--format",
                         type=str,
                         nargs=1,

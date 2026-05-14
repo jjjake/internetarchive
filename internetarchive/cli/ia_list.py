@@ -63,8 +63,7 @@ def setup(subparsers):
                         action="extend",
                         metavar="PATTERN",
                         help="Only return files matching the given glob pattern. "
-                             "Can be specified multiple times; patterns may also "
-                             "be combined with `|`.")
+                             "Can be specified multiple times.")
     parser.add_argument("-f", "--format",
                         action="append",
                         help="Return files matching FORMAT. Can be specified multiple times.")

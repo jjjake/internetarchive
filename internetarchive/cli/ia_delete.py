@@ -74,9 +74,12 @@ def setup(subparsers):
                         help=("Output files to be deleted to stdout, "
                               "but don't actually delete them."))
     parser.add_argument("-g", "--glob",
-                        type=str,
+                        nargs=1,
+                        action="extend",
                         metavar="PATTERN",
-                        help="Only delete files matching the given glob pattern.")
+                        help="Only delete files matching the given glob pattern. "
+                             "Can be specified multiple times; patterns may also "
+                             "be combined with `|`.")
     parser.add_argument("-f", "--format",
                         type=str,
                         nargs=1,

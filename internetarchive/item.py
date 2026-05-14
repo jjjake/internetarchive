@@ -52,6 +52,7 @@ from internetarchive.utils import (
     IdentifierListAsItems,
     IterableToFileAdapter,
     chunk_generator,
+    flatten_pipe_patterns,
     get_file_size,
     get_md5,
     get_s3_xml_text,
@@ -64,27 +65,6 @@ from internetarchive.utils import (
 )
 
 log = getLogger(__name__)
-
-
-def _flatten_pipe_patterns(pattern: str | list[str] | None) -> list[str]:
-    """Normalize a glob pattern argument to a flat list of patterns.
-
-    Accepts ``None``, a single string (optionally pipe-separated), or a
-    list of strings (each optionally pipe-separated), and returns a flat
-    list of individual patterns.
-
-    >>> _flatten_pipe_patterns(None)
-    []
-    >>> _flatten_pipe_patterns('*.jpg|*.xml')
-    ['*.jpg', '*.xml']
-    >>> _flatten_pipe_patterns(['*.jpg|*.xml', '*.torrent'])
-    ['*.jpg', '*.xml', '*.torrent']
-    """
-    if not pattern:
-        return []
-    if isinstance(pattern, str):
-        return pattern.split('|')
-    return [p for entry in pattern for p in entry.split('|')]
 
 
 @total_ordering
@@ -724,8 +704,8 @@ class Item(BaseItem):
             elif f.get('format') in formats:
                 yield self.get_file(str(f.get('name')))
             elif glob_pattern:
-                patterns = _flatten_pipe_patterns(glob_pattern)
-                exclude_patterns = _flatten_pipe_patterns(exclude_pattern)
+                patterns = flatten_pipe_patterns(glob_pattern)
+                exclude_patterns = flatten_pipe_patterns(exclude_pattern)
                 for p in patterns:
                     if fnmatch(f.get('name', ''), p):
                         if not any(fnmatch(f.get('name', ''), e) for e in exclude_patterns):
@@ -735,8 +715,8 @@ class Item(BaseItem):
     def download(self,
                  files: File | list[File] | None = None,
                  formats: str | list[str] | None = None,
-                 glob_pattern: str | None = None,
-                 exclude_pattern: str | None = None,
+                 glob_pattern: str | list[str] | None = None,
+                 exclude_pattern: str | list[str] | None = None,
                  dry_run: bool = False,
                  verbose: bool = False,
                  ignore_existing: bool = False,
@@ -765,10 +745,13 @@ class Item(BaseItem):
                         Formats.
 
         :param glob_pattern: Only download files matching the given
-                             glob pattern.
+                             glob pattern. Multiple patterns can be
+                             separated by ``|``, passed as a list, or a
+                             mix of both.
 
-        :param exclude_pattern: Exclude files whose filename matches the given
-                                glob pattern.
+        :param exclude_pattern: Exclude files matching the given glob pattern.
+                                Multiple patterns can be separated by ``|``,
+                                passed as a list, or a mix of both.
 
         :param dry_run: Output download URLs to stdout, don't
                         download anything.

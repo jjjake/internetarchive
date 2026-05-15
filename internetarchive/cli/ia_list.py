@@ -26,6 +26,7 @@ from fnmatch import fnmatch
 from itertools import chain
 
 from internetarchive.cli.cli_utils import validate_identifier
+from internetarchive.utils import flatten_pipe_patterns
 
 
 def setup(subparsers):
@@ -59,8 +60,11 @@ def setup(subparsers):
                         type=prepare_columns,
                         help="List specified file information")
     parser.add_argument("-g", "--glob",
+                        nargs=1,
+                        action="extend",
                         metavar="PATTERN",
-                        help="Only return files matching the given glob pattern")
+                        help="Only return files matching the given glob pattern. "
+                             "Can be specified multiple times.")
     parser.add_argument("-f", "--format",
                         action="append",
                         help="Return files matching FORMAT. Can be specified multiple times.")
@@ -105,7 +109,7 @@ def filter_files(args, files, item):
     Filter files based on glob patterns or formats.
     """
     if args.glob:
-        patterns = args.glob.split("|")
+        patterns = flatten_pipe_patterns(args.glob)
         return [f for f in files if any(fnmatch(f["name"], p) for p in patterns)]
     if args.format:
         return [f.__dict__ for f in item.get_files(formats=args.format)]

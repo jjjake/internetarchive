@@ -3,6 +3,34 @@
 Release History
 ---------------
 
+5.9.0 (unreleased)
++++++++++++++++++++
+
+**Features and Improvements**
+
+- ``ia download``, ``ia delete``, and ``ia list`` now accept ``--glob``
+  and ``--exclude`` flags multiple times in addition to the existing
+  pipe-separated form. ``--glob "*.mp4" --glob "*.xml"`` is now
+  equivalent to ``--glob "*.mp4|*.xml"``, and the two forms can be
+  mixed.
+
+**Bugfixes**
+
+- Fixed ``write_review`` sending POST data as form-encoded instead of JSON.
+  Now sends the request body as a JSON-encoded dict with ``Content-Type:
+  application/json`` via the requests ``json`` parameter
+  (`#753 <https://github.com/jjjake/internetarchive/pull/753>`_).
+- Restored ``append_list`` deduplication that was lost in a prior refactor,
+  preventing duplicate values from being appended to multi-value metadata
+  fields (`#767 <https://github.com/jjjake/internetarchive/pull/767>`_).
+- Fixed ``ia metadata --remove`` failing to match semicolon-delimited
+  subjects with leading whitespace (e.g. ``"foo; bar; baz"`` split into
+  ``[" bar", " baz"]``). Values are now stripped after splitting
+  (`#768 <https://github.com/jjjake/internetarchive/pull/768>`_).
+- ``Item.get_files()`` now pipe-splits list-element patterns for
+  ``glob_pattern`` and ``exclude_pattern``, so callers can pass
+  mixed forms like ``glob_pattern=['*.mp4|*.xml', '*.jpg']``.
+
 5.8.0 (2026-02-18)
 ++++++++++++++++++
 

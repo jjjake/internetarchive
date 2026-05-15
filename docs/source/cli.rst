@@ -266,6 +266,14 @@ Download files matching multiple glob and exclude patterns:
 
     $ ia download TripDown1905 --glob="*.mp4|*.xml" --exclude "*512kb*|*_reviews.xml"
 
+You can also repeat ``--glob`` and ``--exclude`` instead of (or in
+addition to) using ``|``. The two forms are equivalent and can be
+mixed:
+
+.. code:: console
+
+    $ ia download TripDown1905 --glob "*.mp4" --glob "*.xml" --exclude "*512kb*" --exclude "*_reviews.xml"
+
 Download only files of a specific format:
 
 .. code:: console

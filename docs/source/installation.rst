@@ -6,25 +6,27 @@ Installation
 Recommended: Installing the ``ia`` CLI with ``pipx``
 ----------------------------------------------------
 
-If your primary goal is to use the **``ia`` command-line tool**, the recommended approach is to install it with ``pipx``. This keeps the CLI isolated from your system Python while making the ``ia`` command available globally.
+If your primary goal is to use the ``ia`` **command-line tool**, the recommended approach is to install it with ``pipx``. This keeps the CLI isolated from your system Python while making the ``ia`` command available globally.
 
 Using ``pipx`` ensures the CLI is isolated, easy to upgrade, and globally accessible.
 
-*If you just want to try out the ``ia`` CLI without installing anything, you can use the prebuilt binary instead. See the :ref:`binaries` section below for details.*
+.. note::
+
+   If you just want to try out the ``ia`` CLI without installing anything, you can use the prebuilt binary instead. See the :ref:`binaries` section below for details.
 
 **Prerequisite:** Make sure you have ``pipx`` installed. For installation instructions, see the `pipx installation guide <https://pipx.pypa.io/stable/installation/>`_.
 
-1. **Install ``internetarchive`` using ``pipx``**:
+1. Install ``internetarchive`` using ``pipx``:
 
-.. code-block:: console
+   .. code-block:: console
 
-    pipx install internetarchive
+       pipx install internetarchive
 
-2. **Verify the installation**:
+2. Verify the installation:
 
-.. code-block:: console
+   .. code-block:: console
 
-    ia --version
+       ia --version
 
    This should display the installed version of the ``ia`` CLI.
 
@@ -92,21 +94,19 @@ The method for updating depends on how you originally installed:
 
 .. code-block:: console
 
-      pipx upgrade internetarchive
+    pipx upgrade internetarchive
 
-**If you installed** ``internetarchive`` **in a virtual environment (Python library)**:
-   Activate your virtual environment, then:
-
-   .. code-block:: console
-
-      pip install --upgrade internetarchive
-
-**If you are using the binary**:
-   Simply download the latest binary again with the same steps as above:
+**If you installed** ``internetarchive`` **in a virtual environment (Python library)**, activate your virtual environment, then:
 
 .. code-block:: console
 
-      curl -LOs https://archive.org/download/ia-pex/ia
-      chmod +x ia
+    pip install --upgrade internetarchive
+
+**If you are using the binary**, simply download the latest binary again with the same steps as above:
+
+.. code-block:: console
+
+    curl -LOs https://archive.org/download/ia-pex/ia
+    chmod +x ia
 
 For more information about recent changes, see :ref:`updates`.

@@ -15,7 +15,7 @@ If you're not sure where to start, most users start with these commands:
 - ``ia download <identifier>`` - :ref:`Download <cli-download>` files or items
 - ``ia search '<query>'`` - :ref:`Search <cli-search>` items on archive.org
 - ``ia metadata <identifier>`` - :ref:`Read Metadata <cli-metadata>` from an item
-- ``ia upload <identifier> <files> -m 'collection:test_collection'`` - :ref:`Upload <cli-upload>` files to archive.org
+- ``ia upload <identifier> <files> -m 'collection:test_collection'`` - :ref:`Upload <cli-upload>` files to archive.org. See `Collections <https://archive.org/developers/items.html#collections>`_ for picking a collection — ``test_collection`` is the sandbox.
 
 Check out the help menu to see all available commands:
 
@@ -165,7 +165,7 @@ Upload
 
     $ ia upload <identifier> file1 file2 --metadata="mediatype:texts" --metadata="blah:arg"
 
-.. warning:: Please note that, unless specified otherwise, items will be uploaded with a ``data`` mediatype. **This cannot be changed afterwards.** Therefore, you should specify a mediatype when uploading, eg. ``--metadata="mediatype:movies"``. Similarly, if you want your upload to end up somewhere else than the default collection (currently `community texts <//archive.org/details/opensource>`_), you should also specify a collection with ``--metadata="collection:foo"``. See `metadata documentation <//archive.org/services/docs/api/metadata-schema>`_ for more information.
+.. warning:: Please note that, unless specified otherwise, items will be uploaded with a ``data`` mediatype. **This cannot be changed afterwards.** Therefore, you should specify a mediatype when uploading, eg. ``--metadata="mediatype:movies"``. Items also default to the `opensource <https://archive.org/details/opensource>`_ (Community Texts) collection. To choose a different collection — including the other community collections, the ``test_collection`` sandbox, or a permanent collection — see `Collections <https://archive.org/developers/items.html#collections>`_ in the IA developer docs.
 
 You can upload files from ``stdin``:
 

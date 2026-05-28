@@ -128,8 +128,13 @@ def setup(subparsers):
                         nargs=1,
                         action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        help="Parameters to send with your download request (e.g. `cnt=0`). "
+                        help="Parameters to send with your download request. "
                              "Can be specified multiple times.")
+    parser.add_argument("--count-views",
+                        action="store_true",
+                        help="Count this download toward archive.org view "
+                             "counts. By default `ia download` opts out via "
+                             "`cnt=0`; this flag omits that parameter.")
     parser.add_argument("-a", "--download-history",
                         action="store_true",
                         help="Also download files from the history directory")
@@ -258,6 +263,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             exclude_source=args.exclude_source,
             stdout=args.stdout,
             timeout=args.timeout,
+            count_views=args.count_views,
         )
         if _errors:
             errors.append(_errors)

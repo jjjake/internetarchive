@@ -8,6 +8,11 @@ Release History
 
 **Features and Improvements**
 
+- ``ia download`` and ``File.download()`` now send ``cnt=0`` by default,
+  so downloads no longer count toward archive.org view counts. Pass
+  ``--count-views`` (CLI) or ``count_views=True`` (library) to opt back
+  into counting; the parameter is omitted from the request entirely in
+  that case.
 - ``ia download``, ``ia delete``, and ``ia list`` now accept ``--glob``
   and ``--exclude`` flags multiple times in addition to the existing
   pipe-separated form. ``--glob "*.mp4" --glob "*.xml"`` is now

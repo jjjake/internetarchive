@@ -403,6 +403,24 @@ View all of your queued and running archive.org tasks:
 
     $ ia tasks
 
+To retrieve the log for a specific task, use ``-G/--get-task-log`` with the task id:
+
+.. code:: console
+
+    $ ia tasks --get-task-log <task_id>
+
+Task logs can be large. You can pass URL parameters to the Tasks API with
+``-p/--parameter`` to limit the output. For example, ``lines`` returns only the first
+``N`` lines of the log (or the last ``N`` lines if given a negative value):
+
+.. code:: console
+
+    # First 100 lines of the log:
+    $ ia tasks --get-task-log <task_id> --parameter lines=100
+
+    # Last 100 lines of the log:
+    $ ia tasks --get-task-log <task_id> --parameter lines=-100
+
 See ``ia tasks --help`` for more details.
 
 

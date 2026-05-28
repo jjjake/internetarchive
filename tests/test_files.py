@@ -76,3 +76,15 @@ def test_file_download_user_params_override_default_cnt(tmpdir, nasa_item):
         url = rsps.calls[-1].request.url
         assert 'cnt=x' in url
         assert 'cnt=0' not in url
+
+
+def test_item_download_count_views_propagates(tmpdir, nasa_item):
+    tmpdir.chdir()
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='test content',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
+        nasa_item.download(files=['nasa_meta.xml'],
+                           destdir=str(tmpdir),
+                           count_views=True)
+        assert 'cnt=' not in rsps.calls[-1].request.url

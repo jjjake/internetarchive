@@ -1,8 +1,10 @@
 import os
+import re
 import sys
 import time
 
 import pytest
+import responses
 
 from internetarchive import get_item
 from internetarchive.utils import json
@@ -224,3 +226,23 @@ def test_download_history_flag(capsys):
         item.download(dry_run=True, ignore_history_dir=False)
         stdout_with = capsys.readouterr().out
         assert 'history/files/old_file.txt' in stdout_with
+
+
+def test_count_views_flag(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='test content')
+        ia_call(['ia', '--insecure', 'download', '--no-directories',
+                 '--count-views', 'nasa', 'nasa_meta.xml'])
+        assert 'cnt=' not in rsps.calls[-1].request.url
+
+
+def test_default_sends_cnt_zero(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='test content')
+        ia_call(['ia', '--insecure', 'download', '--no-directories',
+                 'nasa', 'nasa_meta.xml'])
+        assert 'cnt=0' in rsps.calls[-1].request.url

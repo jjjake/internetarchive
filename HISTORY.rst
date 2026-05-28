@@ -3,8 +3,8 @@
 Release History
 ---------------
 
-5.9.1 (unreleased)
-++++++++++++++++++
+5.10.0 (unreleased)
++++++++++++++++++++
 
 **Bugfixes**
 

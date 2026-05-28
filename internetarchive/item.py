@@ -735,7 +735,8 @@ class Item(BaseItem):
                  exclude_source: str | list[str] | None = None,
                  stdout: bool = False,
                  params: Mapping | None = None,
-                 timeout: float | tuple[int, float] | None = None
+                 timeout: float | tuple[int, float] | None = None,
+                 count_views: bool = False,
                  ) -> list[Request | Response]:
         """Download files from an item.
 
@@ -797,8 +798,14 @@ class Item(BaseItem):
         :param exclude_source: Filter files based on their source value in files.xml
                                (i.e. `original`, `derivative`, `metadata`).
 
-        :param params: URL parameters to send with
-                       download request (e.g. `cnt=0`).
+        :param params: URL parameters to send with the download request.
+                       By default the library injects ``cnt=0`` so downloads do
+                       not count toward archive.org view counts; pass
+                       ``count_views=True`` to omit it. An explicit ``cnt`` key
+                       in ``params`` always wins.
+
+        :param count_views: If True, omit the default ``cnt=0`` parameter so
+                            downloads count toward archive.org view counts.
 
         :param ignore_history_dir: Do not download any files from the history
                                    dir. This param defaults to ``False``.
@@ -895,7 +902,8 @@ class Item(BaseItem):
             try:
                 r = f.download(path, verbose, ignore_existing, checksum, checksum_archive,
                                destdir, retries, ignore_errors, fileobj, return_responses,
-                               no_change_timestamp, params, None, stdout, ors, timeout)
+                               no_change_timestamp, params, None, stdout, ors, timeout,
+                               count_views=count_views)
             except exceptions.DirectoryTraversalError as exc:  # type: ignore
                 # Record error and continue; do not abort entire download batch.
                 msg = f'error: {exc}'

@@ -299,6 +299,16 @@ Download from an itemlist:
 
     $ ia download --itemlist itemlist.txt
 
+.. note::
+
+    Downloads issued by ``ia download`` send ``cnt=0`` by default, so
+    they do not count toward archive.org view counts. To count a
+    download as a view, add ``--count-views``:
+
+    .. code:: console
+
+        $ ia download TripDown1905 --count-views
+
 See ``ia download --help`` for more details.
 
 

@@ -332,6 +332,7 @@ def download(
     return_responses: bool = False,
     no_change_timestamp: bool = False,
     timeout: float | tuple[int, float] | None = None,
+    count_views: bool = False,
     **get_item_kwargs,
 ) -> list[requests.Request | requests.Response]:
     r"""Download files from an item.
@@ -379,6 +380,9 @@ def download(
     :param return_responses: Rather than downloading files to disk, return
                              a list of response objects.
 
+    :param count_views: If True, omit the default ``cnt=0`` parameter so
+                        downloads count toward archive.org view counts.
+
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
 
     :returns: A list Requests if debug else a list of Responses.
@@ -402,6 +406,7 @@ def download(
         return_responses=return_responses,
         no_change_timestamp=no_change_timestamp,
         timeout=timeout,
+        count_views=count_views,
     )
     return r
 

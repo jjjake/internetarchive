@@ -3,6 +3,52 @@
 Release History
 ---------------
 
+5.9.0 (2026-05-28)
+++++++++++++++++++
+
+**Features and Improvements**
+
+- **Behavior change:** ``ia download``, ``Item.download()``,
+  ``File.download()``, and the top-level ``internetarchive.download()``
+  now send ``cnt=0`` by default, so downloads no longer count toward
+  archive.org view counts. Pass ``--count-views`` (CLI) or
+  ``count_views=True`` (library) to opt back in; the parameter is
+  omitted from the request entirely in that case.
+- ``ia download``, ``ia delete``, and ``ia list`` now accept ``--glob``
+  and ``--exclude`` flags multiple times in addition to the existing
+  pipe-separated form. ``--glob "*.mp4" --glob "*.xml"`` is now
+  equivalent to ``--glob "*.mp4|*.xml"``, and the two forms can be
+  mixed. ``Item.get_files()`` also pipe-splits list-element patterns
+  for ``glob_pattern`` and ``exclude_pattern``, so callers can pass
+  mixed forms like ``glob_pattern=['*.mp4|*.xml', '*.jpg']``
+  (`#769 <https://github.com/jjjake/internetarchive/pull/769>`_).
+
+**Bugfixes**
+
+- Fixed ``write_review`` sending POST data as form-encoded instead of JSON.
+  Now sends the request body as a JSON-encoded dict with ``Content-Type:
+  application/json`` via the requests ``json`` parameter
+  (`#753 <https://github.com/jjjake/internetarchive/pull/753>`_).
+- Restored ``append_list`` deduplication that was lost in a prior refactor,
+  preventing duplicate values from being appended to multi-value metadata
+  fields (`#767 <https://github.com/jjjake/internetarchive/pull/767>`_).
+- Fixed ``ia metadata --remove`` failing to match semicolon-delimited
+  subjects with leading whitespace (e.g. ``"foo; bar; baz"`` split into
+  ``[" bar", " baz"]``). Values are now stripped after splitting
+  (`#768 <https://github.com/jjjake/internetarchive/pull/768>`_).
+
+**Documentation**
+
+- Corrected default ``ia.ini`` config path in docs, thanks to
+  `@bkjoh <https://github.com/bkjoh>`_
+  (`#766 <https://github.com/jjjake/internetarchive/pull/766>`_).
+- Fixed Installation page rendering bugs
+  (`#770 <https://github.com/jjjake/internetarchive/pull/770>`_).
+- Fixed Sphinx render warnings in the ``get_config`` docstring.
+- Linked the CLI Quick Start and Upload warning to the canonical
+  Collections docs
+  (`#772 <https://github.com/jjjake/internetarchive/pull/772>`_).
+
 5.8.0 (2026-02-18)
 ++++++++++++++++++
 

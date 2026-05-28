@@ -52,6 +52,7 @@ from internetarchive.utils import (
     IdentifierListAsItems,
     IterableToFileAdapter,
     chunk_generator,
+    flatten_pipe_patterns,
     get_file_size,
     get_md5,
     get_s3_xml_text,
@@ -655,10 +656,11 @@ class Item(BaseItem):
                        (e.g., ``'JPEG'``, ``'Ogg Vorbis'``).
         :param glob_pattern: Only return files matching this glob pattern
                             (e.g., ``'*.mp4'``). Multiple patterns can be
-                            separated by ``|`` or passed as a list.
+                            separated by ``|``, passed as a list, or a
+                            mix of both (e.g., ``['*.mp4|*.xml', '*.jpg']``).
         :param exclude_pattern: Exclude files matching this glob pattern.
-                               Multiple patterns can be separated by ``|``
-                               or passed as a list.
+                               Multiple patterns can be separated by ``|``,
+                               passed as a list, or a mix of both.
         :param on_the_fly: Include on-the-fly derivative files (EPUB, MOBI,
                           DAISY, MARCXML) that are generated on request.
 
@@ -702,14 +704,8 @@ class Item(BaseItem):
             elif f.get('format') in formats:
                 yield self.get_file(str(f.get('name')))
             elif glob_pattern:
-                if not isinstance(glob_pattern, list):
-                    patterns = glob_pattern.split('|')
-                else:
-                    patterns = glob_pattern
-                if not isinstance(exclude_pattern, list):
-                    exclude_patterns = exclude_pattern.split('|')
-                else:
-                    exclude_patterns = exclude_pattern
+                patterns = flatten_pipe_patterns(glob_pattern)
+                exclude_patterns = flatten_pipe_patterns(exclude_pattern)
                 for p in patterns:
                     if fnmatch(f.get('name', ''), p):
                         if not any(fnmatch(f.get('name', ''), e) for e in exclude_patterns):
@@ -719,8 +715,8 @@ class Item(BaseItem):
     def download(self,
                  files: File | list[File] | None = None,
                  formats: str | list[str] | None = None,
-                 glob_pattern: str | None = None,
-                 exclude_pattern: str | None = None,
+                 glob_pattern: str | list[str] | None = None,
+                 exclude_pattern: str | list[str] | None = None,
                  dry_run: bool = False,
                  verbose: bool = False,
                  ignore_existing: bool = False,
@@ -739,7 +735,8 @@ class Item(BaseItem):
                  exclude_source: str | list[str] | None = None,
                  stdout: bool = False,
                  params: Mapping | None = None,
-                 timeout: float | tuple[int, float] | None = None
+                 timeout: float | tuple[int, float] | None = None,
+                 count_views: bool = False,
                  ) -> list[Request | Response]:
         """Download files from an item.
 
@@ -749,10 +746,13 @@ class Item(BaseItem):
                         Formats.
 
         :param glob_pattern: Only download files matching the given
-                             glob pattern.
+                             glob pattern. Multiple patterns can be
+                             separated by ``|``, passed as a list, or a
+                             mix of both.
 
-        :param exclude_pattern: Exclude files whose filename matches the given
-                                glob pattern.
+        :param exclude_pattern: Exclude files matching the given glob pattern.
+                                Multiple patterns can be separated by ``|``,
+                                passed as a list, or a mix of both.
 
         :param dry_run: Output download URLs to stdout, don't
                         download anything.
@@ -798,8 +798,14 @@ class Item(BaseItem):
         :param exclude_source: Filter files based on their source value in files.xml
                                (i.e. `original`, `derivative`, `metadata`).
 
-        :param params: URL parameters to send with
-                       download request (e.g. `cnt=0`).
+        :param params: URL parameters to send with the download request.
+                       By default the library injects ``cnt=0`` so downloads do
+                       not count toward archive.org view counts; pass
+                       ``count_views=True`` to omit it. An explicit ``cnt`` key
+                       in ``params`` always wins.
+
+        :param count_views: If True, omit the default ``cnt=0`` parameter so
+                            downloads count toward archive.org view counts.
 
         :param ignore_history_dir: Do not download any files from the history
                                    dir. This param defaults to ``False``.
@@ -896,7 +902,8 @@ class Item(BaseItem):
             try:
                 r = f.download(path, verbose, ignore_existing, checksum, checksum_archive,
                                destdir, retries, ignore_errors, fileobj, return_responses,
-                               no_change_timestamp, params, None, stdout, ors, timeout)
+                               no_change_timestamp, params, None, stdout, ors, timeout,
+                               count_views=count_views)
             except exceptions.DirectoryTraversalError as exc:  # type: ignore
                 # Record error and continue; do not abort entire download batch.
                 msg = f'error: {exc}'

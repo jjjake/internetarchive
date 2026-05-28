@@ -87,14 +87,16 @@ def setup(subparsers):
                         help="Parameters to send with your --search query. "
                              "Can be specified multiple times.")
     parser.add_argument("-g", "--glob",
-                        help=("Only download files whose filename matches "
-                             "the given glob pattern. You can provide multiple "
-                             "patterns separated by a pipe symbol `|`"))
+                        nargs=1,
+                        action="extend",
+                        help=("Only download files matching the given glob "
+                             "pattern. Can be specified multiple times."))
     parser.add_argument("-e", "--exclude",
-                        help=("Exclude files whose filename matches "
-                             "the given glob pattern. You can provide multiple "
-                             "patterns separated by a pipe symbol `|`. You can only "
-                             "use this option in conjunction with --glob"))
+                        nargs=1,
+                        action="extend",
+                        help=("Exclude files matching the given glob pattern. "
+                             "Can be specified multiple times. Can only be "
+                             "used in conjunction with --glob."))
     parser.add_argument("-f", "--format",
                         nargs=1,
                         action="extend",
@@ -126,8 +128,13 @@ def setup(subparsers):
                         nargs=1,
                         action=QueryStringAction,
                         metavar="KEY:VALUE",
-                        help="Parameters to send with your download request (e.g. `cnt=0`). "
+                        help="Parameters to send with your download request. "
                              "Can be specified multiple times.")
+    parser.add_argument("--count-views",
+                        action="store_true",
+                        help="Count this download toward archive.org view "
+                             "counts. By default `ia download` opts out via "
+                             "`cnt=0`; this flag omits that parameter.")
     parser.add_argument("-a", "--download-history",
                         action="store_true",
                         help="Also download files from the history directory")
@@ -256,6 +263,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             exclude_source=args.exclude_source,
             stdout=args.stdout,
             timeout=args.timeout,
+            count_views=args.count_views,
         )
         if _errors:
             errors.append(_errors)

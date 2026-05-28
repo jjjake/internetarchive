@@ -137,8 +137,8 @@ def get_files(
     identifier: str,
     files: files.File | list[files.File] | None = None,
     formats: str | list[str] | None = None,
-    glob_pattern: str | None = None,
-    exclude_pattern: str | None = None,
+    glob_pattern: str | list[str] | None = None,
+    exclude_pattern: str | list[str] | None = None,
     on_the_fly: bool = False,
     **get_item_kwargs,
 ) -> list[files.File]:
@@ -151,8 +151,12 @@ def get_files(
     :param formats: Only return files matching the given formats.
 
     :param glob_pattern: Only return files matching the given glob pattern.
+                         Multiple patterns can be separated by ``|``,
+                         passed as a list, or a mix of both.
 
     :param exclude_pattern: Exclude files matching the given glob pattern.
+                            Multiple patterns can be separated by ``|``,
+                            passed as a list, or a mix of both.
 
     :param on_the_fly: Include on-the-fly files (i.e. derivative EPUB,
                        MOBI, DAISY files).
@@ -313,7 +317,7 @@ def download(
     identifier: str,
     files: files.File | list[files.File] | None = None,
     formats: str | list[str] | None = None,
-    glob_pattern: str | None = None,
+    glob_pattern: str | list[str] | None = None,
     dry_run: bool = False,
     verbose: bool = False,
     ignore_existing: bool = False,
@@ -328,6 +332,7 @@ def download(
     return_responses: bool = False,
     no_change_timestamp: bool = False,
     timeout: float | tuple[int, float] | None = None,
+    count_views: bool = False,
     **get_item_kwargs,
 ) -> list[requests.Request | requests.Response]:
     r"""Download files from an item.
@@ -339,6 +344,8 @@ def download(
     :param formats: Only return files matching the given formats.
 
     :param glob_pattern: Only return files matching the given glob pattern.
+                         Multiple patterns can be separated by ``|``,
+                         passed as a list, or a mix of both.
 
     :param dry_run: Print URLs to files to stdout rather than downloading
                     them.
@@ -373,6 +380,9 @@ def download(
     :param return_responses: Rather than downloading files to disk, return
                              a list of response objects.
 
+    :param count_views: If True, omit the default ``cnt=0`` parameter so
+                        downloads count toward archive.org view counts.
+
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
 
     :returns: A list Requests if debug else a list of Responses.
@@ -396,6 +406,7 @@ def download(
         return_responses=return_responses,
         no_change_timestamp=no_change_timestamp,
         timeout=timeout,
+        count_views=count_views,
     )
     return r
 
@@ -404,7 +415,7 @@ def delete(
     identifier: str,
     files: files.File | list[files.File] | None = None,
     formats: str | list[str] | None = None,
-    glob_pattern: str | None = None,
+    glob_pattern: str | list[str] | None = None,
     cascade_delete: bool = False,
     access_key: str | None = None,
     secret_key: str | None = None,
@@ -422,6 +433,8 @@ def delete(
     :param formats: Only return files matching the given formats.
 
     :param glob_pattern: Only return files matching the given glob pattern.
+                         Multiple patterns can be separated by ``|``,
+                         passed as a list, or a mix of both.
 
     :param cascade_delete: Delete all files associated with the specified file,
                            including upstream derivatives and the original.

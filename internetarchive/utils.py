@@ -139,6 +139,27 @@ def norm_filepath(fp: bytes | str) -> str:
     return fp
 
 
+def flatten_pipe_patterns(pattern: str | list[str] | None) -> list[str]:
+    """Normalize a glob pattern argument to a flat list of patterns.
+
+    Accepts ``None``, a single string (optionally pipe-separated), or a
+    list of strings (each optionally pipe-separated), and returns a flat
+    list of individual patterns.
+
+    >>> flatten_pipe_patterns(None)
+    []
+    >>> flatten_pipe_patterns('*.jpg|*.xml')
+    ['*.jpg', '*.xml']
+    >>> flatten_pipe_patterns(['*.jpg|*.xml', '*.torrent'])
+    ['*.jpg', '*.xml', '*.torrent']
+    """
+    if not pattern:
+        return []
+    if isinstance(pattern, str):
+        return pattern.split('|')
+    return [p for entry in pattern for p in entry.split('|')]
+
+
 def get_md5(file_object) -> str:
     """Calculate the MD5 hash of a file object.
 

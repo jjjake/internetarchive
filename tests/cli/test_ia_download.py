@@ -1,8 +1,10 @@
 import os
+import re
 import sys
 import time
 
 import pytest
+import responses
 
 from internetarchive import get_item
 from internetarchive.utils import json
@@ -11,6 +13,7 @@ from tests.conftest import (
     IaRequestsMock,
     call_cmd,
     files_downloaded,
+    ia_call,
     load_test_data_file,
 )
 
@@ -57,6 +60,42 @@ def test_exclude(tmpdir_ch):
 
     call_cmd('ia --insecure download --glob="*jpg" --exclude="*thumb*" nasa')
     assert files_downloaded(path='nasa') == expected_files
+
+
+def _dry_run_filenames(capsys):
+    out, _err = capsys.readouterr()
+    return {line.split('/')[-1] for line in out.split('\n') if line and 'nasa:' not in line}
+
+
+def test_glob_repeated(tmpdir_ch, capsys):
+    """`--glob` repeated multiple times should union the patterns."""
+    with IaRequestsMock() as mocker:
+        mocker.add_metadata_mock('nasa')
+        ia_call(['ia', '--insecure', 'download', '--dry-run',
+                 '--glob', '*meta.xml', '--glob', '*reviews.xml', 'nasa'])
+    assert _dry_run_filenames(capsys) == {'nasa_meta.xml', 'nasa_reviews.xml'}
+
+
+def test_glob_mixed_pipe_and_repeated(tmpdir_ch, capsys):
+    """`--glob "a|b" --glob c` should match the union of all three patterns."""
+    with IaRequestsMock() as mocker:
+        mocker.add_metadata_mock('nasa')
+        ia_call(['ia', '--insecure', 'download', '--dry-run',
+                 '--glob', '*meta.xml|*reviews.xml', '--glob', '*.torrent', 'nasa'])
+    assert _dry_run_filenames(capsys) == {
+        'nasa_meta.xml', 'nasa_reviews.xml', 'nasa_archive.torrent',
+    }
+
+
+def test_exclude_repeated(tmpdir_ch, capsys):
+    """`--exclude` repeated multiple times should union the excludes."""
+    with IaRequestsMock() as mocker:
+        mocker.add_metadata_mock('nasa')
+        ia_call(['ia', '--insecure', 'download', '--dry-run',
+                 '--glob', '*.xml',
+                 '--exclude', '*reviews*', '--exclude', '*files*',
+                 'nasa'])
+    assert _dry_run_filenames(capsys) == {'nasa_meta.xml'}
 
 
 def test_format(tmpdir_ch):
@@ -187,3 +226,23 @@ def test_download_history_flag(capsys):
         item.download(dry_run=True, ignore_history_dir=False)
         stdout_with = capsys.readouterr().out
         assert 'history/files/old_file.txt' in stdout_with
+
+
+def test_count_views_flag(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='test content')
+        ia_call(['ia', '--insecure', 'download', '--no-directories',
+                 '--count-views', 'nasa', 'nasa_meta.xml'])
+        assert 'cnt=' not in rsps.calls[-1].request.url
+
+
+def test_default_sends_cnt_zero(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='test content')
+        ia_call(['ia', '--insecure', 'download', '--no-directories',
+                 'nasa', 'nasa_meta.xml'])
+        assert 'cnt=0' in rsps.calls[-1].request.url

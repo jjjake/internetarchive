@@ -170,6 +170,7 @@ class File(BaseFile):
         ors=None,
         timeout=None,
         headers=None,
+        count_views=False,
     ):
         """Download the file into the current working directory.
 
@@ -195,8 +196,15 @@ class File(BaseFile):
                        downloading to file.
         :param ors: Append a newline or $ORS to the end of file.
                     This is mainly intended to be used internally with `stdout`.
-        :param params: URL parameters to send with download request
-                       (e.g. ``cnt=0``).
+        :param params: URL parameters to send with download request.
+                       By default the library injects ``cnt=0`` so downloads do
+                       not count toward archive.org view counts; pass
+                       ``count_views=True`` to omit it. An explicit ``cnt`` key
+                       in ``params`` always wins.
+        :param count_views: If True, omit the default ``cnt=0`` parameter so
+                            the download counts toward archive.org view counts.
+                            Has no effect if ``params`` already contains a
+                            ``cnt`` key.
 
         :returns: ``True`` if file was successfully downloaded.
         """
@@ -208,7 +216,9 @@ class File(BaseFile):
         ignore_errors = ignore_errors or False
         return_responses = return_responses or False
         no_change_timestamp = no_change_timestamp or False
-        params = params or None
+        params = dict(params) if params else {}
+        if not count_views:
+            params.setdefault('cnt', '0')
         timeout = 12 if not timeout else timeout
         headers = headers or {}
         retries_sleep = 3  # TODO: exponential sleep

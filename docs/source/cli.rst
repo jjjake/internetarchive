@@ -15,7 +15,7 @@ If you're not sure where to start, most users start with these commands:
 - ``ia download <identifier>`` - :ref:`Download <cli-download>` files or items
 - ``ia search '<query>'`` - :ref:`Search <cli-search>` items on archive.org
 - ``ia metadata <identifier>`` - :ref:`Read Metadata <cli-metadata>` from an item
-- ``ia upload <identifier> <files> -m 'collection:test_collection'`` - :ref:`Upload <cli-upload>` files to archive.org
+- ``ia upload <identifier> <files> -m 'collection:test_collection'`` - :ref:`Upload <cli-upload>` files to archive.org. See `Collections <https://archive.org/developers/items.html#collections>`_ for picking a collection — ``test_collection`` is the sandbox.
 
 Check out the help menu to see all available commands:
 
@@ -165,7 +165,7 @@ Upload
 
     $ ia upload <identifier> file1 file2 --metadata="mediatype:texts" --metadata="blah:arg"
 
-.. warning:: Please note that, unless specified otherwise, items will be uploaded with a ``data`` mediatype. **This cannot be changed afterwards.** Therefore, you should specify a mediatype when uploading, eg. ``--metadata="mediatype:movies"``. Similarly, if you want your upload to end up somewhere else than the default collection (currently `community texts <//archive.org/details/opensource>`_), you should also specify a collection with ``--metadata="collection:foo"``. See `metadata documentation <//archive.org/services/docs/api/metadata-schema>`_ for more information.
+.. warning:: Please note that, unless specified otherwise, items will be uploaded with a ``data`` mediatype. **This cannot be changed afterwards.** Therefore, you should specify a mediatype when uploading, eg. ``--metadata="mediatype:movies"``. Items also default to the `opensource <https://archive.org/details/opensource>`_ (Community Texts) collection. To choose a different collection — including the other community collections, the ``test_collection`` sandbox, or a permanent collection — see `Collections <https://archive.org/developers/items.html#collections>`_ in the IA developer docs.
 
 You can upload files from ``stdin``:
 
@@ -266,6 +266,14 @@ Download files matching multiple glob and exclude patterns:
 
     $ ia download TripDown1905 --glob="*.mp4|*.xml" --exclude "*512kb*|*_reviews.xml"
 
+You can also repeat ``--glob`` and ``--exclude`` instead of (or in
+addition to) using ``|``. The two forms are equivalent and can be
+mixed:
+
+.. code:: console
+
+    $ ia download TripDown1905 --glob "*.mp4" --glob "*.xml" --exclude "*512kb*" --exclude "*_reviews.xml"
+
 Download only files of a specific format:
 
 .. code:: console
@@ -290,6 +298,16 @@ Download from an itemlist:
 .. code:: console
 
     $ ia download --itemlist itemlist.txt
+
+.. note::
+
+    Downloads issued by ``ia download`` send ``cnt=0`` by default, so
+    they do not count toward archive.org view counts. To count a
+    download as a view, add ``--count-views``:
+
+    .. code:: console
+
+        $ ia download TripDown1905 --count-views
 
 See ``ia download --help`` for more details.
 

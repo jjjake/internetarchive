@@ -18,7 +18,10 @@ Release History
   and ``--exclude`` flags multiple times in addition to the existing
   pipe-separated form. ``--glob "*.mp4" --glob "*.xml"`` is now
   equivalent to ``--glob "*.mp4|*.xml"``, and the two forms can be
-  mixed.
+  mixed. ``Item.get_files()`` also pipe-splits list-element patterns
+  for ``glob_pattern`` and ``exclude_pattern``, so callers can pass
+  mixed forms like ``glob_pattern=['*.mp4|*.xml', '*.jpg']``
+  (`#769 <https://github.com/jjjake/internetarchive/pull/769>`_).
 
 **Bugfixes**
 
@@ -33,9 +36,18 @@ Release History
   subjects with leading whitespace (e.g. ``"foo; bar; baz"`` split into
   ``[" bar", " baz"]``). Values are now stripped after splitting
   (`#768 <https://github.com/jjjake/internetarchive/pull/768>`_).
-- ``Item.get_files()`` now pipe-splits list-element patterns for
-  ``glob_pattern`` and ``exclude_pattern``, so callers can pass
-  mixed forms like ``glob_pattern=['*.mp4|*.xml', '*.jpg']``.
+
+**Documentation**
+
+- Corrected default ``ia.ini`` config path in docs, thanks to
+  `@bkjoh <https://github.com/bkjoh>`_
+  (`#766 <https://github.com/jjjake/internetarchive/pull/766>`_).
+- Fixed Installation page rendering bugs
+  (`#770 <https://github.com/jjjake/internetarchive/pull/770>`_).
+- Fixed Sphinx render warnings in the ``get_config`` docstring.
+- Linked the CLI Quick Start and Upload warning to the canonical
+  Collections docs
+  (`#772 <https://github.com/jjjake/internetarchive/pull/772>`_).
 
 5.8.0 (2026-02-18)
 ++++++++++++++++++

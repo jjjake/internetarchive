@@ -3,8 +3,8 @@
 Release History
 ---------------
 
-5.9.0 (unreleased)
-+++++++++++++++++++
+5.9.0 (2026-05-28)
+++++++++++++++++++
 
 **Features and Improvements**
 

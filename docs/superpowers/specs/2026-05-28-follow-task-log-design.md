@@ -86,7 +86,7 @@ Rejected alternatives:
 
 ```python
 @staticmethod
-def follow_task_log(task_id, session, *, lines=None, until_complete=True,
+def follow_task_log(task_id, session, *, lines=None,
                     request_kwargs=None) -> Iterator[str]:
     """Yield new task-log text as it is appended (tail -f style)."""
 ```
@@ -96,8 +96,8 @@ def follow_task_log(task_id, session, *, lines=None, until_complete=True,
   semantics exactly (positive → first N lines, negative → last N lines,
   `None` → whole log). Never sent to the server (that would truncate the body
   and break the delta math).
-- `until_complete: bool = True` — auto-stop when the task reaches a terminal
-  state. (Always `True` from the CLI; exposed for library flexibility.)
+- Follow always auto-stops when the task reaches a terminal state (there is no
+  use case for following a finite log forever).
 
 Algorithm:
 
@@ -117,7 +117,7 @@ Algorithm:
        the whole `body` (re-emit) — defensive, rare.
      - Else yield `body[seen:]` if non-empty; advance `seen = len(body)`;
        update stored `Last-Modified`.
-   - **If nothing new this round and `until_complete`:** poll task status. If
+   - **If nothing new this round:** poll task status. If
      terminal, do one final full fetch to catch trailing bytes, yield any
      remaining delta, then `return`. (Status is only polled when the log did
      not grow — while it is actively appending it is obviously still running,

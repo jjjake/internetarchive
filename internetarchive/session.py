@@ -666,11 +666,15 @@ class ArchiveSession(requests.sessions.Session):
 
     def get_task_log(self,
                      task_id: str | int,
+                     *,
                      params: Mapping | None = None,
                      request_kwargs: Mapping | None = None) -> str:
         """Get a task log.
 
         :param task_id: The task id for the task log you'd like to fetch.
+
+        :param params: URL parameters to send with the request (e.g.
+                       ``{'lines': 100}`` to fetch a truncated log).
 
         :param request_kwargs: Keyword arguments that
                                :py:class:`requests.Request` takes.

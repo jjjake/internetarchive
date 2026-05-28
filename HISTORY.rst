@@ -11,8 +11,9 @@ Release History
 - Fixed ``ia tasks --parameter`` crashing when combined with
   ``--get-task-log``. Parameters such as ``lines`` are now merged into the
   task log request's query string, allowing ``ia tasks -G <task_id> -p
-  lines=100`` to fetch a truncated log
-  (`#764 <https://github.com/jjjake/internetarchive/pull/764>`_).
+  lines=100`` to fetch a truncated log. ``get_task_log()`` gained a
+  ``params`` argument; ``params`` and ``request_kwargs`` are now
+  keyword-only (`#764 <https://github.com/jjjake/internetarchive/pull/764>`_).
 - Fixed ``CatalogTask.task_log()`` passing ``request_kwargs`` into the new
   ``params`` slot, which caused request kwargs (e.g. ``timeout``,
   ``headers``) to be serialized as URL query parameters and silently

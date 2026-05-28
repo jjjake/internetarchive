@@ -311,6 +311,7 @@ class CatalogTask:
     def get_task_log(
         task_id: int | str | None,
         session: ia_session.ArchiveSession,
+        *,
         params: Mapping | None = None,
         request_kwargs: Mapping | None = None
     ) -> str:
@@ -321,7 +322,10 @@ class CatalogTask:
 
         :param task_id: The task id for the task log you'd like to fetch.
 
-        :param archive_session: :class:`ArchiveSession <ArchiveSession>`
+        :param session: :class:`ArchiveSession <ArchiveSession>`
+
+        :param params: URL parameters to send with the request (e.g.
+                       ``{'lines': 100}`` to fetch a truncated log).
 
         :param request_kwargs: Keyword arguments that
                                :py:class:`requests.Request` takes.

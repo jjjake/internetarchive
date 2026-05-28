@@ -44,6 +44,13 @@ For more control and to persist configuration across operations, use a :class:`~
     item.download()
     search = session.search_items('subject:science')
 
+.. note::
+
+    Downloads send ``cnt=0`` by default and do not count toward
+    archive.org view counts. To count a download as a view, pass
+    ``count_views=True`` to :func:`internetarchive.download`,
+    :meth:`Item.download`, or :meth:`File.download`.
+
 Simple Functional Interface
 ---------------------------
 

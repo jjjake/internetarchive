@@ -304,7 +304,8 @@ class CatalogTask:
         task_id = self.task_id  # type: ignore
         if task_id is None:
             raise ValueError('task_id is None')
-        return self.get_task_log(task_id, self.session, self.request_kwargs)
+        return self.get_task_log(task_id, self.session,
+                                 request_kwargs=self.request_kwargs)
 
     @staticmethod
     def get_task_log(

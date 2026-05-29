@@ -27,9 +27,10 @@ This module contains objects for interacting with the Archive.org catalog.
 """
 from __future__ import annotations
 
+import time
 from datetime import datetime
 from logging import getLogger
-from typing import Iterable, Mapping, MutableMapping
+from typing import Iterable, Iterator, Mapping, MutableMapping
 
 from requests import Response
 from requests.exceptions import HTTPError
@@ -39,6 +40,14 @@ from internetarchive import session as ia_session
 from internetarchive.utils import json
 
 log = getLogger(__name__)
+
+FOLLOW_POLL_INTERVAL = 2.0
+
+# Task ``status`` values that mean the task is still alive and may produce more
+# log output. A finished task is either done (returned from history with a null
+# status) or errored (``status='error'``, which lingers in the catalog awaiting
+# admin) -- both are terminal for follow purposes.
+ACTIVE_TASK_STATUSES = frozenset({'running', 'queued', 'paused'})
 
 
 def sort_by_date(task_dict: CatalogTask) -> datetime:
@@ -308,6 +317,41 @@ class CatalogTask:
                                  request_kwargs=self.request_kwargs)
 
     @staticmethod
+    def _request_task_log(
+        task_id: int | str | None,
+        session: ia_session.ArchiveSession,
+        *,
+        params: Mapping | None = None,
+        request_kwargs: Mapping | None = None
+    ) -> Response:
+        """Make the HTTP request for a task log and return the raw Response.
+
+        :param task_id: The task id for the task log you'd like to fetch.
+
+        :param session: :class:`ArchiveSession <ArchiveSession>`
+
+        :param params: Extra URL parameters to send with the request.
+
+        :param request_kwargs: Keyword arguments that
+                               :py:class:`requests.Request` takes.
+
+        :returns: :class:`requests.Response`
+        """
+        request_kwargs = request_kwargs or {}
+        _auth = auth.S3Auth(session.access_key, session.secret_key)
+        if session.host == 'archive.org':
+            host = 'catalogd.archive.org'
+        else:
+            host = session.host
+        url = f'{session.protocol}//{host}/services/tasks.php'
+        _params = {'task_log': task_id}
+        if params:
+            _params.update(params)
+        r = session.get(url, params=_params, auth=_auth, **request_kwargs)
+        r.raise_for_status()
+        return r
+
+    @staticmethod
     def get_task_log(
         task_id: int | str | None,
         session: ia_session.ArchiveSession,
@@ -332,16 +376,132 @@ class CatalogTask:
 
         :returns: The task log as a string.
         """
-        request_kwargs = request_kwargs or {}
-        _auth = auth.S3Auth(session.access_key, session.secret_key)
-        if session.host == 'archive.org':
-            host = 'catalogd.archive.org'
-        else:
-            host = session.host
-        url = f'{session.protocol}//{host}/services/tasks.php'
-        _params = {'task_log': task_id}
-        if params:
-            _params.update(params)
-        r = session.get(url, params=_params, auth=_auth, **request_kwargs)
-        r.raise_for_status()
+        r = CatalogTask._request_task_log(task_id, session, params=params,
+                                          request_kwargs=request_kwargs)
         return r.content.decode('utf-8', errors='surrogateescape')
+
+    @staticmethod
+    def _select_log_lines(text: str, lines: int | None) -> str:
+        """Return the initial backlog slice of ``text`` for follow mode.
+
+        Replicates Tasks API ``lines`` semantics: ``None`` -> whole log,
+        positive ``N`` -> first N lines, negative ``N`` -> last N lines,
+        ``0`` -> nothing.
+
+        :param text: The full decoded task log.
+
+        :param lines: Number of lines of backlog to keep, or ``None`` for all.
+
+        :returns: The selected backlog text (newlines preserved).
+        """
+        if lines is None:
+            return text
+        if lines == 0:
+            return ''
+        parts = text.splitlines(keepends=True)
+        selected = parts[:lines] if lines > 0 else parts[lines:]
+        return ''.join(selected)
+
+    @staticmethod
+    def _task_is_active(
+        task_id: int | str,
+        session: ia_session.ArchiveSession,
+        request_kwargs: Mapping | None = None
+    ) -> bool:
+        """Return ``True`` while the task may still produce log output.
+
+        A task's ``status`` is the authoritative signal: ``running``,
+        ``queued`` and ``paused`` are alive, while ``error`` (which lingers in
+        the catalog awaiting admin) and ``done`` (returned from history with a
+        null status) are terminal. Catalog membership alone is not reliable.
+
+        :param task_id: The task id to check.
+
+        :param session: :class:`ArchiveSession <ArchiveSession>`
+
+        :param request_kwargs: Keyword arguments for the request.
+
+        :returns: ``True`` if the task is active, else ``False``.
+        """
+        tasks = session.get_tasks(
+            params={'task_id': task_id, 'catalog': 1, 'history': 1, 'summary': 0},
+            request_kwargs=request_kwargs)
+        for t in tasks:
+            if str(getattr(t, 'task_id', '')) == str(task_id):
+                return getattr(t, 'status', None) in ACTIVE_TASK_STATUSES
+        return False
+
+    @staticmethod
+    def follow_task_log(
+        task_id: int | str,
+        session: ia_session.ArchiveSession,
+        *,
+        lines: int | None = None,
+        request_kwargs: Mapping | None = None
+    ) -> Iterator[str]:
+        """Follow a task log as it grows, ``tail -f`` style.
+
+        Yields newly appended text as it appears. Stops automatically when
+        the task finishes (leaves the active catalog).
+
+        :param task_id: The task id to follow.
+
+        :param session: :class:`ArchiveSession <ArchiveSession>`
+
+        :param lines: How many trailing lines of existing backlog to emit
+                      before following (same semantics as the Tasks API
+                      ``lines`` parameter; ``None`` = the whole log).
+
+        :param request_kwargs: Keyword arguments that
+                               :py:class:`requests.Request` takes.
+
+        :returns: An iterator of newly appended log text.
+        """
+        seen = 0
+        last_modified = None
+        first = True
+        while True:
+            rk = dict(request_kwargs or {})
+            headers = dict(rk.get('headers', {}))
+            if last_modified:
+                headers['If-Modified-Since'] = last_modified
+            rk['headers'] = headers
+            r = CatalogTask._request_task_log(task_id, session, request_kwargs=rk)
+
+            grew = False
+            if r.status_code != 304:
+                body = r.content.decode('utf-8', errors='surrogateescape')
+                lm = r.headers.get('Last-Modified')
+                if lm:
+                    last_modified = lm
+                if len(body) < seen:
+                    # Log rotated/truncated: re-emit from the start.
+                    seen = 0
+                if first:
+                    initial = CatalogTask._select_log_lines(body, lines)
+                    if initial:
+                        yield initial
+                    seen = len(body)
+                    first = False
+                    grew = True
+                else:
+                    new = body[seen:]
+                    if new:
+                        yield new
+                        seen = len(body)
+                        grew = True
+
+            if not grew:
+                if not CatalogTask._task_is_active(task_id, session,
+                                                   request_kwargs=request_kwargs):
+                    # Final fetch to catch any trailing bytes, then stop.
+                    r = CatalogTask._request_task_log(
+                        task_id, session, request_kwargs=request_kwargs)
+                    body = r.content.decode('utf-8', errors='surrogateescape')
+                    if len(body) < seen:
+                        seen = 0
+                    new = body[seen:]
+                    if new:
+                        yield new
+                    return
+            time.sleep(FOLLOW_POLL_INTERVAL)

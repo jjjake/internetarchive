@@ -684,6 +684,30 @@ class ArchiveSession(requests.sessions.Session):
         return catalog.CatalogTask.get_task_log(task_id, self, params=params,
                                                 request_kwargs=request_kwargs)
 
+    def follow_task_log(self,
+                        task_id: str | int,
+                        *,
+                        lines: int | None = None,
+                        request_kwargs: Mapping | None = None):
+        """Follow a task log as it grows, ``tail -f`` style.
+
+        Yields newly appended text as it appears, stopping when the task
+        finishes.
+
+        :param task_id: The task id to follow.
+
+        :param lines: How many trailing lines of existing backlog to emit
+                      before following (same semantics as the Tasks API
+                      ``lines`` parameter; ``None`` = the whole log).
+
+        :param request_kwargs: Keyword arguments that
+                               :py:class:`requests.Request` takes.
+
+        :returns: An iterator of newly appended log text.
+        """
+        return catalog.CatalogTask.follow_task_log(
+            task_id, self, lines=lines, request_kwargs=request_kwargs)
+
     def send(self, request, **kwargs) -> Response:
         """Send a prepared request, handling HTTPS security warnings.
 

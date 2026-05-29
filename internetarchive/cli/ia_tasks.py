@@ -41,8 +41,12 @@ def setup(subparsers):
     parser.add_argument("-t", "--task",
                         nargs="*",
                         help="Return information about the given task.")
-    parser.add_argument("-G", "--get-task-log",
-                        help="Return the given tasks task log.")
+    log_group = parser.add_mutually_exclusive_group()
+    log_group.add_argument("-G", "--get-task-log",
+                           help="Return the given tasks task log.")
+    log_group.add_argument("-F", "--follow-task-log",
+                           help="Follow the given task's log as it grows "
+                                "(tail -f style); stops when the task finishes.")
     parser.add_argument("-p", "--parameter",
                         nargs=1,
                         action=QueryStringAction,
@@ -135,6 +139,25 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         log = args.session.get_task_log(args.get_task_log, params=args.parameter)
         print(log.encode("utf-8", errors="surrogateescape")
                  .decode("utf-8", errors="replace"))
+        sys.exit(0)
+    elif args.follow_task_log:
+        lines = args.parameter.get("lines")
+        if lines is not None:
+            try:
+                lines = int(lines)
+            except (TypeError, ValueError):
+                print(f"error: lines must be an integer, got {lines!r}",
+                      file=sys.stderr)
+                sys.exit(1)
+        try:
+            for chunk in args.session.follow_task_log(args.follow_task_log,
+                                                      lines=lines):
+                sys.stdout.write(
+                    chunk.encode("utf-8", errors="surrogateescape")
+                         .decode("utf-8", errors="replace"))
+                sys.stdout.flush()
+        except KeyboardInterrupt:
+            pass
         sys.exit(0)
 
     queryable_params = [

@@ -6,6 +6,14 @@ Release History
 5.10.0 (unreleased)
 +++++++++++++++++++
 
+**Features**
+
+- Added ``ia tasks --follow-task-log <task_id>`` to follow a task log live
+  as the task runs (``tail -f`` style), stopping automatically when the task
+  finishes. Combine with ``-p lines=-N`` to seed the last ``N`` lines first.
+  A new ``ArchiveSession.follow_task_log()`` method exposes the same behavior
+  to the library.
+
 **Bugfixes**
 
 - Fixed ``ia tasks --parameter`` crashing when combined with

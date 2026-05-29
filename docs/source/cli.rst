@@ -421,6 +421,23 @@ Task logs can be large. You can pass URL parameters to the Tasks API with
     # Last 100 lines of the log:
     $ ia tasks --get-task-log <task_id> --parameter lines=-100
 
+To follow a task log live as the task runs (``tail -f`` style), use
+``-F/--follow-task-log``. It streams newly appended output and stops
+automatically when the task finishes:
+
+.. code:: console
+
+    $ ia tasks --follow-task-log <task_id>
+
+Combine with ``-p lines=-N`` to show the last ``N`` lines of existing log
+before following (like ``tail -n N -f``):
+
+.. code:: console
+
+    $ ia tasks --follow-task-log <task_id> --parameter lines=-20
+
+Press Ctrl-C to stop following at any time.
+
 See ``ia tasks --help`` for more details.
 
 

@@ -1,8 +1,11 @@
 import responses
 
+import internetarchive.catalog as catalog_mod
 from tests.conftest import IaRequestsMock, ia_call
 
 TASKS_URL = 'https://catalogd.archive.org/services/tasks.php'
+# Status queries (get_tasks) go to session.host (archive.org).
+TASKS_STATUS_URL = 'https://archive.org/services/tasks.php'
 
 
 def test_ia_tasks_get_task_log(capsys):
@@ -29,3 +32,37 @@ def test_ia_tasks_get_task_log_with_params(capsys):
         ia_call(['ia', 'tasks', '-G', '123', '-p', 'lines=10'])
     out, _err = capsys.readouterr()
     assert 'last 10 lines' in out
+
+
+def test_ia_tasks_follow_task_log(capsys, monkeypatch):
+    """``ia tasks -F <id>`` streams the log and stops when the task finishes."""
+    monkeypatch.setattr(catalog_mod.time, 'sleep', lambda *a, **k: None)
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.GET, TASKS_URL, body='streamed line\n',
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
+        ia_call(['ia', 'tasks', '-F', '123'])
+    out, _err = capsys.readouterr()
+    assert 'streamed line' in out
+
+
+def test_ia_tasks_follow_task_log_lines(capsys, monkeypatch):
+    """``-p lines=-2`` seeds only the trailing backlog before following."""
+    monkeypatch.setattr(catalog_mod.time, 'sleep', lambda *a, **k: None)
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.GET, TASKS_URL, body='a\nb\nc\nd\n',
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
+        ia_call(['ia', 'tasks', '-F', '123', '-p', 'lines=-2'])
+    out, _err = capsys.readouterr()
+    assert 'c\nd' in out
+    assert 'a\nb' not in out
+
+
+def test_ia_tasks_get_and_follow_mutually_exclusive():
+    """``-G`` and ``-F`` cannot be combined (argparse error -> exit 2)."""
+    ia_call(['ia', 'tasks', '-G', '123', '-F', '123'], expected_exit_code=2)

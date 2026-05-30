@@ -34,7 +34,7 @@ def test_archive_session(tmpdir):
     assert os.path.isfile('test.log')
 
     assert CONFIG == s.config
-    assert set(s.cookies.keys()) == set(CONFIG['cookies'].keys())
+    assert len(s.cookies) == 0
     assert s.secure is True
     assert s.protocol == PROTOCOL
     assert s.access_key == 'test_access'
@@ -193,21 +193,10 @@ def test_access_key_always_in_user_agent():
     assert s.headers['User-Agent'].startswith(f'internetarchive/{__version__}')
 
 
-def test_cookies():
+def test_cookies_not_sent():
+    """Cookies from config are not loaded into the session cookie jar."""
     with responses.RequestsMock() as rsps:
         rsps.add(responses.GET, f'{PROTOCOL}//archive.org')
         s = internetarchive.session.ArchiveSession(CONFIG)
         r = s.get(f'{PROTOCOL}//archive.org')
-        assert 'logged-in-sig' in r.request.headers['Cookie']
-        assert 'logged-in-user' in r.request.headers['Cookie']
-        for c in s.cookies:
-            if c.name.startswith('logged-in-'):
-                assert c.domain == '.archive.org'
-
-    with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, f'{PROTOCOL}//example.com')
-        s = internetarchive.session.ArchiveSession(CONFIG)
-        r = s.get(f'{PROTOCOL}//example.com')
-        assert 'logged-in-sig' not in r.request.headers.get('Cookie', '')
-        assert 'logged-in-user' not in r.request.headers.get('Cookie', '')
-        assert '.archive.org' not in r.request.headers.get('Cookie', '')
+        assert 'Cookie' not in r.request.headers

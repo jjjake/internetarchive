@@ -180,6 +180,28 @@ def test_follow_task_log_304_yields_nothing(monkeypatch):
     assert chunks == ['x\n']
 
 
+def test_follow_task_log_304_still_active_keeps_polling(monkeypatch):
+    """A 304 while the task is still active does not exit; keeps polling."""
+    _patch_sleep(monkeypatch)
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.GET, TASKS_URL, body='x\n',
+                 headers={'Last-Modified': 'Wed, 28 May 2026 00:00:00 GMT'},
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_URL, status=304,
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_STATUS_URL,
+                 body=_task_status_body('running'),
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
+        rsps.add(responses.GET, TASKS_URL, body='x\ny\n',
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
+        chunks = list(CatalogTask.follow_task_log(123, _session()))
+    assert chunks == ['x\n', 'y\n']
+
+
 def test_follow_task_log_resets_on_truncation(monkeypatch):
     """If the log shrinks (rotation), re-emit the new shorter body."""
     _patch_sleep(monkeypatch)

@@ -428,7 +428,8 @@ class CatalogTask:
             request_kwargs=request_kwargs)
         for t in tasks:
             if str(getattr(t, 'task_id', '')) == str(task_id):
-                return getattr(t, 'status', None) in ACTIVE_TASK_STATUSES
+                if getattr(t, 'status', None) in ACTIVE_TASK_STATUSES:
+                    return True
         return False
 
     @staticmethod
@@ -442,7 +443,8 @@ class CatalogTask:
         """Follow a task log as it grows, ``tail -f`` style.
 
         Yields newly appended text as it appears. Stops automatically when
-        the task finishes (leaves the active catalog).
+        the task's status indicates it has finished (the task is no longer
+        ``running``, ``queued``, or ``paused``).
 
         :param task_id: The task id to follow.
 

@@ -476,9 +476,6 @@ class CatalogTask:
                 lm = r.headers.get('Last-Modified')
                 if lm:
                     last_modified = lm
-                if len(body) < seen:
-                    # Log rotated/truncated: re-emit from the start.
-                    seen = 0
                 if first:
                     initial = CatalogTask._select_log_lines(body, lines)
                     if initial:
@@ -486,7 +483,10 @@ class CatalogTask:
                     seen = len(body)
                     first = False
                     grew = True
-                else:
+                elif len(body) >= seen:
+                    # Task logs are append-only in practice; a body shorter
+                    # than what we've already emitted can only be a transient
+                    # bad response, so that poll is skipped entirely.
                     new = body[seen:]
                     if new:
                         yield new
@@ -500,10 +500,9 @@ class CatalogTask:
                     r = CatalogTask._request_task_log(
                         task_id, session, request_kwargs=request_kwargs)
                     body = r.content.decode('utf-8', errors='surrogateescape')
-                    if len(body) < seen:
-                        seen = 0
-                    new = body[seen:]
-                    if new:
-                        yield new
+                    if len(body) >= seen:
+                        new = body[seen:]
+                        if new:
+                            yield new
                     return
             time.sleep(FOLLOW_POLL_INTERVAL)

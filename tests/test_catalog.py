@@ -202,19 +202,48 @@ def test_follow_task_log_304_still_active_keeps_polling(monkeypatch):
     assert chunks == ['x\n', 'y\n']
 
 
-def test_follow_task_log_resets_on_truncation(monkeypatch):
-    """If the log shrinks (rotation), re-emit the new shorter body."""
+def test_follow_task_log_skips_transient_shrink(monkeypatch):
+    """A body shorter than already emitted is a transient blip -- skipped.
+
+    Task logs are append-only in practice, so a shrink can only be a bad
+    response. The poll is skipped (no duplicate re-emit) and the follower
+    picks up the delta on the next healthy poll.
+    """
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL, body='aaa\n',
+        rsps.add(responses.GET, TASKS_URL, body='l1\nl2\n',
                  match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_URL, body='',
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        # The blip poll shows no growth -> status check: still running.
+        rsps.add(responses.GET, TASKS_STATUS_URL,
+                 body=_task_status_body('running'),
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
+        rsps.add(responses.GET, TASKS_URL, body='l1\nl2\nl3\n',
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
+        chunks = list(CatalogTask.follow_task_log(123, _session()))
+    assert chunks == ['l1\nl2\n', 'l3\n']
+
+
+def test_follow_task_log_final_fetch_shrink_emits_nothing(monkeypatch):
+    """A shrunken body on the final fetch emits nothing (no garbage re-emit)."""
+    _patch_sleep(monkeypatch)
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.GET, TASKS_URL, body='l1\nl2\n',
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        # Shorter body than seen: skipped during the poll, and skipped again
+        # when reused as the final fetch after terminal detection.
         rsps.add(responses.GET, TASKS_URL, body='x\n',
                  match=[responses.matchers.query_param_matcher({'task_log': '123'})])
         rsps.add(responses.GET, TASKS_STATUS_URL, body='',
                  match=[responses.matchers.query_param_matcher(
                      {'task_id': '123'}, strict_match=False)])
         chunks = list(CatalogTask.follow_task_log(123, _session()))
-    assert chunks == ['aaa\n', 'x\n']
+    assert chunks == ['l1\nl2\n']
 
 
 def test_session_follow_task_log(monkeypatch):

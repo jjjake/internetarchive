@@ -32,6 +32,7 @@ from datetime import datetime
 from logging import getLogger
 from typing import Iterable, Iterator, Mapping, MutableMapping
 
+import requests
 from requests import Response
 from requests.exceptions import HTTPError
 
@@ -43,11 +44,35 @@ log = getLogger(__name__)
 
 FOLLOW_POLL_INTERVAL = 2.0
 
+# How many consecutive transient request failures follow mode tolerates
+# before re-raising (failures 1 through N-1 are retried; the Nth is fatal).
+# Each counted failure already represents an exhausted session-layer urllib3
+# retry cycle, so reaching this means a genuinely persistent outage.
+FOLLOW_MAX_CONSECUTIVE_ERRORS = 5
+
 # Task ``status`` values that mean the task is still alive and may produce more
 # log output. A finished task is either done (returned from history with a null
 # status) or errored (``status='error'``, which lingers in the catalog awaiting
 # admin) -- both are terminal for follow purposes.
 ACTIVE_TASK_STATUSES = frozenset({'running', 'queued', 'paused'})
+
+
+def _is_transient_error(exc: requests.exceptions.RequestException) -> bool:
+    """Return ``True`` if ``exc`` is a transient failure worth retrying.
+
+    Connection errors, premature chunked responses, timeouts, and 5xx
+    responses are transient. 4xx responses (and an ``HTTPError`` without an
+    attached response) are fatal -- they won't heal by retrying.
+
+    :param exc: The exception raised by a follow-mode request.
+
+    :returns: ``True`` if the error is transient, else ``False``.
+    """
+    if isinstance(exc, HTTPError):
+        return exc.response is not None and exc.response.status_code >= 500
+    return isinstance(exc, (requests.exceptions.ConnectionError,
+                            requests.exceptions.ChunkedEncodingError,
+                            requests.exceptions.Timeout))
 
 
 def sort_by_date(task_dict: CatalogTask) -> datetime:

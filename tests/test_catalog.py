@@ -1,5 +1,6 @@
 import json
 
+import requests
 import responses
 
 import internetarchive.catalog as catalog_mod
@@ -257,3 +258,29 @@ def test_session_follow_task_log(monkeypatch):
                      {'task_id': '123'}, strict_match=False)])
         chunks = list(_session().follow_task_log(123))
     assert chunks == ['only line\n']
+
+
+def _http_error(status):
+    """Build an HTTPError with an attached response of the given status."""
+    resp = requests.models.Response()
+    resp.status_code = status
+    return requests.exceptions.HTTPError(response=resp)
+
+
+def test_is_transient_error():
+    """Network blips, timeouts and 5xx retry; 4xx and everything else is fatal."""
+    assert catalog_mod._is_transient_error(
+        requests.exceptions.ConnectionError('reset')) is True
+    assert catalog_mod._is_transient_error(
+        requests.exceptions.ChunkedEncodingError('premature end')) is True
+    assert catalog_mod._is_transient_error(
+        requests.exceptions.Timeout('timed out')) is True
+    assert catalog_mod._is_transient_error(_http_error(500)) is True
+    assert catalog_mod._is_transient_error(_http_error(503)) is True
+    assert catalog_mod._is_transient_error(_http_error(403)) is False
+    assert catalog_mod._is_transient_error(_http_error(404)) is False
+    # An HTTPError with no attached response is fatal.
+    assert catalog_mod._is_transient_error(
+        requests.exceptions.HTTPError('no response')) is False
+    assert catalog_mod._is_transient_error(
+        requests.exceptions.RequestException('other')) is False

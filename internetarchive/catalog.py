@@ -483,51 +483,79 @@ class CatalogTask:
                                :py:class:`requests.Request` takes.
 
         :returns: An iterator of newly appended log text.
+
+        :raises requests.exceptions.RequestException: On a fatal request
+            error, or when transient errors persist for
+            ``FOLLOW_MAX_CONSECUTIVE_ERRORS`` consecutive polls.
         """
         seen = 0
         last_modified = None
         first = True
+        consecutive_errors = 0
         while True:
-            rk = dict(request_kwargs or {})
-            headers = dict(rk.get('headers', {}))
-            if last_modified:
-                headers['If-Modified-Since'] = last_modified
-            rk['headers'] = headers
-            r = CatalogTask._request_task_log(task_id, session, request_kwargs=rk)
+            # Everything is computed inside the try and yielded outside it,
+            # so a failure can never lose or duplicate already-fetched
+            # output, and exceptions never fire mid-yield.
+            to_yield: list[str] = []
+            stop = False
+            try:
+                rk = dict(request_kwargs or {})
+                headers = dict(rk.get('headers', {}))
+                if last_modified:
+                    headers['If-Modified-Since'] = last_modified
+                rk['headers'] = headers
+                r = CatalogTask._request_task_log(task_id, session,
+                                                  request_kwargs=rk)
 
-            grew = False
-            if r.status_code != 304:
-                body = r.content.decode('utf-8', errors='surrogateescape')
-                lm = r.headers.get('Last-Modified')
-                if lm:
-                    last_modified = lm
-                if first:
-                    initial = CatalogTask._select_log_lines(body, lines)
-                    if initial:
-                        yield initial
-                    seen = len(body)
-                    first = False
-                    grew = True
-                elif len(body) >= seen:
+                grew = False
+                if r.status_code != 304:
+                    body = r.content.decode('utf-8', errors='surrogateescape')
+                    lm = r.headers.get('Last-Modified')
+                    if lm:
+                        last_modified = lm
                     # Task logs are append-only in practice; a body shorter
                     # than what we've already emitted can only be a transient
-                    # bad response, so that poll is skipped entirely.
-                    new = body[seen:]
-                    if new:
-                        yield new
+                    # bad response, so such a poll is skipped entirely.
+                    if first:
+                        initial = CatalogTask._select_log_lines(body, lines)
+                        if initial:
+                            to_yield.append(initial)
                         seen = len(body)
+                        first = False
                         grew = True
-
-            if not grew:
-                if not CatalogTask._task_is_active(task_id, session,
-                                                   request_kwargs=request_kwargs):
-                    # Final fetch to catch any trailing bytes, then stop.
-                    r = CatalogTask._request_task_log(
-                        task_id, session, request_kwargs=request_kwargs)
-                    body = r.content.decode('utf-8', errors='surrogateescape')
-                    if len(body) >= seen:
+                    elif len(body) >= seen:
                         new = body[seen:]
                         if new:
-                            yield new
-                    return
+                            to_yield.append(new)
+                            seen = len(body)
+                            grew = True
+
+                if not grew:
+                    if not CatalogTask._task_is_active(
+                            task_id, session, request_kwargs=request_kwargs):
+                        # Final fetch to catch any trailing bytes, then stop.
+                        r = CatalogTask._request_task_log(
+                            task_id, session, request_kwargs=request_kwargs)
+                        body = r.content.decode('utf-8',
+                                                errors='surrogateescape')
+                        if len(body) >= seen:
+                            new = body[seen:]
+                            if new:
+                                to_yield.append(new)
+                        stop = True
+            except requests.exceptions.RequestException as exc:
+                if not _is_transient_error(exc):
+                    raise
+                consecutive_errors += 1
+                if consecutive_errors >= FOLLOW_MAX_CONSECUTIVE_ERRORS:
+                    raise
+                log.warning('Transient error following task %s log (%d/%d): %s',
+                            task_id, consecutive_errors,
+                            FOLLOW_MAX_CONSECUTIVE_ERRORS, exc)
+                time.sleep(FOLLOW_POLL_INTERVAL)
+                continue
+            consecutive_errors = 0
+            yield from to_yield
+            if stop:
+                return
             time.sleep(FOLLOW_POLL_INTERVAL)

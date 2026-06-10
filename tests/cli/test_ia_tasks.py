@@ -1,5 +1,6 @@
 import json
 
+import requests
 import responses
 
 import internetarchive.catalog as catalog_mod
@@ -92,3 +93,23 @@ def test_ia_tasks_follow_task_log_not_found(capsys, monkeypatch):
 def test_ia_tasks_get_and_follow_mutually_exclusive():
     """``-G`` and ``-F`` cannot be combined (argparse error -> exit 2)."""
     ia_call(['ia', 'tasks', '-G', '123', '-F', '123'], expected_exit_code=2)
+
+
+def test_ia_tasks_follow_task_log_request_error(capsys, monkeypatch):
+    """Persistent request failures print a clean one-line error and exit 1."""
+    monkeypatch.setattr(catalog_mod.time, 'sleep', lambda *a, **k: None)
+    with IaRequestsMock() as rsps:
+        # Upfront existence check succeeds: the task is running.
+        rsps.add(responses.GET, TASKS_STATUS_URL,
+                 body=_task_status_body('running'),
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
+        for _ in range(catalog_mod.FOLLOW_MAX_CONSECUTIVE_ERRORS):
+            rsps.add(responses.GET, TASKS_URL,
+                     body=requests.exceptions.ConnectionError('connection reset'),
+                     match=[responses.matchers.query_param_matcher(
+                         {'task_log': '123'})])
+        ia_call(['ia', 'tasks', '-F', '123'], expected_exit_code=1)
+    _out, err = capsys.readouterr()
+    assert 'error: connection reset' in err
+    assert 'Traceback' not in err

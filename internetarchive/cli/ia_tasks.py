@@ -23,6 +23,8 @@ import argparse
 import sys
 import warnings
 
+from requests.exceptions import RequestException
+
 from internetarchive.cli.cli_utils import PostDataAction, QueryStringAction
 from internetarchive.utils import json
 
@@ -153,23 +155,25 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         # the follower would stream nothing and exit 0 -- misleading. Verify
         # the task exists first so a bad id fails fast with a clear message.
         tid = args.follow_task_log
-        found = any(
-            str(getattr(t, "task_id", "")) == str(tid)
-            for t in args.session.get_tasks(
-                params={"task_id": tid, "catalog": 1,
-                        "history": 1, "summary": 0}))
-        if not found:
-            print(f"error: task {tid} not found", file=sys.stderr)
-            sys.exit(1)
         try:
-            for chunk in args.session.follow_task_log(args.follow_task_log,
-                                                      lines=lines):
+            found = any(
+                str(getattr(t, "task_id", "")) == str(tid)
+                for t in args.session.get_tasks(
+                    params={"task_id": tid, "catalog": 1,
+                            "history": 1, "summary": 0}))
+            if not found:
+                print(f"error: task {tid} not found", file=sys.stderr)
+                sys.exit(1)
+            for chunk in args.session.follow_task_log(tid, lines=lines):
                 sys.stdout.write(
                     chunk.encode("utf-8", errors="surrogateescape")
                          .decode("utf-8", errors="replace"))
                 sys.stdout.flush()
         except KeyboardInterrupt:
             pass
+        except RequestException as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            sys.exit(1)
         sys.exit(0)
 
     queryable_params = [

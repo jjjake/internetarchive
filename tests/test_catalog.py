@@ -1,5 +1,6 @@
 import json
 
+import pytest
 import requests
 import responses
 
@@ -284,3 +285,62 @@ def test_is_transient_error():
         requests.exceptions.HTTPError('no response')) is False
     assert catalog_mod._is_transient_error(
         requests.exceptions.RequestException('other')) is False
+
+
+def test_follow_task_log_recovers_from_transient_error(monkeypatch):
+    """A mid-follow connection error is retried; output is complete, no dupes."""
+    _patch_sleep(monkeypatch)
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.GET, TASKS_URL, body='l1\n',
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_URL,
+                 body=requests.exceptions.ConnectionError('reset'),
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_URL, body='l1\nl2\n',
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
+        chunks = list(CatalogTask.follow_task_log(123, _session()))
+    assert chunks == ['l1\n', 'l2\n']
+
+
+def test_follow_task_log_5xx_is_transient(monkeypatch):
+    """A 5xx response is retried like a connection error."""
+    _patch_sleep(monkeypatch)
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.GET, TASKS_URL, status=502,
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_URL, body='l1\n',
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
+        chunks = list(CatalogTask.follow_task_log(123, _session()))
+    assert chunks == ['l1\n']
+
+
+def test_follow_task_log_persistent_errors_raise(monkeypatch):
+    """The Nth consecutive transient failure re-raises (N-1 retries first)."""
+    _patch_sleep(monkeypatch)
+    with IaRequestsMock() as rsps:
+        for _ in range(catalog_mod.FOLLOW_MAX_CONSECUTIVE_ERRORS):
+            rsps.add(responses.GET, TASKS_URL,
+                     body=requests.exceptions.ConnectionError('reset'),
+                     match=[responses.matchers.query_param_matcher(
+                         {'task_log': '123'})])
+        with pytest.raises(requests.exceptions.ConnectionError):
+            list(CatalogTask.follow_task_log(123, _session()))
+        # All N registered failures were consumed: N-1 retries + 1 fatal.
+        assert len(rsps.calls) == catalog_mod.FOLLOW_MAX_CONSECUTIVE_ERRORS
+
+
+def test_follow_task_log_4xx_is_fatal(monkeypatch):
+    """A 4xx response raises immediately -- no retries."""
+    _patch_sleep(monkeypatch)
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.GET, TASKS_URL, status=403,
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        with pytest.raises(requests.exceptions.HTTPError):
+            list(CatalogTask.follow_task_log(123, _session()))
+        assert len(rsps.calls) == 1

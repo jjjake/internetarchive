@@ -436,7 +436,8 @@ before following (like ``tail -n N -f``):
 
     $ ia tasks --follow-task-log <task_id> --parameter lines=-20
 
-Press Ctrl-C to stop following at any time.
+Press Ctrl-C to stop following at any time. Transient network or server
+errors are retried for a short period before giving up.
 
 See ``ia tasks --help`` for more details.
 

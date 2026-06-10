@@ -692,7 +692,8 @@ class ArchiveSession(requests.sessions.Session):
         """Follow a task log as it grows, ``tail -f`` style.
 
         Yields newly appended text as it appears, stopping when the task
-        finishes.
+        finishes. Transient request failures are retried for several
+        consecutive polls before the error is raised.
 
         :param task_id: The task id to follow.
 

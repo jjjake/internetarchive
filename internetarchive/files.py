@@ -205,6 +205,12 @@ class File(BaseFile):
                             the download counts toward archive.org view counts.
                             Has no effect if ``params`` already contains a
                             ``cnt`` key.
+        :param headers: Extra HTTP headers to send with the download request.
+                        Supplying a ``Range`` header (e.g.
+                        ``{'Range': 'bytes=0-1023'}``) performs an intentional
+                        partial fetch: the automatic resume behaviour and
+                        full-file checksum validation are skipped, so the bytes
+                        returned by the server are written as-is.
 
         :returns: ``True`` if file was successfully downloaded.
         """
@@ -223,6 +229,7 @@ class File(BaseFile):
         headers = headers or {}
         retries_sleep = 3  # TODO: exponential sleep
         retrying = False  # for retry loop
+        resume = False  # True when auto-resuming a partial local download
 
         self.item.session.mount_http_adapter(max_retries=retries)
         file_path = file_path or self.name
@@ -317,8 +324,15 @@ class File(BaseFile):
                         and self.name != f'{self.identifier}_files.xml' \
                         and os.path.exists(file_path.encode('utf-8')):
                     st = os.stat(file_path.encode('utf-8'))
-                    if st.st_size != self.size and not (checksum or checksum_archive):
+                    # Only auto-resume when the caller has not supplied an explicit
+                    # Range header (e.g. via the ``--range`` CLI flag). An explicit
+                    # range is an intentional partial fetch and must not trigger the
+                    # resume seek/append or the full-file checksum validation below.
+                    if st.st_size != self.size \
+                            and not (checksum or checksum_archive) \
+                            and 'Range' not in headers:
                         headers = {"Range": f"bytes={st.st_size}-"}
+                        resume = True
 
                 response = self.item.session.get(
                     self.url,
@@ -368,13 +382,13 @@ class File(BaseFile):
                 if stdout:
                     fileobj = os.fdopen(sys.stdout.fileno(), 'wb', closefd=False)
                 if not fileobj or retrying:
-                    if 'Range' in headers:
+                    if resume:
                         fileobj = open(file_path.encode('utf-8'), 'rb+')
                     else:
                         fileobj = open(file_path.encode('utf-8'), 'wb')
 
                 with fileobj, progress_bar as bar:
-                    if 'Range' in headers:
+                    if resume:
                         fileobj.seek(st.st_size)
                     for chunk in response.iter_content(chunk_size=chunk_size):
                         if chunk:
@@ -384,7 +398,7 @@ class File(BaseFile):
                     if ors:
                         fileobj.write(os.environ.get("ORS", "\n").encode("utf-8"))
 
-                if 'Range' in headers:
+                if resume:
                     with open(file_path, 'rb') as fh:
                         local_checksum = utils.get_md5(fh)
                     try:

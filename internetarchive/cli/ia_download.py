@@ -22,6 +22,7 @@ ia_download.py
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from typing import TextIO
 
@@ -120,6 +121,14 @@ def setup(subparsers):
     parser.add_argument("-s", "--stdout",
                         action="store_true",
                         help="Write file contents to stdout")
+    parser.add_argument("--range",
+                        dest="byte_range",
+                        metavar="START-END",
+                        help="Download only the given byte range, e.g. `0-1023` "
+                             "(or `bytes=0-1023`). Most useful with --stdout for "
+                             "partial fetches of (private) item files. Disables "
+                             "resume and full-file checksum validation. Open-ended "
+                             "ranges such as `1024-` are allowed.")
     parser.add_argument("--no-change-timestamp",
                         action="store_true",
                         help=("Don't change the timestamp of downloaded files to reflect "
@@ -158,6 +167,27 @@ def setup(subparsers):
     parser.set_defaults(func=lambda args: main(args, parser))
 
 
+def normalize_byte_range(value: str) -> str:
+    """Normalize a user-supplied ``--range`` value into an HTTP Range header value.
+
+    Accepts ``START-END``, ``START-`` (open-ended), or a value already prefixed
+    with ``bytes=``. Returns a string of the form ``bytes=START-END``.
+
+    :param value: The raw ``--range`` argument.
+    :returns: A normalized ``bytes=...`` Range header value.
+    :raises ValueError: If the range is not a valid single byte range.
+    """
+    spec = value.strip()
+    if spec.lower().startswith("bytes="):
+        spec = spec[len("bytes="):]
+    if not re.fullmatch(r"\d+-\d*", spec):
+        raise ValueError(f"invalid byte range: {value!r}")
+    start, _, end = spec.partition("-")
+    if end and int(end) < int(start):
+        raise ValueError(f"range end is before range start: {value!r}")
+    return f"bytes={spec}"
+
+
 def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     if args.itemlist and args.search:
         parser.error("--itemlist and --search cannot be used together")
@@ -171,6 +201,12 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         if not args.identifier:
             parser.error("Identifier is required when not using --itemlist/--search")
 
+    if args.byte_range:
+        try:
+            args.byte_range = normalize_byte_range(args.byte_range)
+        except ValueError as exc:
+            parser.error(str(exc))
+
 
 def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
@@ -181,6 +217,9 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
 
     ids: list[File | str] | Search | TextIO
     validate_args(args, parser)
+
+    # Built after validate_args so byte_range is normalized to a `bytes=...` value.
+    headers = {"Range": args.byte_range} if args.byte_range else None
 
     if args.itemlist:
         ids = [x.strip() for x in args.itemlist if x.strip()]
@@ -264,6 +303,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             stdout=args.stdout,
             timeout=args.timeout,
             count_views=args.count_views,
+            headers=headers,
         )
         if _errors:
             errors.append(_errors)

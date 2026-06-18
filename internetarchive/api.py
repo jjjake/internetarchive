@@ -333,6 +333,7 @@ def download(
     no_change_timestamp: bool = False,
     timeout: float | tuple[int, float] | None = None,
     count_views: bool = False,
+    headers: Mapping | None = None,
     **get_item_kwargs,
 ) -> list[requests.Request | requests.Response]:
     r"""Download files from an item.
@@ -383,6 +384,12 @@ def download(
     :param count_views: If True, omit the default ``cnt=0`` parameter so
                         downloads count toward archive.org view counts.
 
+    :param headers: Extra HTTP headers to send with each download request.
+                    Supplying a ``Range`` header (e.g.
+                    ``{'Range': 'bytes=0-1023'}``) performs an intentional
+                    partial fetch, skipping resume and full-file checksum
+                    validation.
+
     :param \*\*kwargs: Optional arguments that ``get_item`` takes.
 
     :returns: A list Requests if debug else a list of Responses.
@@ -407,6 +414,7 @@ def download(
         no_change_timestamp=no_change_timestamp,
         timeout=timeout,
         count_views=count_views,
+        headers=headers,
     )
     return r
 

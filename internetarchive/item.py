@@ -711,7 +711,7 @@ class Item(BaseItem):
                         if not any(fnmatch(f.get('name', ''), e) for e in exclude_patterns):
                             yield self.get_file(str(f.get('name')))
 
-    # ruff: noqa: PLR0912
+    # ruff: noqa: PLR0912, PLR0913
     def download(self,
                  files: File | list[File] | None = None,
                  formats: str | list[str] | None = None,
@@ -737,6 +737,7 @@ class Item(BaseItem):
                  params: Mapping | None = None,
                  timeout: float | tuple[int, float] | None = None,
                  count_views: bool = False,
+                 headers: Mapping | None = None,
                  ) -> list[Request | Response]:
         """Download files from an item.
 
@@ -806,6 +807,12 @@ class Item(BaseItem):
 
         :param count_views: If True, omit the default ``cnt=0`` parameter so
                             downloads count toward archive.org view counts.
+
+        :param headers: Extra HTTP headers to send with each download request.
+                        Supplying a ``Range`` header (e.g.
+                        ``{'Range': 'bytes=0-1023'}``) performs an intentional
+                        partial fetch, skipping resume and full-file checksum
+                        validation.
 
         :param ignore_history_dir: Do not download any files from the history
                                    dir. This param defaults to ``False``.
@@ -903,7 +910,7 @@ class Item(BaseItem):
                 r = f.download(path, verbose, ignore_existing, checksum, checksum_archive,
                                destdir, retries, ignore_errors, fileobj, return_responses,
                                no_change_timestamp, params, None, stdout, ors, timeout,
-                               count_views=count_views)
+                               headers=headers, count_views=count_views)
             except exceptions.DirectoryTraversalError as exc:  # type: ignore
                 # Record error and continue; do not abort entire download batch.
                 msg = f'error: {exc}'

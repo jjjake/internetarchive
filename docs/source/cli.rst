@@ -311,6 +311,14 @@ Download from an itemlist:
 
 See ``ia download --help`` for more details.
 
+You can download only a portion of a file with ``--range``. This sends an HTTP ``Range`` header and is most useful together with ``--stdout`` for inspecting part of a (possibly private) file without fetching the whole thing. Your configured credentials are used, so private items are supported:
+
+.. code:: console
+
+    $ ia download TripDown1905 TripDown1905.ogv --range 0-1023 --stdout > head.bin
+
+The range may be given as ``START-END`` or as an open-ended ``START-`` (e.g. ``1024-``). Because a ranged download is an intentional partial fetch, resume and full-file checksum validation are disabled for that request.
+
 
 Downloading On-The-Fly Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

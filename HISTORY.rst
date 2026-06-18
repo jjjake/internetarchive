@@ -6,6 +6,16 @@ Release History
 5.10.0 (unreleased)
 +++++++++++++++++++
 
+**Features and Improvements**
+
+- Added ``ia download --range START-END`` for partial (byte-range) downloads.
+  This sends an HTTP ``Range`` header and is most useful with ``--stdout`` for
+  fetching part of a file (including from private items, using configured
+  credentials). ``Item.download()``, ``File.download()``, and the top-level
+  ``internetarchive.download()`` gained a ``headers`` argument; passing a
+  ``Range`` header is treated as an intentional partial fetch and disables
+  resume and full-file checksum validation.
+
 **Bugfixes**
 
 - Fixed ``ia tasks --parameter`` crashing when combined with

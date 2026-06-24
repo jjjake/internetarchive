@@ -88,3 +88,56 @@ def test_item_download_count_views_propagates(tmpdir, nasa_item):
                            destdir=str(tmpdir),
                            count_views=True)
         assert 'cnt=' not in rsps.calls[-1].request.url
+
+
+def test_file_download_sends_range_header(tmpdir, nasa_item):
+    tmpdir.chdir()
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='test',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
+        file_obj = nasa_item.get_file('nasa_meta.xml')
+        file_obj.download(destdir=str(tmpdir), headers={'Range': 'bytes=0-3'})
+        assert rsps.calls[-1].request.headers.get('Range') == 'bytes=0-3'
+
+
+def test_item_download_headers_propagate(tmpdir, nasa_item):
+    tmpdir.chdir()
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='test',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
+        nasa_item.download(files=['nasa_meta.xml'],
+                           destdir=str(tmpdir),
+                           headers={'Range': 'bytes=0-3'})
+        assert rsps.calls[-1].request.headers.get('Range') == 'bytes=0-3'
+
+
+def test_file_download_explicit_range_skips_resume(tmpdir, nasa_item):
+    """An explicit Range must not trigger resume (seek/append) or the
+    full-file checksum validation, even when a shorter local file exists.
+    """
+    tmpdir.chdir()
+    file_obj = nasa_item.get_file('nasa_meta.xml')
+    # Pre-create a partial local file whose size differs from the remote size,
+    # which is what normally triggers the auto-resume code path.
+    local_path = os.path.join(str(tmpdir), 'nasa_meta.xml')
+    with open(local_path, 'w') as fh:
+        fh.write('AAAA')
+    assert len('AAAA') != file_obj.size
+
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='test',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
+        # Body md5 != file_obj.md5; if resume fired this would raise
+        # InvalidChecksumError. It must not.
+        file_obj.download(destdir=str(tmpdir), headers={'Range': 'bytes=5-8'})
+
+        # The user's Range was sent unchanged (not overwritten by an auto-resume
+        # ``bytes=<localsize>-`` header)...
+        assert rsps.calls[-1].request.headers.get('Range') == 'bytes=5-8'
+
+    # ...and the file was truncated + rewritten ('wb'), not appended to ('rb+').
+    with open(local_path) as fh:
+        assert fh.read() == 'test'

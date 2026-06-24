@@ -7,6 +7,7 @@ import pytest
 import responses
 
 from internetarchive import get_item
+from internetarchive.cli.ia_download import normalize_byte_range
 from internetarchive.utils import json
 from tests.conftest import (
     NASA_EXPECTED_FILES,
@@ -246,3 +247,35 @@ def test_default_sends_cnt_zero(tmpdir_ch):
         ia_call(['ia', '--insecure', 'download', '--no-directories',
                  'nasa', 'nasa_meta.xml'])
         assert 'cnt=0' in rsps.calls[-1].request.url
+
+
+@pytest.mark.parametrize(('value', 'expected'), [
+    ('0-1023', 'bytes=0-1023'),
+    ('bytes=0-1023', 'bytes=0-1023'),
+    ('1024-', 'bytes=1024-'),
+    (' 0-100 ', 'bytes=0-100'),
+    ('BYTES=5-9', 'bytes=5-9'),
+])
+def test_normalize_byte_range_valid(value, expected):
+    assert normalize_byte_range(value) == expected
+
+
+@pytest.mark.parametrize('value', ['abc', '-5', '5-1', '', 'bytes=', '0-1-2'])
+def test_normalize_byte_range_invalid(value):
+    with pytest.raises(ValueError, match='range'):
+        normalize_byte_range(value)
+
+
+def test_range_flag_sends_range_header(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='test')
+        ia_call(['ia', '--insecure', 'download', '--no-directories',
+                 '--range', '0-3', 'nasa', 'nasa_meta.xml'])
+        assert rsps.calls[-1].request.headers.get('Range') == 'bytes=0-3'
+
+
+def test_range_flag_rejects_invalid_range():
+    ia_call(['ia', '--insecure', 'download', 'nasa', 'nasa_meta.xml',
+             '--range', 'not-a-range'], expected_exit_code=2)

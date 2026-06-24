@@ -274,8 +274,9 @@ class File(BaseFile):
             if verbose:
                 print(f' warning: long path may cause issues: {file_path}', file=sys.stderr)
 
-        # Check if we should skip...
-        if not return_responses and os.path.exists(file_path.encode('utf-8')):
+        # Check if we should skip... (never when streaming to stdout: the
+        # local filesystem is irrelevant to a stdout download).
+        if not return_responses and not stdout and os.path.exists(file_path.encode('utf-8')):
             if checksum_archive:
                 checksum_archive_filename = '_checksum_archive.txt'
                 if not os.path.exists(checksum_archive_filename):
@@ -320,6 +321,7 @@ class File(BaseFile):
                     os.makedirs(parent_dir, exist_ok=True)
 
                 if not return_responses \
+                        and not stdout \
                         and not ignore_existing \
                         and self.name != f'{self.identifier}_files.xml' \
                         and os.path.exists(file_path.encode('utf-8')):
@@ -328,10 +330,13 @@ class File(BaseFile):
                     # Range header (e.g. via the ``--range`` CLI flag). An explicit
                     # range is an intentional partial fetch and must not trigger the
                     # resume seek/append or the full-file checksum validation below.
+                    # (Resume is also skipped for stdout, since seeking a pipe fails
+                    # and there is no local partial file to append to.)
                     if st.st_size != self.size \
                             and not (checksum or checksum_archive) \
                             and 'Range' not in headers:
-                        headers = {"Range": f"bytes={st.st_size}-"}
+                        # Preserve any caller-supplied headers; only set Range.
+                        headers = {**headers, "Range": f"bytes={st.st_size}-"}
                         resume = True
 
                 response = self.item.session.get(
@@ -353,7 +358,8 @@ class File(BaseFile):
                 response.raise_for_status()
 
                 # Check if we should skip based on last modified time...
-                if not fileobj and not return_responses and os.path.exists(file_path.encode('utf-8')):
+                if not fileobj and not return_responses and not stdout \
+                        and os.path.exists(file_path.encode('utf-8')):
                     st = os.stat(file_path.encode('utf-8'))
                     if st.st_mtime == last_mod_mtime:
                         if self.name == f'{self.identifier}_files.xml' or (st.st_size == self.size):
@@ -413,7 +419,11 @@ class File(BaseFile):
                 break
             except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout,
                     exceptions.InvalidChecksumError) as exc:
-                if retries > 0:
+                # A 416 (Range Not Satisfiable) is a permanent response to an
+                # explicit range request -- retrying cannot help, so fail fast.
+                resp = getattr(exc, 'response', None)
+                unsatisfiable = getattr(resp, 'status_code', None) == 416
+                if retries > 0 and not unsatisfiable:
                     retrying = True
                     retries -= 1
                     msg = ('download failed, sleeping for '
@@ -422,12 +432,21 @@ class File(BaseFile):
                     log.warning(msg)
                     sleep(retries_sleep)
                     continue
-                msg = f'error downloading file {file_path}, exception raised: {exc}'
+                if unsatisfiable:
+                    valid = resp.headers.get('Content-Range', '')
+                    rng = headers.get('Range', '')
+                    msg = (f'error downloading {file_path}: requested range '
+                           f'{rng!r} not satisfiable'
+                           + (f' (file is {valid})' if valid else ''))
+                else:
+                    msg = f'error downloading file {file_path}, exception raised: {exc}'
                 log.error(msg)
-                try:
-                    os.remove(file_path)
-                except OSError:
-                    pass
+                # Never touch the local filesystem for a stdout download.
+                if not stdout:
+                    try:
+                        os.remove(file_path)
+                    except OSError:
+                        pass
                 if verbose:
                     print(f' {msg}', file=sys.stderr)
                 if ignore_errors:

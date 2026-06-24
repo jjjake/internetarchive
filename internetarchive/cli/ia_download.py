@@ -127,9 +127,12 @@ def setup(subparsers):
                         metavar="[FILE:]START-END",
                         help="Download only the given byte range(s). Requires "
                              "--stdout and can be specified multiple times. A bare "
-                             "range (e.g. `0-1023`, `bytes=0-1023`, or open-ended "
-                             "`1024-`) applies to the named file; use one file with "
-                             "multiple ranges, or one range with multiple files. To "
+                             "range (e.g. `0-1023`, `bytes=0-1023`, open-ended "
+                             "`1024-`, or suffix `-1024` for the last 1024 bytes) "
+                             "applies to the named file; use one file with "
+                             "multiple ranges, or one range with multiple files. "
+                             "Comma-separated ranges (e.g. `0-1023,4096-8191`) are "
+                             "fetched in order, equivalent to repeating --range. To "
                              "pull ranges from different files, bind each explicitly "
                              "as FILE:START-END (e.g. `--range a.warc.gz:0-9 --range "
                              "b.warc.gz:50-99`). Segments are written back-to-back "
@@ -177,8 +180,9 @@ def setup(subparsers):
 def normalize_byte_range(value: str) -> str:
     """Normalize a user-supplied ``--range`` value into an HTTP Range header value.
 
-    Accepts ``START-END``, ``START-`` (open-ended), or a value already prefixed
-    with ``bytes=``. Returns a string of the form ``bytes=START-END``.
+    Accepts ``START-END``, open-ended ``START-``, suffix ``-N`` (the last ``N``
+    bytes), or a value already prefixed with ``bytes=``. Returns a string of the
+    form ``bytes=...``.
 
     :param value: The raw ``--range`` argument.
     :returns: A normalized ``bytes=...`` Range header value.
@@ -187,12 +191,34 @@ def normalize_byte_range(value: str) -> str:
     spec = value.strip()
     if spec.lower().startswith("bytes="):
         spec = spec[len("bytes="):]
-    if not re.fullmatch(r"\d+-\d*", spec):
+    if not re.fullmatch(r"\d+-\d*|-\d+", spec):
         raise ValueError(f"invalid byte range: {value!r}")
     start, _, end = spec.partition("-")
-    if end and int(end) < int(start):
+    if start and end and int(end) < int(start):
         raise ValueError(f"range end is before range start: {value!r}")
     return f"bytes={spec}"
+
+
+def parse_byte_ranges(value: str) -> list[str]:
+    """Parse a (possibly comma-separated) ``--range`` value into Range headers.
+
+    Accepts the HTTP multi-range syntax: one or more comma-separated byte ranges
+    with an optional single leading ``bytes=`` (e.g. ``50-99,123-180`` or
+    ``bytes=0-9,-100``). Each range is normalized independently and returned as
+    its own ``bytes=...`` value -- one per upstream request, since we expand a
+    comma list client-side rather than sending a single multi-range request.
+
+    :param value: The raw ``--range`` argument.
+    :returns: One normalized ``bytes=...`` value per comma-separated range.
+    :raises ValueError: If the value is empty or any segment is not a valid range.
+    """
+    spec = value.strip()
+    if spec.lower().startswith("bytes="):
+        spec = spec[len("bytes="):]
+    parts = spec.split(",")
+    if any(p.strip() == "" for p in parts):
+        raise ValueError(f"invalid byte range: {value!r}")
+    return [normalize_byte_range(p) for p in parts]
 
 
 def positional_files(args: argparse.Namespace) -> list[str]:
@@ -217,33 +243,37 @@ def build_range_jobs(
     """Resolve repeatable ``--range`` values into an ordered job list.
 
     Each ``--range`` value is either a bare ``[bytes=]START-END`` (which binds to
-    the explicitly-named file) or a file-bound ``FILE:START-END``. Returns an
-    ordered list of ``(filename, "bytes=...")`` jobs. Any rule violation is
-    reported via ``parser.error`` (which exits with status 2).
+    the explicitly-named file) or a file-bound ``FILE:START-END``. A value may
+    carry several comma-separated ranges (HTTP multi-range syntax, e.g.
+    ``0-9,50-99``), which expand to one job each, in order. Returns an ordered
+    list of ``(filename, "bytes=...")`` jobs. Any rule violation is reported via
+    ``parser.error`` (which exits with status 2).
 
     :param args: Parsed CLI arguments (``args.ranges`` holds the raw values).
     :param parser: The argument parser, used to emit errors.
     :returns: Ordered ``(filename, range_header_value)`` jobs.
     """
+    err = ("expected [bytes=]START-END[,START-END...] or "
+           "FILE:START-END[,...]")
     parsed: list[tuple[str | None, str]] = []
     for raw in args.ranges:
-        # A bare range is anything that parses as a range on its own.
+        # A bare value parses (in full) as one or more comma-separated ranges.
         try:
-            parsed.append((None, normalize_byte_range(raw)))
+            for rng in parse_byte_ranges(raw):
+                parsed.append((None, rng))
             continue
         except ValueError:
             pass
-        # Otherwise it must be FILE:START-END (split on the last colon so file
+        # Otherwise it must be FILE:RANGES (split on the last colon so file
         # names containing a colon still work).
         file_part, sep, range_part = raw.rpartition(":")
         if not sep or not file_part:
-            parser.error(f"could not parse --range {raw!r}: "
-                         "expected START-END or FILE:START-END")
+            parser.error(f"could not parse --range {raw!r}: {err}")
         try:
-            parsed.append((file_part, normalize_byte_range(range_part)))
+            for rng in parse_byte_ranges(range_part):
+                parsed.append((file_part, rng))
         except ValueError:
-            parser.error(f"could not parse --range {raw!r}: "
-                         "expected START-END or FILE:START-END")
+            parser.error(f"could not parse --range {raw!r}: {err}")
 
     has_bare = any(f is None for f, _ in parsed)
     has_bound = any(f is not None for f, _ in parsed)
@@ -301,6 +331,9 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
     if args.ranges:
         if not args.stdout:
             parser.error("--range requires --stdout")
+        if args.identifier == "-":
+            parser.error("--range cannot be combined with reading identifiers "
+                         "from stdin")
         args.range_jobs = build_range_jobs(args, parser)
     else:
         args.range_jobs = None

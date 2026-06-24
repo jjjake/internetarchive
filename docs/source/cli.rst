@@ -314,7 +314,7 @@ See ``ia download --help`` for more details.
 Downloading byte ranges
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can download only part of a file with ``--range``, which sends an HTTP ``Range`` header. It **requires** ``--stdout`` (so you can pipe or redirect the bytes), uses your configured credentials (so private items work), and can be specified multiple times. A range may be given as ``START-END``, an open-ended ``START-`` (e.g. ``1024-``), or ``bytes=START-END``.
+You can download only part of a file with ``--range``, which sends an HTTP ``Range`` header. It **requires** ``--stdout`` (so you can pipe or redirect the bytes), uses your configured credentials (so private items work), and can be specified multiple times. A range may be given as ``START-END``, an open-ended ``START-`` (e.g. ``1024-``), a suffix ``-N`` (the last ``N`` bytes, e.g. ``-1024``), or ``bytes=START-END``.
 
 A bare range applies to the file named on the command line:
 
@@ -331,6 +331,12 @@ With bare ranges you may vary *either* the range *or* the file, but not both at 
     # the same range from several files
     $ ia download ITEM a.bin b.bin --stdout --range 0-1023
 
+Multiple ranges for one file may also be given as a single comma-separated value (the HTTP multi-range syntax); they are fetched in order, exactly as if you had repeated ``--range``:
+
+.. code:: console
+
+    $ ia download ITEM file.bin --stdout --range 0-1023,4096-8191
+
 To pull ranges from *different* files, bind each range to its file with ``FILE:START-END``:
 
 .. code:: console
@@ -344,7 +350,7 @@ Segments are written back-to-back with **no separator** between them (unlike a n
     # CDX fields: ... S(length) V(offset) g(filename); range is V-(V+S-1)
     $ ia download ITEM crawl.warc.gz --stdout --range 270034594-270035614 | zcat
 
-Because a ranged download is an intentional partial fetch, resume and full-file checksum validation are disabled for the request.
+Because a ranged download is an intentional partial fetch, resume and full-file checksum validation are disabled for the request. A range that lies entirely beyond the end of the file is rejected by the server (HTTP ``416``) and fails immediately with a clear error; a range that covers the whole file simply returns the full contents.
 
 
 Downloading On-The-Fly Files

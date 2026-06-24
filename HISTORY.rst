@@ -11,17 +11,28 @@ Release History
 - Added ``ia download --range`` for partial (byte-range) downloads. It requires
   ``--stdout`` and is repeatable, taking ``[FILE:]START-END`` values: a bare
   range binds to the named file (vary the range or the file, not both at once),
-  or ``FILE:START-END`` binds each range to its own file. Segments are streamed
-  back-to-back with no separator, so e.g. WARC records selected via a CDX
-  index's compressed offset/length can be piped straight to ``zcat``. Useful
-  for partial fetches of private items (configured credentials are used).
-  ``Item.download()``, ``File.download()``, and the top-level
-  ``internetarchive.download()`` gained a ``headers`` argument, and
+  or ``FILE:START-END`` binds each range to its own file. Ranges may be given as
+  ``START-END``, open-ended ``START-``, suffix ``-N`` (the last ``N`` bytes), or
+  ``bytes=...``, and a single value may carry several comma-separated ranges
+  (``0-9,50-99``), fetched in order. Segments are streamed back-to-back with no separator, so e.g.
+  WARC records selected via a CDX index's compressed offset/length can be piped
+  straight to ``zcat``. Useful for partial fetches of private items (configured
+  credentials are used). ``Item.download()``, ``File.download()``, and the
+  top-level ``internetarchive.download()`` gained a ``headers`` argument, and
   ``Item.download()`` a ``range_jobs`` argument; passing a ``Range`` header is
   treated as an intentional partial fetch and disables resume and full-file
-  checksum validation.
+  checksum validation. An unsatisfiable range (HTTP ``416``) fails fast with a
+  clear message instead of being retried; a range covering the whole file
+  returns the full contents (HTTP ``200``).
 
 **Bugfixes**
+
+- Fixed ``File.download(stdout=True)`` consulting the local filesystem: a
+  same-named local file could cause the stream to be skipped (length/date or
+  checksum match) or trigger the auto-resume code path, which seeks the output
+  and fails on a pipe. A stdout download now ignores any on-disk file.
+- Fixed auto-resume discarding caller-supplied headers; the internal ``Range``
+  header is now merged into the provided ``headers`` rather than replacing them.
 
 - Fixed ``ia tasks --parameter`` crashing when combined with
   ``--get-task-log``. Parameters such as ``lines`` are now merged into the

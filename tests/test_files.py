@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 import responses
+from requests.exceptions import HTTPError
 
 from internetarchive.exceptions import DirectoryTraversalError
 from internetarchive.utils import sanitize_filename
@@ -170,3 +171,57 @@ def test_file_download_explicit_range_skips_resume(tmpdir, nasa_item):
     # ...and the file was truncated + rewritten ('wb'), not appended to ('rb+').
     with open(local_path) as fh:
         assert fh.read() == 'test'
+
+
+def test_range_not_satisfiable_fails_fast(tmpdir, nasa_item):
+    """A 416 (Range Not Satisfiable) is permanent: it must not be retried, and
+    with ignore_errors it returns False rather than raising."""
+    tmpdir.chdir()
+    file_obj = nasa_item.get_file('nasa_meta.xml')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 status=416,
+                 adding_headers={'Content-Range': 'bytes */7105'})
+        result = file_obj.download(destdir=str(tmpdir), ignore_errors=True,
+                                   headers={'Range': 'bytes=99999999-'})
+        assert result is False
+        # Exactly one request: the 416 was not retried.
+        assert len(rsps.calls) == 1
+
+
+def test_range_not_satisfiable_raises_without_ignore_errors(tmpdir, nasa_item):
+    tmpdir.chdir()
+    file_obj = nasa_item.get_file('nasa_meta.xml')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 status=416,
+                 adding_headers={'Content-Range': 'bytes */7105'})
+        with pytest.raises(HTTPError):
+            file_obj.download(destdir=str(tmpdir),
+                              headers={'Range': 'bytes=99999999-'})
+        assert len(rsps.calls) == 1
+
+
+def test_stdout_ignores_local_file_no_resume_or_skip(tmpdir, nasa_item, capfd):
+    """A stdout download must never consult the local filesystem: no skip,
+    no auto-resume seek/append, regardless of a same-named local file.
+
+    A same-named local file whose size differs from the remote size is what
+    normally triggers the auto-resume path (and seeking a pipe would fail).
+    """
+    tmpdir.chdir()
+    file_obj = nasa_item.get_file('nasa_meta.xml')
+    with open(os.path.join(str(tmpdir), 'nasa_meta.xml'), 'w') as fh:
+        fh.write('AA')
+    assert len('AA') != file_obj.size
+
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE,
+                 body='test',
+                 adding_headers=EXPECTED_LAST_MOD_HEADER)
+        file_obj.download(stdout=True)
+        # No auto-resume Range header was sent for the stdout download...
+        assert 'Range' not in rsps.calls[-1].request.headers
+
+    # ...and the full body went to stdout (not skipped, not appended locally).
+    assert capfd.readouterr().out == 'test'

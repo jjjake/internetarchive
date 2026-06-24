@@ -113,6 +113,35 @@ def test_item_download_headers_propagate(tmpdir, nasa_item):
         assert rsps.calls[-1].request.headers.get('Range') == 'bytes=0-3'
 
 
+def test_item_download_range_jobs_no_separator(nasa_item, capfd):
+    """Range segments are concatenated raw to stdout -- no ORS between them, so
+    e.g. gzip members stay byte-adjacent."""
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='AAAA')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='BBBB')
+        nasa_item.download(
+            range_jobs=[('nasa_meta.xml', 'bytes=0-3'),
+                        ('nasa_meta.xml', 'bytes=5-9')],
+            stdout=True,
+        )
+    out = capfd.readouterr().out
+    assert out == 'AAAABBBB'  # no '\n' (or any) separator between segments
+
+
+def test_item_download_range_jobs_sends_ranges_in_order(nasa_item):
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='AAAA')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='BBBB')
+        nasa_item.download(
+            range_jobs=[('nasa_meta.xml', 'bytes=0-3'),
+                        ('nasa_meta.xml', 'bytes=5-9')],
+            stdout=True,
+        )
+        ranges = [c.request.headers['Range']
+                  for c in rsps.calls if 'Range' in c.request.headers]
+        assert ranges == ['bytes=0-3', 'bytes=5-9']
+
+
 def test_file_download_explicit_range_skips_resume(tmpdir, nasa_item):
     """An explicit Range must not trigger resume (seek/append) or the
     full-file checksum validation, even when a shorter local file exists.

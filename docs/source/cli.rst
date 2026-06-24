@@ -311,13 +311,40 @@ Download from an itemlist:
 
 See ``ia download --help`` for more details.
 
-You can download only a portion of a file with ``--range``. This sends an HTTP ``Range`` header and is most useful together with ``--stdout`` for inspecting part of a (possibly private) file without fetching the whole thing. Your configured credentials are used, so private items are supported:
+Downloading byte ranges
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can download only part of a file with ``--range``, which sends an HTTP ``Range`` header. It **requires** ``--stdout`` (so you can pipe or redirect the bytes), uses your configured credentials (so private items work), and can be specified multiple times. A range may be given as ``START-END``, an open-ended ``START-`` (e.g. ``1024-``), or ``bytes=START-END``.
+
+A bare range applies to the file named on the command line:
 
 .. code:: console
 
-    $ ia download TripDown1905 TripDown1905.ogv --range 0-1023 --stdout > head.bin
+    $ ia download TripDown1905 TripDown1905.ogv --stdout --range 0-1023 > head.bin
 
-The range may be given as ``START-END`` or as an open-ended ``START-`` (e.g. ``1024-``). Because a ranged download is an intentional partial fetch, resume and full-file checksum validation are disabled for that request.
+With bare ranges you may vary *either* the range *or* the file, but not both at once — give multiple ranges for one file, or one range for several files:
+
+.. code:: console
+
+    # multiple ranges from one file
+    $ ia download ITEM file.bin --stdout --range 0-1023 --range 4096-8191
+    # the same range from several files
+    $ ia download ITEM a.bin b.bin --stdout --range 0-1023
+
+To pull ranges from *different* files, bind each range to its file with ``FILE:START-END``:
+
+.. code:: console
+
+    $ ia download ITEM --stdout --range a.warc.gz:0-9 --range b.warc.gz:50-99
+
+Segments are written back-to-back with **no separator** between them (unlike a normal multi-file ``--stdout``, which inserts the ORS). This means concatenated gzip members stay byte-adjacent, so you can extract WARC records using the compressed offset/length from a CDX index and pipe straight to ``zcat``:
+
+.. code:: console
+
+    # CDX fields: ... S(length) V(offset) g(filename); range is V-(V+S-1)
+    $ ia download ITEM crawl.warc.gz --stdout --range 270034594-270035614 | zcat
+
+Because a ranged download is an intentional partial fetch, resume and full-file checksum validation are disabled for the request.
 
 
 Downloading On-The-Fly Files

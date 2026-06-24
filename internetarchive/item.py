@@ -711,6 +711,53 @@ class Item(BaseItem):
                         if not any(fnmatch(f.get('name', ''), e) for e in exclude_patterns):
                             yield self.get_file(str(f.get('name')))
 
+    def _download_range_jobs(
+        self,
+        range_jobs: list[tuple[str, str]],
+        **kwargs,
+    ) -> list[Request | Response]:
+        """Stream partial (byte-range) downloads for an ordered list of jobs.
+
+        Each job is a ``(filename, range_header_value)`` tuple. Jobs are written
+        in order with **no** separator between them (``ors=False``), so the bytes
+        returned by the server are concatenated raw -- concatenated gzip members
+        (e.g. ``.warc.gz`` records) stay byte-adjacent and can be piped to
+        ``zcat``. The same file may appear more than once.
+
+        :param range_jobs: Ordered ``(filename, "bytes=...")`` tuples.
+        :param kwargs: Download options forwarded to :meth:`File.download`.
+        :returns: A list of responses if ``return_responses`` is set, else ``[]``.
+        """
+        responses = []
+        for name, byte_range in range_jobs:
+            f = self.get_file(name)
+            if kwargs.get("dry_run"):
+                print(f.url)
+                continue
+            r = f.download(
+                f.name,
+                kwargs.get("verbose"),
+                kwargs.get("ignore_existing"),
+                kwargs.get("checksum"),
+                kwargs.get("checksum_archive"),
+                kwargs.get("destdir"),
+                kwargs.get("retries"),
+                kwargs.get("ignore_errors"),
+                kwargs.get("fileobj"),
+                kwargs.get("return_responses"),
+                kwargs.get("no_change_timestamp"),
+                kwargs.get("params"),
+                None,  # chunk_size
+                kwargs.get("stdout"),
+                False,  # ors -- raw concatenation, no separator between segments
+                kwargs.get("timeout"),
+                headers={"Range": byte_range},
+                count_views=kwargs.get("count_views", False),
+            )
+            if kwargs.get("return_responses"):
+                responses.append(r)
+        return responses
+
     # ruff: noqa: PLR0912, PLR0913
     def download(self,
                  files: File | list[File] | None = None,
@@ -738,6 +785,7 @@ class Item(BaseItem):
                  timeout: float | tuple[int, float] | None = None,
                  count_views: bool = False,
                  headers: Mapping | None = None,
+                 range_jobs: list[tuple[str, str]] | None = None,
                  ) -> list[Request | Response]:
         """Download files from an item.
 
@@ -814,6 +862,15 @@ class Item(BaseItem):
                         partial fetch, skipping resume and full-file checksum
                         validation.
 
+        :param range_jobs: An ordered list of ``(filename, range_header_value)``
+                           tuples for partial (byte-range) downloads, e.g.
+                           ``[('a.warc.gz', 'bytes=0-1023')]``. Intended for use
+                           with ``stdout=True``: each job is streamed in order
+                           with **no** separator between them (raw
+                           concatenation), so the same file may appear more than
+                           once. When set, this supersedes ``files``/``formats``/
+                           ``glob_pattern`` selection.
+
         :param ignore_history_dir: Do not download any files from the history
                                    dir. This param defaults to ``False``.
 
@@ -860,6 +917,17 @@ class Item(BaseItem):
             if verbose:
                 print(f' {msg}', file=sys.stderr)
             return []
+
+        if range_jobs:
+            return self._download_range_jobs(
+                range_jobs, verbose=verbose, ignore_existing=ignore_existing,
+                checksum=checksum, checksum_archive=checksum_archive,
+                destdir=destdir, retries=retries, ignore_errors=ignore_errors,
+                fileobj=fileobj, return_responses=return_responses,
+                no_change_timestamp=no_change_timestamp, params=params,
+                stdout=stdout, timeout=timeout, count_views=count_views,
+                dry_run=dry_run,
+            )
 
         if files:
             files = self.get_files(files, on_the_fly=on_the_fly)

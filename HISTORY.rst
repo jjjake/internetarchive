@@ -8,13 +8,18 @@ Release History
 
 **Features and Improvements**
 
-- Added ``ia download --range START-END`` for partial (byte-range) downloads.
-  This sends an HTTP ``Range`` header and is most useful with ``--stdout`` for
-  fetching part of a file (including from private items, using configured
-  credentials). ``Item.download()``, ``File.download()``, and the top-level
-  ``internetarchive.download()`` gained a ``headers`` argument; passing a
-  ``Range`` header is treated as an intentional partial fetch and disables
-  resume and full-file checksum validation.
+- Added ``ia download --range`` for partial (byte-range) downloads. It requires
+  ``--stdout`` and is repeatable, taking ``[FILE:]START-END`` values: a bare
+  range binds to the named file (vary the range or the file, not both at once),
+  or ``FILE:START-END`` binds each range to its own file. Segments are streamed
+  back-to-back with no separator, so e.g. WARC records selected via a CDX
+  index's compressed offset/length can be piped straight to ``zcat``. Useful
+  for partial fetches of private items (configured credentials are used).
+  ``Item.download()``, ``File.download()``, and the top-level
+  ``internetarchive.download()`` gained a ``headers`` argument, and
+  ``Item.download()`` a ``range_jobs`` argument; passing a ``Range`` header is
+  treated as an intentional partial fetch and disables resume and full-file
+  checksum validation.
 
 **Bugfixes**
 

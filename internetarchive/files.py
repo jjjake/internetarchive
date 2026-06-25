@@ -230,6 +230,10 @@ class File(BaseFile):
         retries_sleep = 3  # TODO: exponential sleep
         retrying = False  # for retry loop
         resume = False  # True when auto-resuming a partial local download
+        # Whether the caller supplied an explicit Range header (case-insensitive).
+        # An explicit range is an intentional partial fetch and must never trigger
+        # auto-resume or full-file checksum validation.
+        explicit_range = any(k.lower() == 'range' for k in headers)
 
         self.item.session.mount_http_adapter(max_retries=retries)
         file_path = file_path or self.name
@@ -334,7 +338,11 @@ class File(BaseFile):
                     # and there is no local partial file to append to.)
                     if st.st_size != self.size \
                             and not (checksum or checksum_archive) \
-                            and 'Range' not in headers:
+                            and not explicit_range:
+                        # Recompute the resume Range from the current file size on
+                        # every attempt so it stays aligned with the seek offset
+                        # below; a stale Range left over from a prior attempt would
+                        # re-fetch already-written bytes and corrupt the file.
                         # Preserve any caller-supplied headers; only set Range.
                         headers = {**headers, "Range": f"bytes={st.st_size}-"}
                         resume = True
@@ -386,8 +394,10 @@ class File(BaseFile):
                 if not chunk_size:
                     chunk_size = 1048576
                 if stdout:
+                    # stdout is its own sink; never fall back to a local file,
+                    # even on a retry (which must keep writing to the pipe).
                     fileobj = os.fdopen(sys.stdout.fileno(), 'wb', closefd=False)
-                if not fileobj or retrying:
+                elif not fileobj or retrying:
                     if resume:
                         fileobj = open(file_path.encode('utf-8'), 'rb+')
                     else:

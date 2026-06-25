@@ -257,21 +257,17 @@ def build_range_jobs(
            "FILE:START-END[,...]")
     parsed: list[tuple[str | None, str]] = []
     for raw in args.ranges:
-        # A bare value parses (in full) as one or more comma-separated ranges.
-        try:
-            for rng in parse_byte_ranges(raw):
-                parsed.append((None, rng))
-            continue
-        except ValueError:
-            pass
-        # Otherwise it must be FILE:RANGES (split on the last colon so file
-        # names containing a colon still work).
+        # A bare range never contains a colon (only digits, '-', ',', and an
+        # optional leading 'bytes='), so a ':' unambiguously marks the FILE:RANGES
+        # form. Split on the last colon so filenames containing a colon still work.
         file_part, sep, range_part = raw.rpartition(":")
-        if not sep or not file_part:
-            parser.error(f"could not parse --range {raw!r}: {err}")
+        if sep and file_part:
+            target, spec = file_part, range_part
+        else:
+            target, spec = None, raw
         try:
-            for rng in parse_byte_ranges(range_part):
-                parsed.append((file_part, rng))
+            for rng in parse_byte_ranges(spec):
+                parsed.append((target, rng))
         except ValueError:
             parser.error(f"could not parse --range {raw!r}: {err}")
 

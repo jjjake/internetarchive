@@ -350,7 +350,7 @@ Segments are written back-to-back with **no separator** between them (unlike a n
     # CDX fields: ... S(length) V(offset) g(filename); range is V-(V+S-1)
     $ ia download ITEM crawl.warc.gz --stdout --range 270034594-270035614 | zcat
 
-Because a ranged download is an intentional partial fetch, resume and full-file checksum validation are disabled for the request. A range that lies entirely beyond the end of the file is rejected by the server (HTTP ``416``) and fails immediately with a clear error; a range that covers the whole file simply returns the full contents.
+Because a ranged download is an intentional partial fetch, resume and full-file checksum validation are disabled for the request. A range that lies entirely beyond the end of the file is rejected by the server (HTTP ``416``) and fails immediately with a clear error; a range that covers the whole file simply returns the full contents. If any segment fails, ``ia download`` exits non-zero, so a downstream pipe consumer can tell the output is incomplete.
 
 
 Downloading On-The-Fly Files

@@ -1,3 +1,4 @@
+import argparse
 import os
 import re
 import sys
@@ -7,7 +8,11 @@ import pytest
 import responses
 
 from internetarchive import get_item
-from internetarchive.cli.ia_download import normalize_byte_range, parse_byte_ranges
+from internetarchive.cli.ia_download import (
+    build_range_jobs,
+    normalize_byte_range,
+    parse_byte_ranges,
+)
 from internetarchive.utils import json
 from tests.conftest import (
     NASA_EXPECTED_FILES,
@@ -417,3 +422,34 @@ def test_range_file_form_same_file_repeated(tmpdir_ch):
 ])
 def test_range_invalid_invocations(argv):
     ia_call(argv, expected_exit_code=2)
+
+
+def test_range_job_failure_exits_nonzero(tmpdir_ch):
+    """A failed range segment must propagate a nonzero exit code, so a downstream
+    pipe consumer can tell the bytes are incomplete."""
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re,
+                 status=416,
+                 adding_headers={'Content-Range': 'bytes */7105'})
+        ia_call(['ia', '--insecure', 'download', '--no-directories', '--stdout',
+                 '--range', '99999999-', 'nasa', 'nasa_meta.xml'],
+                expected_exit_code=1)
+
+
+def _range_args(ranges, identifier='nasa', file=None):
+    """Build a minimal argparse.Namespace for build_range_jobs unit tests."""
+    return argparse.Namespace(
+        identifier=identifier, file=file or [], glob=None, format=None,
+        source=None, exclude_source=None, search=None, itemlist=None,
+        ranges=ranges,
+    )
+
+
+def test_build_range_jobs_filename_with_colon():
+    """A FILE:RANGE value whose filename itself contains a colon binds to the
+    full filename (split on the last colon)."""
+    parser = argparse.ArgumentParser()
+    args = _range_args(['weird:name.warc.gz:0-9'])
+    assert build_range_jobs(args, parser) == [('weird:name.warc.gz', 'bytes=0-9')]

@@ -33,6 +33,21 @@ Release History
   and fails on a pipe. A stdout download now ignores any on-disk file.
 - Fixed auto-resume discarding caller-supplied headers; the internal ``Range``
   header is now merged into the provided ``headers`` rather than replacing them.
+- Fixed a retried ``stdout`` download falling back to writing a local disk file
+  instead of the pipe (leaving the pipe empty). A ``stdout`` download now always
+  writes to ``stdout``, even across retries.
+- Fixed auto-resume corrupting a file when a resumed transfer was itself retried:
+  the internal ``Range`` header was not recomputed for the retry, so it no longer
+  matched the (grown) local file and the seek offset, re-fetching already-written
+  bytes. The resume ``Range`` is now recomputed from the current file size on
+  every attempt.
+- Fixed the explicit-range check being case-sensitive, so a caller-supplied
+  lowercase ``range`` header was silently clobbered by an auto-resume ``Range``.
+  The check is now case-insensitive.
+- Fixed ranged ``--range`` segment failures being silently swallowed: a failed
+  segment now surfaces as a download error (nonzero exit), and caller-supplied
+  ``headers`` are forwarded to every ranged request (merged with the per-segment
+  ``Range``).
 
 - Fixed ``ia tasks --parameter`` crashing when combined with
   ``--get-task-log``. Parameters such as ``lines`` are now merged into the

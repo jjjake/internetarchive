@@ -714,6 +714,7 @@ class Item(BaseItem):
     def _download_range_jobs(
         self,
         range_jobs: list[tuple[str, str]],
+        headers: Mapping | None = None,
         **kwargs,
     ) -> list[Request | Response]:
         """Stream partial (byte-range) downloads for an ordered list of jobs.
@@ -725,10 +726,17 @@ class Item(BaseItem):
         ``zcat``. The same file may appear more than once.
 
         :param range_jobs: Ordered ``(filename, "bytes=...")`` tuples.
+        :param headers: Extra HTTP headers merged into each request (the per-job
+                        ``Range`` header takes precedence).
         :param kwargs: Download options forwarded to :meth:`File.download`.
-        :returns: A list of responses if ``return_responses`` is set, else ``[]``.
+        :returns: A list of responses if ``return_responses`` is set, else a list
+                  of the filenames whose download failed (empty if all succeeded),
+                  mirroring :meth:`download`.
         """
+        base_headers = dict(headers) if headers else {}
+        return_responses = kwargs.get("return_responses")
         responses = []
+        errors = []
         for name, byte_range in range_jobs:
             f = self.get_file(name)
             if kwargs.get("dry_run"):
@@ -736,27 +744,28 @@ class Item(BaseItem):
                 continue
             r = f.download(
                 f.name,
-                kwargs.get("verbose"),
-                kwargs.get("ignore_existing"),
-                kwargs.get("checksum"),
-                kwargs.get("checksum_archive"),
-                kwargs.get("destdir"),
-                kwargs.get("retries"),
-                kwargs.get("ignore_errors"),
-                kwargs.get("fileobj"),
-                kwargs.get("return_responses"),
-                kwargs.get("no_change_timestamp"),
-                kwargs.get("params"),
-                None,  # chunk_size
-                kwargs.get("stdout"),
-                False,  # ors -- raw concatenation, no separator between segments
-                kwargs.get("timeout"),
-                headers={"Range": byte_range},
+                verbose=kwargs.get("verbose"),
+                ignore_existing=kwargs.get("ignore_existing"),
+                checksum=kwargs.get("checksum"),
+                checksum_archive=kwargs.get("checksum_archive"),
+                destdir=kwargs.get("destdir"),
+                retries=kwargs.get("retries"),
+                ignore_errors=kwargs.get("ignore_errors"),
+                fileobj=kwargs.get("fileobj"),
+                return_responses=return_responses,
+                no_change_timestamp=kwargs.get("no_change_timestamp"),
+                params=kwargs.get("params"),
+                stdout=kwargs.get("stdout"),
+                ors=False,  # raw concatenation, no separator between segments
+                timeout=kwargs.get("timeout"),
+                headers={**base_headers, "Range": byte_range},
                 count_views=kwargs.get("count_views", False),
             )
-            if kwargs.get("return_responses"):
+            if return_responses:
                 responses.append(r)
-        return responses
+            if r is False:
+                errors.append(f.name)
+        return responses if return_responses else errors
 
     # ruff: noqa: PLR0912, PLR0913
     def download(self,
@@ -920,10 +929,11 @@ class Item(BaseItem):
 
         if range_jobs:
             return self._download_range_jobs(
-                range_jobs, verbose=verbose, ignore_existing=ignore_existing,
-                checksum=checksum, checksum_archive=checksum_archive,
-                destdir=destdir, retries=retries, ignore_errors=ignore_errors,
-                fileobj=fileobj, return_responses=return_responses,
+                range_jobs, headers=headers, verbose=verbose,
+                ignore_existing=ignore_existing, checksum=checksum,
+                checksum_archive=checksum_archive, destdir=destdir,
+                retries=retries, ignore_errors=ignore_errors, fileobj=fileobj,
+                return_responses=return_responses,
                 no_change_timestamp=no_change_timestamp, params=params,
                 stdout=stdout, timeout=timeout, count_views=count_views,
                 dry_run=dry_run,

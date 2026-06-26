@@ -36,7 +36,7 @@ import socket
 import sys
 import threading
 import warnings
-from typing import Iterable, Mapping, MutableMapping
+from typing import Any, Iterable, Mapping, MutableMapping
 from urllib.parse import unquote, urlparse
 
 import requests
@@ -346,7 +346,7 @@ class ArchiveSession(requests.sessions.Session):
 
         _log.addHandler(sh)
 
-    def whoami(self) -> str:
+    def whoami(self) -> dict[str, Any]:
         """Return the logged-in user email address.
 
         :returns: The logged-in user email address.

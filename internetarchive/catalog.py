@@ -27,10 +27,12 @@ This module contains objects for interacting with the Archive.org catalog.
 """
 from __future__ import annotations
 
+import time
 from datetime import datetime
 from logging import getLogger
-from typing import Iterable, Mapping, MutableMapping
+from typing import Iterable, Iterator, Mapping, MutableMapping
 
+import requests
 from requests import Response
 from requests.exceptions import HTTPError
 
@@ -39,6 +41,38 @@ from internetarchive import session as ia_session
 from internetarchive.utils import json
 
 log = getLogger(__name__)
+
+FOLLOW_POLL_INTERVAL = 2.0
+
+# How many consecutive transient request failures follow mode tolerates
+# before re-raising (failures 1 through N-1 are retried; the Nth is fatal).
+# Each counted failure already represents an exhausted session-layer urllib3
+# retry cycle, so reaching this means a genuinely persistent outage.
+FOLLOW_MAX_CONSECUTIVE_ERRORS = 5
+
+# Task ``status`` values that mean the task is still alive and may produce more
+# log output. A finished task is either done (returned from history with a null
+# status) or errored (``status='error'``, which lingers in the catalog awaiting
+# admin) -- both are terminal for follow purposes.
+ACTIVE_TASK_STATUSES = frozenset({'running', 'queued', 'paused'})
+
+
+def _is_transient_error(exc: requests.exceptions.RequestException) -> bool:
+    """Return ``True`` if ``exc`` is a transient failure worth retrying.
+
+    Connection errors, premature chunked responses, timeouts, and 5xx
+    responses are transient. 4xx responses (and an ``HTTPError`` without an
+    attached response) are fatal -- they won't heal by retrying.
+
+    :param exc: The exception raised by a follow-mode request.
+
+    :returns: ``True`` if the error is transient, else ``False``.
+    """
+    if isinstance(exc, HTTPError):
+        return exc.response is not None and exc.response.status_code >= 500
+    return isinstance(exc, (requests.exceptions.ConnectionError,
+                            requests.exceptions.ChunkedEncodingError,
+                            requests.exceptions.Timeout))
 
 
 def sort_by_date(task_dict: CatalogTask) -> datetime:
@@ -308,6 +342,41 @@ class CatalogTask:
                                  request_kwargs=self.request_kwargs)
 
     @staticmethod
+    def _request_task_log(
+        task_id: int | str | None,
+        session: ia_session.ArchiveSession,
+        *,
+        params: Mapping | None = None,
+        request_kwargs: Mapping | None = None
+    ) -> Response:
+        """Make the HTTP request for a task log and return the raw Response.
+
+        :param task_id: The task id for the task log you'd like to fetch.
+
+        :param session: :class:`ArchiveSession <ArchiveSession>`
+
+        :param params: Extra URL parameters to send with the request.
+
+        :param request_kwargs: Keyword arguments that
+                               :py:class:`requests.Request` takes.
+
+        :returns: :class:`requests.Response`
+        """
+        request_kwargs = request_kwargs or {}
+        _auth = auth.S3Auth(session.access_key, session.secret_key)
+        if session.host == 'archive.org':
+            host = 'catalogd.archive.org'
+        else:
+            host = session.host
+        url = f'{session.protocol}//{host}/services/tasks.php'
+        _params = {'task_log': task_id}
+        if params:
+            _params.update(params)
+        r = session.get(url, params=_params, auth=_auth, **request_kwargs)
+        r.raise_for_status()
+        return r
+
+    @staticmethod
     def get_task_log(
         task_id: int | str | None,
         session: ia_session.ArchiveSession,
@@ -332,16 +401,199 @@ class CatalogTask:
 
         :returns: The task log as a string.
         """
-        request_kwargs = request_kwargs or {}
-        _auth = auth.S3Auth(session.access_key, session.secret_key)
-        if session.host == 'archive.org':
-            host = 'catalogd.archive.org'
-        else:
-            host = session.host
-        url = f'{session.protocol}//{host}/services/tasks.php'
-        _params = {'task_log': task_id}
-        if params:
-            _params.update(params)
-        r = session.get(url, params=_params, auth=_auth, **request_kwargs)
-        r.raise_for_status()
+        r = CatalogTask._request_task_log(task_id, session, params=params,
+                                          request_kwargs=request_kwargs)
         return r.content.decode('utf-8', errors='surrogateescape')
+
+    @staticmethod
+    def _select_log_lines(text: str, lines: int | None) -> str:
+        """Return the initial backlog slice of ``text`` for follow mode.
+
+        Replicates Tasks API ``lines`` semantics: ``None`` -> whole log,
+        negative ``N`` -> last N lines, ``0`` -> nothing. Positive values
+        (first N lines / the head of the log) are rejected by the callers,
+        since a head slice cannot be followed.
+
+        :param text: The full decoded task log.
+
+        :param lines: Number of lines of backlog to keep, or ``None`` for all.
+
+        :returns: The selected backlog text (newlines preserved).
+        """
+        if lines is None:
+            return text
+        if lines == 0:
+            return ''
+        parts = text.splitlines(keepends=True)
+        selected = parts[:lines] if lines > 0 else parts[lines:]
+        return ''.join(selected)
+
+    @staticmethod
+    def _task_is_active(
+        task_id: int | str,
+        session: ia_session.ArchiveSession,
+        request_kwargs: Mapping | None = None
+    ) -> bool:
+        """Return ``True`` while the task may still produce log output.
+
+        A task's ``status`` is the authoritative signal: ``running``,
+        ``queued`` and ``paused`` are alive, while ``error`` (which lingers in
+        the catalog awaiting admin) and ``done`` (returned from history with a
+        null status) are terminal. Catalog membership alone is not reliable.
+
+        :param task_id: The task id to check.
+
+        :param session: :class:`ArchiveSession <ArchiveSession>`
+
+        :param request_kwargs: Keyword arguments for the request.
+
+        :returns: ``True`` if the task is active, else ``False``.
+        """
+        tasks = session.get_tasks(
+            params={'task_id': task_id, 'catalog': 1, 'history': 1, 'summary': 0},
+            request_kwargs=request_kwargs)
+        for t in tasks:
+            if str(getattr(t, 'task_id', '')) == str(task_id):
+                if getattr(t, 'status', None) in ACTIVE_TASK_STATUSES:
+                    return True
+        return False
+
+    @staticmethod
+    def follow_task_log(
+        task_id: int | str,
+        session: ia_session.ArchiveSession,
+        *,
+        lines: int | None = None,
+        params: Mapping | None = None,
+        request_kwargs: Mapping | None = None
+    ) -> Iterator[str]:
+        """Follow a task log as it grows, ``tail -f`` style.
+
+        Yields newly appended text as it appears. Stops automatically when
+        the task's status indicates it has finished (the task is no longer
+        ``running``, ``queued``, or ``paused``).
+
+        :param task_id: The task id to follow.
+
+        :param session: :class:`ArchiveSession <ArchiveSession>`
+
+        :param lines: How much existing backlog to emit before following,
+                      using Tasks API ``lines`` semantics: ``None`` = the
+                      whole log, negative ``N`` = the last ``N`` lines, ``0`` =
+                      none. A positive value (the head of the log) cannot be
+                      followed and is rejected.
+
+        :param params: Extra URL parameters forwarded to every task-log
+                       request. Do not pass the Tasks API ``lines`` parameter
+                       here (it would truncate the body and break delta
+                       tracking) -- use the ``lines`` argument instead.
+
+        :param request_kwargs: Keyword arguments that
+                               :py:class:`requests.Request` takes.
+
+        :returns: An iterator of newly appended log text.
+
+        :raises ValueError: If ``lines`` is positive (the head of the log
+            cannot be followed; use a negative value for the last N lines).
+
+        :raises requests.exceptions.RequestException: On a fatal request
+            error, or when transient errors persist for
+            ``FOLLOW_MAX_CONSECUTIVE_ERRORS`` consecutive polls.
+        """
+        if lines is not None and lines > 0:
+            raise ValueError(
+                "follow_task_log: a positive 'lines' value selects the head "
+                "of the log and cannot be followed; use a negative value for "
+                "the last N lines (e.g. lines=-20)")
+        seen = 0
+        last_modified = None
+        first = True
+        consecutive_errors = 0
+
+        def _request_kwargs(conditional: bool) -> dict:
+            # The conditional poll sends If-Modified-Since for a cheap 304;
+            # the final/unconditional read must never be short-circuited by a
+            # conditional header (including one a caller supplied), or it could
+            # 304 away the trailing bytes it exists to catch.
+            rk = dict(request_kwargs or {})
+            headers = dict(rk.get('headers', {}))
+            if conditional and last_modified:
+                headers['If-Modified-Since'] = last_modified
+            else:
+                headers.pop('If-Modified-Since', None)
+            rk['headers'] = headers
+            return rk
+
+        while True:
+            # Everything is computed inside the try and yielded outside it,
+            # so a failure can never lose or duplicate already-fetched
+            # output, and exceptions never fire mid-yield.
+            to_yield: list[str] = []
+            stop = False
+            try:
+                checked_first = first
+                r = CatalogTask._request_task_log(
+                    task_id, session, params=params,
+                    request_kwargs=_request_kwargs(conditional=True))
+
+                grew = False
+                if r.status_code != 304:
+                    body = r.content.decode('utf-8', errors='surrogateescape')
+                    lm = r.headers.get('Last-Modified')
+                    if lm:
+                        last_modified = lm
+                    # Task logs are append-only in practice; a body shorter
+                    # than what we've already emitted can only be a transient
+                    # bad response, so such a poll is skipped entirely.
+                    if first:
+                        initial = CatalogTask._select_log_lines(body, lines)
+                        if initial:
+                            to_yield.append(initial)
+                        seen = len(body)
+                        first = False
+                        grew = True
+                    elif len(body) >= seen:
+                        new = body[seen:]
+                        if new:
+                            to_yield.append(new)
+                            seen = len(body)
+                            grew = True
+
+                # Check the task status after the first poll (so an already
+                # finished task exits at once instead of waiting a full poll
+                # interval) and on any later poll that produced no new output.
+                terminal = False
+                if checked_first or not grew:
+                    terminal = not CatalogTask._task_is_active(
+                        task_id, session, request_kwargs=request_kwargs)
+                # Only fetch the trailing bytes when this poll produced nothing,
+                # so a failed final fetch can never discard buffered output.
+                if terminal and not grew:
+                    r = CatalogTask._request_task_log(
+                        task_id, session, params=params,
+                        request_kwargs=_request_kwargs(conditional=False))
+                    body = r.content.decode('utf-8', errors='surrogateescape')
+                    if len(body) >= seen:
+                        new = body[seen:]
+                        if new:
+                            to_yield.append(new)
+                    stop = True
+            except requests.exceptions.RequestException as exc:
+                if not _is_transient_error(exc):
+                    raise
+                consecutive_errors += 1
+                if consecutive_errors >= FOLLOW_MAX_CONSECUTIVE_ERRORS:
+                    raise
+                log.warning('Transient error following task %s log (%d/%d): %s',
+                            task_id, consecutive_errors,
+                            FOLLOW_MAX_CONSECUTIVE_ERRORS, exc)
+                time.sleep(FOLLOW_POLL_INTERVAL)
+                continue
+            consecutive_errors = 0
+            yield from to_yield
+            if stop:
+                return
+            # A terminal task that just emitted its backlog reconciles on the
+            # next poll without sleeping first -- no idle wait before exit.
+            if not terminal:
+                time.sleep(FOLLOW_POLL_INTERVAL)

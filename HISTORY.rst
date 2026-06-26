@@ -24,6 +24,13 @@ Release History
   checksum validation. An unsatisfiable range (HTTP ``416``) fails fast with a
   clear message instead of being retried; a range covering the whole file
   returns the full contents (HTTP ``200``).
+- Added ``ia tasks --follow-task-log <task_id>`` to follow a task log live
+  as the task runs (``tail -f`` style), stopping automatically when the task
+  finishes. Combine with ``-p lines=-N`` to seed the last ``N`` lines first
+  (Tasks API ``lines`` semantics, as with ``--get-task-log``); any other
+  ``-p`` params are forwarded to the Tasks API. A new
+  ``ArchiveSession.follow_task_log()`` method exposes the same behavior to the
+  library.
 
 **Bugfixes**
 

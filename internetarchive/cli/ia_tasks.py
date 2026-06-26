@@ -23,6 +23,8 @@ import argparse
 import sys
 import warnings
 
+from requests.exceptions import RequestException
+
 from internetarchive.cli.cli_utils import PostDataAction, QueryStringAction
 from internetarchive.utils import json
 
@@ -41,8 +43,12 @@ def setup(subparsers):
     parser.add_argument("-t", "--task",
                         nargs="*",
                         help="Return information about the given task.")
-    parser.add_argument("-G", "--get-task-log",
-                        help="Return the given tasks task log.")
+    log_group = parser.add_mutually_exclusive_group()
+    log_group.add_argument("-G", "--get-task-log",
+                           help="Return the given tasks task log.")
+    log_group.add_argument("-F", "--follow-task-log",
+                           help="Follow the given task's log as it grows "
+                                "(tail -f style); stops when the task finishes.")
     parser.add_argument("-p", "--parameter",
                         nargs=1,
                         action=QueryStringAction,
@@ -126,6 +132,12 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         handle_task_submission_result(r.json(), args.cmd)
         sys.exit(0)
 
+    # A positional identifier selects a metadata query and would silently
+    # shadow -G/-F (which take their own task id), so reject the combination.
+    if args.identifier and (args.get_task_log or args.follow_task_log):
+        parser.error("argument identifier: not allowed with "
+                     "-G/--get-task-log or -F/--follow-task-log")
+
     # Tasks read API.
     if args.identifier:
         _params = {"identifier": args.identifier, "catalog": 1, "history": 1}
@@ -135,6 +147,54 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         log = args.session.get_task_log(args.get_task_log, params=args.parameter)
         print(log.encode("utf-8", errors="surrogateescape")
                  .decode("utf-8", errors="replace"))
+        sys.exit(0)
+    elif args.follow_task_log:
+        # ``lines`` keeps Tasks API semantics (negative N = the last N lines)
+        # but is applied client-side and never forwarded to the server, which
+        # would truncate the body and break delta tracking. A positive value
+        # selects the head of the log, which can't be followed, so reject it.
+        # Every other -p param is forwarded to each request.
+        raw_lines = args.parameter.get("lines")
+        lines = None
+        if raw_lines is not None:
+            try:
+                lines = int(raw_lines)
+            except (TypeError, ValueError):
+                print(f"error: lines must be an integer, got {raw_lines!r}",
+                      file=sys.stderr)
+                sys.exit(1)
+            if lines > 0:
+                print("error: --follow-task-log: 'lines' must be negative "
+                      "(the last N lines, e.g. -p lines=-20); a positive value "
+                      "selects the head of the log, which can't be followed",
+                      file=sys.stderr)
+                sys.exit(1)
+        params = {k: v for k, v in args.parameter.items()
+                  if k != "lines"} or None
+        # An unknown task id makes the Tasks API return an empty 200 body, so
+        # the follower would stream nothing and exit 0 -- misleading. Verify
+        # the task exists first so a bad id fails fast with a clear message.
+        tid = args.follow_task_log
+        try:
+            found = any(
+                str(getattr(t, "task_id", "")) == str(tid)
+                for t in args.session.get_tasks(
+                    params={"task_id": tid, "catalog": 1,
+                            "history": 1, "summary": 0}))
+            if not found:
+                print(f"error: task {tid} not found", file=sys.stderr)
+                sys.exit(1)
+            for chunk in args.session.follow_task_log(tid, lines=lines,
+                                                      params=params):
+                sys.stdout.write(
+                    chunk.encode("utf-8", errors="surrogateescape")
+                         .decode("utf-8", errors="replace"))
+                sys.stdout.flush()
+        except KeyboardInterrupt:
+            pass
+        except RequestException as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            sys.exit(1)
         sys.exit(0)
 
     queryable_params = [

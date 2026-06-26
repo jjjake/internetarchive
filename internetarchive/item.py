@@ -711,7 +711,63 @@ class Item(BaseItem):
                         if not any(fnmatch(f.get('name', ''), e) for e in exclude_patterns):
                             yield self.get_file(str(f.get('name')))
 
-    # ruff: noqa: PLR0912
+    def _download_range_jobs(
+        self,
+        range_jobs: list[tuple[str, str]],
+        headers: Mapping | None = None,
+        **kwargs,
+    ) -> list[Request | Response]:
+        """Stream partial (byte-range) downloads for an ordered list of jobs.
+
+        Each job is a ``(filename, range_header_value)`` tuple. Jobs are written
+        in order with **no** separator between them (``ors=False``), so the bytes
+        returned by the server are concatenated raw -- concatenated gzip members
+        (e.g. ``.warc.gz`` records) stay byte-adjacent and can be piped to
+        ``zcat``. The same file may appear more than once.
+
+        :param range_jobs: Ordered ``(filename, "bytes=...")`` tuples.
+        :param headers: Extra HTTP headers merged into each request (the per-job
+                        ``Range`` header takes precedence).
+        :param kwargs: Download options forwarded to :meth:`File.download`.
+        :returns: A list of responses if ``return_responses`` is set, else a list
+                  of the filenames whose download failed (empty if all succeeded),
+                  mirroring :meth:`download`.
+        """
+        base_headers = dict(headers) if headers else {}
+        return_responses = kwargs.get("return_responses")
+        responses = []
+        errors = []
+        for name, byte_range in range_jobs:
+            f = self.get_file(name)
+            if kwargs.get("dry_run"):
+                print(f.url)
+                continue
+            r = f.download(
+                f.name,
+                verbose=kwargs.get("verbose"),
+                ignore_existing=kwargs.get("ignore_existing"),
+                checksum=kwargs.get("checksum"),
+                checksum_archive=kwargs.get("checksum_archive"),
+                destdir=kwargs.get("destdir"),
+                retries=kwargs.get("retries"),
+                ignore_errors=kwargs.get("ignore_errors"),
+                fileobj=kwargs.get("fileobj"),
+                return_responses=return_responses,
+                no_change_timestamp=kwargs.get("no_change_timestamp"),
+                params=kwargs.get("params"),
+                stdout=kwargs.get("stdout"),
+                ors=False,  # raw concatenation, no separator between segments
+                timeout=kwargs.get("timeout"),
+                headers={**base_headers, "Range": byte_range},
+                count_views=kwargs.get("count_views", False),
+            )
+            if return_responses:
+                responses.append(r)
+            if r is False:
+                errors.append(f.name)
+        return responses if return_responses else errors
+
+    # ruff: noqa: PLR0912, PLR0913
     def download(self,
                  files: File | list[File] | None = None,
                  formats: str | list[str] | None = None,
@@ -737,6 +793,8 @@ class Item(BaseItem):
                  params: Mapping | None = None,
                  timeout: float | tuple[int, float] | None = None,
                  count_views: bool = False,
+                 headers: Mapping | None = None,
+                 range_jobs: list[tuple[str, str]] | None = None,
                  ) -> list[Request | Response]:
         """Download files from an item.
 
@@ -807,6 +865,21 @@ class Item(BaseItem):
         :param count_views: If True, omit the default ``cnt=0`` parameter so
                             downloads count toward archive.org view counts.
 
+        :param headers: Extra HTTP headers to send with each download request.
+                        Supplying a ``Range`` header (e.g.
+                        ``{'Range': 'bytes=0-1023'}``) performs an intentional
+                        partial fetch, skipping resume and full-file checksum
+                        validation.
+
+        :param range_jobs: An ordered list of ``(filename, range_header_value)``
+                           tuples for partial (byte-range) downloads, e.g.
+                           ``[('a.warc.gz', 'bytes=0-1023')]``. Intended for use
+                           with ``stdout=True``: each job is streamed in order
+                           with **no** separator between them (raw
+                           concatenation), so the same file may appear more than
+                           once. When set, this supersedes ``files``/``formats``/
+                           ``glob_pattern`` selection.
+
         :param ignore_history_dir: Do not download any files from the history
                                    dir. This param defaults to ``False``.
 
@@ -853,6 +926,18 @@ class Item(BaseItem):
             if verbose:
                 print(f' {msg}', file=sys.stderr)
             return []
+
+        if range_jobs:
+            return self._download_range_jobs(
+                range_jobs, headers=headers, verbose=verbose,
+                ignore_existing=ignore_existing, checksum=checksum,
+                checksum_archive=checksum_archive, destdir=destdir,
+                retries=retries, ignore_errors=ignore_errors, fileobj=fileobj,
+                return_responses=return_responses,
+                no_change_timestamp=no_change_timestamp, params=params,
+                stdout=stdout, timeout=timeout, count_views=count_views,
+                dry_run=dry_run,
+            )
 
         if files:
             files = self.get_files(files, on_the_fly=on_the_fly)
@@ -903,7 +988,7 @@ class Item(BaseItem):
                 r = f.download(path, verbose, ignore_existing, checksum, checksum_archive,
                                destdir, retries, ignore_errors, fileobj, return_responses,
                                no_change_timestamp, params, None, stdout, ors, timeout,
-                               count_views=count_views)
+                               headers=headers, count_views=count_views)
             except exceptions.DirectoryTraversalError as exc:  # type: ignore
                 # Record error and continue; do not abort entire download batch.
                 msg = f'error: {exc}'

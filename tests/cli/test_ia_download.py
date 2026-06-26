@@ -1,3 +1,4 @@
+import argparse
 import os
 import re
 import sys
@@ -7,6 +8,11 @@ import pytest
 import responses
 
 from internetarchive import get_item
+from internetarchive.cli.ia_download import (
+    build_range_jobs,
+    normalize_byte_range,
+    parse_byte_ranges,
+)
 from internetarchive.utils import json
 from tests.conftest import (
     NASA_EXPECTED_FILES,
@@ -246,3 +252,204 @@ def test_default_sends_cnt_zero(tmpdir_ch):
         ia_call(['ia', '--insecure', 'download', '--no-directories',
                  'nasa', 'nasa_meta.xml'])
         assert 'cnt=0' in rsps.calls[-1].request.url
+
+
+@pytest.mark.parametrize(('value', 'expected'), [
+    ('0-1023', 'bytes=0-1023'),
+    ('bytes=0-1023', 'bytes=0-1023'),
+    ('1024-', 'bytes=1024-'),
+    ('-5', 'bytes=-5'),
+    ('bytes=-1024', 'bytes=-1024'),
+    (' 0-100 ', 'bytes=0-100'),
+    ('BYTES=5-9', 'bytes=5-9'),
+])
+def test_normalize_byte_range_valid(value, expected):
+    assert normalize_byte_range(value) == expected
+
+
+@pytest.mark.parametrize('value', ['abc', '-', '5-1', '', 'bytes=', '0-1-2'])
+def test_normalize_byte_range_invalid(value):
+    with pytest.raises(ValueError, match='range'):
+        normalize_byte_range(value)
+
+
+@pytest.mark.parametrize(('value', 'expected'), [
+    ('0-9', ['bytes=0-9']),
+    ('0-9,50-99', ['bytes=0-9', 'bytes=50-99']),
+    ('bytes=0-9,-100', ['bytes=0-9', 'bytes=-100']),
+    (' 0-9 , 50-99 ', ['bytes=0-9', 'bytes=50-99']),
+])
+def test_parse_byte_ranges_valid(value, expected):
+    assert parse_byte_ranges(value) == expected
+
+
+@pytest.mark.parametrize('value', ['', '0-9,', ',', '0-9,abc', '0-9,,50-99'])
+def test_parse_byte_ranges_invalid(value):
+    with pytest.raises(ValueError, match='range'):
+        parse_byte_ranges(value)
+
+
+def _range_headers(rsps):
+    """Return the Range header of every download request, in call order."""
+    return [c.request.headers['Range']
+            for c in rsps.calls if 'Range' in c.request.headers]
+
+
+def test_range_single_bare(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='test')
+        ia_call(['ia', '--insecure', 'download', '--no-directories', '--stdout',
+                 '--range', '0-3', 'nasa', 'nasa_meta.xml'])
+        assert _range_headers(rsps) == ['bytes=0-3']
+
+
+def test_range_suffix_bare(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='test')
+        ia_call(['ia', '--insecure', 'download', '--no-directories', '--stdout',
+                 '--range', '-100', 'nasa', 'nasa_meta.xml'])
+        assert _range_headers(rsps) == ['bytes=-100']
+
+
+def test_range_bare_multi_range_one_file(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='AAAA')
+        rsps.add(responses.GET, download_url_re, body='BBBB')
+        ia_call(['ia', '--insecure', 'download', '--no-directories', '--stdout',
+                 '--range', '0-3', '--range', '5-9', 'nasa', 'nasa_meta.xml'])
+        # Both ranges, same file, in flag order.
+        assert _range_headers(rsps) == ['bytes=0-3', 'bytes=5-9']
+
+
+def test_range_bare_comma_one_file(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='AAAA')
+        rsps.add(responses.GET, download_url_re, body='BBBB')
+        ia_call(['ia', '--insecure', 'download', '--no-directories', '--stdout',
+                 '--range', '0-3,5-9', 'nasa', 'nasa_meta.xml'])
+        # A comma list expands to one request per range, in order -- identical
+        # to repeating --range.
+        assert _range_headers(rsps) == ['bytes=0-3', 'bytes=5-9']
+
+
+def test_range_file_form_comma(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='AAAA')
+        rsps.add(responses.GET, download_url_re, body='BBBB')
+        ia_call(['ia', '--insecure', 'download', '--no-directories', '--stdout',
+                 '--range', 'nasa_meta.xml:0-3,5-9', 'nasa'])
+        assert _range_headers(rsps) == ['bytes=0-3', 'bytes=5-9']
+        urls = [c.request.url for c in rsps.calls if 'Range' in c.request.headers]
+        assert all('nasa_meta.xml' in u for u in urls)
+
+
+def test_range_bare_single_range_multi_file(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='AAAA')
+        rsps.add(responses.GET, download_url_re, body='BBBB')
+        ia_call(['ia', '--insecure', 'download', '--no-directories', '--stdout',
+                 '--range', '0-3', 'nasa', 'nasa_meta.xml', 'globe_west_540.jpg'])
+        # Same range applied to each file, in file order.
+        assert _range_headers(rsps) == ['bytes=0-3', 'bytes=0-3']
+        urls = [c.request.url for c in rsps.calls if 'Range' in c.request.headers]
+        assert 'nasa_meta.xml' in urls[0]
+        assert 'globe_west_540.jpg' in urls[1]
+
+
+def test_range_file_form_multi_file(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='AAAA')
+        rsps.add(responses.GET, download_url_re, body='BBBB')
+        ia_call(['ia', '--insecure', 'download', '--no-directories', '--stdout',
+                 '--range', 'nasa_meta.xml:0-3',
+                 '--range', 'globe_west_540.jpg:5-9', 'nasa'])
+        assert _range_headers(rsps) == ['bytes=0-3', 'bytes=5-9']
+        urls = [c.request.url for c in rsps.calls if 'Range' in c.request.headers]
+        assert 'nasa_meta.xml' in urls[0]
+        assert 'globe_west_540.jpg' in urls[1]
+
+
+def test_range_file_form_same_file_repeated(tmpdir_ch):
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re, body='AAAA')
+        rsps.add(responses.GET, download_url_re, body='BBBB')
+        ia_call(['ia', '--insecure', 'download', '--no-directories', '--stdout',
+                 '--range', 'nasa_meta.xml:0-3',
+                 '--range', 'nasa_meta.xml:5-9', 'nasa'])
+        assert _range_headers(rsps) == ['bytes=0-3', 'bytes=5-9']
+
+
+@pytest.mark.parametrize('argv', [
+    # --range requires --stdout
+    ['ia', '--insecure', 'download', 'nasa', 'nasa_meta.xml', '--range', '0-3'],
+    # bare range with no file to bind to
+    ['ia', '--insecure', 'download', '--stdout', 'nasa', '--range', '0-3'],
+    # multiple bare ranges with multiple files is ambiguous
+    ['ia', '--insecure', 'download', '--stdout', 'nasa', 'a', 'b',
+     '--range', '0-3', '--range', '5-9'],
+    # a comma list is multiple ranges too -- still ambiguous with multiple files
+    ['ia', '--insecure', 'download', '--stdout', 'nasa', 'a', 'b',
+     '--range', '0-3,5-9'],
+    # cannot mix bare and FILE: forms
+    ['ia', '--insecure', 'download', '--stdout', 'nasa',
+     '--range', '0-3', '--range', 'f:5-9'],
+    # FILE: form cannot combine with selectors
+    ['ia', '--insecure', 'download', '--stdout', 'nasa',
+     '--glob', '*', '--range', 'f:0-3'],
+    ['ia', '--insecure', 'download', '--stdout', '--itemlist', '/dev/null',
+     '--range', 'f:0-3'],
+    # cannot read identifiers from stdin with --range
+    ['ia', '--insecure', 'download', '--stdout', '-', '--range', 'f:0-3'],
+    # invalid range value
+    ['ia', '--insecure', 'download', '--stdout', 'nasa', 'nasa_meta.xml',
+     '--range', 'not-a-range'],
+])
+def test_range_invalid_invocations(argv):
+    ia_call(argv, expected_exit_code=2)
+
+
+def test_range_job_failure_exits_nonzero(tmpdir_ch):
+    """A failed range segment must propagate a nonzero exit code, so a downstream
+    pipe consumer can tell the bytes are incomplete."""
+    download_url_re = re.compile(r'https?://archive.org/download/.*')
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('nasa')
+        rsps.add(responses.GET, download_url_re,
+                 status=416,
+                 adding_headers={'Content-Range': 'bytes */7105'})
+        ia_call(['ia', '--insecure', 'download', '--no-directories', '--stdout',
+                 '--range', '99999999-', 'nasa', 'nasa_meta.xml'],
+                expected_exit_code=1)
+
+
+def _range_args(ranges, identifier='nasa', file=None):
+    """Build a minimal argparse.Namespace for build_range_jobs unit tests."""
+    return argparse.Namespace(
+        identifier=identifier, file=file or [], glob=None, format=None,
+        source=None, exclude_source=None, search=None, itemlist=None,
+        ranges=ranges,
+    )
+
+
+def test_build_range_jobs_filename_with_colon():
+    """A FILE:RANGE value whose filename itself contains a colon binds to the
+    full filename (split on the last colon)."""
+    parser = argparse.ArgumentParser()
+    args = _range_args(['weird:name.warc.gz:0-9'])
+    assert build_range_jobs(args, parser) == [('weird:name.warc.gz', 'bytes=0-9')]

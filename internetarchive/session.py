@@ -36,7 +36,7 @@ import socket
 import sys
 import threading
 import warnings
-from typing import Iterable, Mapping, MutableMapping
+from typing import Iterable, Iterator, Mapping, MutableMapping
 from urllib.parse import unquote, urlparse
 
 import requests
@@ -688,7 +688,8 @@ class ArchiveSession(requests.sessions.Session):
                         task_id: str | int,
                         *,
                         lines: int | None = None,
-                        request_kwargs: Mapping | None = None):
+                        params: Mapping | None = None,
+                        request_kwargs: Mapping | None = None) -> Iterator[str]:
         """Follow a task log as it grows, ``tail -f`` style.
 
         Yields newly appended text as it appears, stopping when the task
@@ -697,17 +698,26 @@ class ArchiveSession(requests.sessions.Session):
 
         :param task_id: The task id to follow.
 
-        :param lines: How many trailing lines of existing backlog to emit
-                      before following (same semantics as the Tasks API
-                      ``lines`` parameter; ``None`` = the whole log).
+        :param lines: How much existing backlog to emit before following,
+                      using Tasks API ``lines`` semantics: ``None`` = the
+                      whole log, negative ``N`` = the last ``N`` lines, ``0`` =
+                      none. A positive value (the head of the log) cannot be
+                      followed and is rejected.
+
+        :param params: Extra URL parameters forwarded to every task-log
+                       request (do not pass the Tasks API ``lines`` parameter
+                       here; use the ``lines`` argument instead).
 
         :param request_kwargs: Keyword arguments that
                                :py:class:`requests.Request` takes.
 
         :returns: An iterator of newly appended log text.
+
+        :raises ValueError: If ``lines`` is positive.
         """
         return catalog.CatalogTask.follow_task_log(
-            task_id, self, lines=lines, request_kwargs=request_kwargs)
+            task_id, self, lines=lines, params=params,
+            request_kwargs=request_kwargs)
 
     def send(self, request, **kwargs) -> Response:
         """Send a prepared request, handling HTTPS security warnings.

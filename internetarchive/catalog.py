@@ -410,8 +410,9 @@ class CatalogTask:
         """Return the initial backlog slice of ``text`` for follow mode.
 
         Replicates Tasks API ``lines`` semantics: ``None`` -> whole log,
-        positive ``N`` -> first N lines, negative ``N`` -> last N lines,
-        ``0`` -> nothing.
+        negative ``N`` -> last N lines, ``0`` -> nothing. Positive values
+        (first N lines / the head of the log) are rejected by the callers,
+        since a head slice cannot be followed.
 
         :param text: The full decoded task log.
 
@@ -463,6 +464,7 @@ class CatalogTask:
         session: ia_session.ArchiveSession,
         *,
         lines: int | None = None,
+        params: Mapping | None = None,
         request_kwargs: Mapping | None = None
     ) -> Iterator[str]:
         """Follow a task log as it grows, ``tail -f`` style.
@@ -475,23 +477,53 @@ class CatalogTask:
 
         :param session: :class:`ArchiveSession <ArchiveSession>`
 
-        :param lines: How many trailing lines of existing backlog to emit
-                      before following (same semantics as the Tasks API
-                      ``lines`` parameter; ``None`` = the whole log).
+        :param lines: How much existing backlog to emit before following,
+                      using Tasks API ``lines`` semantics: ``None`` = the
+                      whole log, negative ``N`` = the last ``N`` lines, ``0`` =
+                      none. A positive value (the head of the log) cannot be
+                      followed and is rejected.
+
+        :param params: Extra URL parameters forwarded to every task-log
+                       request. Do not pass the Tasks API ``lines`` parameter
+                       here (it would truncate the body and break delta
+                       tracking) -- use the ``lines`` argument instead.
 
         :param request_kwargs: Keyword arguments that
                                :py:class:`requests.Request` takes.
 
         :returns: An iterator of newly appended log text.
 
+        :raises ValueError: If ``lines`` is positive (the head of the log
+            cannot be followed; use a negative value for the last N lines).
+
         :raises requests.exceptions.RequestException: On a fatal request
             error, or when transient errors persist for
             ``FOLLOW_MAX_CONSECUTIVE_ERRORS`` consecutive polls.
         """
+        if lines is not None and lines > 0:
+            raise ValueError(
+                "follow_task_log: a positive 'lines' value selects the head "
+                "of the log and cannot be followed; use a negative value for "
+                "the last N lines (e.g. lines=-20)")
         seen = 0
         last_modified = None
         first = True
         consecutive_errors = 0
+
+        def _request_kwargs(conditional: bool) -> dict:
+            # The conditional poll sends If-Modified-Since for a cheap 304;
+            # the final/unconditional read must never be short-circuited by a
+            # conditional header (including one a caller supplied), or it could
+            # 304 away the trailing bytes it exists to catch.
+            rk = dict(request_kwargs or {})
+            headers = dict(rk.get('headers', {}))
+            if conditional and last_modified:
+                headers['If-Modified-Since'] = last_modified
+            else:
+                headers.pop('If-Modified-Since', None)
+            rk['headers'] = headers
+            return rk
+
         while True:
             # Everything is computed inside the try and yielded outside it,
             # so a failure can never lose or duplicate already-fetched
@@ -499,13 +531,10 @@ class CatalogTask:
             to_yield: list[str] = []
             stop = False
             try:
-                rk = dict(request_kwargs or {})
-                headers = dict(rk.get('headers', {}))
-                if last_modified:
-                    headers['If-Modified-Since'] = last_modified
-                rk['headers'] = headers
-                r = CatalogTask._request_task_log(task_id, session,
-                                                  request_kwargs=rk)
+                checked_first = first
+                r = CatalogTask._request_task_log(
+                    task_id, session, params=params,
+                    request_kwargs=_request_kwargs(conditional=True))
 
                 grew = False
                 if r.status_code != 304:
@@ -530,19 +559,25 @@ class CatalogTask:
                             seen = len(body)
                             grew = True
 
-                if not grew:
-                    if not CatalogTask._task_is_active(
-                            task_id, session, request_kwargs=request_kwargs):
-                        # Final fetch to catch any trailing bytes, then stop.
-                        r = CatalogTask._request_task_log(
-                            task_id, session, request_kwargs=request_kwargs)
-                        body = r.content.decode('utf-8',
-                                                errors='surrogateescape')
-                        if len(body) >= seen:
-                            new = body[seen:]
-                            if new:
-                                to_yield.append(new)
-                        stop = True
+                # Check the task status after the first poll (so an already
+                # finished task exits at once instead of waiting a full poll
+                # interval) and on any later poll that produced no new output.
+                terminal = False
+                if checked_first or not grew:
+                    terminal = not CatalogTask._task_is_active(
+                        task_id, session, request_kwargs=request_kwargs)
+                # Only fetch the trailing bytes when this poll produced nothing,
+                # so a failed final fetch can never discard buffered output.
+                if terminal and not grew:
+                    r = CatalogTask._request_task_log(
+                        task_id, session, params=params,
+                        request_kwargs=_request_kwargs(conditional=False))
+                    body = r.content.decode('utf-8', errors='surrogateescape')
+                    if len(body) >= seen:
+                        new = body[seen:]
+                        if new:
+                            to_yield.append(new)
+                    stop = True
             except requests.exceptions.RequestException as exc:
                 if not _is_transient_error(exc):
                     raise
@@ -558,4 +593,7 @@ class CatalogTask:
             yield from to_yield
             if stop:
                 return
-            time.sleep(FOLLOW_POLL_INTERVAL)
+            # A terminal task that just emitted its backlog reconciles on the
+            # next poll without sleeping first -- no idle wait before exit.
+            if not terminal:
+                time.sleep(FOLLOW_POLL_INTERVAL)

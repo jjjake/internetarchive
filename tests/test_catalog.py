@@ -97,10 +97,8 @@ def test_select_log_lines():
     """``_select_log_lines`` replicates Tasks API ``lines`` semantics client-side."""
     text = 'a\nb\nc\nd\n'
     assert CatalogTask._select_log_lines(text, None) == 'a\nb\nc\nd\n'
-    assert CatalogTask._select_log_lines(text, 2) == 'a\nb\n'
     assert CatalogTask._select_log_lines(text, -2) == 'c\nd\n'
     assert CatalogTask._select_log_lines(text, 0) == ''
-    assert CatalogTask._select_log_lines(text, 100) == 'a\nb\nc\nd\n'
     assert CatalogTask._select_log_lines('', -5) == ''
 
 
@@ -164,6 +162,12 @@ def test_follow_task_log_seeds_lines(monkeypatch):
     assert chunks == ['c\nd\n']
 
 
+def test_follow_task_log_rejects_positive_lines():
+    """A positive ``lines`` (head of the log) is rejected, not followed."""
+    with pytest.raises(ValueError, match='positive'):
+        list(CatalogTask.follow_task_log(123, _session(), lines=5))
+
+
 def test_follow_task_log_304_yields_nothing(monkeypatch):
     """A 304 response adds no output."""
     _patch_sleep(monkeypatch)
@@ -191,12 +195,18 @@ def test_follow_task_log_304_still_active_keeps_polling(monkeypatch):
                  match=[responses.matchers.query_param_matcher({'task_log': '123'})])
         rsps.add(responses.GET, TASKS_URL, status=304,
                  match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_URL, body='x\ny\n',
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        # Active right after the first poll and again at the 304 poll, so the
+        # 304 is reached while running and does not end the follow.
         rsps.add(responses.GET, TASKS_STATUS_URL,
                  body=_task_status_body('running'),
                  match=[responses.matchers.query_param_matcher(
                      {'task_id': '123'}, strict_match=False)])
-        rsps.add(responses.GET, TASKS_URL, body='x\ny\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_STATUS_URL,
+                 body=_task_status_body('running'),
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
         rsps.add(responses.GET, TASKS_STATUS_URL, body='',
                  match=[responses.matchers.query_param_matcher(
                      {'task_id': '123'}, strict_match=False)])
@@ -217,13 +227,18 @@ def test_follow_task_log_skips_transient_shrink(monkeypatch):
                  match=[responses.matchers.query_param_matcher({'task_log': '123'})])
         rsps.add(responses.GET, TASKS_URL, body='',
                  match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        # The blip poll shows no growth -> status check: still running.
+        rsps.add(responses.GET, TASKS_URL, body='l1\nl2\nl3\n',
+                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        # Active after the first poll, and again at the shrink blip so it keeps
+        # polling instead of exiting; the next healthy poll yields the delta.
         rsps.add(responses.GET, TASKS_STATUS_URL,
                  body=_task_status_body('running'),
                  match=[responses.matchers.query_param_matcher(
                      {'task_id': '123'}, strict_match=False)])
-        rsps.add(responses.GET, TASKS_URL, body='l1\nl2\nl3\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(responses.GET, TASKS_STATUS_URL,
+                 body=_task_status_body('running'),
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
         rsps.add(responses.GET, TASKS_STATUS_URL, body='',
                  match=[responses.matchers.query_param_matcher(
                      {'task_id': '123'}, strict_match=False)])
@@ -246,6 +261,22 @@ def test_follow_task_log_final_fetch_shrink_emits_nothing(monkeypatch):
                      {'task_id': '123'}, strict_match=False)])
         chunks = list(CatalogTask.follow_task_log(123, _session()))
     assert chunks == ['l1\nl2\n']
+
+
+def test_follow_task_log_forwards_params(monkeypatch):
+    """Non-``lines`` params are forwarded to every task-log request."""
+    _patch_sleep(monkeypatch)
+    with IaRequestsMock() as rsps:
+        # The request only matches if foo=bar is forwarded alongside task_log.
+        rsps.add(responses.GET, TASKS_URL, body='log\n',
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_log': '123', 'foo': 'bar'})])
+        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
+        chunks = list(CatalogTask.follow_task_log(123, _session(),
+                                                  params={'foo': 'bar'}))
+    assert chunks == ['log\n']
 
 
 def test_session_follow_task_log(monkeypatch):

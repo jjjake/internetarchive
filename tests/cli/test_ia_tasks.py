@@ -90,9 +90,46 @@ def test_ia_tasks_follow_task_log_not_found(capsys, monkeypatch):
     assert 'task 999 not found' in err
 
 
+def test_ia_tasks_follow_task_log_positive_lines_rejected(capsys):
+    """A positive ``-p lines=N`` (head of the log) fails fast (exit 1).
+
+    Keeps Tasks API semantics consistent with ``-G``; the head can't be
+    followed. No network request is made.
+    """
+    ia_call(['ia', 'tasks', '-F', '123', '-p', 'lines=2'], expected_exit_code=1)
+    _out, err = capsys.readouterr()
+    assert "'lines' must be negative" in err
+
+
+def test_ia_tasks_follow_task_log_forwards_params(capsys, monkeypatch):
+    """Non-``lines`` ``-p`` params are forwarded to the task-log request."""
+    monkeypatch.setattr(catalog_mod.time, 'sleep', lambda *a, **k: None)
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.GET, TASKS_URL, body='streamed line\n',
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_log': '123', 'foo': 'bar'})])
+        rsps.add(responses.GET, TASKS_STATUS_URL,
+                 body=_task_status_body(None, category='history'),
+                 match=[responses.matchers.query_param_matcher(
+                     {'task_id': '123'}, strict_match=False)])
+        ia_call(['ia', 'tasks', '-F', '123', '-p', 'foo=bar'])
+    out, _err = capsys.readouterr()
+    assert 'streamed line' in out
+
+
 def test_ia_tasks_get_and_follow_mutually_exclusive():
     """``-G`` and ``-F`` cannot be combined (argparse error -> exit 2)."""
     ia_call(['ia', 'tasks', '-G', '123', '-F', '123'], expected_exit_code=2)
+
+
+def test_ia_tasks_identifier_and_follow_rejected():
+    """A positional identifier plus ``-F`` is rejected (exit 2), not ignored."""
+    ia_call(['ia', 'tasks', 'foo', '-F', '123'], expected_exit_code=2)
+
+
+def test_ia_tasks_identifier_and_get_log_rejected():
+    """A positional identifier plus ``-G`` is rejected (exit 2), not ignored."""
+    ia_call(['ia', 'tasks', 'foo', '-G', '123'], expected_exit_code=2)
 
 
 def test_ia_tasks_follow_task_log_request_error(capsys, monkeypatch):

@@ -3,6 +3,15 @@
 Release History
 ---------------
 
+5.10.1 (2026-06-29)
++++++++++++++++++++
+
+**Features and Improvements**
+
+- Changed the ``ia tasks --follow-task-log`` short option from ``-F`` to ``-f``
+  (to match ``tail -f``). ``-F`` was only present in 5.10.0 and is no longer
+  accepted.
+
 5.10.0 (2026-06-29)
 +++++++++++++++++++
 

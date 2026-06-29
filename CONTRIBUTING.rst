@@ -69,3 +69,19 @@ To test against all supported Python versions, first make sure you have all of t
     $ tox
 
 Even easier is simply creating a pull request. `GitHub Actions <https://docs.github.com/en/actions>`_ are used for continuous integration, and are set up to run the full testsuite whenever a pull request is submitted or updated.
+
+Releasing
+---------
+
+``master`` is branch-protected (pull requests and required status checks; no direct pushes), so a release is two steps: land the version bump through a pull request, then run ``make publish``.
+
+#. **Bump the version (via a PR).** On a branch, run ``make prepare-release RELEASE=X.Y.Z`` -- this sets ``internetarchive/__version__.py`` (and the ``HISTORY.rst`` date when the heading is ``X.Y.Z (?)``). Open a pull request with those changes and merge it once CI passes.
+
+#. **Publish.** Update your local ``master`` and run ``make publish``:
+
+   .. code:: bash
+
+       $ git checkout master && git pull
+       $ make publish
+
+   ``make publish`` runs the tests; builds the sdist, wheel, and ``pex`` binary; tags the release and pushes the **tag only** (never ``master``, which is protected); uploads to PyPI; uploads the ``pex`` binary to the ``ia-pex`` archive.org item; and creates the GitHub release. Use ``make publish-binary`` to re-upload just the binary if that step ever needs redoing.

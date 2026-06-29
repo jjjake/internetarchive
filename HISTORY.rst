@@ -3,7 +3,7 @@
 Release History
 ---------------
 
-5.10.0 (unreleased)
+5.10.0 (2026-06-29)
 +++++++++++++++++++
 
 **Features and Improvements**
@@ -23,7 +23,9 @@ Release History
   treated as an intentional partial fetch and disables resume and full-file
   checksum validation. An unsatisfiable range (HTTP ``416``) fails fast with a
   clear message instead of being retried; a range covering the whole file
-  returns the full contents (HTTP ``200``).
+  returns the full contents (HTTP ``200``). If any segment fails,
+  ``ia download`` exits non-zero, so a downstream pipe consumer can tell the
+  output is incomplete.
 - Added ``ia tasks --follow-task-log <task_id>`` to follow a task log live
   as the task runs (``tail -f`` style), stopping automatically when the task
   finishes. Combine with ``-p lines=-N`` to seed the last ``N`` lines first
@@ -38,8 +40,6 @@ Release History
   same-named local file could cause the stream to be skipped (length/date or
   checksum match) or trigger the auto-resume code path, which seeks the output
   and fails on a pipe. A stdout download now ignores any on-disk file.
-- Fixed auto-resume discarding caller-supplied headers; the internal ``Range``
-  header is now merged into the provided ``headers`` rather than replacing them.
 - Fixed a retried ``stdout`` download falling back to writing a local disk file
   instead of the pipe (leaving the pipe empty). A ``stdout`` download now always
   writes to ``stdout``, even across retries.
@@ -48,24 +48,14 @@ Release History
   matched the (grown) local file and the seek offset, re-fetching already-written
   bytes. The resume ``Range`` is now recomputed from the current file size on
   every attempt.
-- Fixed the explicit-range check being case-sensitive, so a caller-supplied
-  lowercase ``range`` header was silently clobbered by an auto-resume ``Range``.
-  The check is now case-insensitive.
-- Fixed ranged ``--range`` segment failures being silently swallowed: a failed
-  segment now surfaces as a download error (nonzero exit), and caller-supplied
-  ``headers`` are forwarded to every ranged request (merged with the per-segment
-  ``Range``).
-
 - Fixed ``ia tasks --parameter`` crashing when combined with
   ``--get-task-log``. Parameters such as ``lines`` are now merged into the
   task log request's query string, allowing ``ia tasks -G <task_id> -p
-  lines=100`` to fetch a truncated log. ``get_task_log()`` gained a
-  ``params`` argument; ``params`` and ``request_kwargs`` are now
-  keyword-only (`#764 <https://github.com/jjjake/internetarchive/pull/764>`_).
-- Fixed ``CatalogTask.task_log()`` passing ``request_kwargs`` into the new
-  ``params`` slot, which caused request kwargs (e.g. ``timeout``,
-  ``headers``) to be serialized as URL query parameters and silently
-  dropped (`#764 <https://github.com/jjjake/internetarchive/pull/764>`_).
+  lines=100`` to fetch a truncated log. ``get_task_log()`` gained a ``params``
+  argument; ``params`` and ``request_kwargs`` are now keyword-only and kept
+  distinct, so request kwargs (e.g. ``timeout``, ``headers``) are no longer
+  serialized into the URL as query parameters
+  (`#764 <https://github.com/jjjake/internetarchive/pull/764>`_).
 
 5.9.0 (2026-05-28)
 ++++++++++++++++++

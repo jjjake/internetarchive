@@ -46,7 +46,7 @@ def setup(subparsers):
     log_group = parser.add_mutually_exclusive_group()
     log_group.add_argument("-G", "--get-task-log",
                            help="Return the given tasks task log.")
-    log_group.add_argument("-F", "--follow-task-log",
+    log_group.add_argument("-f", "--follow-task-log",
                            help="Follow the given task's log as it grows "
                                 "(tail -f style); stops when the task finishes.")
     parser.add_argument("-p", "--parameter",
@@ -133,10 +133,10 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         sys.exit(0)
 
     # A positional identifier selects a metadata query and would silently
-    # shadow -G/-F (which take their own task id), so reject the combination.
+    # shadow -G/-f (which take their own task id), so reject the combination.
     if args.identifier and (args.get_task_log or args.follow_task_log):
         parser.error("argument identifier: not allowed with "
-                     "-G/--get-task-log or -F/--follow-task-log")
+                     "-G/--get-task-log or -f/--follow-task-log")
 
     # Tasks read API.
     if args.identifier:

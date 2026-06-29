@@ -1,6 +1,6 @@
 .PHONY: docs clean clean-dist test binary test-binary check-release check-version \
         build tag push-tag upload-pypi publish-binary-upload github-release \
-        publish publish-all publish-binary docs-init init pep8-test prepare-release
+        publish publish-binary docs-init init pep8-test prepare-release
 
 VERSION=$(shell grep -m1 __version__ internetarchive/__version__.py | cut -d\' -f2)
 
@@ -83,8 +83,10 @@ build: clean-dist
 tag:
 	git tag -a v$(VERSION) -m 'version $(VERSION)'
 
+# master is branch-protected; push only the tag, never the branch. The version
+# bump is already on master via its release PR.
 push-tag:
-	git push --tags origin master
+	git push origin v$(VERSION)
 
 upload-pypi:
 	twine upload --repository pypi ./dist/*
@@ -105,13 +107,12 @@ github-release:
 
 # ============ Main Release Targets ============
 
-# PyPI-only release (no binary)
-publish: check-version check-release test build tag push-tag upload-pypi github-release
-	@echo "\n\033[92mRelease v$(VERSION) published to PyPI and GitHub!\033[0m"
-
-# Full release including pex binary
-publish-all: check-version check-release test build binary test-binary tag push-tag upload-pypi publish-binary-upload github-release
-	@echo "\n\033[92mRelease v$(VERSION) published everywhere!\033[0m"
+# Full release. We always publish everywhere, so this is the single release target:
+# it tests, builds the sdist/wheel and pex binary, tags and pushes the tag (never
+# master), uploads to PyPI and the pex to the archive.org item, and creates the
+# GitHub release.
+publish: check-version check-release test build binary test-binary tag push-tag upload-pypi publish-binary-upload github-release
+	@echo "\n\033[92mRelease v$(VERSION) published to PyPI, archive.org, and GitHub!\033[0m"
 
 # Binary-only release (for publishing binary after PyPI release)
 publish-binary: binary test-binary publish-binary-upload

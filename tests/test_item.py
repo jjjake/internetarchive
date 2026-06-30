@@ -22,8 +22,8 @@ from tests.conftest import (
 )
 
 S3_URL = f'{PROTOCOL}//s3.us.archive.org/'
-DOWNLOAD_URL_RE = re.compile(f'{PROTOCOL}//archive.org/download/.*')
-S3_URL_RE = re.compile(r'.*s3.us.archive.org/.*')
+DOWNLOAD_URL_RE = re.compile(rf'{PROTOCOL}//archive\.org/download/.*')
+S3_URL_RE = re.compile(r'.*s3\.us\.archive\.org/.*')
 
 EXPECTED_LAST_MOD_HEADER = {"Last-Modified": "Tue, 14 Nov 2023 20:25:48 GMT"}
 EXPECTED_S3_HEADERS = {
@@ -323,7 +323,7 @@ def test_download_destdir(tmpdir, nasa_item):
 
 
 def test_download_no_directory(tmpdir, nasa_item):
-    url_re = re.compile(f'{PROTOCOL}//archive.org/download/.*')
+    url_re = re.compile(rf'{PROTOCOL}//archive\.org/download/.*')
     tmpdir.chdir()
     with IaRequestsMock() as rsps:
         rsps.add(

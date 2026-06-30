@@ -23,6 +23,7 @@ internetarchive.files
 :copyright: (C) 2012-2024 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+
 import logging
 import os
 import socket
@@ -124,6 +125,7 @@ class File(BaseFile):
     <https://archive.org/account/s3.php>`__
 
     """
+
     def __init__(self, item, name, file_metadata=None):
         """
         :param item: The item that the file is part of.
@@ -140,16 +142,19 @@ class File(BaseFile):
         }
         self.url = '{protocol}//{host}/download/{id}/{name}'.format(**url_parts)
         if self.item.session.access_key and self.item.session.secret_key:
-            self.auth = auth.S3Auth(self.item.session.access_key,
-                                    self.item.session.secret_key)
+            self.auth = auth.S3Auth(
+                self.item.session.access_key, self.item.session.secret_key
+            )
         else:
             self.auth = None
 
     def __repr__(self):
-        return (f'File(identifier={self.identifier!r}, '
-                f'filename={self.name!r}, '
-                f'size={self.size!r}, '
-                f'format={self.format!r})')
+        return (
+            f'File(identifier={self.identifier!r}, '
+            f'filename={self.name!r}, '
+            f'size={self.size!r}, '
+            f'format={self.format!r})'
+        )
 
     def download(  # noqa: C901,PLR0911,PLR0912,PLR0915
         self,
@@ -245,7 +250,6 @@ class File(BaseFile):
                 printer=lambda m: print(m, file=sys.stderr),
             )
 
-
         if destdir:
             if not (return_responses or stdout):
                 try:
@@ -262,13 +266,17 @@ class File(BaseFile):
         # (or cwd if none provided). Determine intended base directory.
         intended_base = destdir if destdir else os.getcwd()
         try:
-            if not utils.is_path_within_directory(intended_base, os.path.abspath(file_path)):
+            if not utils.is_path_within_directory(
+                intended_base, os.path.abspath(file_path)
+            ):
                 raise exceptions.DirectoryTraversalError(
                     f'Unsafe file path resolved outside destination directory: {file_path}'
                 )
         except AttributeError:
             # Fallback if DirectoryTraversalError not present (older versions); re-raise generic.
-            raise OSError(f'Unsafe file path resolved outside destination directory: {file_path}')
+            raise OSError(
+                f'Unsafe file path resolved outside destination directory: {file_path}'
+            )
 
         parent_dir = os.path.dirname(file_path)
 
@@ -276,11 +284,18 @@ class File(BaseFile):
         if os.name == 'nt' and len(os.path.abspath(file_path)) > 240:
             log.warning('Long path may cause issues: %s', file_path)
             if verbose:
-                print(f' warning: long path may cause issues: {file_path}', file=sys.stderr)
+                print(
+                    f' warning: long path may cause issues: {file_path}',
+                    file=sys.stderr,
+                )
 
         # Check if we should skip... (never when streaming to stdout: the
         # local filesystem is irrelevant to a stdout download).
-        if not return_responses and not stdout and os.path.exists(file_path.encode('utf-8')):
+        if (
+            not return_responses
+            and not stdout
+            and os.path.exists(file_path.encode('utf-8'))
+        ):
             if checksum_archive:
                 checksum_archive_filename = '_checksum_archive.txt'
                 if not os.path.exists(checksum_archive_filename):
@@ -308,13 +323,17 @@ class File(BaseFile):
                     md5_sum = utils.get_md5(fp)
 
                 if md5_sum == self.md5:
-                    msg = f'skipping {file_path}, file already exists based on checksum.'
+                    msg = (
+                        f'skipping {file_path}, file already exists based on checksum.'
+                    )
                     log.info(msg)
                     if verbose:
                         print(f' {msg}', file=sys.stderr)
                     if checksum_archive:
                         # add file to checksum_archive to skip it next time
-                        with open(checksum_archive_filename, 'a', encoding='utf-8') as f:
+                        with open(
+                            checksum_archive_filename, 'a', encoding='utf-8'
+                        ) as f:
                             f.write(f'{file_path}\n')
                     return
 
@@ -324,11 +343,13 @@ class File(BaseFile):
                 if parent_dir != '' and not (return_responses or stdout):
                     os.makedirs(parent_dir, exist_ok=True)
 
-                if not return_responses \
-                        and not stdout \
-                        and not ignore_existing \
-                        and self.name != f'{self.identifier}_files.xml' \
-                        and os.path.exists(file_path.encode('utf-8')):
+                if (
+                    not return_responses
+                    and not stdout
+                    and not ignore_existing
+                    and self.name != f'{self.identifier}_files.xml'
+                    and os.path.exists(file_path.encode('utf-8'))
+                ):
                     st = os.stat(file_path.encode('utf-8'))
                     # Only auto-resume when the caller has not supplied an explicit
                     # Range header (e.g. via the ``--range`` CLI flag). An explicit
@@ -336,9 +357,11 @@ class File(BaseFile):
                     # resume seek/append or the full-file checksum validation below.
                     # (Resume is also skipped for stdout, since seeking a pipe fails
                     # and there is no local partial file to append to.)
-                    if st.st_size != self.size \
-                            and not (checksum or checksum_archive) \
-                            and not explicit_range:
+                    if (
+                        st.st_size != self.size
+                        and not (checksum or checksum_archive)
+                        and not explicit_range
+                    ):
                         # Recompute the resume Range from the current file size on
                         # every attempt so it stays aligned with the seek offset
                         # below; a stale Range left over from a prior attempt would
@@ -366,13 +389,21 @@ class File(BaseFile):
                 response.raise_for_status()
 
                 # Check if we should skip based on last modified time...
-                if not fileobj and not return_responses and not stdout \
-                        and os.path.exists(file_path.encode('utf-8')):
+                if (
+                    not fileobj
+                    and not return_responses
+                    and not stdout
+                    and os.path.exists(file_path.encode('utf-8'))
+                ):
                     st = os.stat(file_path.encode('utf-8'))
                     if st.st_mtime == last_mod_mtime:
-                        if self.name == f'{self.identifier}_files.xml' or (st.st_size == self.size):
-                            msg = (f'skipping {file_path}, file already exists based on '
-                                    'length and date.')
+                        if self.name == f'{self.identifier}_files.xml' or (
+                            st.st_size == self.size
+                        ):
+                            msg = (
+                                f'skipping {file_path}, file already exists based on '
+                                'length and date.'
+                            )
                             log.info(msg)
                             if verbose:
                                 print(f' {msg}', file=sys.stderr)
@@ -383,11 +414,13 @@ class File(BaseFile):
 
                 if verbose:
                     total = int(response.headers.get('content-length', 0)) or None
-                    progress_bar = tqdm(desc=f' downloading {self.name}',
-                                        total=total,
-                                        unit='iB',
-                                        unit_scale=True,
-                                        unit_divisor=1024)
+                    progress_bar = tqdm(
+                        desc=f' downloading {self.name}',
+                        total=total,
+                        unit='iB',
+                        unit_scale=True,
+                        unit_divisor=1024,
+                    )
                 else:
                     progress_bar = nullcontext()
 
@@ -420,15 +453,23 @@ class File(BaseFile):
                     try:
                         assert local_checksum == self.md5
                     except AssertionError:
-                        msg = (f"\"{file_path}\" corrupt, "
-                               "checksums do not match. "
-                               "Remote file may have been modified, "
-                               "retry download.")
+                        msg = (
+                            f"\"{file_path}\" corrupt, "
+                            "checksums do not match. "
+                            "Remote file may have been modified, "
+                            "retry download."
+                        )
                         os.remove(file_path.encode('utf-8'))
                         raise exceptions.InvalidChecksumError(msg)
                 break
-            except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout,
-                    exceptions.InvalidChecksumError) as exc:
+            except (
+                RetryError,
+                HTTPError,
+                ConnectTimeout,
+                OSError,
+                ReadTimeout,
+                exceptions.InvalidChecksumError,
+            ) as exc:
                 # A 416 (Range Not Satisfiable) is a permanent response to an
                 # explicit range request -- retrying cannot help, so fail fast.
                 resp = getattr(exc, 'response', None)
@@ -436,18 +477,22 @@ class File(BaseFile):
                 if retries > 0 and not unsatisfiable:
                     retrying = True
                     retries -= 1
-                    msg = ('download failed, sleeping for '
-                           f'{retries_sleep} seconds and retrying. '
-                           f'{retries} retries left.')
+                    msg = (
+                        'download failed, sleeping for '
+                        f'{retries_sleep} seconds and retrying. '
+                        f'{retries} retries left.'
+                    )
                     log.warning(msg)
                     sleep(retries_sleep)
                     continue
                 if unsatisfiable:
                     valid = resp.headers.get('Content-Range', '')
                     rng = headers.get('Range', '')
-                    msg = (f'error downloading {file_path}: requested range '
-                           f'{rng!r} not satisfiable'
-                           + (f' (file is {valid})' if valid else ''))
+                    msg = (
+                        f'error downloading {file_path}: requested range '
+                        f'{rng!r} not satisfiable'
+                        + (f' (file is {valid})' if valid else '')
+                    )
                 else:
                     msg = f'error downloading file {file_path}, exception raised: {exc}'
                 log.error(msg)
@@ -468,14 +513,22 @@ class File(BaseFile):
         if not no_change_timestamp:
             # If we want to set the timestamp to that of the original archive...
             with suppress(OSError):  # Probably file-like object, e.g. sys.stdout.
-                os.utime(file_path.encode('utf-8'), (0,last_mod_mtime))
+                os.utime(file_path.encode('utf-8'), (0, last_mod_mtime))
 
         msg = f'downloaded {self.identifier}/{self.name} to {file_path}'
         log.info(msg)
         return True
 
-    def delete(self, cascade_delete=None, access_key=None, secret_key=None, verbose=None,
-               debug=None, retries=None, headers=None):
+    def delete(
+        self,
+        cascade_delete=None,
+        access_key=None,
+        secret_key=None,
+        verbose=None,
+        debug=None,
+        retries=None,
+        headers=None,
+    ):
         """Delete a file from the Archive.
 
         Note: Some files -- such as ``<itemname>_meta.xml`` -- cannot be deleted.
@@ -500,15 +553,15 @@ class File(BaseFile):
             headers['x-archive-cascade-delete'] = cascade_delete
 
         url = f'{self.item.session.protocol}//s3.us.archive.org/{self.identifier}/{quote(self.name)}'
-        self.item.session.mount_http_adapter(max_retries=max_retries,
-                                             status_forcelist=[503],
-                                             host='s3.us.archive.org')
+        self.item.session.mount_http_adapter(
+            max_retries=max_retries, status_forcelist=[503], host='s3.us.archive.org'
+        )
         request = iarequest.S3Request(
             method='DELETE',
             url=url,
             headers=headers,
             access_key=access_key,
-            secret_key=secret_key
+            secret_key=secret_key,
         )
         if debug:
             return request
@@ -523,8 +576,7 @@ class File(BaseFile):
             try:
                 resp = self.item.session.send(prepared_request)
                 resp.raise_for_status()
-            except (RetryError, HTTPError, ConnectTimeout,
-                    OSError, ReadTimeout) as exc:
+            except (RetryError, HTTPError, ConnectTimeout, OSError, ReadTimeout) as exc:
                 error_msg = f'Error deleting {url}, {exc}'
                 log.error(error_msg)
                 raise

@@ -68,6 +68,7 @@ def setup(subparsers):
 
     parser.set_defaults(func=lambda args: main(args, parser))
 
+
 def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """Handle flag subcommand execution.
 
@@ -86,7 +87,9 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         r = item.add_flag(args.add_flag, flag_user)
         j = r.json()
         if j.get("status") == "success":
-            print(f"success: added '{args.add_flag}' flag by {flag_user} to {args.identifier}")
+            print(
+                f"success: added '{args.add_flag}' flag by {flag_user} to {args.identifier}"
+            )
         else:
             print(f"error: {item.identifier} - {r.text}")
 
@@ -94,7 +97,9 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         r = item.delete_flag(args.delete_flag, flag_user)
         j = r.json()
         if j.get("status") == "success":
-            print(f"success: deleted '{args.delete_flag}' flag by {flag_user} from {args.identifier}")
+            print(
+                f"success: deleted '{args.delete_flag}' flag by {flag_user} from {args.identifier}"
+            )
         else:
             print(f"error: {item.identifier} - {r.text}")
 

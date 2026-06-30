@@ -72,43 +72,50 @@ def main():
     Main entry point for the CLI.
     """
     parser = argparse.ArgumentParser(
-            description="A command line interface to Archive.org.",
-            epilog=("Documentation for 'ia' is available at:\n\n\t"
-                    "https://archive.org/developers/internetarchive/cli.html\n\n"
-                    "See 'ia {command} --help' for help on a specific command."),
-            formatter_class=argparse.RawTextHelpFormatter)  # support for \n in epilog
+        description="A command line interface to Archive.org.",
+        epilog=(
+            "Documentation for 'ia' is available at:\n\n\t"
+            "https://archive.org/developers/internetarchive/cli.html\n\n"
+            "See 'ia {command} --help' for help on a specific command."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )  # support for \n in epilog
 
-    parser.add_argument("-v", "--version",
-                        action="version",
-                        version=__version__)
-    parser.add_argument("-c", "--config-file",
-                        action="store",
-                        type=validate_config_path,
-                        metavar="FILE",
-                        help="Path to configuration file")
-    parser.add_argument("-l", "--log",
-                        action="store_true",
-                        default=False,
-                        help="Enable logging")
-    parser.add_argument("-d", "--debug",
-                        action="store_true",
-                        help="Enable debugging")
-    parser.add_argument("-i", "--insecure",
-                        action="store_true",
-                        help="Allow insecure connections")
-    parser.add_argument("-H", "--host",
-                        action="store",
-                        help=("Host to connect to "
-                              "(doesn't work for requests made to s3.us.archive.org)"))
-    parser.add_argument("--user-agent-suffix",
-                        action="store",
-                        metavar="STRING",
-                        help="Custom string to append to the default User-Agent "
-                             "(default with access key is always included)")
+    parser.add_argument("-v", "--version", action="version", version=__version__)
+    parser.add_argument(
+        "-c",
+        "--config-file",
+        action="store",
+        type=validate_config_path,
+        metavar="FILE",
+        help="Path to configuration file",
+    )
+    parser.add_argument(
+        "-l", "--log", action="store_true", default=False, help="Enable logging"
+    )
+    parser.add_argument("-d", "--debug", action="store_true", help="Enable debugging")
+    parser.add_argument(
+        "-i", "--insecure", action="store_true", help="Allow insecure connections"
+    )
+    parser.add_argument(
+        "-H",
+        "--host",
+        action="store",
+        help=(
+            "Host to connect to (doesn't work for requests made to s3.us.archive.org)"
+        ),
+    )
+    parser.add_argument(
+        "--user-agent-suffix",
+        action="store",
+        metavar="STRING",
+        help="Custom string to append to the default User-Agent "
+        "(default with access key is always included)",
+    )
 
-    subparsers = parser.add_subparsers(title="commands",
-                                       dest="command",
-                                       metavar="{command}")
+    subparsers = parser.add_subparsers(
+        title="commands", dest="command", metavar="{command}"
+    )
 
     # Add subcommand parsers
     ia_account.setup(subparsers)
@@ -148,9 +155,9 @@ def main():
         else:
             config["general"] = {"user_agent_suffix": args.user_agent_suffix}
 
-    args.session = get_session(config_file=args.config_file,
-                               config=config,
-                               debug=args.debug)
+    args.session = get_session(
+        config_file=args.config_file, config=config, debug=args.debug
+    )
 
     # Check if any arguments were provided
     if len(sys.argv) == 1:

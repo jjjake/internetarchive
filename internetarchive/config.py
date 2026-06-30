@@ -23,6 +23,7 @@ internetarchive.config
 :copyright: (C) 2012-2024 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+
 from __future__ import annotations
 
 import os
@@ -79,7 +80,7 @@ def get_auth_config(email: str, password: str, host: str = 'archive.org') -> dic
         },
         'general': {
             'screenname': j['values']['screenname'],
-        }
+        },
     }
     return auth_config
 
@@ -242,7 +243,9 @@ def get_config(config=None, config_file=None) -> dict:
     env_secret_key = os.environ.get('IA_SECRET_ACCESS_KEY')
 
     # Check if only one environment variable is set
-    if (env_access_key and not env_secret_key) or (not env_access_key and env_secret_key):
+    if (env_access_key and not env_secret_key) or (
+        not env_access_key and env_secret_key
+    ):
         raise ValueError(
             "Both IA_ACCESS_KEY_ID and IA_SECRET_ACCESS_KEY environment variables "
             "must be set together, or neither should be set."

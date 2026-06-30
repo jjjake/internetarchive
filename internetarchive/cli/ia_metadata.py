@@ -43,98 +43,135 @@ def setup(subparsers):
     Args:
         subparsers: subparser object passed from ia.py
     """
-    parser = subparsers.add_parser("metadata",
-                                   aliases=["md"],
-                                   help="Retrieve and modify archive.org item metadata")
+    parser = subparsers.add_parser(
+        "metadata", aliases=["md"], help="Retrieve and modify archive.org item metadata"
+    )
 
-    parser.add_argument("identifier",
-                        nargs="?",
-                        type=str,
-                        help="Identifier of the item")
+    parser.add_argument(
+        "identifier", nargs="?", type=str, help="Identifier of the item"
+    )
 
     # Mutually exclusive group for metadata modification options
     modify_group = parser.add_mutually_exclusive_group()
-    modify_group.add_argument("-m", "--modify",
-                              nargs=1,
-                              action=MetadataAction,
-                              metavar="KEY:VALUE",
-                              help="Modify the metadata of an item. "
-                                   "Can be specified multiple times.")
-    modify_group.add_argument("-r", "--remove",
-                              nargs=1,
-                              action=MetadataAction,
-                              metavar="KEY:VALUE",
-                              help="Remove KEY:VALUE from a metadata element. "
-                                   "Can be specified multiple times.")
-    modify_group.add_argument("-a", "--append",
-                              nargs=1,
-                              action=MetadataAction,
-                              metavar="KEY:VALUE",
-                              help="Append a string to a metadata element. "
-                                   "Can be specified multiple times.")
-    modify_group.add_argument("-A", "--append-list",
-                              nargs=1,
-                              action=MetadataAction,
-                              metavar="KEY:VALUE",
-                              help="Append a field to a metadata element. "
-                                   "Can be specified multiple times.")
-    modify_group.add_argument("-i", "--insert",
-                              nargs=1,
-                              action=MetadataAction,
-                              metavar="KEY:VALUE",
-                              help=("Insert a value into a multi-value field given "
-                                    "an index (e.g. `--insert=collection[0]:foo`). "
-                                    "Can be specified multiple times."))
+    modify_group.add_argument(
+        "-m",
+        "--modify",
+        nargs=1,
+        action=MetadataAction,
+        metavar="KEY:VALUE",
+        help="Modify the metadata of an item. Can be specified multiple times.",
+    )
+    modify_group.add_argument(
+        "-r",
+        "--remove",
+        nargs=1,
+        action=MetadataAction,
+        metavar="KEY:VALUE",
+        help="Remove KEY:VALUE from a metadata element. "
+        "Can be specified multiple times.",
+    )
+    modify_group.add_argument(
+        "-a",
+        "--append",
+        nargs=1,
+        action=MetadataAction,
+        metavar="KEY:VALUE",
+        help="Append a string to a metadata element. Can be specified multiple times.",
+    )
+    modify_group.add_argument(
+        "-A",
+        "--append-list",
+        nargs=1,
+        action=MetadataAction,
+        metavar="KEY:VALUE",
+        help="Append a field to a metadata element. Can be specified multiple times.",
+    )
+    modify_group.add_argument(
+        "-i",
+        "--insert",
+        nargs=1,
+        action=MetadataAction,
+        metavar="KEY:VALUE",
+        help=(
+            "Insert a value into a multi-value field given "
+            "an index (e.g. `--insert=collection[0]:foo`). "
+            "Can be specified multiple times."
+        ),
+    )
 
     # Additional options
-    parser.add_argument("-E", "--expect",
-                        nargs=1,
-                        action=MetadataAction,
-                        metavar="KEY:VALUE",
-                        help=("Test an expectation server-side before applying patch "
-                              "to item metadata. Can be specified multiple times."))
-    parser.add_argument("-H", "--header",
-                        nargs=1,
-                        action=QueryStringAction,
-                        metavar="KEY:VALUE",
-                        help="S3 HTTP headers to send with your request. "
-                             "Can be specified multiple times.")
-    parser.add_argument("-t", "--target",
-                        metavar="target",
-                        default="metadata",
-                        help="The metadata target to modify")
-    parser.add_argument("-s", "--spreadsheet",
-                        metavar="metadata.csv",
-                        help="Modify metadata in bulk using a spreadsheet as input")
-    parser.add_argument("-e", "--exists",
-                        action="store_true",
-                        help="Check if an item exists")
-    parser.add_argument("-F", "--formats",
-                        action="store_true",
-                        help="Return the file-formats the given item contains")
-    parser.add_argument("-p", "--priority",
-                        metavar="priority",
-                        help="Set the task priority")
-    parser.add_argument("--timeout",
-                        metavar="value",
-                        help="Set a timeout for metadata writes")
-    parser.add_argument("-R", "--reduced-priority",
-                        action="store_true",
-                        help="Submit task at a reduced priority.")
-    parser.add_argument("-P", "--parameters",
-                        nargs=1,
-                        action=QueryStringAction,
-                        metavar="KEY:VALUE",
-                        help="Parameters to send with your query. "
-                             "Can be specified multiple times.")
+    parser.add_argument(
+        "-E",
+        "--expect",
+        nargs=1,
+        action=MetadataAction,
+        metavar="KEY:VALUE",
+        help=(
+            "Test an expectation server-side before applying patch "
+            "to item metadata. Can be specified multiple times."
+        ),
+    )
+    parser.add_argument(
+        "-H",
+        "--header",
+        nargs=1,
+        action=QueryStringAction,
+        metavar="KEY:VALUE",
+        help="S3 HTTP headers to send with your request. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-t",
+        "--target",
+        metavar="target",
+        default="metadata",
+        help="The metadata target to modify",
+    )
+    parser.add_argument(
+        "-s",
+        "--spreadsheet",
+        metavar="metadata.csv",
+        help="Modify metadata in bulk using a spreadsheet as input",
+    )
+    parser.add_argument(
+        "-e", "--exists", action="store_true", help="Check if an item exists"
+    )
+    parser.add_argument(
+        "-F",
+        "--formats",
+        action="store_true",
+        help="Return the file-formats the given item contains",
+    )
+    parser.add_argument(
+        "-p", "--priority", metavar="priority", help="Set the task priority"
+    )
+    parser.add_argument(
+        "--timeout", metavar="value", help="Set a timeout for metadata writes"
+    )
+    parser.add_argument(
+        "-R",
+        "--reduced-priority",
+        action="store_true",
+        help="Submit task at a reduced priority.",
+    )
+    parser.add_argument(
+        "-P",
+        "--parameters",
+        nargs=1,
+        action=QueryStringAction,
+        metavar="KEY:VALUE",
+        help="Parameters to send with your query. Can be specified multiple times.",
+    )
 
     parser.set_defaults(func=lambda args: main(args, parser))
 
 
-def modify_metadata(item: item.Item,
-                    metadata: Mapping,
-                    args: argparse.Namespace,
-                    parser: argparse.ArgumentParser) -> Response:
+def modify_metadata(
+    item: item.Item,
+    metadata: Mapping,
+    args: argparse.Namespace,
+    parser: argparse.ArgumentParser,
+) -> Response:
     """
     Modify metadata helper function.
     """
@@ -143,18 +180,27 @@ def modify_metadata(item: item.Item,
     insert = bool(args.insert)
 
     try:
-        r = item.modify_metadata(metadata, target=args.target, append=append,
-                                 expect=args.expect, priority=args.priority,
-                                 append_list=append_list, headers=args.header,
-                                 insert=insert, reduced_priority=args.reduced_priority,
-                                 timeout=args.timeout)
+        r = item.modify_metadata(
+            metadata,
+            target=args.target,
+            append=append,
+            expect=args.expect,
+            priority=args.priority,
+            append_list=append_list,
+            headers=args.header,
+            insert=insert,
+            reduced_priority=args.reduced_priority,
+            timeout=args.timeout,
+        )
     except ItemLocateError as exc:
         print(f"{item.identifier} - error: {exc}", file=sys.stderr)
         sys.exit(1)
     except ValueError as exc:
         if "append to list" in str(exc):
-            error_msg = ("cannot append string to list metadata with '--append'; "
-                         "use '--append-list' instead.")
+            error_msg = (
+                "cannot append string to list metadata with '--append'; "
+                "use '--append-list' instead."
+            )
             print(f"{item.identifier} - error: {error_msg}", file=sys.stderr)
             sys.exit(1)
 
@@ -168,16 +214,21 @@ def modify_metadata(item: item.Item,
     if not r.json()["success"]:
         error_msg = r.json()["error"]
         etype = "warning" if "no changes" in r.text else "error"
-        print(f"{item.identifier} - {etype} ({r.status_code}): {error_msg}", file=sys.stderr)
+        print(
+            f"{item.identifier} - {etype} ({r.status_code}): {error_msg}",
+            file=sys.stderr,
+        )
         return r
     print(f"{item.identifier} - success: {r.json()['log']}", file=sys.stderr)
     return r
 
 
-def remove_metadata(item: item.Item,
-                    metadata: Mapping,
-                    args: argparse.Namespace,
-                    parser: argparse.ArgumentParser) -> Response:
+def remove_metadata(
+    item: item.Item,
+    metadata: Mapping,
+    args: argparse.Namespace,
+    parser: argparse.ArgumentParser,
+) -> Response:
     """
     Remove metadata helper function.
     """
@@ -206,15 +257,22 @@ def remove_metadata(item: item.Item,
                     r = item.remove_from_simplelist(c, "holdings")
                     j = r.json()
                     if j.get("success"):
-                        print(f"{item.identifier} - success: {item.identifier} no longer in {c}",
-                              file=sys.stderr)
+                        print(
+                            f"{item.identifier} - success: {item.identifier} no longer in {c}",
+                            file=sys.stderr,
+                        )
                         sys.exit(0)
                     elif j.get("error", "").startswith("no row to delete for"):
-                        print(f"{item.identifier} - success: {item.identifier} no longer in {c}",
-                              file=sys.stderr)
+                        print(
+                            f"{item.identifier} - success: {item.identifier} no longer in {c}",
+                            file=sys.stderr,
+                        )
                         sys.exit(0)
                     else:
-                        print(f"{item.identifier} - error: {j.get('error')}", file=sys.stderr)
+                        print(
+                            f"{item.identifier} - error: {j.get('error')}",
+                            file=sys.stderr,
+                        )
                         sys.exit(1)
 
         if not isinstance(src_md, list):
@@ -222,8 +280,11 @@ def remove_metadata(item: item.Item,
                 if isinstance(src_md, str):
                     src_md = [v.strip() for v in src_md.split(";")]
             elif key == "collection":
-                print(f"{item.identifier} - error: all collections would be removed, "
-                      "not submitting task.", file=sys.stderr)
+                print(
+                    f"{item.identifier} - error: all collections would be removed, "
+                    "not submitting task.",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
             if src_md == metadata[key]:
@@ -242,11 +303,16 @@ def remove_metadata(item: item.Item,
             del md[key]
 
     if md.get("collection") == []:
-        print(f"{item.identifier} - error: all collections would be removed, not submitting task.",
-              file=sys.stderr)
+        print(
+            f"{item.identifier} - error: all collections would be removed, not submitting task.",
+            file=sys.stderr,
+        )
         sys.exit(1)
     elif not md:
-        print(f"{item.identifier} - warning: nothing needed to be removed.", file=sys.stderr)
+        print(
+            f"{item.identifier} - warning: nothing needed to be removed.",
+            file=sys.stderr,
+        )
         sys.exit(0)
 
     r = modify_metadata(item, md, args, parser)
@@ -269,8 +335,9 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     formats = set()
     responses: list[bool | Response] = []
 
-    item = args.session.get_item(args.identifier,
-                                 request_kwargs={'params': args.parameters})
+    item = args.session.get_item(
+        args.identifier, request_kwargs={'params': args.parameters}
+    )
 
     # Check existence of item.
     if args.exists:
@@ -286,8 +353,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             sys.exit(1)
 
     # Modify metadata.
-    elif (args.modify or args.append or args.append_list
-          or args.remove or args.insert):
+    elif args.modify or args.append or args.append_list or args.remove or args.insert:
         # TODO: Find a better way to handle this.
         if args.modify:
             metadata = args.modify

@@ -108,16 +108,17 @@ class TestMetadataAction:
     def test_multiple_flags_different_keys(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("--metadata", nargs=1, action=MetadataAction)
-        args = parser.parse_args(["--metadata", "title:Foo", "--metadata", "creator:Bar"])
+        args = parser.parse_args(
+            ["--metadata", "title:Foo", "--metadata", "creator:Bar"]
+        )
         assert args.metadata == {"title": "Foo", "creator": "Bar"}
 
     def test_multiple_flags_same_key(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("--metadata", nargs=1, action=MetadataAction)
-        args = parser.parse_args([
-            "--metadata", "subject:topic1",
-            "--metadata", "subject:topic2"
-        ])
+        args = parser.parse_args(
+            ["--metadata", "subject:topic1", "--metadata", "subject:topic2"]
+        )
         assert args.metadata == {"subject": ["topic1", "topic2"]}
 
     def test_value_with_colons(self):
@@ -159,10 +160,9 @@ class TestPostDataAction:
     def test_multiple_json_flags(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
-        args = parser.parse_args([
-            "--data", '{"priority": 10}',
-            "--data", '{"comment": "test"}'
-        ])
+        args = parser.parse_args(
+            ["--data", '{"priority": 10}', "--data", '{"comment": "test"}']
+        )
         assert args.data == {"priority": 10, "comment": "test"}
 
     def test_multiple_key_value_flags(self):
@@ -174,19 +174,15 @@ class TestPostDataAction:
     def test_mixed_json_and_key_value(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
-        args = parser.parse_args([
-            "--data", '{"priority": 10}',
-            "--data", "comment:test"
-        ])
+        args = parser.parse_args(
+            ["--data", '{"priority": 10}', "--data", "comment:test"]
+        )
         assert args.data == {"priority": 10, "comment": "test"}
 
     def test_json_overwrites_key(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("--data", nargs=1, action=PostDataAction, default=None)
-        args = parser.parse_args([
-            "--data", "priority:5",
-            "--data", '{"priority": 10}'
-        ])
+        args = parser.parse_args(["--data", "priority:5", "--data", '{"priority": 10}'])
         assert args.data == {"priority": 10}
 
     def test_flag_before_positional(self):
@@ -256,29 +252,17 @@ class TestDownloadArgParsing:
         assert args.format == ["JPEG"]
 
     def test_multiple_formats_before_identifier(self):
-        args = self.parser.parse_args([
-            "--format", "JPEG",
-            "--format", "PNG",
-            "myitem"
-        ])
+        args = self.parser.parse_args(["--format", "JPEG", "--format", "PNG", "myitem"])
         assert args.identifier == "myitem"
         assert args.format == ["JPEG", "PNG"]
 
     def test_formats_on_both_sides(self):
-        args = self.parser.parse_args([
-            "--format", "JPEG",
-            "myitem",
-            "--format", "PNG"
-        ])
+        args = self.parser.parse_args(["--format", "JPEG", "myitem", "--format", "PNG"])
         assert args.identifier == "myitem"
         assert args.format == ["JPEG", "PNG"]
 
     def test_with_file_argument(self):
-        args = self.parser.parse_args([
-            "myitem",
-            "file1.txt",
-            "--format", "JPEG"
-        ])
+        args = self.parser.parse_args(["myitem", "file1.txt", "--format", "JPEG"])
         assert args.identifier == "myitem"
         assert args.file == ["file1.txt"]
         assert args.format == ["JPEG"]
@@ -292,32 +276,36 @@ class TestUploadArgParsing:
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument("identifier", nargs="?")
         self.parser.add_argument("file", nargs="*")
-        self.parser.add_argument("--metadata", "-m", nargs=1, action=MetadataAction,
-                                 default=None)
+        self.parser.add_argument(
+            "--metadata", "-m", nargs=1, action=MetadataAction, default=None
+        )
 
     def test_metadata_after_identifier(self):
-        args = self.parser.parse_args([
-            "myitem", "file.txt",
-            "--metadata", "title:My Title"
-        ])
+        args = self.parser.parse_args(
+            ["myitem", "file.txt", "--metadata", "title:My Title"]
+        )
         assert args.identifier == "myitem"
         assert args.file == ["file.txt"]
         assert args.metadata == {"title": "My Title"}
 
     def test_metadata_before_identifier(self):
-        args = self.parser.parse_args([
-            "--metadata", "title:My Title",
-            "myitem", "file.txt"
-        ])
+        args = self.parser.parse_args(
+            ["--metadata", "title:My Title", "myitem", "file.txt"]
+        )
         assert args.identifier == "myitem"
         assert args.file == ["file.txt"]
         assert args.metadata == {"title": "My Title"}
 
     def test_multiple_metadata(self):
-        args = self.parser.parse_args([
-            "--metadata", "title:My Title",
-            "--metadata", "creator:Author",
-            "myitem", "file.txt"
-        ])
+        args = self.parser.parse_args(
+            [
+                "--metadata",
+                "title:My Title",
+                "--metadata",
+                "creator:Author",
+                "myitem",
+                "file.txt",
+            ]
+        )
         assert args.identifier == "myitem"
         assert args.metadata == {"title": "My Title", "creator": "Author"}

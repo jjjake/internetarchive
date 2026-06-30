@@ -31,9 +31,9 @@ from urllib.parse import parse_qsl
 from internetarchive.utils import InvalidIdentifierException, validate_s3_identifier
 
 
-def get_args_dict(args: list[str],
-                  query_string: bool = False,
-                  header: bool = False) -> dict:
+def get_args_dict(
+    args: list[str], query_string: bool = False, header: bool = False
+) -> dict:
     args = args or []
     if not isinstance(args, list):
         args = [args]
@@ -104,6 +104,7 @@ class PostDataAction(argparse.Action):
 
     Multiple invocations are merged into a single dict.
     """
+
     def __call__(self, parser, namespace, values, option_string=None):
         # Initialize as empty dict if not set
         if getattr(namespace, self.dest, None) is None:
@@ -120,7 +121,9 @@ class PostDataAction(argparse.Action):
             if isinstance(obj, dict):
                 current.update(obj)
             else:
-                parser.error(f"{option_string} JSON must be an object, not {type(obj).__name__}")
+                parser.error(
+                    f"{option_string} JSON must be an object, not {type(obj).__name__}"
+                )
             return
         except json.JSONDecodeError:
             pass
@@ -148,8 +151,9 @@ class QueryStringAction(argparse.Action):
             key_value_pairs = parse_qsl(sublist)
 
             if sublist and not key_value_pairs:
-                parser.error(f"{option_string} must be formatted as 'key=value' "
-                              "or 'key:value'")
+                parser.error(
+                    f"{option_string} must be formatted as 'key=value' or 'key:value'"
+                )
 
             for key, value in key_value_pairs:
                 current_dict = getattr(namespace, self.dest)

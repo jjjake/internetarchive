@@ -8,7 +8,7 @@ NASA_FILES = {
     'nasa_reviews.xml',
     'nasa_meta.xml',
     'nasa_archive.torrent',
-    'nasa_files.xml'
+    'nasa_files.xml',
 }
 
 

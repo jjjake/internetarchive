@@ -93,19 +93,35 @@ htmlhelp_basename = 'internetarchivedoc'
 latex_elements: dict[str, str] = {}
 
 latex_documents = [
-    ('index', 'internetarchive.tex', 'internetarchive Documentation',
-     'Jacob M. Johnson', 'manual'),
+    (
+        'index',
+        'internetarchive.tex',
+        'internetarchive Documentation',
+        'Jacob M. Johnson',
+        'manual',
+    ),
 ]
 
 # -- Manual page output configuration ---------------------------------------
 man_pages = [
-    ('index', 'internetarchive', 'internetarchive Documentation',
-     ['Jacob M. Johnson'], 1)
+    (
+        'index',
+        'internetarchive',
+        'internetarchive Documentation',
+        ['Jacob M. Johnson'],
+        1,
+    )
 ]
 
 # -- Texinfo output configuration -------------------------------------------
 texinfo_documents = [
-    ('index', 'internetarchive', 'internetarchive Documentation',
-     'Jacob M. Johnson', 'internetarchive', 'One line description of project.',
-     'Miscellaneous'),
+    (
+        'index',
+        'internetarchive',
+        'internetarchive Documentation',
+        'Jacob M. Johnson',
+        'internetarchive',
+        'One line description of project.',
+        'Miscellaneous',
+    ),
 ]

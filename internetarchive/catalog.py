@@ -25,6 +25,7 @@ This module contains objects for interacting with the Archive.org catalog.
 :copyright: (C) 2012-2024 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+
 from __future__ import annotations
 
 import time
@@ -70,9 +71,14 @@ def _is_transient_error(exc: requests.exceptions.RequestException) -> bool:
     """
     if isinstance(exc, HTTPError):
         return exc.response is not None and exc.response.status_code >= 500
-    return isinstance(exc, (requests.exceptions.ConnectionError,
-                            requests.exceptions.ChunkedEncodingError,
-                            requests.exceptions.Timeout))
+    return isinstance(
+        exc,
+        (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.ChunkedEncodingError,
+            requests.exceptions.Timeout,
+        ),
+    )
 
 
 def sort_by_date(task_dict: CatalogTask) -> datetime:
@@ -161,10 +167,9 @@ class Catalog:
 
         :returns: :class:`requests.Response`
         """
-        r = self.session.get(self.url,
-                             params=params,
-                             auth=self.auth,
-                             **self.request_kwargs)
+        r = self.session.get(
+            self.url, params=params, auth=self.auth, **self.request_kwargs
+        )
         try:
             r.raise_for_status()
         except HTTPError as exc:
@@ -218,7 +223,9 @@ class Catalog:
         j = json.loads(line)
         return j
 
-    def get_tasks(self, identifier: str = "", params: dict | None = None) -> list[CatalogTask]:
+    def get_tasks(
+        self, identifier: str = "", params: dict | None = None
+    ) -> list[CatalogTask]:
         """Get a list of all tasks meeting all criteria.
         The list is ordered by submission time.
 
@@ -258,11 +265,15 @@ class Catalog:
         all_tasks = sorted(tasks, key=sort_by_date, reverse=True)
         return all_tasks
 
-    def submit_task(self, identifier: str, cmd: str,
-                    comment: str | None = None,
-                    priority: int = 0,
-                    data: dict | None = None,
-                    headers: dict | None = None) -> Response:
+    def submit_task(
+        self,
+        identifier: str,
+        cmd: str,
+        comment: str | None = None,
+        priority: int = 0,
+        data: dict | None = None,
+        headers: dict | None = None,
+    ) -> Response:
         """Submit an archive.org task.
 
         :param identifier: Item identifier.
@@ -294,11 +305,9 @@ class Catalog:
                 data['args'] = {'comment': comment}
         if priority:
             data['priority'] = priority
-        r = self.session.post(self.url,
-                              json=data,
-                              auth=self.auth,
-                              headers=headers,
-                              **self.request_kwargs)
+        r = self.session.post(
+            self.url, json=data, auth=self.auth, headers=headers, **self.request_kwargs
+        )
         return r
 
 
@@ -306,6 +315,7 @@ class CatalogTask:
     """This class represents an Archive.org catalog task. It is primarily used by
     :class:`Catalog`, and should not be used directly.
     """
+
     def __init__(self, task_dict: Mapping, catalog_obj: Catalog):
         self.session = catalog_obj.session
         self.request_kwargs = catalog_obj.request_kwargs
@@ -316,11 +326,13 @@ class CatalogTask:
 
     def __repr__(self):
         color = self.task_dict.get('color', 'done')
-        return ('CatalogTask(identifier={identifier},'
-                ' task_id={task_id!r}, server={server!r},'
-                ' cmd={cmd!r},'
-                ' submitter={submitter!r},'
-                ' color={task_color!r})'.format(task_color=color, **self.task_dict))
+        return (
+            'CatalogTask(identifier={identifier},'
+            ' task_id={task_id!r}, server={server!r},'
+            ' cmd={cmd!r},'
+            ' submitter={submitter!r},'
+            ' color={task_color!r})'.format(task_color=color, **self.task_dict)
+        )
 
     def __getitem__(self, key: str):
         """Dict-like access provided as backward compatibility."""
@@ -338,8 +350,9 @@ class CatalogTask:
         task_id = self.task_id  # type: ignore
         if task_id is None:
             raise ValueError('task_id is None')
-        return self.get_task_log(task_id, self.session,
-                                 request_kwargs=self.request_kwargs)
+        return self.get_task_log(
+            task_id, self.session, request_kwargs=self.request_kwargs
+        )
 
     @staticmethod
     def _request_task_log(
@@ -347,7 +360,7 @@ class CatalogTask:
         session: ia_session.ArchiveSession,
         *,
         params: Mapping | None = None,
-        request_kwargs: Mapping | None = None
+        request_kwargs: Mapping | None = None,
     ) -> Response:
         """Make the HTTP request for a task log and return the raw Response.
 
@@ -382,7 +395,7 @@ class CatalogTask:
         session: ia_session.ArchiveSession,
         *,
         params: Mapping | None = None,
-        request_kwargs: Mapping | None = None
+        request_kwargs: Mapping | None = None,
     ) -> str:
         """Static method for getting a task log, given a task_id.
 
@@ -401,8 +414,9 @@ class CatalogTask:
 
         :returns: The task log as a string.
         """
-        r = CatalogTask._request_task_log(task_id, session, params=params,
-                                          request_kwargs=request_kwargs)
+        r = CatalogTask._request_task_log(
+            task_id, session, params=params, request_kwargs=request_kwargs
+        )
         return r.content.decode('utf-8', errors='surrogateescape')
 
     @staticmethod
@@ -432,7 +446,7 @@ class CatalogTask:
     def _task_is_active(
         task_id: int | str,
         session: ia_session.ArchiveSession,
-        request_kwargs: Mapping | None = None
+        request_kwargs: Mapping | None = None,
     ) -> bool:
         """Return ``True`` while the task may still produce log output.
 
@@ -451,7 +465,8 @@ class CatalogTask:
         """
         tasks = session.get_tasks(
             params={'task_id': task_id, 'catalog': 1, 'history': 1, 'summary': 0},
-            request_kwargs=request_kwargs)
+            request_kwargs=request_kwargs,
+        )
         for t in tasks:
             if str(getattr(t, 'task_id', '')) == str(task_id):
                 if getattr(t, 'status', None) in ACTIVE_TASK_STATUSES:
@@ -465,7 +480,7 @@ class CatalogTask:
         *,
         lines: int | None = None,
         params: Mapping | None = None,
-        request_kwargs: Mapping | None = None
+        request_kwargs: Mapping | None = None,
     ) -> Iterator[str]:
         """Follow a task log as it grows, ``tail -f`` style.
 
@@ -504,7 +519,8 @@ class CatalogTask:
             raise ValueError(
                 "follow_task_log: a positive 'lines' value selects the head "
                 "of the log and cannot be followed; use a negative value for "
-                "the last N lines (e.g. lines=-20)")
+                "the last N lines (e.g. lines=-20)"
+            )
         seen = 0
         last_modified = None
         first = True
@@ -533,8 +549,11 @@ class CatalogTask:
             try:
                 checked_first = first
                 r = CatalogTask._request_task_log(
-                    task_id, session, params=params,
-                    request_kwargs=_request_kwargs(conditional=True))
+                    task_id,
+                    session,
+                    params=params,
+                    request_kwargs=_request_kwargs(conditional=True),
+                )
 
                 grew = False
                 if r.status_code != 304:
@@ -565,13 +584,17 @@ class CatalogTask:
                 terminal = False
                 if checked_first or not grew:
                     terminal = not CatalogTask._task_is_active(
-                        task_id, session, request_kwargs=request_kwargs)
+                        task_id, session, request_kwargs=request_kwargs
+                    )
                 # Only fetch the trailing bytes when this poll produced nothing,
                 # so a failed final fetch can never discard buffered output.
                 if terminal and not grew:
                     r = CatalogTask._request_task_log(
-                        task_id, session, params=params,
-                        request_kwargs=_request_kwargs(conditional=False))
+                        task_id,
+                        session,
+                        params=params,
+                        request_kwargs=_request_kwargs(conditional=False),
+                    )
                     body = r.content.decode('utf-8', errors='surrogateescape')
                     if len(body) >= seen:
                         new = body[seen:]
@@ -584,9 +607,13 @@ class CatalogTask:
                 consecutive_errors += 1
                 if consecutive_errors >= FOLLOW_MAX_CONSECUTIVE_ERRORS:
                     raise
-                log.warning('Transient error following task %s log (%d/%d): %s',
-                            task_id, consecutive_errors,
-                            FOLLOW_MAX_CONSECUTIVE_ERRORS, exc)
+                log.warning(
+                    'Transient error following task %s log (%d/%d): %s',
+                    task_id,
+                    consecutive_errors,
+                    FOLLOW_MAX_CONSECUTIVE_ERRORS,
+                    exc,
+                )
                 time.sleep(FOLLOW_POLL_INTERVAL)
                 continue
             consecutive_errors = 0

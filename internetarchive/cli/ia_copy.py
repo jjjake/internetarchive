@@ -40,47 +40,65 @@ def setup(subparsers):
     Args:
         subparsers: subparser object passed from ia.py
     """
-    parser = subparsers.add_parser("copy",
-                                   aliases=["cp"],
-                                   help="Copy files from archive.org items")
+    parser = subparsers.add_parser(
+        "copy", aliases=["cp"], help="Copy files from archive.org items"
+    )
     # Positional arguments
-    parser.add_argument("source",
-                        metavar="SOURCE",
-                        help="Source file formatted as: identifier/file")
-    parser.add_argument("destination",
-                        metavar="DESTINATION",
-                        help="Destination file formatted as: identifier/file")
+    parser.add_argument(
+        "source", metavar="SOURCE", help="Source file formatted as: identifier/file"
+    )
+    parser.add_argument(
+        "destination",
+        metavar="DESTINATION",
+        help="Destination file formatted as: identifier/file",
+    )
 
     # Options
-    parser.add_argument("-m", "--metadata",
-                        metavar="KEY:VALUE",
-                        nargs=1,
-                        default=None,
-                        action=MetadataAction,
-                        help=("Metadata to add to your new item, if you are moving the "
-                              "file to a new item. Can be specified multiple times."))
-    parser.add_argument("--replace-metadata",
-                        action="store_true",
-                        help=("Only use metadata specified as argument, do not copy any "
-                              "from the source item"))
-    parser.add_argument("-H", "--header",
-                        metavar="KEY:VALUE",
-                        nargs=1,
-                        default=None,
-                        action=QueryStringAction,
-                        help="S3 HTTP headers to send with your request. "
-                             "Can be specified multiple times.")
-    parser.add_argument("--ignore-file-metadata",
-                        action="store_true",
-                        help="Do not copy file metadata")
-    parser.add_argument("-n", "--no-derive",
-                        action="store_true",
-                        help="Do not derive uploaded files")
-    parser.add_argument("--no-backup",
-                        action="store_true",
-                        help=("Turn off archive.org backups, "
-                              "clobbered files will not be saved to "
-                              "'history/files/$key.~N~'"))
+    parser.add_argument(
+        "-m",
+        "--metadata",
+        metavar="KEY:VALUE",
+        nargs=1,
+        default=None,
+        action=MetadataAction,
+        help=(
+            "Metadata to add to your new item, if you are moving the "
+            "file to a new item. Can be specified multiple times."
+        ),
+    )
+    parser.add_argument(
+        "--replace-metadata",
+        action="store_true",
+        help=(
+            "Only use metadata specified as argument, do not copy any "
+            "from the source item"
+        ),
+    )
+    parser.add_argument(
+        "-H",
+        "--header",
+        metavar="KEY:VALUE",
+        nargs=1,
+        default=None,
+        action=QueryStringAction,
+        help="S3 HTTP headers to send with your request. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "--ignore-file-metadata", action="store_true", help="Do not copy file metadata"
+    )
+    parser.add_argument(
+        "-n", "--no-derive", action="store_true", help="Do not derive uploaded files"
+    )
+    parser.add_argument(
+        "--no-backup",
+        action="store_true",
+        help=(
+            "Turn off archive.org backups, "
+            "clobbered files will not be saved to "
+            "'history/files/$key.~N~'"
+        ),
+    )
 
     parser.set_defaults(func=lambda args: main(args, "copy", parser))
 
@@ -97,9 +115,9 @@ def assert_src_file_exists(src_location: str) -> bool:
     return True
 
 
-def main(args: argparse.Namespace,
-         cmd: str,
-         parser: argparse.ArgumentParser) -> tuple[Response, ia.files.File | None]:
+def main(
+    args: argparse.Namespace, cmd: str, parser: argparse.ArgumentParser
+) -> tuple[Response, ia.files.File | None]:
     """
     Main entry point for 'ia copy'.
     """
@@ -113,14 +131,16 @@ def main(args: argparse.Namespace,
 
     global SRC_ITEM
     SRC_ITEM = args.session.get_item(args.source.split("/")[0])  # type: ignore
-    SRC_FILE = SRC_ITEM.get_file(args.source.split("/",1)[-1])  # type: ignore
+    SRC_FILE = SRC_ITEM.get_file(args.source.split("/", 1)[-1])  # type: ignore
 
     try:
         assert_src_file_exists(args.source)
     except AssertionError:
-        parser.error(f"error: https://{args.session.host}/download/{args.source} "
-                      "does not exist. Please check the "
-                      "identifier and filepath and retry.")
+        parser.error(
+            f"error: https://{args.session.host}/download/{args.source} "
+            "does not exist. Please check the "
+            "identifier and filepath and retry."
+        )
 
     args.header["x-amz-copy-source"] = f"/{quote(args.source)}"
     # Copy the old metadata verbatim if no additional metadata is supplied,
@@ -132,8 +152,10 @@ def main(args: argparse.Namespace,
 
     # New metadata takes precedence over old metadata.
     if not args.replace_metadata:
-        args.metadata = merge_dictionaries(SRC_ITEM.metadata,  # type: ignore
-                                           args.metadata)
+        args.metadata = merge_dictionaries(
+            SRC_ITEM.metadata,  # type: ignore
+            args.metadata,
+        )
 
     # File metadata is copied by default but can be dropped.
     file_metadata = None if args.ignore_file_metadata else SRC_FILE.metadata  # type: ignore
@@ -144,14 +166,16 @@ def main(args: argparse.Namespace,
 
     url = f"{args.session.protocol}//s3.us.archive.org/{quote(args.destination)}"
     queue_derive = not args.no_derive
-    req = ia.iarequest.S3Request(url=url,
-                                 method="PUT",
-                                 metadata=args.metadata,
-                                 file_metadata=file_metadata,
-                                 headers=args.header,
-                                 queue_derive=queue_derive,
-                                 access_key=args.session.access_key,
-                                 secret_key=args.session.secret_key)
+    req = ia.iarequest.S3Request(
+        url=url,
+        method="PUT",
+        metadata=args.metadata,
+        file_metadata=file_metadata,
+        headers=args.header,
+        queue_derive=queue_derive,
+        access_key=args.session.access_key,
+        secret_key=args.session.secret_key,
+    )
     p = req.prepare()
     r = args.session.send(p)
     if r.status_code != 200:
@@ -159,10 +183,13 @@ def main(args: argparse.Namespace,
             msg = get_s3_xml_text(r.text)
         except Exception as e:
             msg = r.text
-        print(f"error: failed to {cmd} '{args.source}' to '{args.destination}' - {msg}",
-              file=sys.stderr)
+        print(
+            f"error: failed to {cmd} '{args.source}' to '{args.destination}' - {msg}",
+            file=sys.stderr,
+        )
         sys.exit(1)
     elif cmd == "copy":
-        print(f"success: copied '{args.source}' to '{args.destination}'.",
-              file=sys.stderr)
+        print(
+            f"success: copied '{args.source}' to '{args.destination}'.", file=sys.stderr
+        )
     return (r, SRC_FILE)

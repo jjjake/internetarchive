@@ -25,6 +25,7 @@ This module implements the Internetarchive API.
 :copyright: (C) 2012-2024 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+
 from __future__ import annotations
 
 from getpass import getpass
@@ -226,7 +227,7 @@ def modify_metadata(
         secret_key=secret_key,
         debug=debug,
         request_kwargs=request_kwargs,
-        refresh=False
+        refresh=False,
     )
 
 

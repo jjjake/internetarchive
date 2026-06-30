@@ -49,9 +49,12 @@ def test_get_item(tmpdir):
         item_metadata = fh.read().strip()
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa',
-                 body=item_metadata,
-                 content_type='application/json')
+        rsps.add(
+            responses.GET,
+            f'{PROTOCOL}//archive.org/metadata/nasa',
+            body=item_metadata,
+            content_type='application/json',
+        )
 
         s = internetarchive.session.ArchiveSession()
         item = s.get_item('nasa')
@@ -59,10 +62,13 @@ def test_get_item(tmpdir):
         assert item.identifier == 'nasa'
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, f'{PROTOCOL}//archive.org/metadata/nasa',
-                 body=item_metadata,
-                 status=400,
-                 content_type='application/json')
+        rsps.add(
+            responses.GET,
+            f'{PROTOCOL}//archive.org/metadata/nasa',
+            body=item_metadata,
+            status=400,
+            content_type='application/json',
+        )
 
         s = internetarchive.session.ArchiveSession(CONFIG)
         try:
@@ -91,9 +97,12 @@ def test_s3_is_overloaded():
     }"""
 
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
-                 body=test_body,
-                 content_type='application/json')
+        rsps.add(
+            responses.GET,
+            f'{PROTOCOL}//s3.us.archive.org',
+            body=test_body,
+            content_type='application/json',
+        )
         s = internetarchive.session.ArchiveSession(CONFIG)
         r = s.s3_is_overloaded('nasa')
         assert r is False
@@ -116,9 +125,12 @@ def test_s3_is_overloaded():
     }"""
 
     with responses.RequestsMock() as rsps:
-        rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
-                 body=test_body,
-                 content_type='application/json')
+        rsps.add(
+            responses.GET,
+            f'{PROTOCOL}//s3.us.archive.org',
+            body=test_body,
+            content_type='application/json',
+        )
         s = internetarchive.session.ArchiveSession(CONFIG)
         r = s.s3_is_overloaded('nasa')
         assert r is True
@@ -174,7 +186,9 @@ def test_user_agent_suffix_in_requests():
         s = internetarchive.session.ArchiveSession(config)
         r = s.get(f'{PROTOCOL}//archive.org')
         # Verify the UA starts with the default and ends with the custom suffix
-        assert r.request.headers['User-Agent'].startswith(f'internetarchive/{__version__}')
+        assert r.request.headers['User-Agent'].startswith(
+            f'internetarchive/{__version__}'
+        )
         assert r.request.headers['User-Agent'].endswith(custom_suffix)
         # Verify access key is present in the UA
         assert 'test_access' in r.request.headers['User-Agent']

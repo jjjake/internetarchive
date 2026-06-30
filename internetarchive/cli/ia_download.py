@@ -41,138 +41,204 @@ def setup(subparsers):
     Args:
         subparsers: subparser object passed from ia.py
     """
-    parser = subparsers.add_parser("download",
-                                   aliases=["do"],
-                                   help="Download files from archive.org",)
+    parser = subparsers.add_parser(
+        "download",
+        aliases=["do"],
+        help="Download files from archive.org",
+    )
 
     # Main options
-    parser.add_argument("identifier",
-                        nargs="?",
-                        type=str,
-                        help="Identifier of the item to download")
-    parser.add_argument("file",
-                        nargs="*",
-                        help="Files to download (only allowed with identifier)")
+    parser.add_argument(
+        "identifier", nargs="?", type=str, help="Identifier of the item to download"
+    )
+    parser.add_argument(
+        "file", nargs="*", help="Files to download (only allowed with identifier)"
+    )
 
     # Additional options
-    parser.add_argument("-q", "--quiet",
-                        action="store_true",
-                        help="Turn off ia's output")
-    parser.add_argument("-d", "--dry-run",
-                        action="store_true",
-                        help="Print URLs to stdout and exit")
-    parser.add_argument("-i", "--ignore-existing",
-                        action="store_true",
-                        help="Clobber files already downloaded")
-    parser.add_argument("-C", "--checksum",
-                        action="store_true",
-                        help="Skip files based on checksum")
-    parser.add_argument("--checksum-archive",
-                        action="store_true",
-                        help="Skip files based on _checksum_archive.txt file")
-    parser.add_argument("-R", "--retries",
-                        type=int,
-                        default=5,
-                        help="Set number of retries to <retries> (default: 5)")
-    parser.add_argument("-I", "--itemlist",
-                        type=argparse.FileType("r"),
-                        help=("Download items from a specified file. "
-                             "Itemlists should be a plain text file with one "
-                             "identifier per line"))
-    parser.add_argument("-S", "--search",
-                        help="Download items returned from a specified search query")
-    parser.add_argument("-P", "--search-parameters",
-                        nargs=1,
-                        action=QueryStringAction,
-                        metavar="KEY:VALUE",
-                        help="Parameters to send with your --search query. "
-                             "Can be specified multiple times.")
-    parser.add_argument("-g", "--glob",
-                        nargs=1,
-                        action="extend",
-                        help=("Only download files matching the given glob "
-                             "pattern. Can be specified multiple times."))
-    parser.add_argument("-e", "--exclude",
-                        nargs=1,
-                        action="extend",
-                        help=("Exclude files matching the given glob pattern. "
-                             "Can be specified multiple times. Can only be "
-                             "used in conjunction with --glob."))
-    parser.add_argument("-f", "--format",
-                        nargs=1,
-                        action="extend",
-                        help=("Only download files of the specified format. "
-                             "Can be specified multiple times. You can use the following "
-                             "command to retrieve a list of file formats contained within "
-                             "a given item: ia metadata --formats <identifier>"))
-    parser.add_argument("--on-the-fly",
-                        action="store_true",
-                        help=("Download on-the-fly files, as well as other "
-                             "matching files. on-the-fly files include derivative "
-                             "EPUB, MOBI and DAISY files [default: False]"))
-    parser.add_argument("--no-directories",
-                        action="store_true",
-                        help=("Download files into working directory. "
-                             "Do not create item directories"))
-    parser.add_argument("--destdir",
-                        type=validate_dir_path,
-                        help=("The destination directory to download files "
-                             "and item directories to"))
-    parser.add_argument("-s", "--stdout",
-                        action="store_true",
-                        help="Write file contents to stdout")
-    parser.add_argument("--range",
-                        dest="ranges",
-                        action="append",
-                        metavar="[FILE:]START-END",
-                        help="Download only the given byte range(s). Requires "
-                             "--stdout and can be specified multiple times. A bare "
-                             "range (e.g. `0-1023`, `bytes=0-1023`, open-ended "
-                             "`1024-`, or suffix `-1024` for the last 1024 bytes) "
-                             "applies to the named file; use one file with "
-                             "multiple ranges, or one range with multiple files. "
-                             "Comma-separated ranges (e.g. `0-1023,4096-8191`) are "
-                             "fetched in order, equivalent to repeating --range. To "
-                             "pull ranges from different files, bind each explicitly "
-                             "as FILE:START-END (e.g. `--range a.warc.gz:0-9 --range "
-                             "b.warc.gz:50-99`). Segments are written back-to-back "
-                             "with no separator, so e.g. selected .warc.gz records "
-                             "can be piped straight to zcat. Disables resume and "
-                             "full-file checksum validation for partial fetches.")
-    parser.add_argument("--no-change-timestamp",
-                        action="store_true",
-                        help=("Don't change the timestamp of downloaded files to reflect "
-                             "the source material"))
-    parser.add_argument("-p", "--parameters",
-                        nargs=1,
-                        action=QueryStringAction,
-                        metavar="KEY:VALUE",
-                        help="Parameters to send with your download request. "
-                             "Can be specified multiple times.")
-    parser.add_argument("--count-views",
-                        action="store_true",
-                        help="Count this download toward archive.org view "
-                             "counts. By default `ia download` opts out via "
-                             "`cnt=0`; this flag omits that parameter.")
-    parser.add_argument("-a", "--download-history",
-                        action="store_true",
-                        help="Also download files from the history directory")
-    parser.add_argument("--source",
-                        nargs=1,
-                        action="extend",
-                        help=("Filter files based on their source value in files.xml "
-                             "(i.e. `original`, `derivative`, `metadata`). "
-                             "Can be specified multiple times."))
-    parser.add_argument("--exclude-source",
-                        nargs=1,
-                        action="extend",
-                        help=("Exclude files based on their source value in files.xml "
-                             "(i.e. `original`, `derivative`, `metadata`). "
-                             "Can be specified multiple times."))
-    parser.add_argument("-t", "--timeout",
-                        type=float,
-                        help=("Set a timeout for download requests. "
-                             "This sets both connect and read timeout"))
+    parser.add_argument(
+        "-q", "--quiet", action="store_true", help="Turn off ia's output"
+    )
+    parser.add_argument(
+        "-d", "--dry-run", action="store_true", help="Print URLs to stdout and exit"
+    )
+    parser.add_argument(
+        "-i",
+        "--ignore-existing",
+        action="store_true",
+        help="Clobber files already downloaded",
+    )
+    parser.add_argument(
+        "-C", "--checksum", action="store_true", help="Skip files based on checksum"
+    )
+    parser.add_argument(
+        "--checksum-archive",
+        action="store_true",
+        help="Skip files based on _checksum_archive.txt file",
+    )
+    parser.add_argument(
+        "-R",
+        "--retries",
+        type=int,
+        default=5,
+        help="Set number of retries to <retries> (default: 5)",
+    )
+    parser.add_argument(
+        "-I",
+        "--itemlist",
+        type=argparse.FileType("r"),
+        help=(
+            "Download items from a specified file. "
+            "Itemlists should be a plain text file with one "
+            "identifier per line"
+        ),
+    )
+    parser.add_argument(
+        "-S", "--search", help="Download items returned from a specified search query"
+    )
+    parser.add_argument(
+        "-P",
+        "--search-parameters",
+        nargs=1,
+        action=QueryStringAction,
+        metavar="KEY:VALUE",
+        help="Parameters to send with your --search query. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-g",
+        "--glob",
+        nargs=1,
+        action="extend",
+        help=(
+            "Only download files matching the given glob "
+            "pattern. Can be specified multiple times."
+        ),
+    )
+    parser.add_argument(
+        "-e",
+        "--exclude",
+        nargs=1,
+        action="extend",
+        help=(
+            "Exclude files matching the given glob pattern. "
+            "Can be specified multiple times. Can only be "
+            "used in conjunction with --glob."
+        ),
+    )
+    parser.add_argument(
+        "-f",
+        "--format",
+        nargs=1,
+        action="extend",
+        help=(
+            "Only download files of the specified format. "
+            "Can be specified multiple times. You can use the following "
+            "command to retrieve a list of file formats contained within "
+            "a given item: ia metadata --formats <identifier>"
+        ),
+    )
+    parser.add_argument(
+        "--on-the-fly",
+        action="store_true",
+        help=(
+            "Download on-the-fly files, as well as other "
+            "matching files. on-the-fly files include derivative "
+            "EPUB, MOBI and DAISY files [default: False]"
+        ),
+    )
+    parser.add_argument(
+        "--no-directories",
+        action="store_true",
+        help=("Download files into working directory. Do not create item directories"),
+    )
+    parser.add_argument(
+        "--destdir",
+        type=validate_dir_path,
+        help=("The destination directory to download files and item directories to"),
+    )
+    parser.add_argument(
+        "-s", "--stdout", action="store_true", help="Write file contents to stdout"
+    )
+    parser.add_argument(
+        "--range",
+        dest="ranges",
+        action="append",
+        metavar="[FILE:]START-END",
+        help="Download only the given byte range(s). Requires "
+        "--stdout and can be specified multiple times. A bare "
+        "range (e.g. `0-1023`, `bytes=0-1023`, open-ended "
+        "`1024-`, or suffix `-1024` for the last 1024 bytes) "
+        "applies to the named file; use one file with "
+        "multiple ranges, or one range with multiple files. "
+        "Comma-separated ranges (e.g. `0-1023,4096-8191`) are "
+        "fetched in order, equivalent to repeating --range. To "
+        "pull ranges from different files, bind each explicitly "
+        "as FILE:START-END (e.g. `--range a.warc.gz:0-9 --range "
+        "b.warc.gz:50-99`). Segments are written back-to-back "
+        "with no separator, so e.g. selected .warc.gz records "
+        "can be piped straight to zcat. Disables resume and "
+        "full-file checksum validation for partial fetches.",
+    )
+    parser.add_argument(
+        "--no-change-timestamp",
+        action="store_true",
+        help=(
+            "Don't change the timestamp of downloaded files to reflect "
+            "the source material"
+        ),
+    )
+    parser.add_argument(
+        "-p",
+        "--parameters",
+        nargs=1,
+        action=QueryStringAction,
+        metavar="KEY:VALUE",
+        help="Parameters to send with your download request. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "--count-views",
+        action="store_true",
+        help="Count this download toward archive.org view "
+        "counts. By default `ia download` opts out via "
+        "`cnt=0`; this flag omits that parameter.",
+    )
+    parser.add_argument(
+        "-a",
+        "--download-history",
+        action="store_true",
+        help="Also download files from the history directory",
+    )
+    parser.add_argument(
+        "--source",
+        nargs=1,
+        action="extend",
+        help=(
+            "Filter files based on their source value in files.xml "
+            "(i.e. `original`, `derivative`, `metadata`). "
+            "Can be specified multiple times."
+        ),
+    )
+    parser.add_argument(
+        "--exclude-source",
+        nargs=1,
+        action="extend",
+        help=(
+            "Exclude files based on their source value in files.xml "
+            "(i.e. `original`, `derivative`, `metadata`). "
+            "Can be specified multiple times."
+        ),
+    )
+    parser.add_argument(
+        "-t",
+        "--timeout",
+        type=float,
+        help=(
+            "Set a timeout for download requests. "
+            "This sets both connect and read timeout"
+        ),
+    )
 
     parser.set_defaults(func=lambda args: main(args, parser))
 
@@ -190,7 +256,7 @@ def normalize_byte_range(value: str) -> str:
     """
     spec = value.strip()
     if spec.lower().startswith("bytes="):
-        spec = spec[len("bytes="):]
+        spec = spec[len("bytes=") :]
     if not re.fullmatch(r"\d+-\d*|-\d+", spec):
         raise ValueError(f"invalid byte range: {value!r}")
     start, _, end = spec.partition("-")
@@ -214,7 +280,7 @@ def parse_byte_ranges(value: str) -> list[str]:
     """
     spec = value.strip()
     if spec.lower().startswith("bytes="):
-        spec = spec[len("bytes="):]
+        spec = spec[len("bytes=") :]
     parts = spec.split(",")
     if any(p.strip() == "" for p in parts):
         raise ValueError(f"invalid byte range: {value!r}")
@@ -253,8 +319,7 @@ def build_range_jobs(
     :param parser: The argument parser, used to emit errors.
     :returns: Ordered ``(filename, range_header_value)`` jobs.
     """
-    err = ("expected [bytes=]START-END[,START-END...] or "
-           "FILE:START-END[,...]")
+    err = "expected [bytes=]START-END[,START-END...] or FILE:START-END[,...]"
     parsed: list[tuple[str | None, str]] = []
     for raw in args.ranges:
         # A bare range never contains a colon (only digits, '-', ',', and an
@@ -274,37 +339,49 @@ def build_range_jobs(
     has_bare = any(f is None for f, _ in parsed)
     has_bound = any(f is not None for f, _ in parsed)
     if has_bare and has_bound:
-        parser.error("--range: cannot mix bare ranges (START-END) and file-bound "
-                     "ranges (FILE:START-END) in the same command")
+        parser.error(
+            "--range: cannot mix bare ranges (START-END) and file-bound "
+            "ranges (FILE:START-END) in the same command"
+        )
 
-    selectors = [name for name, val in (
-        ("--glob", args.glob),
-        ("--format", args.format),
-        ("--source", args.source),
-        ("--exclude-source", args.exclude_source),
-        ("--search", args.search),
-        ("--itemlist", args.itemlist),
-    ) if val]
+    selectors = [
+        name
+        for name, val in (
+            ("--glob", args.glob),
+            ("--format", args.format),
+            ("--source", args.source),
+            ("--exclude-source", args.exclude_source),
+            ("--search", args.search),
+            ("--itemlist", args.itemlist),
+        )
+        if val
+    ]
     if selectors:
         parser.error(f"--range cannot be combined with {', '.join(selectors)}")
 
     if has_bound:
         if positional_files(args):
-            parser.error("--range FILE:START-END cannot be combined with positional "
-                         "file arguments; the files come from the --range values")
+            parser.error(
+                "--range FILE:START-END cannot be combined with positional "
+                "file arguments; the files come from the --range values"
+            )
         return [(str(f), b) for f, b in parsed]
 
     # Bare form: bind ranges to the positional file(s).
     files = positional_files(args)
     if not files:
         first = args.ranges[0]
-        parser.error(f"--range {first} needs a file: name one positionally "
-                     f"(ia download ID FILE --range {first}) or bind it "
-                     f"(--range FILE:{first})")
+        parser.error(
+            f"--range {first} needs a file: name one positionally "
+            f"(ia download ID FILE --range {first}) or bind it "
+            f"(--range FILE:{first})"
+        )
     if len(files) > 1 and len(parsed) > 1:
-        parser.error(f"ambiguous --range: {len(parsed)} ranges and {len(files)} files "
-                     "given. With more than one file, bind each range to its file "
-                     "explicitly, e.g. `--range FILE1:0-9 --range FILE2:55-99`.")
+        parser.error(
+            f"ambiguous --range: {len(parsed)} ranges and {len(files)} files "
+            "given. With more than one file, bind each range to its file "
+            "explicitly, e.g. `--range FILE1:0-9 --range FILE2:55-99`."
+        )
     if len(parsed) == 1:
         rng = parsed[0][1]
         return [(f, rng) for f in files]
@@ -328,8 +405,9 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         if not args.stdout:
             parser.error("--range requires --stdout")
         if args.identifier == "-":
-            parser.error("--range cannot be combined with reading identifiers "
-                         "from stdin")
+            parser.error(
+                "--range cannot be combined with reading identifiers from stdin"
+            )
         args.range_jobs = build_range_jobs(args, parser)
     else:
         args.range_jobs = None
@@ -352,11 +430,15 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         total_ids = len(ids)
     elif args.search:
         try:
-            _search = args.session.search_items(args.search,
-                                                params=args.search_parameters)
+            _search = args.session.search_items(
+                args.search, params=args.search_parameters
+            )
             total_ids = _search.num_found
             if total_ids == 0:
-                print(f"error: the query '{args.search}' returned no results", file=sys.stderr)
+                print(
+                    f"error: the query '{args.search}' returned no results",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
             ids = _search
         except ValueError as e:
@@ -394,7 +476,10 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         try:
             item = args.session.get_item(identifier)
         except Exception as exc:
-            print(f"{identifier}: failed to retrieve item metadata - errors", file=sys.stderr)
+            print(
+                f"{identifier}: failed to retrieve item metadata - errors",
+                file=sys.stderr,
+            )
             if "You are attempting to make an HTTPS" in str(exc):
                 print(f"\n{exc}", file=sys.stderr)
                 sys.exit(1)

@@ -36,38 +36,50 @@ def setup(subparsers):
     Args:
         subparsers: subparser object passed from ia.py
     """
-    parser = subparsers.add_parser("list",
-                                   aliases=["ls"],
-                                   help="List files from archive.org items")
+    parser = subparsers.add_parser(
+        "list", aliases=["ls"], help="List files from archive.org items"
+    )
 
     # Positional arguments
-    parser.add_argument("identifier",
-                        type=validate_identifier,
-                        help="Identifier of the item")
+    parser.add_argument(
+        "identifier", type=validate_identifier, help="Identifier of the item"
+    )
 
     # Options
-    parser.add_argument("-v", "--verbose",
-                        action="store_true",
-                        help="Print column headers")
-    parser.add_argument("-a", "--all",
-                        action="store_true",
-                        help="List all information available for files")
-    parser.add_argument("-l", "--location",
-                        action="store_true",
-                        help="Print full URL for each file")
-    parser.add_argument("-c", "--columns",
-                        action="append",
-                        type=prepare_columns,
-                        help="List specified file information")
-    parser.add_argument("-g", "--glob",
-                        nargs=1,
-                        action="extend",
-                        metavar="PATTERN",
-                        help="Only return files matching the given glob pattern. "
-                             "Can be specified multiple times.")
-    parser.add_argument("-f", "--format",
-                        action="append",
-                        help="Return files matching FORMAT. Can be specified multiple times.")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Print column headers"
+    )
+    parser.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="List all information available for files",
+    )
+    parser.add_argument(
+        "-l", "--location", action="store_true", help="Print full URL for each file"
+    )
+    parser.add_argument(
+        "-c",
+        "--columns",
+        action="append",
+        type=prepare_columns,
+        help="List specified file information",
+    )
+    parser.add_argument(
+        "-g",
+        "--glob",
+        nargs=1,
+        action="extend",
+        metavar="PATTERN",
+        help="Only return files matching the given glob pattern. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-f",
+        "--format",
+        action="append",
+        help="Return files matching FORMAT. Can be specified multiple times.",
+    )
 
     parser.set_defaults(func=main)
 
@@ -128,8 +140,9 @@ def generate_output(files, args, dict_writer, item):
                 if isinstance(val, (list, tuple, set)):
                     val = ";".join(val)
                 if key == "name" and args.location:
-                    file_dict[key] = (f"https://{args.session.host}"
-                                      f"/download/{item.identifier}/{val}")
+                    file_dict[key] = (
+                        f"https://{args.session.host}/download/{item.identifier}/{val}"
+                    )
                 else:
                     file_dict[key] = val
         output.append(file_dict)
@@ -150,7 +163,7 @@ def main(args: argparse.Namespace) -> None:
     setup_columns(args, files)
     files = filter_files(args, files, item)
 
-    dict_writer = csv.DictWriter(sys.stdout, args.columns,
-                                 delimiter="\t",
-                                 lineterminator="\n")
+    dict_writer = csv.DictWriter(
+        sys.stdout, args.columns, delimiter="\t", lineterminator="\n"
+    )
     generate_output(files, args, dict_writer, item)

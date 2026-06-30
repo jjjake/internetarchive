@@ -23,6 +23,7 @@ internetarchive.iarequest
 :copyright: (C) 2012-2025 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+
 import copy
 import logging
 import re
@@ -54,14 +55,15 @@ class S3Request(requests.models.Request):
     :param kwargs: Additional arguments passed to :class:`requests.Request`.
     """
 
-    def __init__(self,
-                 metadata=None,
-                 file_metadata=None,
-                 queue_derive=True,
-                 access_key=None,
-                 secret_key=None,
-                 **kwargs):
-
+    def __init__(
+        self,
+        metadata=None,
+        file_metadata=None,
+        queue_derive=True,
+        access_key=None,
+        secret_key=None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
 
         self.auth = self.auth or auth.S3Auth(access_key, secret_key)
@@ -81,7 +83,6 @@ class S3Request(requests.models.Request):
             auth=self.auth,
             cookies=self.cookies,
             hooks=self.hooks,
-
             # S3Request kwargs.
             metadata=self.metadata,
             file_metadata=self.file_metadata,
@@ -91,9 +92,21 @@ class S3Request(requests.models.Request):
 
 
 class S3PreparedRequest(requests.models.PreparedRequest):
-    def prepare(self, method=None, url=None, headers=None, files=None, data=None,
-                params=None, auth=None, cookies=None, hooks=None, queue_derive=None,
-                metadata=None, file_metadata=None):
+    def prepare(
+        self,
+        method=None,
+        url=None,
+        headers=None,
+        files=None,
+        data=None,
+        params=None,
+        auth=None,
+        cookies=None,
+        hooks=None,
+        queue_derive=None,
+        metadata=None,
+        file_metadata=None,
+    ):
         self.prepare_method(method)
         self.prepare_url(url, params)
         self.prepare_headers(headers, metadata, file_metadata, queue_derive)
@@ -156,20 +169,21 @@ class MetadataRequest(requests.models.Request):
     :param kwargs: Additional arguments passed to :class:`requests.Request`.
     """
 
-    def __init__(self,
-                 metadata=None,
-                 source_metadata=None,
-                 target=None,
-                 priority=None,
-                 access_key=None,
-                 secret_key=None,
-                 append=None,
-                 expect=None,
-                 append_list=None,
-                 insert=None,
-                 reduced_priority=None,
-                 **kwargs):
-
+    def __init__(
+        self,
+        metadata=None,
+        source_metadata=None,
+        target=None,
+        priority=None,
+        access_key=None,
+        secret_key=None,
+        append=None,
+        expect=None,
+        append_list=None,
+        insert=None,
+        reduced_priority=None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
 
         self.auth = self.auth or auth.S3PostAuth(access_key, secret_key)
@@ -195,7 +209,6 @@ class MetadataRequest(requests.models.Request):
             auth=self.auth,
             cookies=self.cookies,
             hooks=self.hooks,
-
             # MetadataRequest kwargs.
             metadata=self.metadata,
             priority=self.priority,
@@ -211,10 +224,27 @@ class MetadataRequest(requests.models.Request):
 
 
 class MetadataPreparedRequest(requests.models.PreparedRequest):
-    def prepare(self, method=None, url=None, headers=None, files=None, data=None,
-                params=None, auth=None, cookies=None, hooks=None, metadata=None,
-                source_metadata=None, target=None, priority=None, append=None,
-                expect=None, append_list=None, insert=None, reduced_priority=None):
+    def prepare(
+        self,
+        method=None,
+        url=None,
+        headers=None,
+        files=None,
+        data=None,
+        params=None,
+        auth=None,
+        cookies=None,
+        hooks=None,
+        metadata=None,
+        source_metadata=None,
+        target=None,
+        priority=None,
+        append=None,
+        expect=None,
+        append_list=None,
+        insert=None,
+        reduced_priority=None,
+    ):
         # First handle our custom headers
         if reduced_priority:
             headers = headers.copy() if headers else {}
@@ -252,8 +282,17 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         # This MUST go after prepare_auth. Authenticators could add a hook
         self.prepare_hooks(hooks)
 
-    def _prepare_request_body(self, metadata, source_metadata, target, priority,
-                              append, append_list, insert, expect):
+    def _prepare_request_body(
+        self,
+        metadata,
+        source_metadata,
+        target,
+        priority,
+        append,
+        append_list,
+        insert,
+        expect,
+    ):
         if not source_metadata:
             r = requests.get(self.url, timeout=10)
             source_metadata = r.json()
@@ -291,8 +330,9 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             or all(isinstance(v, dict) for v in metadata.values())
         )
 
-    def _prepare_multi_target_changes(self, metadata, source_metadata, target,
-                                      append, expect, append_list, insert):
+    def _prepare_multi_target_changes(
+        self, metadata, source_metadata, target, append, expect, append_list, insert
+    ):
         changes = []
         if target:
             metadata = {target: metadata}
@@ -309,8 +349,17 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
             changes.append({'target': key, 'patch': patch})
         return changes
 
-    def _prepare_single_target_body(self, metadata, source_metadata, target, append,
-                                    append_list, insert, expect, priority):
+    def _prepare_single_target_body(
+        self,
+        metadata,
+        source_metadata,
+        target,
+        append,
+        append_list,
+        insert,
+        expect,
+        priority,
+    ):
         target = target or 'metadata'
         if target == 'metadata':
             try:
@@ -354,8 +403,9 @@ class MetadataPreparedRequest(requests.models.PreparedRequest):
         }
 
 
-def prepare_patch(metadata, source_metadata, append, expect=None,
-                  append_list=None, insert=None):
+def prepare_patch(
+    metadata, source_metadata, append, expect=None, append_list=None, insert=None
+):
     """Create a JSON Patch from metadata changes.
 
     :param metadata: New metadata to apply (dict or list).
@@ -408,8 +458,9 @@ def _create_patch_tests(expect):
     return tests
 
 
-def prepare_target_patch(metadata, source_metadata, append, target,
-                         append_list, insert, expect):
+def prepare_target_patch(
+    metadata, source_metadata, append, target, append_list, insert, expect
+):
     """Create a JSON Patch for a specific metadata target path.
 
     :param metadata: New metadata to apply.
@@ -421,6 +472,7 @@ def prepare_target_patch(metadata, source_metadata, append, target,
     :param expect: Dict of expectations for server-side validation.
     :returns: A list of JSON Patch operations.
     """
+
     def get_nested_value(data, parts):
         current = data
         for part in parts:
@@ -443,8 +495,9 @@ def prepare_target_patch(metadata, source_metadata, append, target,
     )
 
 
-def prepare_files_patch(metadata, files_metadata, target, append,
-                        append_list, insert, expect):
+def prepare_files_patch(
+    metadata, files_metadata, target, append, append_list, insert, expect
+):
     """Create a JSON Patch for file-level metadata.
 
     :param metadata: New metadata to apply to the file.
@@ -470,8 +523,9 @@ def prepare_files_patch(metadata, files_metadata, target, append,
     return []
 
 
-def prepare_metadata(metadata, source_metadata=None, append=False,
-                     append_list=False, insert=False):
+def prepare_metadata(
+    metadata, source_metadata=None, append=False, append_list=False, insert=False
+):
     """Normalize and merge metadata before building JSON Patch.
 
     Handles both plain key/value metadata and "indexed" keys like
@@ -527,7 +581,8 @@ def _process_non_indexed_keys(metadata, source, prepared, append, append_list):
             if isinstance(source[current_key], list):
                 raise ValueError(
                     "Cannot append to list metadata with 'append' flag; "
-                    "use 'append_list' instead.")
+                    "use 'append_list' instead."
+                )
             prepared[current_key] = f'{source[current_key]} {value}'
         else:
             prepared[current_key] = value

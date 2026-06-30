@@ -37,39 +37,63 @@ def setup(subparsers):
     Args:
         subparsers: subparser object passed from ia.py
     """
-    parser = subparsers.add_parser("configure",
-                                   aliases=["co"],
-                                   help=("Configure 'ia' with your "
-                                         "archive.org credentials"))
+    parser = subparsers.add_parser(
+        "configure",
+        aliases=["co"],
+        help=("Configure 'ia' with your archive.org credentials"),
+    )
     config_action_group = parser.add_mutually_exclusive_group()
 
-    parser.add_argument("--username", "-u",
-                        help=("Provide username as an option rather than "
-                              "providing it interactively"))
-    parser.add_argument("--password", "-p",
-                        help=("Provide password as an option rather than "
-                              "providing it interactively"))
-    parser.add_argument("--netrc", "-n",
-                        action="store_true",
-                        help="Use netrc file for login")
-    config_action_group.add_argument("--show", "-s",
-                                     action="store_true",
-                                     help=("Print the current configuration in JSON format, "
-                                           "redacting secrets and cookies"))
-    config_action_group.add_argument("--check", "-C",
-                                     action="store_true",
-                                     help="Validate IA-S3 keys (exits 0 if valid, 1 otherwise)")
-    config_action_group.add_argument("--whoami", "-w",
-                                     action="store_true",
-                                     help=("Uses your IA-S3 keys to retrieve account "
-                                          "information from archive.org "
-                                          "about the associated account"))
-    parser.add_argument("--print-cookies", "-c",
-                        action="store_true",
-                        help="Print archive.org logged-in-* cookies")
-    parser.add_argument("--print-auth-header", "-a",
-                        action="store_true",
-                        help="Print an Authorization header with your IA-S3 keys")
+    parser.add_argument(
+        "--username",
+        "-u",
+        help=("Provide username as an option rather than providing it interactively"),
+    )
+    parser.add_argument(
+        "--password",
+        "-p",
+        help=("Provide password as an option rather than providing it interactively"),
+    )
+    parser.add_argument(
+        "--netrc", "-n", action="store_true", help="Use netrc file for login"
+    )
+    config_action_group.add_argument(
+        "--show",
+        "-s",
+        action="store_true",
+        help=(
+            "Print the current configuration in JSON format, "
+            "redacting secrets and cookies"
+        ),
+    )
+    config_action_group.add_argument(
+        "--check",
+        "-C",
+        action="store_true",
+        help="Validate IA-S3 keys (exits 0 if valid, 1 otherwise)",
+    )
+    config_action_group.add_argument(
+        "--whoami",
+        "-w",
+        action="store_true",
+        help=(
+            "Uses your IA-S3 keys to retrieve account "
+            "information from archive.org "
+            "about the associated account"
+        ),
+    )
+    parser.add_argument(
+        "--print-cookies",
+        "-c",
+        action="store_true",
+        help="Print archive.org logged-in-* cookies",
+    )
+    parser.add_argument(
+        "--print-auth-header",
+        "-a",
+        action="store_true",
+        help="Print an Authorization header with your IA-S3 keys",
+    )
 
     parser.set_defaults(func=main)
 
@@ -83,11 +107,15 @@ def main(args: argparse.Namespace) -> None:
         access = args.session.config.get("s3", {}).get("access")
         if not secret or not access:
             if not access:
-                print("error: 'access' key not found in config file, try reconfiguring.",
-                      file=sys.stderr)
+                print(
+                    "error: 'access' key not found in config file, try reconfiguring.",
+                    file=sys.stderr,
+                )
             elif not secret:
-                print("error: 'secret' key not found in config file, try reconfiguring.",
-                      file=sys.stderr)
+                print(
+                    "error: 'secret' key not found in config file, try reconfiguring.",
+                    file=sys.stderr,
+                )
             sys.exit(1)
         print(f"Authorization: LOW {access}:{secret}")
         sys.exit()
@@ -97,14 +125,23 @@ def main(args: argparse.Namespace) -> None:
         sig = args.session.config.get("cookies", {}).get("logged-in-sig")
         if not user or not sig:
             if not user and not sig:
-                print("error: 'logged-in-user' and 'logged-in-sig' cookies "
-                      "not found in config file, try reconfiguring.", file=sys.stderr)
+                print(
+                    "error: 'logged-in-user' and 'logged-in-sig' cookies "
+                    "not found in config file, try reconfiguring.",
+                    file=sys.stderr,
+                )
             elif not user:
-                print("error: 'logged-in-user' cookie not found in config file, "
-                      "try reconfiguring.", file=sys.stderr)
+                print(
+                    "error: 'logged-in-user' cookie not found in config file, "
+                    "try reconfiguring.",
+                    file=sys.stderr,
+                )
             elif not sig:
-                print("error: 'logged-in-sig' cookie not found in config file, "
-                      "try reconfiguring.", file=sys.stderr)
+                print(
+                    "error: 'logged-in-sig' cookie not found in config file, "
+                    "try reconfiguring.",
+                    file=sys.stderr,
+                )
             sys.exit(1)
         print(f"logged-in-user={user}; logged-in-sig={sig}")
         sys.exit()
@@ -138,7 +175,9 @@ def main(args: argparse.Namespace) -> None:
             print(f'The credentials for "{user}" are valid')
             sys.exit(0)
         else:
-            print('Your credentials are invalid, check your configuration and try again')
+            print(
+                'Your credentials are invalid, check your configuration and try again'
+            )
             sys.exit(1)
 
     try:
@@ -148,26 +187,32 @@ def main(args: argparse.Namespace) -> None:
             try:
                 n = netrc.netrc()
             except netrc.NetrcParseError:
-                print("error: netrc.netrc() cannot parse your .netrc file.",
-                      file=sys.stderr)
+                print(
+                    "error: netrc.netrc() cannot parse your .netrc file.",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
             except FileNotFoundError:
                 print("error: .netrc file not found.", file=sys.stderr)
                 sys.exit(1)
             username, _, password = n.hosts["archive.org"]
-            config_file_path = configure(username,
-                                         password or "",
-                                         config_file=args.session.config_file,
-                                         host=args.session.host)
+            config_file_path = configure(
+                username,
+                password or "",
+                config_file=args.session.config_file,
+                host=args.session.host,
+            )
             print(f"Config saved to: {config_file_path}", file=sys.stderr)
         # Interactive input.
         else:
             if not (args.username and args.password):
                 print("Enter your Archive.org credentials below to configure 'ia'.\n")
-            config_file_path = configure(args.username,
-                                         args.password,
-                                         config_file=args.session.config_file,
-                                         host=args.session.host)
+            config_file_path = configure(
+                args.username,
+                args.password,
+                config_file=args.session.config_file,
+                host=args.session.host,
+            )
             saved_msg = f"Config saved to: {config_file_path}"
             if not all([args.username, args.password]):
                 saved_msg = f"\n{saved_msg}"

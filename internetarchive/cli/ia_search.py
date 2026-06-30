@@ -39,55 +39,70 @@ def setup(subparsers):
     Args:
         subparsers: subparser object passed from ia.py
     """
-    parser = subparsers.add_parser("search",
-                                   aliases=["se"],
-                                   help="Search items on archive.org")
+    parser = subparsers.add_parser(
+        "search", aliases=["se"], help="Search items on archive.org"
+    )
 
     # Positional arguments
-    parser.add_argument("query",
-                        type=str,
-                        help="Search query or queries.")
+    parser.add_argument("query", type=str, help="Search query or queries.")
 
     # Optional arguments
-    parser.add_argument("-p", "--parameters",
-                        nargs=1,
-                        action=QueryStringAction,
-                        metavar="KEY:VALUE",
-                        help="Parameters to send with your query. "
-                             "Can be specified multiple times.")
-    parser.add_argument("-H", "--header",
-                        nargs=1,
-                        action=QueryStringAction,
-                        metavar="KEY:VALUE",
-                        help="Add custom headers to your search request. "
-                             "Can be specified multiple times.")
-    parser.add_argument("-s", "--sort",
-                        action="append",
-                        help=("Sort search results by specified fields. "
-                              "See https://archive.org/advancedsearch.php "
-                              "for full list of sort values"
-                              " (e.g. --sort 'date desc', --sort 'date asc', etc.)."))
-    parser.add_argument("-i", "--itemlist",
-                        action="store_true",
-                        help="Output identifiers only.")
-    parser.add_argument("-f", "--field",
-                        nargs=1,
-                        action=FlattenListAction,
-                        help="Metadata field to return. Can be specified multiple times.")
-    parser.add_argument("-n", "--num-found",
-                        action="store_true",
-                        help="Print the number of results to stdout.")
-    parser.add_argument("-F", "--fts",
-                        action="store_true",
-                        help="Beta support for querying the archive.org full text search API.")
-    parser.add_argument("-D", "--dsl-fts",
-                        action="store_true",
-                        help="Submit --fts query in dsl.")
-    parser.add_argument("-t", "--timeout",
-                        type=float,
-                        default=300,
-                        help="Set the timeout in seconds.")
-
+    parser.add_argument(
+        "-p",
+        "--parameters",
+        nargs=1,
+        action=QueryStringAction,
+        metavar="KEY:VALUE",
+        help="Parameters to send with your query. Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-H",
+        "--header",
+        nargs=1,
+        action=QueryStringAction,
+        metavar="KEY:VALUE",
+        help="Add custom headers to your search request. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-s",
+        "--sort",
+        action="append",
+        help=(
+            "Sort search results by specified fields. "
+            "See https://archive.org/advancedsearch.php "
+            "for full list of sort values"
+            " (e.g. --sort 'date desc', --sort 'date asc', etc.)."
+        ),
+    )
+    parser.add_argument(
+        "-i", "--itemlist", action="store_true", help="Output identifiers only."
+    )
+    parser.add_argument(
+        "-f",
+        "--field",
+        nargs=1,
+        action=FlattenListAction,
+        help="Metadata field to return. Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-n",
+        "--num-found",
+        action="store_true",
+        help="Print the number of results to stdout.",
+    )
+    parser.add_argument(
+        "-F",
+        "--fts",
+        action="store_true",
+        help="Beta support for querying the archive.org full text search API.",
+    )
+    parser.add_argument(
+        "-D", "--dsl-fts", action="store_true", help="Submit --fts query in dsl."
+    )
+    parser.add_argument(
+        "-t", "--timeout", type=float, default=300, help="Set the timeout in seconds."
+    )
 
     parser.set_defaults(func=lambda args: main(args, parser))
 
@@ -105,13 +120,15 @@ def perform_search(args, fields, sorts, r_kwargs):
     """
     Perform the search using the provided arguments and request kwargs.
     """
-    return args.session.search_items(args.query,  # type: ignore
-                                     fields=fields,
-                                     sorts=sorts,
-                                     params=args.parameters,
-                                     full_text_search=args.fts,
-                                     dsl_fts=args.dsl_fts,
-                                     request_kwargs=r_kwargs)
+    return args.session.search_items(
+        args.query,  # type: ignore
+        fields=fields,
+        sorts=sorts,
+        params=args.parameters,
+        full_text_search=args.fts,
+        dsl_fts=args.dsl_fts,
+        request_kwargs=r_kwargs,
+    )
 
 
 def handle_search_results(args, search):

@@ -74,8 +74,14 @@ def call_cmd(cmd, expected_exit_code=0):
 
 
 class IaRequestsMock(RequestsMock):
-    def add_metadata_mock(self, identifier, body=None, method=responses.GET,
-                          protocol='https?', transform_body=None):
+    def add_metadata_mock(
+        self,
+        identifier,
+        body=None,
+        method=responses.GET,
+        protocol='https?',
+        transform_body=None,
+    ):
         url = re.compile(f'{protocol}://archive.org/metadata/{identifier}')
         if body is None:
             body = load_test_data_file(f'metadata/{identifier}.json')

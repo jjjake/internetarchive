@@ -36,60 +36,84 @@ def setup(subparsers):
     Args:
         subparsers: subparser object passed from ia.py
     """
-    parser = subparsers.add_parser("tasks",
-                                   aliases=["ta"],
-                                   help="Retrieve information about your archive.org catalog tasks")
+    parser = subparsers.add_parser(
+        "tasks",
+        aliases=["ta"],
+        help="Retrieve information about your archive.org catalog tasks",
+    )
 
-    parser.add_argument("-t", "--task",
-                        nargs="*",
-                        help="Return information about the given task.")
+    parser.add_argument(
+        "-t", "--task", nargs="*", help="Return information about the given task."
+    )
     log_group = parser.add_mutually_exclusive_group()
-    log_group.add_argument("-G", "--get-task-log",
-                           help="Return the given tasks task log.")
-    log_group.add_argument("-f", "--follow-task-log",
-                           help="Follow the given task's log as it grows "
-                                "(tail -f style); stops when the task finishes.")
-    parser.add_argument("-p", "--parameter",
-                        nargs=1,
-                        action=QueryStringAction,
-                        default=None,
-                        metavar="KEY:VALUE",
-                        help="URL parameters passed to catalog.php. "
-                             "Can be specified multiple times.")
-    parser.add_argument("-T", "--tab-output",
-                        action="store_true",
-                        help="Output task info in tab-delimited columns.")
-    parser.add_argument("-c", "--cmd",
-                        type=str,
-                        help="The task to submit (e.g., make_dark.php).")
-    parser.add_argument("-C", "--comment",
-                        type=str,
-                        help="A reasonable explanation for why a task is being submitted.")
-    parser.add_argument("-a", "--task-args",
-                        nargs=1,
-                        action=QueryStringAction,
-                        default=None,
-                        metavar="KEY:VALUE",
-                        help="Args to submit to the Tasks API. "
-                             "Can be specified multiple times.")
-    parser.add_argument("-d", "--data",
-                        nargs=1,
-                        action=PostDataAction,
-                        metavar="DATA",
-                        default=None,
-                        help="Additional data to send when submitting a task. "
-                             "Accepts 'key:value', 'key=value', or a JSON object. "
-                             "Can be specified multiple times.")
-    parser.add_argument("-r", "--reduced-priority",
-                        action="store_true",
-                        help="Submit task at a reduced priority.")
-    parser.add_argument("-l", "--get-rate-limit",
-                        action="store_true",
-                        help="Get rate limit info.")
-    parser.add_argument("identifier",
-                        type=str,
-                        nargs="?",
-                        help="Identifier for tasks specific operations.")
+    log_group.add_argument(
+        "-G", "--get-task-log", help="Return the given tasks task log."
+    )
+    log_group.add_argument(
+        "-f",
+        "--follow-task-log",
+        help="Follow the given task's log as it grows "
+        "(tail -f style); stops when the task finishes.",
+    )
+    parser.add_argument(
+        "-p",
+        "--parameter",
+        nargs=1,
+        action=QueryStringAction,
+        default=None,
+        metavar="KEY:VALUE",
+        help="URL parameters passed to catalog.php. Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-T",
+        "--tab-output",
+        action="store_true",
+        help="Output task info in tab-delimited columns.",
+    )
+    parser.add_argument(
+        "-c", "--cmd", type=str, help="The task to submit (e.g., make_dark.php)."
+    )
+    parser.add_argument(
+        "-C",
+        "--comment",
+        type=str,
+        help="A reasonable explanation for why a task is being submitted.",
+    )
+    parser.add_argument(
+        "-a",
+        "--task-args",
+        nargs=1,
+        action=QueryStringAction,
+        default=None,
+        metavar="KEY:VALUE",
+        help="Args to submit to the Tasks API. Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-d",
+        "--data",
+        nargs=1,
+        action=PostDataAction,
+        metavar="DATA",
+        default=None,
+        help="Additional data to send when submitting a task. "
+        "Accepts 'key:value', 'key=value', or a JSON object. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-r",
+        "--reduced-priority",
+        action="store_true",
+        help="Submit task at a reduced priority.",
+    )
+    parser.add_argument(
+        "-l", "--get-rate-limit", action="store_true", help="Get rate limit info."
+    )
+    parser.add_argument(
+        "identifier",
+        type=str,
+        nargs="?",
+        help="Identifier for tasks specific operations.",
+    )
 
     parser.set_defaults(func=lambda args: main(args, parser))
 
@@ -123,20 +147,24 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             print(json.dumps(r))
             sys.exit(0)
         args.data["args"] = args.task_args
-        r = args.session.submit_task(args.identifier,
-                                     args.cmd,
-                                     comment=args.comment,
-                                     priority=int(args.data.get("priority", 0)),
-                                     reduced_priority=args.reduced_priority,
-                                     data=args.data)
+        r = args.session.submit_task(
+            args.identifier,
+            args.cmd,
+            comment=args.comment,
+            priority=int(args.data.get("priority", 0)),
+            reduced_priority=args.reduced_priority,
+            data=args.data,
+        )
         handle_task_submission_result(r.json(), args.cmd)
         sys.exit(0)
 
     # A positional identifier selects a metadata query and would silently
     # shadow -G/-f (which take their own task id), so reject the combination.
     if args.identifier and (args.get_task_log or args.follow_task_log):
-        parser.error("argument identifier: not allowed with "
-                     "-G/--get-task-log or -f/--follow-task-log")
+        parser.error(
+            "argument identifier: not allowed with "
+            "-G/--get-task-log or -f/--follow-task-log"
+        )
 
     # Tasks read API.
     if args.identifier:
@@ -145,8 +173,11 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         args.parameter = _params
     elif args.get_task_log:
         log = args.session.get_task_log(args.get_task_log, params=args.parameter)
-        print(log.encode("utf-8", errors="surrogateescape")
-                 .decode("utf-8", errors="replace"))
+        print(
+            log.encode("utf-8", errors="surrogateescape").decode(
+                "utf-8", errors="replace"
+            )
+        )
         sys.exit(0)
     elif args.follow_task_log:
         # ``lines`` keeps Tasks API semantics (negative N = the last N lines)
@@ -160,17 +191,20 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             try:
                 lines = int(raw_lines)
             except (TypeError, ValueError):
-                print(f"error: lines must be an integer, got {raw_lines!r}",
-                      file=sys.stderr)
+                print(
+                    f"error: lines must be an integer, got {raw_lines!r}",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
             if lines > 0:
-                print("error: --follow-task-log: 'lines' must be negative "
-                      "(the last N lines, e.g. -p lines=-20); a positive value "
-                      "selects the head of the log, which can't be followed",
-                      file=sys.stderr)
+                print(
+                    "error: --follow-task-log: 'lines' must be negative "
+                    "(the last N lines, e.g. -p lines=-20); a positive value "
+                    "selects the head of the log, which can't be followed",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
-        params = {k: v for k, v in args.parameter.items()
-                  if k != "lines"} or None
+        params = {k: v for k, v in args.parameter.items() if k != "lines"} or None
         # An unknown task id makes the Tasks API return an empty 200 body, so
         # the follower would stream nothing and exit 0 -- misleading. Verify
         # the task exists first so a bad id fails fast with a clear message.
@@ -179,16 +213,18 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             found = any(
                 str(getattr(t, "task_id", "")) == str(tid)
                 for t in args.session.get_tasks(
-                    params={"task_id": tid, "catalog": 1,
-                            "history": 1, "summary": 0}))
+                    params={"task_id": tid, "catalog": 1, "history": 1, "summary": 0}
+                )
+            )
             if not found:
                 print(f"error: task {tid} not found", file=sys.stderr)
                 sys.exit(1)
-            for chunk in args.session.follow_task_log(tid, lines=lines,
-                                                      params=params):
+            for chunk in args.session.follow_task_log(tid, lines=lines, params=params):
                 sys.stdout.write(
-                    chunk.encode("utf-8", errors="surrogateescape")
-                         .decode("utf-8", errors="replace"))
+                    chunk.encode("utf-8", errors="surrogateescape").decode(
+                        "utf-8", errors="replace"
+                    )
+                )
                 sys.stdout.flush()
         except KeyboardInterrupt:
             pass
@@ -209,20 +245,26 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         "submittime",
     ]
 
-    if not (args.identifier
-            or args.parameter.get("task_id")):
+    if not (args.identifier or args.parameter.get("task_id")):
         _params = {"catalog": 1, "history": 0}
         _params.update(args.parameter)
         args.parameter = _params
 
     if not any(x in args.parameter for x in queryable_params):
-        _params = {"submitter": args.session.user_email, "catalog": 1, "history": 0, "summary": 0}
+        _params = {
+            "submitter": args.session.user_email,
+            "catalog": 1,
+            "history": 0,
+            "summary": 0,
+        }
         _params.update(args.parameter)
         args.parameter = _params
 
     if args.tab_output:
-        warn_msg = ("tab-delimited output will be removed in a future release. "
-                    "Please switch to the default JSON output.")
+        warn_msg = (
+            "tab-delimited output will be removed in a future release. "
+            "Please switch to the default JSON output."
+        )
         warnings.warn(warn_msg, stacklevel=2)
     for t in args.session.get_tasks(params=args.parameter):
         # Legacy support for tab-delimited output.
@@ -230,16 +272,22 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         if args.tab_output:
             color = t.color if t.color else "done"
             task_args = "\t".join([f"{k}={v}" for k, v in t.args.items()])  # type: ignore
-            output = "\t".join([str(x) for x in [
-                t.identifier,
-                t.task_id,
-                t.server,
-                t.submittime,
-                t.cmd,
-                color,
-                t.submitter,
-                task_args,
-            ] if x])
+            output = "\t".join(
+                [
+                    str(x)
+                    for x in [
+                        t.identifier,
+                        t.task_id,
+                        t.server,
+                        t.submittime,
+                        t.cmd,
+                        color,
+                        t.submitter,
+                        task_args,
+                    ]
+                    if x
+                ]
+            )
             print(output, flush=True)
         else:
             print(t.json(), flush=True)

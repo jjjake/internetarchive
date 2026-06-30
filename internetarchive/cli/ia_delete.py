@@ -40,58 +40,77 @@ def setup(subparsers):
     Args:
         subparsers: subparser object passed from ia.py
     """
-    parser = subparsers.add_parser("delete",
-                                   aliases=["rm"],
-                                   help="Delete files from archive.org items")
+    parser = subparsers.add_parser(
+        "delete", aliases=["rm"], help="Delete files from archive.org items"
+    )
     # Positional arguments
-    parser.add_argument("identifier",
-                        type=validate_identifier,
-                        help="Identifier for the item from which files are to be deleted.")
-    parser.add_argument("file",
-                        type=str,
-                        nargs="*",
-                        help="Specific file(s) to delete.")
+    parser.add_argument(
+        "identifier",
+        type=validate_identifier,
+        help="Identifier for the item from which files are to be deleted.",
+    )
+    parser.add_argument("file", type=str, nargs="*", help="Specific file(s) to delete.")
 
     # Optional arguments
-    parser.add_argument("-q", "--quiet",
-                        action="store_true",
-                        help="Suppress output.")
-    parser.add_argument("-c", "--cascade",
-                        action="store_true",
-                        help="Delete all associated files including derivatives and the original.")
-    parser.add_argument("-H", "--header",
-                        nargs=1,
-                        action=QueryStringAction,
-                        default=None,
-                        metavar="KEY:VALUE",
-                        help="S3 HTTP headers to send with your request. "
-                             "Can be specified multiple times.")
-    parser.add_argument("-a", "--all",
-                        action="store_true",
-                        help="Delete all files in the given item. Some files cannot be deleted.")
-    parser.add_argument("-d", "--dry-run",
-                        action="store_true",
-                        help=("Output files to be deleted to stdout, "
-                              "but don't actually delete them."))
-    parser.add_argument("-g", "--glob",
-                        nargs=1,
-                        action="extend",
-                        metavar="PATTERN",
-                        help="Only delete files matching the given glob pattern. "
-                             "Can be specified multiple times.")
-    parser.add_argument("-f", "--format",
-                        type=str,
-                        nargs=1,
-                        action=FlattenListAction,
-                        help="Only delete files matching the specified format. "
-                             "Can be specified multiple times.")
-    parser.add_argument("-R", "--retries",
-                        type=int,
-                        default=2,
-                        help="Number of retries on S3 503 SlowDown error.")
-    parser.add_argument("--no-backup",
-                        action="store_true",
-                        help="Turn off archive.org backups. Clobbered files will not be saved.")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Suppress output.")
+    parser.add_argument(
+        "-c",
+        "--cascade",
+        action="store_true",
+        help="Delete all associated files including derivatives and the original.",
+    )
+    parser.add_argument(
+        "-H",
+        "--header",
+        nargs=1,
+        action=QueryStringAction,
+        default=None,
+        metavar="KEY:VALUE",
+        help="S3 HTTP headers to send with your request. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="Delete all files in the given item. Some files cannot be deleted.",
+    )
+    parser.add_argument(
+        "-d",
+        "--dry-run",
+        action="store_true",
+        help=("Output files to be deleted to stdout, but don't actually delete them."),
+    )
+    parser.add_argument(
+        "-g",
+        "--glob",
+        nargs=1,
+        action="extend",
+        metavar="PATTERN",
+        help="Only delete files matching the given glob pattern. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-f",
+        "--format",
+        type=str,
+        nargs=1,
+        action=FlattenListAction,
+        help="Only delete files matching the specified format. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-R",
+        "--retries",
+        type=int,
+        default=2,
+        help="Number of retries on S3 503 SlowDown error.",
+    )
+    parser.add_argument(
+        "--no-backup",
+        action="store_true",
+        help="Turn off archive.org backups. Clobbered files will not be saved.",
+    )
 
     parser.set_defaults(func=lambda args: main(args, parser))
 
@@ -135,16 +154,20 @@ def delete_files(files, args, item, verbose):
             continue
         if args.dry_run:
             if args.cascade:
-                print(f" will delete: {item.identifier}/{f.name} and all derivatives",
-                      file=sys.stderr)
+                print(
+                    f" will delete: {item.identifier}/{f.name} and all derivatives",
+                    file=sys.stderr,
+                )
             else:
                 print(f" will delete: {item.identifier}/{f.name}", file=sys.stderr)
             continue
         try:
-            resp = f.delete(verbose=verbose,
-                            cascade_delete=args.cascade,
-                            headers=args.header,
-                            retries=args.retries)
+            resp = f.delete(
+                verbose=verbose,
+                cascade_delete=args.cascade,
+                headers=args.header,
+                retries=args.retries,
+            )
         except requests.exceptions.RetryError:
             print(f" error: max retries exceeded for {f.name}", file=sys.stderr)
             errors = True

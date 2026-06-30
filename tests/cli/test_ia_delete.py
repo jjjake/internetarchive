@@ -75,7 +75,6 @@ def test_get_files_to_delete_with_glob(nasa_item):
     expected = {'NASAarchiveLogo.jpg'}
     assert {f.name for f in files} == expected
 
-
     # Match lowercase-only names ending in .jpg
     args = make_args(glob="[a-z]*.jpg")
     files = list(get_files_to_delete(args, nasa_item))
@@ -87,7 +86,6 @@ def test_get_files_to_delete_with_glob(nasa_item):
     expected = {'nasa_files.xml', 'nasa_meta.xml'}
     assert {f.name for f in files} == expected
 
-
     args = make_args(glob="*.[a-z][a-z][a-z]")
     files = list(get_files_to_delete(args, nasa_item))
     expected = {
@@ -95,7 +93,7 @@ def test_get_files_to_delete_with_glob(nasa_item):
         'globe_west_540.jpg',
         'nasa_files.xml',
         'nasa_meta.xml',
-        'nasa_reviews.xml'
+        'nasa_reviews.xml',
     }
     assert {f.name for f in files} == expected
 
@@ -105,7 +103,7 @@ def test_get_files_to_delete_with_glob(nasa_item):
         'nasa_archive.torrent',
         'nasa_files.xml',
         'nasa_meta.xml',
-        'nasa_reviews.xml'
+        'nasa_reviews.xml',
     }
     assert {f.name for f in files} == expected
 
@@ -135,7 +133,9 @@ def test_get_files_to_delete_with_format(nasa_item):
 def test_get_files_to_delete_with_explicit_file_list(nasa_item):
     args = make_args(file=["nasa_meta.xml", "nasa_reviews.xml"])
     files = list(get_files_to_delete(args, nasa_item))
-    expected = {f.name for f in nasa_item.get_files(["nasa_meta.xml", "nasa_reviews.xml"])}
+    expected = {
+        f.name for f in nasa_item.get_files(["nasa_meta.xml", "nasa_reviews.xml"])
+    }
     assert {f.name for f in files} == expected
 
 
@@ -143,5 +143,7 @@ def test_get_files_to_delete_with_stdin(monkeypatch, nasa_item):
     args = make_args(file=["-"])
     monkeypatch.setattr(sys, "stdin", ["nasa_meta.xml\n", "nasa_reviews.xml\n"])
     files = list(get_files_to_delete(args, nasa_item))
-    expected = {f.name for f in nasa_item.get_files(["nasa_meta.xml", "nasa_reviews.xml"])}
+    expected = {
+        f.name for f in nasa_item.get_files(["nasa_meta.xml", "nasa_reviews.xml"])
+    }
     assert {f.name for f in files} == expected

@@ -52,86 +52,113 @@ def setup(subparsers):
     Args:
         subparsers: subparser object passed from ia.py
     """
-    parser = subparsers.add_parser("upload",
-                                   aliases=["up"],
-                                   help="Upload files to archive.org")
+    parser = subparsers.add_parser(
+        "upload", aliases=["up"], help="Upload files to archive.org"
+    )
 
     # Positional arguments
-    parser.add_argument("identifier",
-                        type=validate_identifier,
-                        nargs="?",
-                        default=None,
-                        help="Identifier for the upload")
-    parser.add_argument("file",
-                        nargs="*",
-                        type=validate_file,
-                        help="File(s) to upload")
+    parser.add_argument(
+        "identifier",
+        type=validate_identifier,
+        nargs="?",
+        default=None,
+        help="Identifier for the upload",
+    )
+    parser.add_argument("file", nargs="*", type=validate_file, help="File(s) to upload")
 
     # Options
-    parser.add_argument("-q", "--quiet",
-                        action="store_true",
-                        help="Turn off ia's output")
-    parser.add_argument("-d", "--debug",
-                        action="store_true",
-                        help=("Print S3 request parameters to stdout and exit without "
-                              "sending request"))
-    parser.add_argument("-r", "--remote-name",
-                        help=("When uploading data from stdin, "
-                             "this option sets the remote filename"))
-    parser.add_argument("-m", "--metadata",
-                        nargs=1,
-                        action=MetadataAction,
-                        metavar="KEY:VALUE",
-                        default=None,
-                        help="Metadata to add to your item. Can be specified multiple times.")
-    parser.add_argument("--spreadsheet",
-                        type=argparse.FileType("r", encoding="utf-8-sig"),
-                        help="Bulk uploading")
-    parser.add_argument("--file-metadata",
-                        type=argparse.FileType("r"),
-                        help="Upload files with file-level metadata via a file_md.jsonl file")
-    parser.add_argument("-H", "--header",
-                        nargs=1,
-                        action=QueryStringAction,
-                        default=None,
-                        metavar="KEY:VALUE",
-                        help="S3 HTTP headers to send with your request. "
-                             "Can be specified multiple times.")
-    parser.add_argument("-c", "--checksum",
-                        action="store_true",
-                        help="Skip based on checksum")
-    parser.add_argument("-v", "--verify",
-                        action="store_true",
-                        help="Verify that data was not corrupted traversing the network")
-    parser.add_argument("-n", "--no-derive",
-                        action="store_true",
-                        help="Do not derive uploaded files")
-    parser.add_argument("--size-hint",
-                        help="Specify a size-hint for your item")
-    parser.add_argument("--delete",
-                        action="store_true",
-                        help="Delete files after verifying checksums")
-    parser.add_argument("-R", "--retries",
-                        type=int,
-                        help="Number of times to retry request if S3 returns a 503 SlowDown error")
-    parser.add_argument("-s", "--sleep",
-                        type=int,
-                        help="The amount of time to sleep between retries")
-    parser.add_argument("--no-collection-check",
-                        action="store_true",
-                        help="Skip collection exists check")
-    parser.add_argument("-o", "--open-after-upload",
-                        action="store_true",
-                        help="Open the details page for an item after upload")
-    parser.add_argument("--no-backup",
-                        action="store_true",
-                        help="Turn off archive.org backups")
-    parser.add_argument("--keep-directories",
-                        action="store_true",
-                        help="Keep directories in the supplied file paths for the remote filename")
-    parser.add_argument("--status-check",
-                        action="store_true",
-                        help="Check if S3 is accepting requests to the given item")
+    parser.add_argument(
+        "-q", "--quiet", action="store_true", help="Turn off ia's output"
+    )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        action="store_true",
+        help=("Print S3 request parameters to stdout and exit without sending request"),
+    )
+    parser.add_argument(
+        "-r",
+        "--remote-name",
+        help=("When uploading data from stdin, this option sets the remote filename"),
+    )
+    parser.add_argument(
+        "-m",
+        "--metadata",
+        nargs=1,
+        action=MetadataAction,
+        metavar="KEY:VALUE",
+        default=None,
+        help="Metadata to add to your item. Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "--spreadsheet",
+        type=argparse.FileType("r", encoding="utf-8-sig"),
+        help="Bulk uploading",
+    )
+    parser.add_argument(
+        "--file-metadata",
+        type=argparse.FileType("r"),
+        help="Upload files with file-level metadata via a file_md.jsonl file",
+    )
+    parser.add_argument(
+        "-H",
+        "--header",
+        nargs=1,
+        action=QueryStringAction,
+        default=None,
+        metavar="KEY:VALUE",
+        help="S3 HTTP headers to send with your request. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "-c", "--checksum", action="store_true", help="Skip based on checksum"
+    )
+    parser.add_argument(
+        "-v",
+        "--verify",
+        action="store_true",
+        help="Verify that data was not corrupted traversing the network",
+    )
+    parser.add_argument(
+        "-n", "--no-derive", action="store_true", help="Do not derive uploaded files"
+    )
+    parser.add_argument("--size-hint", help="Specify a size-hint for your item")
+    parser.add_argument(
+        "--delete", action="store_true", help="Delete files after verifying checksums"
+    )
+    parser.add_argument(
+        "-R",
+        "--retries",
+        type=int,
+        help="Number of times to retry request if S3 returns a 503 SlowDown error",
+    )
+    parser.add_argument(
+        "-s", "--sleep", type=int, help="The amount of time to sleep between retries"
+    )
+    parser.add_argument(
+        "--no-collection-check",
+        action="store_true",
+        help="Skip collection exists check",
+    )
+    parser.add_argument(
+        "-o",
+        "--open-after-upload",
+        action="store_true",
+        help="Open the details page for an item after upload",
+    )
+    parser.add_argument(
+        "--no-backup", action="store_true", help="Turn off archive.org backups"
+    )
+    parser.add_argument(
+        "--keep-directories",
+        action="store_true",
+        help="Keep directories in the supplied file paths for the remote filename",
+    )
+    parser.add_argument(
+        "--status-check",
+        action="store_true",
+        help="Check if S3 is accepting requests to the given item",
+    )
 
     parser.set_defaults(func=lambda args: main(args, parser))
 
@@ -162,9 +189,7 @@ def _upload_files(item, files, upload_kwargs, prev_identifier=None):
             for i, r in enumerate(responses):
                 if i != 0:
                     print("---", file=sys.stderr)
-                headers = "\n".join(
-                    [f" {k}:{v}" for (k, v) in r.headers.items()]
-                )
+                headers = "\n".join([f" {k}:{v}" for (k, v) in r.headers.items()])
                 print(f"Endpoint:\n {r.url}\n", file=sys.stderr)
                 print(f"HTTP Headers:\n{headers}", file=sys.stderr)
 
@@ -195,7 +220,7 @@ def validate_file(arg):
         raise argparse.ArgumentTypeError(f"'{arg}' is not a valid file or directory")
 
 
-def main(args, parser): # noqa: PLR0912,C901
+def main(args, parser):  # noqa: PLR0912,C901
     # TODO: Refactor to deal with PLR0912 and C901
     # add type hints
     """
@@ -207,14 +232,20 @@ def main(args, parser): # noqa: PLR0912,C901
     check_if_file_arg_required(args, parser)
 
     if uploading_from_stdin(args) and not args.remote_name:
-        parser.error("When uploading from stdin, "
-                     "you must specify a remote filename with --remote-name")
+        parser.error(
+            "When uploading from stdin, "
+            "you must specify a remote filename with --remote-name"
+        )
 
-    if args.status_check:  # TODO: support for checking if a specific bucket is overloaded
+    if (
+        args.status_check
+    ):  # TODO: support for checking if a specific bucket is overloaded
         if args.session.s3_is_overloaded():
-            print(f"warning: {args.identifier} is over limit, and not accepting requests. "
-                  "Expect 503 SlowDown errors.",
-                  file=sys.stderr)
+            print(
+                f"warning: {args.identifier} is over limit, and not accepting requests. "
+                "Expect 503 SlowDown errors.",
+                file=sys.stderr,
+            )
             sys.exit(1)
         else:
             print(f"success: {args.identifier} is accepting requests.", file=sys.stderr)
@@ -233,8 +264,7 @@ def main(args, parser): # noqa: PLR0912,C901
         verbose = True
     if args.size_hint:
         args.header["x-archive-size-hint"] = args.size_hint
-    if not args.header.get("x-archive-keep-old-version") \
-            and not args.no_backup:
+    if not args.header.get("x-archive-keep-old-version") and not args.no_backup:
         args.header["x-archive-keep-old-version"] = "1"
 
     if args.file_metadata:
@@ -273,6 +303,7 @@ def main(args, parser): # noqa: PLR0912,C901
             # Note that the encoding attribute might also be None. In that case, fall back to
             # locale.getpreferredencoding, the default of io.TextIOWrapper and open().
             if hasattr(sys.stdin, "buffer"):
+
                 def read():
                     return sys.stdin.buffer.read(1048576)
             else:
@@ -280,6 +311,7 @@ def main(args, parser): # noqa: PLR0912,C901
 
                 def read():
                     return sys.stdin.read(1048576).encode(encoding)
+
             while True:
                 data = read()
                 if not data:
@@ -327,8 +359,10 @@ def main(args, parser): # noqa: PLR0912,C901
             for row in spreadsheet:
                 for metadata_key in row:
                     if not is_valid_metadata_key(metadata_key):
-                        print(f"error: '{metadata_key}' is not a valid metadata key.",
-                              file=sys.stderr)
+                        print(
+                            f"error: '{metadata_key}' is not a valid metadata key.",
+                            file=sys.stderr,
+                        )
                         sys.exit(1)
                 upload_kwargs_copy = deepcopy(upload_kwargs)
                 if row.get("REMOTE_NAME"):
@@ -341,8 +375,10 @@ def main(args, parser): # noqa: PLR0912,C901
                 identifier = row.get("item", row.get("identifier"))
                 if not identifier:
                     if not prev_identifier:
-                        print("error: no identifier column on spreadsheet.",
-                              file=sys.stderr)
+                        print(
+                            "error: no identifier column on spreadsheet.",
+                            file=sys.stderr,
+                        )
                         sys.exit(1)
                     identifier = prev_identifier
                 del row["file"]
@@ -364,8 +400,10 @@ def main(args, parser): # noqa: PLR0912,C901
                         errors = True
                     else:
                         if args.open_after_upload:
-                            url = (f"{args.session.protocol}//{args.session.host}"
-                                    "/details/{identifier}")
+                            url = (
+                                f"{args.session.protocol}//{args.session.host}"
+                                "/details/{identifier}"
+                            )
                             webbrowser.open_new_tab(url)
                 prev_identifier = identifier
 

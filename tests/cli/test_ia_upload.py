@@ -18,20 +18,25 @@ def test_ia_upload(tmpdir_ch, caplog):
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
-                 body='',
-                 content_type='text/plain')
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+            body='',
+            content_type='text/plain',
+        )
         ia_call(['ia', '--log', 'upload', 'nasa', 'test.txt'])
 
-    assert f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+    assert (
+        f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt'
+        in caplog.text
+    )
 
 
 def test_ia_upload_invalid_identifier(capsys, caplog):
     with open('test.txt', 'w') as fh:
         fh.write('foo')
 
-    ia_call(['ia', '--log', 'upload', 'føø', 'test.txt'],
-            expected_exit_code=2)
+    ia_call(['ia', '--log', 'upload', 'føø', 'test.txt'], expected_exit_code=2)
 
     _out, err = capsys.readouterr()
     assert "Identifier can only contain alphanumeric" in err
@@ -39,9 +44,12 @@ def test_ia_upload_invalid_identifier(capsys, caplog):
 
 def test_ia_upload_status_check(capsys):
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
-                 body=STATUS_CHECK_RESPONSE,
-                 content_type='application/json')
+        rsps.add(
+            responses.GET,
+            f'{PROTOCOL}//s3.us.archive.org',
+            body=STATUS_CHECK_RESPONSE,
+            content_type='application/json',
+        )
 
         ia_call(['ia', 'upload', 'nasa', '--status-check'])
         _out, err = capsys.readouterr()
@@ -50,14 +58,19 @@ def test_ia_upload_status_check(capsys):
         j = json.loads(STATUS_CHECK_RESPONSE)
         j['over_limit'] = 1
         rsps.reset()
-        rsps.add(responses.GET, f'{PROTOCOL}//s3.us.archive.org',
-                 body=json.dumps(j),
-                 content_type='application/json')
+        rsps.add(
+            responses.GET,
+            f'{PROTOCOL}//s3.us.archive.org',
+            body=json.dumps(j),
+            content_type='application/json',
+        )
 
         ia_call(['ia', 'upload', 'nasa', '--status-check'], expected_exit_code=1)
         _out, err = capsys.readouterr()
-        assert ('warning: nasa is over limit, and not accepting requests. '
-                'Expect 503 SlowDown errors.') in err
+        assert (
+            'warning: nasa is over limit, and not accepting requests. '
+            'Expect 503 SlowDown errors.'
+        ) in err
 
 
 def test_ia_upload_debug(capsys, tmpdir_ch, nasa_mocker):
@@ -76,23 +89,27 @@ def test_ia_upload_debug(capsys, tmpdir_ch, nasa_mocker):
 
 
 def test_ia_upload_403(capsys):
-    s3_error = ('<Error>'
-                '<Code>SignatureDoesNotMatch</Code>'
-                '<Message>The request signature we calculated does not match '
-                'the signature you provided. Check your AWS Secret Access Key '
-                'and signing method. For more information, see REST '
-                'Authentication and SOAP Authentication for details.</Message>'
-                "<Resource>'PUT\n\n\n\n/iacli-test-item60/test-replace.txt'</Resource>"
-                '<RequestId>18a9c5ea-088f-42f5-9fcf-70651cc085ca</RequestId>'
-                '</Error>')
+    s3_error = (
+        '<Error>'
+        '<Code>SignatureDoesNotMatch</Code>'
+        '<Message>The request signature we calculated does not match '
+        'the signature you provided. Check your AWS Secret Access Key '
+        'and signing method. For more information, see REST '
+        'Authentication and SOAP Authentication for details.</Message>'
+        "<Resource>'PUT\n\n\n\n/iacli-test-item60/test-replace.txt'</Resource>"
+        '<RequestId>18a9c5ea-088f-42f5-9fcf-70651cc085ca</RequestId>'
+        '</Error>'
+    )
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT,
-                 f'{PROTOCOL}//s3.us.archive.org/nasa/test_ia_upload.py',
-                 body=s3_error,
-                 status=403,
-                 content_type='text/plain')
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/test_ia_upload.py',
+            body=s3_error,
+            status=403,
+            content_type='text/plain',
+        )
         ia_call(['ia', 'upload', 'nasa', __file__], expected_exit_code=1)
 
     _out, err = capsys.readouterr()
@@ -132,6 +149,7 @@ def test_ia_upload_automatic_size_hint_files(capsys, tmpdir_ch, nasa_mocker):
     _out, err = capsys.readouterr()
     assert 'x-archive-size-hint:6' in err
 
+
 def test_ia_upload_automatic_size_hint_dir(capsys, tmpdir_ch, nasa_mocker):
     with open('foo', 'w') as fh:
         fh.write('foo')
@@ -150,16 +168,21 @@ def test_ia_upload_unicode(tmpdir_ch, caplog):
     efname = '%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20baz%20%E2%88%86.txt'
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT,
-                 f'{PROTOCOL}//s3.us.archive.org/nasa/{efname}',
-                 body='',
-                 content_type='text/plain')
-        ia_call(['ia', '--log', 'upload', 'nasa', 'தமிழ் - baz ∆.txt',
-                 '--metadata', 'foo:∆'])
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/{efname}',
+            body='',
+            content_type='text/plain',
+        )
+        ia_call(
+            ['ia', '--log', 'upload', 'nasa', 'தமிழ் - baz ∆.txt', '--metadata', 'foo:∆']
+        )
 
-    assert (f'uploaded தமிழ் - baz ∆.txt to {PROTOCOL}//s3.us.archive.org/nasa/'
-            '%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20'
-            'baz%20%E2%88%86.txt') in caplog.text
+    assert (
+        f'uploaded தமிழ் - baz ∆.txt to {PROTOCOL}//s3.us.archive.org/nasa/'
+        '%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D%20-%20'
+        'baz%20%E2%88%86.txt'
+    ) in caplog.text
 
 
 def test_ia_upload_remote_name(tmpdir_ch, caplog):
@@ -168,13 +191,19 @@ def test_ia_upload_remote_name(tmpdir_ch, caplog):
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/hi.txt',
-                 body='',
-                 content_type='text/plain')
-        ia_call(['ia', '--log', 'upload', 'nasa', 'test.txt', '--remote-name',
-                 'hi.txt'])
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/hi.txt',
+            body='',
+            content_type='text/plain',
+        )
+        ia_call(
+            ['ia', '--log', 'upload', 'nasa', 'test.txt', '--remote-name', 'hi.txt']
+        )
 
-    assert f'uploaded hi.txt to {PROTOCOL}//s3.us.archive.org/nasa/hi.txt' in caplog.text
+    assert (
+        f'uploaded hi.txt to {PROTOCOL}//s3.us.archive.org/nasa/hi.txt' in caplog.text
+    )
 
 
 def test_ia_upload_stdin(tmpdir_ch, caplog):
@@ -189,13 +218,18 @@ def test_ia_upload_stdin(tmpdir_ch, caplog):
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/hi.txt',
-                 body='',
-                 content_type='text/plain')
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/hi.txt',
+            body='',
+            content_type='text/plain',
+        )
         with replace_stdin(StringIO('foo')):
             ia_call(['ia', '--log', 'upload', 'nasa', '-', '--remote-name', 'hi.txt'])
 
-    assert f'uploaded hi.txt to {PROTOCOL}//s3.us.archive.org/nasa/hi.txt' in caplog.text
+    assert (
+        f'uploaded hi.txt to {PROTOCOL}//s3.us.archive.org/nasa/hi.txt' in caplog.text
+    )
 
 
 def test_ia_upload_inexistent_file(tmpdir_ch, capsys, caplog):
@@ -216,12 +250,18 @@ def test_ia_upload_spreadsheet(tmpdir_ch, capsys):
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/foo.txt',
-                 body='',
-                 content_type='text/plain')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/bar.txt',
-                 body='',
-                 content_type='text/plain')
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/foo.txt',
+            body='',
+            content_type='text/plain',
+        )
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/bar.txt',
+            body='',
+            content_type='text/plain',
+        )
         ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'])
 
     _out, err = capsys.readouterr()
@@ -238,9 +278,12 @@ def test_ia_upload_spreadsheet_item_column(tmpdir_ch, capsys):
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
-                 body='',
-                 content_type='text/plain')
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+            body='',
+            content_type='text/plain',
+        )
         ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'])
 
     _out, err = capsys.readouterr()
@@ -257,9 +300,12 @@ def test_ia_upload_spreadsheet_item_and_identifier_column(tmpdir_ch, capsys):
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
-                 body='',
-                 content_type='text/plain')
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+            body='',
+            content_type='text/plain',
+        )
 
         ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'])
 
@@ -307,9 +353,12 @@ def test_ia_upload_spreadsheet_bom(tmpdir_ch, capsys):
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
-                 body='',
-                 content_type='text/plain')
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+            body='',
+            content_type='text/plain',
+        )
         ia_call(['ia', 'upload', '--spreadsheet', 'test.csv'])
 
     _out, err = capsys.readouterr()
@@ -323,25 +372,39 @@ def test_ia_upload_checksum(tmpdir_ch, caplog):
     # First upload, file not in metadata yet
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
-                 body='',
-                 content_type='text/plain')
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+            body='',
+            content_type='text/plain',
+        )
         ia_call(['ia', '--log', 'upload', 'nasa', 'test.txt', '--checksum'])
-    assert f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+    assert (
+        f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt'
+        in caplog.text
+    )
 
     caplog.clear()
 
     # Second upload with file in metadata
     def insert_test_txt(body):
         body = json.loads(body)
-        body['files'].append({'name': 'test.txt', 'md5': 'acbd18db4cc2f85cedef654fccc4a4d8'})
+        body['files'].append(
+            {'name': 'test.txt', 'md5': 'acbd18db4cc2f85cedef654fccc4a4d8'}
+        )
         return json.dumps(body)
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa', transform_body=insert_test_txt)
-        ia_call(['ia', '--log', 'upload', 'nasa', 'test.txt', '--checksum'], expected_exit_code=1)
+        ia_call(
+            ['ia', '--log', 'upload', 'nasa', 'test.txt', '--checksum'],
+            expected_exit_code=1,
+        )
 
-    assert f'test.txt already exists: {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+    assert (
+        f'test.txt already exists: {PROTOCOL}//s3.us.archive.org/nasa/test.txt'
+        in caplog.text
+    )
 
     caplog.clear()
 
@@ -352,10 +415,15 @@ def test_ia_upload_checksum(tmpdir_ch, caplog):
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa', transform_body=insert_test_txt)
-        ia_call(['ia', '--log', 'upload', '--spreadsheet', 'test.csv', '--checksum'],
-                expected_exit_code=1)
+        ia_call(
+            ['ia', '--log', 'upload', '--spreadsheet', 'test.csv', '--checksum'],
+            expected_exit_code=1,
+        )
 
-    assert f'test.txt already exists: {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+    assert (
+        f'test.txt already exists: {PROTOCOL}//s3.us.archive.org/nasa/test.txt'
+        in caplog.text
+    )
 
 
 def test_ia_upload_keep_directories(tmpdir_ch, caplog):
@@ -369,36 +437,62 @@ def test_ia_upload_keep_directories(tmpdir_ch, caplog):
     # Default behaviour
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
-                 body='',
-                 content_type='text/plain')
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+            body='',
+            content_type='text/plain',
+        )
         ia_call(['ia', '--log', 'upload', 'nasa', 'foo/test.txt'])
-    assert f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+    assert (
+        f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt'
+        in caplog.text
+    )
     caplog.clear()
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
-                 body='',
-                 content_type='text/plain')
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/test.txt',
+            body='',
+            content_type='text/plain',
+        )
         ia_call(['ia', '--log', 'upload', '--spreadsheet', 'test.csv'])
-    assert f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt' in caplog.text
+    assert (
+        f'uploaded test.txt to {PROTOCOL}//s3.us.archive.org/nasa/test.txt'
+        in caplog.text
+    )
     caplog.clear()
 
     # With the option
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/foo/test.txt',
-                 body='',
-                 content_type='text/plain')
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/foo/test.txt',
+            body='',
+            content_type='text/plain',
+        )
         ia_call(['ia', '--log', 'upload', 'nasa', 'foo/test.txt', '--keep-directories'])
-    assert f'uploaded foo/test.txt to {PROTOCOL}//s3.us.archive.org/nasa/foo/test.txt' in caplog.text
+    assert (
+        f'uploaded foo/test.txt to {PROTOCOL}//s3.us.archive.org/nasa/foo/test.txt'
+        in caplog.text
+    )
     caplog.clear()
 
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/foo/test.txt',
-                 body='',
-                 content_type='text/plain')
-        ia_call(['ia', '--log', 'upload', '--spreadsheet', 'test.csv', '--keep-directories'])
-    assert f'uploaded foo/test.txt to {PROTOCOL}//s3.us.archive.org/nasa/foo/test.txt' in caplog.text
+        rsps.add(
+            responses.PUT,
+            f'{PROTOCOL}//s3.us.archive.org/nasa/foo/test.txt',
+            body='',
+            content_type='text/plain',
+        )
+        ia_call(
+            ['ia', '--log', 'upload', '--spreadsheet', 'test.csv', '--keep-directories']
+        )
+    assert (
+        f'uploaded foo/test.txt to {PROTOCOL}//s3.us.archive.org/nasa/foo/test.txt'
+        in caplog.text
+    )

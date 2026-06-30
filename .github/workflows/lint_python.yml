@@ -11,7 +11,7 @@ jobs:
           python-version: 3.x
       - run: pip install --upgrade pip setuptools wheel
       - run: pip install .[all]
-      - run: black --check --skip-string-normalization . || true
+      - run: ruff format --check --diff .  # See pyproject.toml for configuration
       - run: ruff check --output-format=github  # See pyproject.toml for configuration
       - run: pip install -r pex-requirements.txt -r tests/requirements.txt
       - run: mypy .  # See setup.cfg for configuration

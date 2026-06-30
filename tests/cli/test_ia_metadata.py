@@ -23,14 +23,21 @@ def test_ia_metadata_exists(capsys):
 def test_ia_metadata_formats(capsys, nasa_mocker):
     ia_call(['ia', 'metadata', '--formats', 'nasa'])
     out, _err = capsys.readouterr()
-    expected_formats = {'Collection Header', 'Archive BitTorrent', 'JPEG',
-                        'Metadata', ''}
+    expected_formats = {
+        'Collection Header',
+        'Archive BitTorrent',
+        'JPEG',
+        'Metadata',
+        '',
+    }
     assert set(out.split('\n')) == expected_formats
 
 
 def test_ia_metadata_modify(capsys):
-    md_rsp = ('{"success":true,"task_id":447613301,'
-              '"log":"https://catalogd.archive.org/log/447613301"}')
+    md_rsp = (
+        '{"success":true,"task_id":447613301,'
+        '"log":"https://catalogd.archive.org/log/447613301"}'
+    )
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa', method=responses.GET)
         rsps.add_metadata_mock('nasa', body=md_rsp, method=responses.POST)
@@ -38,6 +45,7 @@ def test_ia_metadata_modify(capsys):
         ia_call(['ia', 'metadata', 'nasa', '--modify', f'{valid_key}:test_value'])
         _out, err = capsys.readouterr()
         assert err == 'nasa - success: https://catalogd.archive.org/log/447613301\n'
+
 
 def test_subject_semicolon_split_strips_whitespace(capsys):
     md_rsp = '{"success":true,"task_id":1,"log":"https://catalogd.archive.org/log/1"}'

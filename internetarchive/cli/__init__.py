@@ -23,6 +23,7 @@ internetarchive.cli
 :copyright: (C) 2012-2024 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+
 from internetarchive.cli import (
     cli_utils,
     ia,

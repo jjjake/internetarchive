@@ -26,9 +26,12 @@ def _patch_sleep(monkeypatch):
 def test_get_task_log():
     """``get_task_log`` fetches the log for a task_id and decodes the body."""
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL,
-                 body='log line 1\nlog line 2\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='log line 1\nlog line 2\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
         log = _session().get_task_log(123)
     assert log == 'log line 1\nlog line 2\n'
 
@@ -36,10 +39,16 @@ def test_get_task_log():
 def test_get_task_log_with_params():
     """Extra ``params`` (e.g. ``lines``) are merged with ``task_log`` in the query string."""
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL,
-                 body='last 10 lines',
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_log': '123', 'lines': '10'})])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='last 10 lines',
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_log': '123', 'lines': '10'}
+                )
+            ],
+        )
         log = _session().get_task_log(123, params={'lines': '10'})
     assert log == 'last 10 lines'
 
@@ -47,14 +56,18 @@ def test_get_task_log_with_params():
 def test_get_task_log_request_kwargs_headers():
     """``request_kwargs`` headers (e.g. ``Range``) reach the outgoing request."""
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL,
-                 body='partial content',
-                 match=[
-                     responses.matchers.query_param_matcher({'task_log': '123'}),
-                     responses.matchers.header_matcher({'Range': 'bytes=-500'}),
-                 ])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='partial content',
+            match=[
+                responses.matchers.query_param_matcher({'task_log': '123'}),
+                responses.matchers.header_matcher({'Range': 'bytes=-500'}),
+            ],
+        )
         log = _session().get_task_log(
-            123, request_kwargs={'headers': {'Range': 'bytes=-500'}})
+            123, request_kwargs={'headers': {'Range': 'bytes=-500'}}
+        )
     assert log == 'partial content'
 
 
@@ -67,14 +80,18 @@ def test_catalogtask_task_log_passes_request_kwargs():
     both matchers below would fail.
     """
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL,
-                 body='log',
-                 match=[
-                     responses.matchers.query_param_matcher({'task_log': '123'}),
-                     responses.matchers.header_matcher({'Range': 'bytes=-10'}),
-                 ])
-        catalog = Catalog(_session(),
-                          request_kwargs={'headers': {'Range': 'bytes=-10'}})
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='log',
+            match=[
+                responses.matchers.query_param_matcher({'task_log': '123'}),
+                responses.matchers.header_matcher({'Range': 'bytes=-10'}),
+            ],
+        )
+        catalog = Catalog(
+            _session(), request_kwargs={'headers': {'Range': 'bytes=-10'}}
+        )
         task = CatalogTask({'task_id': 123}, catalog)
         log = task.task_log()
     assert log == 'log'
@@ -83,10 +100,13 @@ def test_catalogtask_task_log_passes_request_kwargs():
 def test_request_task_log_returns_response():
     """``_request_task_log`` returns the raw Response (status + headers intact)."""
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL,
-                 body='log body',
-                 headers={'Last-Modified': 'Wed, 28 May 2026 00:00:00 GMT'},
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='log body',
+            headers={'Last-Modified': 'Wed, 28 May 2026 00:00:00 GMT'},
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
         r = CatalogTask._request_task_log(123, _session())
     assert r.status_code == 200
     assert r.headers['Last-Modified'] == 'Wed, 28 May 2026 00:00:00 GMT'
@@ -104,16 +124,32 @@ def test_select_log_lines():
 
 def _task_status_body(status, category='catalog', task_id=123):
     """Build a one-task Tasks API response body with the given status."""
-    return json.dumps({'task_id': task_id, 'identifier': 'foo',
-                       'category': category, 'status': status,
-                       'submittime': '2026-05-28 12:00:00'}) + '\n'
+    return (
+        json.dumps(
+            {
+                'task_id': task_id,
+                'identifier': 'foo',
+                'category': category,
+                'status': status,
+                'submittime': '2026-05-28 12:00:00',
+            }
+        )
+        + '\n'
+    )
 
 
 def _assert_task_active(status_body, expected):
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_STATUS_URL, body=status_body,
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body=status_body,
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
         assert CatalogTask._task_is_active(123, _session()) is expected
 
 
@@ -138,13 +174,28 @@ def test_follow_task_log_yields_delta(monkeypatch):
     """Successive fetches yield only newly appended content; auto-stops."""
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL, body='l1\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_URL, body='l1\nl2\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='l1\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='l1\nl2\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body='',
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
         chunks = list(CatalogTask.follow_task_log(123, _session()))
     assert chunks == ['l1\n', 'l2\n']
 
@@ -153,11 +204,22 @@ def test_follow_task_log_seeds_lines(monkeypatch):
     """``lines`` seeds only the trailing backlog before following."""
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL, body='a\nb\nc\nd\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='a\nb\nc\nd\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body='',
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
         chunks = list(CatalogTask.follow_task_log(123, _session(), lines=-2))
     assert chunks == ['c\nd\n']
 
@@ -172,16 +234,35 @@ def test_follow_task_log_304_yields_nothing(monkeypatch):
     """A 304 response adds no output."""
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL, body='x\n',
-                 headers={'Last-Modified': 'Wed, 28 May 2026 00:00:00 GMT'},
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_URL, status=304,
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_URL, body='x\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='x\n',
+            headers={'Last-Modified': 'Wed, 28 May 2026 00:00:00 GMT'},
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            status=304,
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='x\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body='',
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
         chunks = list(CatalogTask.follow_task_log(123, _session()))
     assert chunks == ['x\n']
 
@@ -190,26 +271,57 @@ def test_follow_task_log_304_still_active_keeps_polling(monkeypatch):
     """A 304 while the task is still active does not exit; keeps polling."""
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL, body='x\n',
-                 headers={'Last-Modified': 'Wed, 28 May 2026 00:00:00 GMT'},
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_URL, status=304,
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_URL, body='x\ny\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='x\n',
+            headers={'Last-Modified': 'Wed, 28 May 2026 00:00:00 GMT'},
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            status=304,
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='x\ny\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
         # Active right after the first poll and again at the 304 poll, so the
         # 304 is reached while running and does not end the follow.
-        rsps.add(responses.GET, TASKS_STATUS_URL,
-                 body=_task_status_body('running'),
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
-        rsps.add(responses.GET, TASKS_STATUS_URL,
-                 body=_task_status_body('running'),
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
-        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body=_task_status_body('running'),
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body=_task_status_body('running'),
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body='',
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
         chunks = list(CatalogTask.follow_task_log(123, _session()))
     assert chunks == ['x\n', 'y\n']
 
@@ -223,25 +335,56 @@ def test_follow_task_log_skips_transient_shrink(monkeypatch):
     """
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL, body='l1\nl2\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_URL, body='',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_URL, body='l1\nl2\nl3\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='l1\nl2\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='l1\nl2\nl3\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
         # Active after the first poll, and again at the shrink blip so it keeps
         # polling instead of exiting; the next healthy poll yields the delta.
-        rsps.add(responses.GET, TASKS_STATUS_URL,
-                 body=_task_status_body('running'),
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
-        rsps.add(responses.GET, TASKS_STATUS_URL,
-                 body=_task_status_body('running'),
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
-        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body=_task_status_body('running'),
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body=_task_status_body('running'),
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body='',
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
         chunks = list(CatalogTask.follow_task_log(123, _session()))
     assert chunks == ['l1\nl2\n', 'l3\n']
 
@@ -250,15 +393,30 @@ def test_follow_task_log_final_fetch_shrink_emits_nothing(monkeypatch):
     """A shrunken body on the final fetch emits nothing (no garbage re-emit)."""
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL, body='l1\nl2\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='l1\nl2\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
         # Shorter body than seen: skipped during the poll, and skipped again
         # when reused as the final fetch after terminal detection.
-        rsps.add(responses.GET, TASKS_URL, body='x\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='x\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body='',
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
         chunks = list(CatalogTask.follow_task_log(123, _session()))
     assert chunks == ['l1\nl2\n']
 
@@ -268,14 +426,29 @@ def test_follow_task_log_forwards_params(monkeypatch):
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
         # The request only matches if foo=bar is forwarded alongside task_log.
-        rsps.add(responses.GET, TASKS_URL, body='log\n',
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_log': '123', 'foo': 'bar'})])
-        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
-        chunks = list(CatalogTask.follow_task_log(123, _session(),
-                                                  params={'foo': 'bar'}))
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='log\n',
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_log': '123', 'foo': 'bar'}
+                )
+            ],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body='',
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
+        chunks = list(
+            CatalogTask.follow_task_log(123, _session(), params={'foo': 'bar'})
+        )
     assert chunks == ['log\n']
 
 
@@ -283,11 +456,22 @@ def test_session_follow_task_log(monkeypatch):
     """``ArchiveSession.follow_task_log`` delegates to CatalogTask.follow_task_log."""
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL, body='only line\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='only line\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body='',
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
         chunks = list(_session().follow_task_log(123))
     assert chunks == ['only line\n']
 
@@ -301,37 +485,67 @@ def _http_error(status):
 
 def test_is_transient_error():
     """Network blips, timeouts and 5xx retry; 4xx and everything else is fatal."""
-    assert catalog_mod._is_transient_error(
-        requests.exceptions.ConnectionError('reset')) is True
-    assert catalog_mod._is_transient_error(
-        requests.exceptions.ChunkedEncodingError('premature end')) is True
-    assert catalog_mod._is_transient_error(
-        requests.exceptions.Timeout('timed out')) is True
+    assert (
+        catalog_mod._is_transient_error(requests.exceptions.ConnectionError('reset'))
+        is True
+    )
+    assert (
+        catalog_mod._is_transient_error(
+            requests.exceptions.ChunkedEncodingError('premature end')
+        )
+        is True
+    )
+    assert (
+        catalog_mod._is_transient_error(requests.exceptions.Timeout('timed out'))
+        is True
+    )
     assert catalog_mod._is_transient_error(_http_error(500)) is True
     assert catalog_mod._is_transient_error(_http_error(503)) is True
     assert catalog_mod._is_transient_error(_http_error(403)) is False
     assert catalog_mod._is_transient_error(_http_error(404)) is False
     # An HTTPError with no attached response is fatal.
-    assert catalog_mod._is_transient_error(
-        requests.exceptions.HTTPError('no response')) is False
-    assert catalog_mod._is_transient_error(
-        requests.exceptions.RequestException('other')) is False
+    assert (
+        catalog_mod._is_transient_error(requests.exceptions.HTTPError('no response'))
+        is False
+    )
+    assert (
+        catalog_mod._is_transient_error(requests.exceptions.RequestException('other'))
+        is False
+    )
 
 
 def test_follow_task_log_recovers_from_transient_error(monkeypatch):
     """A mid-follow connection error is retried; output is complete, no dupes."""
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL, body='l1\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_URL,
-                 body=requests.exceptions.ConnectionError('reset'),
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_URL, body='l1\nl2\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='l1\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body=requests.exceptions.ConnectionError('reset'),
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='l1\nl2\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body='',
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
         chunks = list(CatalogTask.follow_task_log(123, _session()))
     assert chunks == ['l1\n', 'l2\n']
 
@@ -340,13 +554,28 @@ def test_follow_task_log_5xx_is_transient(monkeypatch):
     """A 5xx response is retried like a connection error."""
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL, status=502,
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_URL, body='l1\n',
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
-        rsps.add(responses.GET, TASKS_STATUS_URL, body='',
-                 match=[responses.matchers.query_param_matcher(
-                     {'task_id': '123'}, strict_match=False)])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            status=502,
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            body='l1\n',
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
+        rsps.add(
+            responses.GET,
+            TASKS_STATUS_URL,
+            body='',
+            match=[
+                responses.matchers.query_param_matcher(
+                    {'task_id': '123'}, strict_match=False
+                )
+            ],
+        )
         chunks = list(CatalogTask.follow_task_log(123, _session()))
     assert chunks == ['l1\n']
 
@@ -356,10 +585,12 @@ def test_follow_task_log_persistent_errors_raise(monkeypatch):
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
         for _ in range(catalog_mod.FOLLOW_MAX_CONSECUTIVE_ERRORS):
-            rsps.add(responses.GET, TASKS_URL,
-                     body=requests.exceptions.ConnectionError('reset'),
-                     match=[responses.matchers.query_param_matcher(
-                         {'task_log': '123'})])
+            rsps.add(
+                responses.GET,
+                TASKS_URL,
+                body=requests.exceptions.ConnectionError('reset'),
+                match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+            )
         with pytest.raises(requests.exceptions.ConnectionError):
             list(CatalogTask.follow_task_log(123, _session()))
         # All N registered failures were consumed: N-1 retries + 1 fatal.
@@ -370,8 +601,12 @@ def test_follow_task_log_4xx_is_fatal(monkeypatch):
     """A 4xx response raises immediately -- no retries."""
     _patch_sleep(monkeypatch)
     with IaRequestsMock() as rsps:
-        rsps.add(responses.GET, TASKS_URL, status=403,
-                 match=[responses.matchers.query_param_matcher({'task_log': '123'})])
+        rsps.add(
+            responses.GET,
+            TASKS_URL,
+            status=403,
+            match=[responses.matchers.query_param_matcher({'task_log': '123'})],
+        )
         with pytest.raises(requests.exceptions.HTTPError):
             list(CatalogTask.follow_task_log(123, _session()))
         assert len(rsps.calls) == 1

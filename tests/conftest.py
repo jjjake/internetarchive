@@ -74,9 +74,15 @@ def call_cmd(cmd, expected_exit_code=0):
 
 
 class IaRequestsMock(RequestsMock):
-    def add_metadata_mock(self, identifier, body=None, method=responses.GET,
-                          protocol='https?', transform_body=None):
-        url = re.compile(f'{protocol}://archive.org/metadata/{identifier}')
+    def add_metadata_mock(
+        self,
+        identifier,
+        body=None,
+        method=responses.GET,
+        protocol='https?',
+        transform_body=None,
+    ):
+        url = re.compile(rf'{protocol}://archive\.org/metadata/{identifier}')
         if body is None:
             body = load_test_data_file(f'metadata/{identifier}.json')
         if transform_body:
@@ -84,7 +90,7 @@ class IaRequestsMock(RequestsMock):
         self.add(method, url, body=body, content_type='application/json')
 
     def mock_all_downloads(self, num_calls=1, body='test content', protocol='https?'):
-        url = re.compile(f'{protocol}://archive.org/download/.*')
+        url = re.compile(rf'{protocol}://archive\.org/download/.*')
         for _ in range(6):
             self.add(responses.GET, url, body=body)
 

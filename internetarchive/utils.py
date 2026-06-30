@@ -25,6 +25,7 @@ This module provides utility functions for the internetarchive library.
 :copyright: (C) 2012-2024 by Internet Archive.
 :license: AGPL 3, see LICENSE for more details.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -45,6 +46,7 @@ try:
     JSONDecodeError = ValueError
 except ImportError:
     import json  # type: ignore
+
     JSONDecodeError = json.JSONDecodeError  # type: ignore
 
 
@@ -87,22 +89,26 @@ def validate_s3_identifier(string: str) -> bool:
     # periods, underscores, and dashes are legal, but may not be the first
     # character!
     if any(string.startswith(c) is True for c in ['.', '_', '-']):
-        raise InvalidIdentifierException('Identifier cannot begin with periods ".", underscores '
-                                        '"_", or dashes "-".')
+        raise InvalidIdentifierException(
+            'Identifier cannot begin with periods ".", underscores "_", or dashes "-".'
+        )
 
     if len(string) > 100 or len(string) < 3:
-        raise InvalidIdentifierException('Identifier should be between 3 and 80 characters in '
-                                        'length.')
+        raise InvalidIdentifierException(
+            'Identifier should be between 3 and 80 characters in length.'
+        )
 
     # Support for uploading to user items, e.g. first character can be `@`.
     if string.startswith('@'):
         string = string[1:]
 
     if any(c not in legal_chars for c in string):
-        raise InvalidIdentifierException('Identifier can only contain alphanumeric characters, '
-                                        'periods ".", underscores "_", or dashes "-". However, '
-                                        'identifier cannot begin with periods, underscores, or '
-                                        'dashes.')
+        raise InvalidIdentifierException(
+            'Identifier can only contain alphanumeric characters, '
+            'periods ".", underscores "_", or dashes "-". However, '
+            'identifier cannot begin with periods, underscores, or '
+            'dashes.'
+        )
 
     return True
 
@@ -255,9 +261,11 @@ class IdentifierListAsItems:
     """
 
     def __init__(self, id_list_or_single_id, session):
-        self.ids = (id_list_or_single_id
-                    if isinstance(id_list_or_single_id, list)
-                    else [id_list_or_single_id])
+        self.ids = (
+            id_list_or_single_id
+            if isinstance(id_list_or_single_id, list)
+            else [id_list_or_single_id]
+        )
         self._items = [None] * len(self.ids)
         self.session = session
 
@@ -265,7 +273,7 @@ class IdentifierListAsItems:
         return len(self.ids)
 
     def __getitem__(self, idx):
-        for i in (range(*idx.indices(len(self))) if isinstance(idx, slice) else [idx]):
+        for i in range(*idx.indices(len(self))) if isinstance(idx, slice) else [idx]:
             if self._items[i] is None:
                 self._items[i] = self.session.get_item(self.ids[i])
         return self._items[idx]
@@ -290,6 +298,7 @@ def get_s3_xml_text(xml_str: str) -> str:
     :returns: A human-readable error message extracted from the XML,
               or the original string if parsing fails.
     """
+
     def _get_tag_text(tag_name, xml_obj):
         text = ''
         elements = xml_obj.getElementsByTagName(tag_name)
@@ -488,8 +497,11 @@ def remove_none(obj):
         except (AttributeError, TypeError):
             return lst
     elif isinstance(obj, dict):
-        return type(obj)((remove_none(k), remove_none(v))
-                         for k, v in obj.items() if k is not None and v is not None)
+        return type(obj)(
+            (remove_none(k), remove_none(v))
+            for k, v in obj.items()
+            if k is not None and v is not None
+        )
     else:
         return obj
 
@@ -541,19 +553,19 @@ def merge_dictionaries(
 ) -> dict:
     """Merge two dictionaries.
 
-       Items in `dict0` can optionally be dropped before the merge.
+    Items in `dict0` can optionally be dropped before the merge.
 
-       If equal keys exist in both dictionaries,
-       entries in`dict0` are overwritten.
+    If equal keys exist in both dictionaries,
+    entries in`dict0` are overwritten.
 
-       :param dict0: A base dictionary with the bulk of the items.
+    :param dict0: A base dictionary with the bulk of the items.
 
-       :param dict1: Additional items which overwrite the items in `dict0`.
+    :param dict1: Additional items which overwrite the items in `dict0`.
 
-       :param keys_to_drop: An iterable of keys to drop from `dict0` before the merge.
+    :param keys_to_drop: An iterable of keys to drop from `dict0` before the merge.
 
-       :returns: A merged dictionary.
-       """
+    :returns: A merged dictionary.
+    """
     if dict0 is not None:
         new_dict = dict0.copy()
     else:
@@ -617,15 +629,22 @@ def is_valid_email(email):
 
 _WINDOWS_RESERVED_BASENAMES = {
     # Device names without extensions (case-insensitive match on stem only)
-    'CON', 'PRN', 'AUX', 'NUL',
+    'CON',
+    'PRN',
+    'AUX',
+    'NUL',
     *(f'COM{i}' for i in range(1, 10)),
     *(f'LPT{i}' for i in range(1, 10)),
 }
 
-_WINDOWS_INVALID_CHARS = set('<>:"\\|?*')  # plus control chars 0x00-0x1F handled separately
+_WINDOWS_INVALID_CHARS = set(
+    '<>:"\\|?*'
+)  # plus control chars 0x00-0x1F handled separately
+
 
 def _percent_encode_byte(b: int) -> str:
     return f'%{b:02X}'
+
 
 def sanitize_windows_filename(name: str) -> tuple[str, bool]:
     """Return a Windows-safe filename by percent-encoding illegal constructs.
@@ -708,7 +727,9 @@ def is_path_within_directory(base_dir: str, target_path: str) -> bool:
     return target_real.startswith(base_real)
 
 
-def sanitize_windows_relpath(rel_path: str, verbose: bool = False, printer=None) -> tuple[str, bool]:
+def sanitize_windows_relpath(
+    rel_path: str, verbose: bool = False, printer=None
+) -> tuple[str, bool]:
     """Sanitize a relative path intended for Windows downloads.
 
     Splits only on forward slashes (logical separators we introduce) so that any
@@ -724,8 +745,10 @@ def sanitize_windows_relpath(rel_path: str, verbose: bool = False, printer=None)
     out_parts: list[str] = []
     modified_any = False
     if printer is None:
+
         def noop_printer(msg):
             pass
+
         printer = noop_printer
     original_components: list[str] = []
     for comp in components:
@@ -739,15 +762,13 @@ def sanitize_windows_relpath(rel_path: str, verbose: bool = False, printer=None)
         printer(f'windows path sanitized: {original_path_display} -> {result_path}')
     return result_path, modified_any
 
+
 def is_windows() -> bool:
     """Check if the current platform is Windows.
 
     :returns: ``True`` if running on Windows, ``False`` otherwise.
     """
-    return (
-        platform.system().lower() == "windows"
-        or sys.platform.startswith("win")
-    )
+    return platform.system().lower() == "windows" or sys.platform.startswith("win")
 
 
 def sanitize_filepath(filepath: str, avoid_colon: bool = False) -> str:
@@ -788,7 +809,7 @@ def sanitize_filename(name: str, avoid_colon: bool = False) -> str:
         warnings.warn(
             f"Filename sanitized: original='{original}' sanitized='{sanitized}'",
             UserWarning,
-            stacklevel=2
+            stacklevel=2,
         )
 
     return sanitized
@@ -807,8 +828,9 @@ def unsanitize_filename(name: str) -> str:
             warnings.warn(
                 "Filename contains percent-encoded sequences that will be decoded.",
                 UserWarning,
-                stacklevel=2
+                stacklevel=2,
             )
+
     def decode_match(match):
         hex_value = match.group(1)
         return chr(int(hex_value, 16))

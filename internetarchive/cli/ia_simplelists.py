@@ -33,51 +33,51 @@ def setup(subparsers):
     Args:
         subparsers: argparse subparsers object from main CLI
     """
-    parser = subparsers.add_parser("simplelists",
-                                   aliases=["sl"],
-                                   help="Manage simplelists")
+    parser = subparsers.add_parser(
+        "simplelists", aliases=["sl"], help="Manage simplelists"
+    )
     parser.add_argument(
-        "identifier",
-        nargs="?",
-        type=str,
-        help="Identifier of the item"
+        "identifier", nargs="?", type=str, help="Identifier of the item"
     )
 
     group = parser.add_argument_group("List operations")
     group.add_argument(
-        "-p", "--list-parents",
+        "-p",
+        "--list-parents",
         action="store_true",
-        help="List parent lists for the given identifier"
+        help="List parent lists for the given identifier",
     )
     group.add_argument(
-        "-c", "--list-children",
+        "-c",
+        "--list-children",
         action="store_true",
-        help="List children in parent list"
+        help="List children in parent list",
     )
     group.add_argument(
-        "-l", "--list-name",
-        type=str,
-        help="Name of the list to operate on"
+        "-l", "--list-name", type=str, help="Name of the list to operate on"
     )
 
     group = parser.add_argument_group("Modification operations")
     group.add_argument(
-        "-s", "--set-parent",
+        "-s",
+        "--set-parent",
         metavar="PARENT",
         type=str,
-        help="Add identifier to specified parent list"
+        help="Add identifier to specified parent list",
     )
     group.add_argument(
-        "-n", "--notes",
+        "-n",
+        "--notes",
         metavar="NOTES",
         type=str,
-        help="Notes to attach to the list membership"
+        help="Notes to attach to the list membership",
     )
     group.add_argument(
-        "-r", "--remove-parent",
+        "-r",
+        "--remove-parent",
         metavar="PARENT",
         type=str,
-        help="Remove identifier from specified parent list"
+        help="Remove identifier from specified parent list",
     )
 
     parser.set_defaults(func=lambda args: main(args, parser))

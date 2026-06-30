@@ -33,47 +33,65 @@ def setup(subparsers):
     Args:
         subparsers: subparser object passed from ia.py
     """
-    parser = subparsers.add_parser("move",
-                                   aliases=["mv"],
-                                   help="Move and rename files in archive.org items")
+    parser = subparsers.add_parser(
+        "move", aliases=["mv"], help="Move and rename files in archive.org items"
+    )
 
     # Positional arguments
-    parser.add_argument("source",
-                        metavar="SOURCE",
-                        help="Source file formatted as: identifier/file")
-    parser.add_argument("destination",
-                        metavar="DESTINATION",
-                        help="Destination file formatted as: identifier/file")
+    parser.add_argument(
+        "source", metavar="SOURCE", help="Source file formatted as: identifier/file"
+    )
+    parser.add_argument(
+        "destination",
+        metavar="DESTINATION",
+        help="Destination file formatted as: identifier/file",
+    )
 
     # Options
-    parser.add_argument("-m", "--metadata",
-                        metavar="KEY:VALUE",
-                        nargs=1,
-                        action=MetadataAction,
-                        help=("Metadata to add to your new item, "
-                              "if you are moving the file to a new item. "
-                              "Can be specified multiple times."))
-    parser.add_argument("-H", "--header",
-                        metavar="KEY:VALUE",
-                        nargs=1,
-                        action=QueryStringAction,
-                        default=None,
-                        help="S3 HTTP headers to send with your request. "
-                             "Can be specified multiple times.")
-    parser.add_argument("--replace-metadata",
-                        action="store_true",
-                        help=("Only use metadata specified as argument, do not copy any "
-                              "from the source item"))
-    parser.add_argument("--ignore-file-metadata",
-                        action="store_true",
-                        help="Do not copy file metadata")
-    parser.add_argument("-n", "--no-derive",
-                        action="store_true",
-                        help="Do not derive uploaded files")
-    parser.add_argument("--no-backup",
-                        action="store_true",
-                        help=("Turn off archive.org backups, "
-                              "clobbered files will not be saved to 'history/files/$key.~N~'"))
+    parser.add_argument(
+        "-m",
+        "--metadata",
+        metavar="KEY:VALUE",
+        nargs=1,
+        action=MetadataAction,
+        help=(
+            "Metadata to add to your new item, "
+            "if you are moving the file to a new item. "
+            "Can be specified multiple times."
+        ),
+    )
+    parser.add_argument(
+        "-H",
+        "--header",
+        metavar="KEY:VALUE",
+        nargs=1,
+        action=QueryStringAction,
+        default=None,
+        help="S3 HTTP headers to send with your request. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "--replace-metadata",
+        action="store_true",
+        help=(
+            "Only use metadata specified as argument, do not copy any "
+            "from the source item"
+        ),
+    )
+    parser.add_argument(
+        "--ignore-file-metadata", action="store_true", help="Do not copy file metadata"
+    )
+    parser.add_argument(
+        "-n", "--no-derive", action="store_true", help="Do not derive uploaded files"
+    )
+    parser.add_argument(
+        "--no-backup",
+        action="store_true",
+        help=(
+            "Turn off archive.org backups, "
+            "clobbered files will not be saved to 'history/files/$key.~N~'"
+        ),
+    )
 
     parser.set_defaults(func=lambda args: main(args, parser))
 
@@ -96,6 +114,8 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         print(f"error: {src_file} does not exist", file=sys.stderr)
         sys.exit(1)
     if dr.status_code == 204:
-        print(f"success: moved '{args.source}' to '{args.destination}'", file=sys.stderr)
+        print(
+            f"success: moved '{args.source}' to '{args.destination}'", file=sys.stderr
+        )
         sys.exit(0)
     print(f"error: {dr.content}", file=sys.stderr)

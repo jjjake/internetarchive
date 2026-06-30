@@ -1,6 +1,11 @@
 [tool.ruff]
-line-length = 102
+line-length = 88
 target-version = "py37"
+
+[tool.ruff.format]
+# Preserve the project's historical style (black ran with skip-string-normalization):
+# keep existing quotes rather than normalizing to double.
+quote-style = "preserve"
 
 [tool.ruff.lint]
 select = [
@@ -54,6 +59,7 @@ select = [
 ]
 ignore = [
   "B904",
+  "E501",  # line length is enforced by `ruff format`; E501 only fires on lines it can't split
   "F401",
   "F841",
   "PLC1901",

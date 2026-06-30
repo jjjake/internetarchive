@@ -1,13 +1,12 @@
 .PHONY: docs clean clean-dist test binary test-binary check-release check-version \
-        build tag push-tag upload-pypi publish-binary-upload github-release \
-        publish publish-binary docs-init init pep8-test prepare-release
+        build check-dist tag push-tag upload-pypi publish-binary-upload github-release \
+        publish publish-binary docs-init init prepare-release
 
 VERSION=$(shell grep -m1 __version__ internetarchive/__version__.py | cut -d\' -f2)
 
 # ============ Development ============
 init:
-	pip install responses==0.5.0 pytest-cov pytest-pep8
-	pip install -e .
+	pip install -e '.[all]'
 
 clean:
 	find . -type f -name '*\.pyc' -delete
@@ -15,9 +14,6 @@ clean:
 
 clean-dist:
 	rm -rf dist/ build/ *.egg-info
-
-pep8-test:
-	py.test --pep8 -m pep8 --cov-report term-missing --cov internetarchive
 
 test:
 	ruff check
@@ -79,6 +75,10 @@ check-version:
 build: clean-dist
 	python -m build
 
+# Validate built artifacts (metadata + long_description rendering) before any upload
+check-dist:
+	twine check dist/*
+
 # ============ Release Publishing ============
 tag:
 	git tag -a v$(VERSION) -m 'version $(VERSION)'
@@ -95,13 +95,20 @@ publish-binary-upload:
 	./ia-$(VERSION)-py3-none-any.pex upload ia-pex ia-$(VERSION)-py3-none-any.pex --no-derive
 	./ia-$(VERSION)-py3-none-any.pex upload ia-pex ia-$(VERSION)-py3-none-any.pex --remote-name=ia --no-derive
 
-# Extract changelog and create GitHub release
+# Extract the curated changelog section and create the GitHub release. The curated notes
+# are prepended to GitHub's auto-generated "What's Changed" / "New Contributors" /
+# "Full Changelog" section (--generate-notes). reST double-backticks are collapsed to
+# Markdown single-backticks since the release body is rendered as Markdown.
 github-release:
 	@echo "Extracting changelog for v$(VERSION)..."
-	@awk '/^$(VERSION) /{found=1; next} found && /^\++$$/{next} found && /^[0-9]+\.[0-9]+\.[0-9]+ /{exit} found' HISTORY.rst > /tmp/ia-release-notes-$(VERSION).md
+	@awk '/^$(VERSION) /{found=1; next} found && /^\++$$/{next} found && /^[0-9]+\.[0-9]+\.[0-9]+ /{exit} found' HISTORY.rst \
+		| sed 's/``/`/g' > /tmp/ia-release-notes-$(VERSION).md
+	@test -s /tmp/ia-release-notes-$(VERSION).md || \
+		{ echo "Error: extracted release notes are empty -- check the '$(VERSION)' heading in HISTORY.rst"; exit 1; }
 	gh release create v$(VERSION) \
 		--title "Version $(VERSION)" \
-		--notes-file /tmp/ia-release-notes-$(VERSION).md
+		--notes-file /tmp/ia-release-notes-$(VERSION).md \
+		--generate-notes
 	@rm -f /tmp/ia-release-notes-$(VERSION).md
 	@echo "GitHub release created!"
 
@@ -111,7 +118,7 @@ github-release:
 # it tests, builds the sdist/wheel and pex binary, tags and pushes the tag (never
 # master), uploads to PyPI and the pex to the archive.org item, and creates the
 # GitHub release.
-publish: check-version check-release test build binary test-binary tag push-tag upload-pypi publish-binary-upload github-release
+publish: check-version check-release test build check-dist binary test-binary tag push-tag upload-pypi publish-binary-upload github-release
 	@echo "\n\033[92mRelease v$(VERSION) published to PyPI, archive.org, and GitHub!\033[0m"
 
 # Binary-only release (for publishing binary after PyPI release)

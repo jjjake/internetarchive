@@ -103,14 +103,6 @@ def nasa_mocker():
 
 
 @pytest.fixture
-def nasa_item():
-    session = get_session()
-    with IaRequestsMock() as mocker:
-        mocker.add_metadata_mock('nasa')
-        yield session.get_item('nasa')
-
-
-@pytest.fixture
 def session():
     return get_session(config={'s3': {'access': 'access', 'secret': 'secret'}})
 
@@ -120,7 +112,6 @@ def nasa_metadata():
     return json.loads(load_test_data_file('metadata/nasa.json'))
 
 
-# TODO: Why is this function defined twice in this file?  See issue #505
-@pytest.fixture  # type: ignore
-def nasa_item(nasa_mocker):  # noqa: F811
+@pytest.fixture
+def nasa_item(nasa_mocker):
     return get_item('nasa')

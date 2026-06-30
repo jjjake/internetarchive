@@ -1,0 +1,25 @@
+# Configures the auto-generated section that `gh release create --generate-notes`
+# appends after the curated HISTORY.rst body.
+# https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
+changelog:
+  exclude:
+    authors:
+      - dependabot
+      - dependabot[bot]
+      - pre-commit-ci[bot]
+  categories:
+    - title: Features and Improvements
+      labels:
+        - enhancement
+        - feature
+    - title: Bugfixes
+      labels:
+        - bug
+        - bugfix
+    - title: Documentation
+      labels:
+        - documentation
+        - docs
+    - title: Other Changes
+      labels:
+        - "*"

@@ -10,8 +10,8 @@ Python library and `ia` CLI for interacting with archive.org. Used for uploading
 ## Common Commands
 
 ```bash
-# Install for development
-pip install -e .
+# Install for development (includes linting, tests, type-checking, and docs tooling)
+pip install -e '.[all]'
 
 # Run tests
 pytest
@@ -61,7 +61,7 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 
 ## Code Style
 
-- Line length: 90 characters
+- Line length: 102 characters (configured for ruff in `pyproject.toml` and for black in `setup.cfg`)
 - Linter: ruff (configured in `pyproject.toml`)
 - Formatter: black
 - Type checking: mypy (type stubs in `options.extras_require` under `types`)

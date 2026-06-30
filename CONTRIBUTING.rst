@@ -25,7 +25,7 @@ All pull requests and patches are welcome, but please consider the following:
 - Include tests.
 - Include documentation for new features.
 - If your patch is supposed to fix a bug, please describe in as much detail as possible the circumstances in which the bug happens.
-- Please follow `PEP8 <http://legacy.python.org/dev/peps/pep-0008/>`_, with the exception of what is ignored in `setup.cfg <https://github.com/jjjake/internetarchive/blob/master/setup.cfg>`_. PEP8 compliance is checked when tests run. Tests will fail if your patch is not PEP8 compliant.
+- Code style is enforced by `ruff <https://docs.astral.sh/ruff/>`_ (configured in `pyproject.toml <https://github.com/jjjake/internetarchive/blob/master/pyproject.toml>`_). Run ``ruff check`` before submitting; CI will fail if your patch is not clean.
 - Add yourself to AUTHORS.rst.
 - Avoid introducing new dependencies.
 - Open an issue if a relevant one is not already open, so others have visibility into what you're working on and efforts aren't duplicated.
@@ -34,34 +34,28 @@ All pull requests and patches are welcome, but please consider the following:
 Running Tests
 -------------
 
-The minimal requirements for running tests are ``pytest``, ``pytest-pep8`` and ``responses``:
-
-.. code:: bash
-
-    $ pip install pytest pytest-pep8 responses
-
 Clone the `internetarchive lib <https://github.com/jjjake/internetarchive>`_:
 
 .. code:: bash
 
     $ git clone https://github.com/jjjake/internetarchive
 
-Install the `internetarchive lib <https://github.com/jjjake/internetarchive>`_ as an editable package:
+Install it as an editable package with its test dependencies:
 
 .. code:: bash
 
     $ cd internetarchive
-    $ pip install -e .
+    $ pip install -e '.[test]'
 
-Run the tests:
+Run the linter and the tests:
 
 .. code:: bash
 
-    $ py.test --pep8
+    $ ruff check && pytest
 
 Note that this will only test against the Python version you are currently using, however ``internetarchive`` tests against multiple Python versions defined in `tox.ini <https://github.com/jjjake/internetarchive/blob/master/tox.ini>`_. Tests must pass on all versions defined in ``tox.ini`` for all pull requests.
 
-To test against all supported Python versions, first make sure you have all of the required versions of Python installed. Then simply install execute tox from the root directory of the repo:
+To test against all supported Python versions, first make sure you have all of the required versions of Python installed. Then install and execute tox from the root directory of the repo:
 
 .. code:: bash
 

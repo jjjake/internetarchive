@@ -218,7 +218,7 @@ def test_upload():
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(
             responses.PUT,
-            re.compile(r'.*s3.us.archive.org/.*'),
+            re.compile(r'.*s3\.us\.archive\.org/.*'),
             adding_headers=expected_s3_headers,
         )
         rsps.add_metadata_mock('nasa')
@@ -264,7 +264,7 @@ def test_upload_validate_identifier():
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add(
             responses.PUT,
-            re.compile(r'.*s3.us.archive.org/.*'),
+            re.compile(r'.*s3\.us\.archive\.org/.*'),
             adding_headers=expected_s3_headers,
         )
         rsps.add_metadata_mock('nasa')

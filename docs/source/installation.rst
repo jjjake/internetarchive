@@ -40,7 +40,7 @@ Troubleshooting ``pipx`` Installation
 
     pipx ensurepath
 
-- **Python version issues**: Ensure you are using Python 3.9 or later.
+- **Python version issues**: Ensure you are using Python 3.10 or later.
 
 For more details, refer to the `pipx documentation <https://pipx.pypa.io/stable/>`_.
 

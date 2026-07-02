@@ -24,8 +24,6 @@ internetarchive.exceptions
 :license: AGPL 3, see LICENSE for more details.
 """
 
-from typing import Dict, Optional
-
 
 class AuthenticationError(Exception):
     """Authentication Failed"""
@@ -52,7 +50,7 @@ class InvalidChecksumError(Exception):
 class AccountAPIError(Exception):
     """Base exception for Account API-related errors."""
 
-    def __init__(self, message: str, error_data: Optional[Dict] = None):
+    def __init__(self, message: str, error_data: dict | None = None):
         super().__init__(message)
         self.error_data = error_data
 

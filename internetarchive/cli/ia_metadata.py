@@ -25,8 +25,8 @@ import argparse
 import csv
 import sys
 from collections import defaultdict
+from collections.abc import Mapping
 from copy import copy
-from typing import Mapping
 
 from requests import Request, Response
 

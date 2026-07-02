@@ -28,8 +28,8 @@ This module implements the Internetarchive API.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, MutableMapping
 from getpass import getpass
-from typing import Iterable, Mapping, MutableMapping
 
 import requests
 from urllib3 import Retry

@@ -28,9 +28,9 @@ from __future__ import annotations
 
 import os
 from collections import defaultdict
+from collections.abc import Mapping
 from configparser import RawConfigParser
 from time import sleep
-from typing import DefaultDict, Dict, Mapping
 
 import requests
 
@@ -223,9 +223,7 @@ def get_config(config=None, config_file=None) -> dict:
     _config = config or {}
     config_file, _is_xdg, config_parser = parse_config_file(config_file)
 
-    # TODO: Use typing.TypedDict when we drop Python 3.8 support
-    # to get rid of noqa: UP006
-    config_dict: DefaultDict[str, Dict[str, str]] = defaultdict(dict)  # noqa: UP006
+    config_dict: defaultdict[str, dict[str, str]] = defaultdict(dict)
 
     # Read from config file if it exists
     if os.path.isfile(config_file):

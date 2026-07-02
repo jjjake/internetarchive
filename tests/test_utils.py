@@ -123,8 +123,9 @@ def test_is_valid_metadata_key():
 
 
 def test_is_windows():
-    with patch('platform.system', return_value='Windows'), patch(
-        'sys.platform', 'win32'
+    with (
+        patch('platform.system', return_value='Windows'),
+        patch('sys.platform', 'win32'),
     ):
         assert internetarchive.utils.is_windows() is True
 

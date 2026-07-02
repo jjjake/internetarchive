@@ -37,7 +37,7 @@ import socket
 import sys
 import threading
 import warnings
-from typing import Iterable, Iterator, Mapping, MutableMapping
+from collections.abc import Iterable, Iterator, Mapping, MutableMapping
 from urllib.parse import unquote, urlparse
 
 import requests

@@ -25,7 +25,7 @@ pytest tests/test_api.py
 # Run a specific test
 pytest tests/test_api.py::test_get_item
 
-# Multi-version testing (requires Python 3.9-3.14 installed)
+# Multi-version testing (requires Python 3.10-3.14 installed)
 tox
 
 # Lint only
@@ -80,7 +80,7 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 - PRs require tests and must pass ruff linting
 - New features must include documentation updates (see `docs/source/`)
 - Avoid introducing new dependencies
-- Support Python 3.9+
+- Support Python 3.10+
 
 ## Git Workflow
 

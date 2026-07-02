@@ -16,8 +16,8 @@ pip install -e '.[all]'
 # Run tests
 pytest
 
-# Run tests with linting
-ruff check && pytest
+# Run tests with linting and format checking (what CI runs)
+ruff check && ruff format --check && pytest
 
 # Run a single test file
 pytest tests/test_api.py
@@ -61,9 +61,9 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 
 ## Code Style
 
-- Line length: 102 characters (configured for ruff in `pyproject.toml` and for black in `setup.cfg`)
+- Line length: 88 characters (configured in `pyproject.toml`)
 - Linter: ruff (configured in `pyproject.toml`)
-- Formatter: black
+- Formatter: `ruff format` (quote style and line length configured in `pyproject.toml`; enforced in CI)
 - Type checking: mypy (type stubs in `options.extras_require` under `types`)
 - Docstrings: Always add or update docstrings when editing or adding code. Use Sphinx-style format with `:param:`, `:returns:`, and `:raises:` sections
 

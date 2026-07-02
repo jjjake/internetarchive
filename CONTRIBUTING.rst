@@ -25,7 +25,7 @@ All pull requests and patches are welcome, but please consider the following:
 - Include tests.
 - Include documentation for new features.
 - If your patch is supposed to fix a bug, please describe in as much detail as possible the circumstances in which the bug happens.
-- Code style is enforced by `ruff <https://docs.astral.sh/ruff/>`_ (configured in `pyproject.toml <https://github.com/jjjake/internetarchive/blob/master/pyproject.toml>`_). Run ``ruff check`` before submitting; CI will fail if your patch is not clean.
+- Code style and formatting are enforced by `ruff <https://docs.astral.sh/ruff/>`_ (configured in `pyproject.toml <https://github.com/jjjake/internetarchive/blob/master/pyproject.toml>`_). Run ``ruff check`` and ``ruff format --check`` before submitting; CI will fail if your patch is not clean.
 - Add yourself to AUTHORS.rst.
 - Avoid introducing new dependencies.
 - Open an issue if a relevant one is not already open, so others have visibility into what you're working on and efforts aren't duplicated.
@@ -47,11 +47,11 @@ Install it as an editable package with its test dependencies:
     $ cd internetarchive
     $ pip install -e '.[test]'
 
-Run the linter and the tests:
+Run the linter, the format check, and the tests:
 
 .. code:: bash
 
-    $ ruff check && pytest
+    $ ruff check && ruff format --check && pytest
 
 Note that this will only test against the Python version you are currently using, however ``internetarchive`` tests against multiple Python versions defined in `tox.ini <https://github.com/jjjake/internetarchive/blob/master/tox.ini>`_. Tests must pass on all versions defined in ``tox.ini`` for all pull requests.
 

@@ -13,8 +13,10 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
-          cache: pip
-      - run: pip install pre-commit
+      - uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+      - run: uv pip install --system pre-commit
       - run: pre-commit --version
       - run: pre-commit install
       - run: pre-commit run --all-files

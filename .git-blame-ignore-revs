@@ -2,4 +2,4 @@
 # Locally: git config blame.ignoreRevsFile .git-blame-ignore-revs
 
 # Reformat the codebase with ruff format (black -> ruff format, line length 88)
-e93f236a86e98ae632f612569caa476d326ed02a
+fdb603d0fe7512516b60601149427a026fc7b92c

@@ -17,6 +17,7 @@ clean-dist:
 
 test:
 	ruff check
+	ruff format --check
 	pytest
 
 # ============ Documentation ============

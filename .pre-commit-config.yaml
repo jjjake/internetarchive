@@ -46,6 +46,6 @@ repos:
           - types-urllib3
 
   - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.7.0  # Use v2.7.0 until dropping Python 3.9 support
+    rev: v3.2.0
     hooks:
       - id: setup-cfg-fmt

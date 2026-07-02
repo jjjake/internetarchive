@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import ClassVar, Dict, List, Optional
+from typing import ClassVar
 
 import requests
 
@@ -45,15 +45,15 @@ class Account:
     canonical_email: str
     itemname: str
     screenname: str
-    notifications: List[str]
+    notifications: list[str]
     has_disability_access: bool
     lastlogin: str
     createdate: str
     session: ArchiveSession = field(default_factory=get_session)
 
     API_BASE_URL: str = '/services/xauthn/'
-    API_INFO_PARAMS: ClassVar[Dict[str, str]] = {'op': 'info'}
-    API_LOCK_UNLOCK_PARAMS: ClassVar[Dict[str, str]] = {'op': 'lock_unlock'}
+    API_INFO_PARAMS: ClassVar[dict[str, str]] = {'op': 'info'}
+    API_LOCK_UNLOCK_PARAMS: ClassVar[dict[str, str]] = {'op': 'lock_unlock'}
 
     def _get_api_base_url(self) -> str:
         """Dynamically construct the API base URL using the session's host."""
@@ -62,9 +62,9 @@ class Account:
     def _post_api_request(
         self,
         endpoint: str,
-        params: Dict[str, str],
-        data: Dict[str, str],
-        session: Optional[ArchiveSession] = None,
+        params: dict[str, str],
+        data: dict[str, str],
+        session: ArchiveSession | None = None,
     ) -> requests.Response:
         """Make a POST request to the Account API.
 
@@ -86,7 +86,7 @@ class Account:
         cls,
         identifier_type: str,
         identifier: str,
-        session: Optional[ArchiveSession] = None,
+        session: ArchiveSession | None = None,
     ) -> "Account":
         """Create an Account by looking up an identifier.
 
@@ -105,8 +105,8 @@ class Account:
         cls,
         identifier_type: str,
         identifier: str,
-        session: Optional[ArchiveSession] = None,
-    ) -> Dict:
+        session: ArchiveSession | None = None,
+    ) -> dict:
         """Fetch account data from the API using an identifier.
 
         :param identifier_type: The type of identifier (e.g., ``'email'``, ``'screenname'``).
@@ -135,7 +135,7 @@ class Account:
 
     @classmethod
     def from_json(
-        cls, json_data: Dict, session: Optional[ArchiveSession] = None
+        cls, json_data: dict, session: ArchiveSession | None = None
     ) -> "Account":
         """Create an Account from JSON data.
 
@@ -186,7 +186,7 @@ class Account:
         )
 
     def lock(
-        self, comment: Optional[str] = None, session: Optional[ArchiveSession] = None
+        self, comment: str | None = None, session: ArchiveSession | None = None
     ) -> requests.Response:
         """Lock the account.
 
@@ -205,7 +205,7 @@ class Account:
         )
 
     def unlock(
-        self, comment: Optional[str] = None, session: Optional[ArchiveSession] = None
+        self, comment: str | None = None, session: ArchiveSession | None = None
     ) -> requests.Response:
         """Unlock the account.
 
@@ -223,7 +223,7 @@ class Account:
             session=session,
         )
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert the Account instance to a dictionary.
 
         :returns: A dictionary representation of the Account instance.

@@ -34,8 +34,7 @@ import platform
 import re
 import sys
 import warnings
-from collections.abc import Mapping
-from typing import Iterable
+from collections.abc import Iterable, Mapping
 from xml.dom.minidom import parseString
 
 # Make preferred JSON package available via `from internetarchive.utils import json`

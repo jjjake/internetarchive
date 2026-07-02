@@ -1,6 +1,6 @@
 [tool.ruff]
 line-length = 88
-target-version = "py37"
+target-version = "py310"
 
 [tool.ruff.format]
 # Preserve the project's historical style (black ran with skip-string-normalization):

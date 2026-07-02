@@ -31,13 +31,14 @@ import math
 import os
 import socket
 import sys
+from collections.abc import Mapping, MutableMapping
 from copy import deepcopy
 from datetime import datetime
 from fnmatch import fnmatch
 from functools import total_ordering
 from logging import getLogger
 from time import sleep
-from typing import Mapping, MutableMapping, Optional
+from typing import Optional
 from urllib.parse import quote, urlparse
 from xml.parsers.expat import ExpatError
 

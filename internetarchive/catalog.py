@@ -29,9 +29,9 @@ This module contains objects for interacting with the Archive.org catalog.
 from __future__ import annotations
 
 import time
+from collections.abc import Iterable, Iterator, Mapping, MutableMapping
 from datetime import datetime
 from logging import getLogger
-from typing import Iterable, Iterator, Mapping, MutableMapping
 
 import requests
 from requests import Response

@@ -1,6 +1,7 @@
 import os
 import re
 
+import pytest
 import responses
 import urllib3
 
@@ -79,6 +80,11 @@ def test_get_item_with_kwargs():
             item.session.adapters[f'{PROTOCOL}//'].max_retries, urllib3.Retry
         )
 
+
+@pytest.mark.network
+def test_get_item_request_kwargs_timeout():
+    # Hits the live site: an unmockable sub-millisecond timeout proves the
+    # timeout request_kwarg is passed through to requests.
     try:
         get_item('nasa', request_kwargs={'timeout': 0.0000000000001})
     except Exception as exc:
@@ -242,17 +248,23 @@ def test_upload():
 
 
 def test_upload_validate_identifier():
-    try:
-        upload(
-            'føø',
-            NASA_METADATA_PATH,
-            access_key='test_access',
-            secret_key='test_secret',
-            validate_identifier=True,
-        )
-        raise AssertionError("Given invalid identifier was not correctly validated.")
-    except Exception as exc:
-        assert isinstance(exc, InvalidIdentifierException)
+    # Mock the metadata fetch that upload()'s get_item() performs before
+    # identifier validation runs, so this test never hits the live site.
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('føø', body='{}')
+        try:
+            upload(
+                'føø',
+                NASA_METADATA_PATH,
+                access_key='test_access',
+                secret_key='test_secret',
+                validate_identifier=True,
+            )
+            raise AssertionError(
+                "Given invalid identifier was not correctly validated."
+            )
+        except Exception as exc:
+            assert isinstance(exc, InvalidIdentifierException)
 
     expected_s3_headers = {
         'content-length': '7557',

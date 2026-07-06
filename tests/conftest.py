@@ -2,6 +2,7 @@ import os
 import re
 import sys
 from subprocess import PIPE, Popen
+from urllib.parse import quote
 
 import pytest
 import responses
@@ -15,6 +16,7 @@ from internetarchive.utils import json
 PROTOCOL = 'https:'
 BASE_URL = 'https://archive.org/'
 METADATA_URL = f'{BASE_URL}metadata/'
+DOWNLOAD_URL_RE = re.compile(r'https?://archive\.org/download/.*')
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEST_CONFIG = os.path.join(ROOT_DIR, 'tests/ia.ini')
 NASA_METADATA_PATH = os.path.join(ROOT_DIR, 'tests/data/metadata/nasa.json')
@@ -82,7 +84,11 @@ class IaRequestsMock(RequestsMock):
         protocol='https?',
         transform_body=None,
     ):
-        url = re.compile(rf'{protocol}://archive\.org/metadata/{identifier}')
+        # requests percent-encodes non-ASCII identifiers in the URL, so match
+        # the quoted form; re.escape guards regex metachars (e.g. '.') in ids.
+        url = re.compile(
+            rf'{protocol}://archive\.org/metadata/{re.escape(quote(identifier))}'
+        )
         if body is None:
             body = load_test_data_file(f'metadata/{identifier}.json')
         if transform_body:

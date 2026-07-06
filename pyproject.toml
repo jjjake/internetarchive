@@ -1,3 +1,14 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+markers = [
+  "network: tests that hit the live archive.org (deselect with -m 'not network')",
+]
+filterwarnings = [
+  # Fail on deprecations raised by our own code so they get fixed, not shipped.
+  "error::DeprecationWarning:internetarchive.*",
+]
+
 [tool.ruff]
 line-length = 88
 target-version = "py310"

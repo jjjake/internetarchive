@@ -1,0 +1,129 @@
+# Tag-triggered release: push a v* tag (e.g. via `make tag push-tag`) and this
+# workflow tests, builds the sdist/wheel and pex, publishes to PyPI via Trusted
+# Publishing (OIDC — no stored token), and creates the GitHub release with the
+# curated HISTORY.rst notes and the pex attached.
+#
+# Prerequisites (one-time, repo/PyPI settings):
+#   - PyPI trusted publisher: owner jjjake, repo internetarchive,
+#     workflow release.yml, environment pypi.
+#   - GitHub environment `pypi` (optionally with a required reviewer).
+#
+# The pex upload to the archive.org `ia-pex` item stays manual (`make
+# publish-binary`) — it needs IA credentials we don't keep in CI.
+# `make publish` remains as a documented laptop fallback.
+name: release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: true
+      - run: uv pip install --system .[test]
+      - run: pytest -m "not network"
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: true
+      - name: Verify tag matches package version
+        run: |
+          PKG_VERSION=$(python -c "import re; print(re.search(r\"__version__ = '(.*)'\", open('internetarchive/__version__.py').read()).group(1))")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match __version__ $PKG_VERSION" >&2
+            exit 1
+          fi
+          case "$PKG_VERSION" in
+            *dev*) echo "Refusing to release a dev version: $PKG_VERSION" >&2; exit 1 ;;
+          esac
+      - run: uv pip install --system build twine
+      - run: python -m build
+      - run: twine check dist/*
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+  pex:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: true
+      - run: uv pip install --system pex
+      - run: make test-binary  # builds the pex (via `binary`) and smoke-tests it
+      - name: Generate sha256 checksum
+        run: sha256sum ia-*.pex > ia-pex.sha256
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pex
+          path: |
+            ia-*.pex
+            ia-pex.sha256
+
+  publish-pypi:
+    runs-on: ubuntu-latest
+    needs: [build, pex]
+    environment:
+      name: pypi
+      url: https://pypi.org/project/internetarchive/
+    permissions:
+      id-token: write  # required for PyPI Trusted Publishing (OIDC)
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    runs-on: ubuntu-latest
+    needs: publish-pypi
+    permissions:
+      contents: write  # create the release and upload assets
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: pex
+      - name: Extract curated notes from HISTORY.rst
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v ver="$VERSION" '$0 ~ "^"ver" "{found=1; next} found && /^\++$/{next} found && /^[0-9]+\.[0-9]+\.[0-9]+ /{exit} found' HISTORY.rst \
+            | sed 's/``/`/g' > release-notes.md
+          test -s release-notes.md || {
+            echo "Error: extracted release notes are empty -- check the '$VERSION' heading in HISTORY.rst" >&2
+            exit 1
+          }
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Version ${GITHUB_REF_NAME#v}" \
+            --notes-file release-notes.md \
+            --generate-notes \
+            ia-*.pex ia-pex.sha256

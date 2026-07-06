@@ -98,10 +98,13 @@ When merging new features to master, increment the dev number if needed (e.g., `
 
 ## Releasing
 
-`master` is branch-protected, so a release is two steps: (1) bump the version via a
-PR, then (2) run `make publish` — it tests, builds the sdist/wheel and pex binary,
-pushes the **tag** (never `master`), uploads to PyPI and the pex to archive.org, and
-creates the GitHub release.
+`master` is branch-protected, so a release is three steps: (1) bump the version via a
+PR, (2) push the release tag (`make check-version check-release tag push-tag`) — the
+tag-triggered `release` workflow tests, builds the sdist/wheel and pex, publishes to
+PyPI via Trusted Publishing (OIDC), and creates the GitHub release with the pex
+attached — then (3) `make publish-binary` to upload the pex to the archive.org
+`ia-pex` item (CI has no IA credentials). `make publish` remains a laptop fallback
+when the workflow is unavailable.
 
 Full steps are in the **Releasing** section of `CONTRIBUTING.rst`.
 

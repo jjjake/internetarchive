@@ -48,8 +48,11 @@ endif
 	@if echo "$(RELEASE)" | grep -q 'dev'; then \
 		echo "Error: RELEASE should not contain 'dev'"; exit 1; \
 	fi
-	sed -i '' "s/__version__ = '.*'/__version__ = '$(RELEASE)'/" internetarchive/__version__.py
-	sed -i '' "s/^$(RELEASE) (?)$$/$(RELEASE) ($$(date +%Y-%m-%d))/" HISTORY.rst
+	@python3 -c "import re, pathlib, datetime; \
+		v = pathlib.Path('internetarchive/__version__.py'); \
+		v.write_text(re.sub(r\"__version__ = '.*'\", \"__version__ = '$(RELEASE)'\", v.read_text())); \
+		h = pathlib.Path('HISTORY.rst'); \
+		h.write_text(h.read_text().replace('$(RELEASE) (?)', '$(RELEASE) (' + datetime.date.today().isoformat() + ')', 1))"
 	@echo "Updated to version $(RELEASE) with date $$(date +%Y-%m-%d)"
 	@echo "Review changes and commit when ready"
 
@@ -63,6 +66,10 @@ check-release:
 	fi
 	@if git rev-parse v$(VERSION) >/dev/null 2>&1; then \
 		echo "Error: Tag v$(VERSION) already exists"; exit 1; \
+	fi
+	@git fetch origin master
+	@if [ "$$(git rev-parse HEAD)" != "$$(git rev-parse origin/master)" ]; then \
+		echo "Error: HEAD is not up to date with origin/master"; exit 1; \
 	fi
 	@echo "Release checks passed!"
 

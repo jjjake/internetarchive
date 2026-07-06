@@ -8,9 +8,8 @@ from requests.exceptions import HTTPError, ReadTimeout
 
 from internetarchive.exceptions import DirectoryTraversalError
 from internetarchive.utils import sanitize_filename
-from tests.conftest import PROTOCOL, IaRequestsMock
+from tests.conftest import DOWNLOAD_URL_RE, PROTOCOL, IaRequestsMock
 
-DOWNLOAD_URL_RE = re.compile(rf'{PROTOCOL}//archive\.org/download/.*')
 EXPECTED_LAST_MOD_HEADER = {"Last-Modified": "Tue, 14 Nov 2023 20:25:48 GMT"}
 
 

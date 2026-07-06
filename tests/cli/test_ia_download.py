@@ -15,6 +15,7 @@ from internetarchive.cli.ia_download import (
 )
 from internetarchive.utils import json
 from tests.conftest import (
+    DOWNLOAD_URL_RE,
     NASA_EXPECTED_FILES,
     IaRequestsMock,
     call_cmd,
@@ -24,17 +25,20 @@ from tests.conftest import (
 )
 
 
+@pytest.mark.network
 def test_no_args(tmpdir_ch):
     call_cmd('ia --insecure download nasa')
     assert files_downloaded(path='nasa') == NASA_EXPECTED_FILES
 
 
+@pytest.mark.network
 @pytest.mark.xfail("CI" in os.environ, reason="May timeout on continuous integration")
 def test_https(tmpdir_ch):
     call_cmd('ia download nasa')
     assert files_downloaded(path='nasa') == NASA_EXPECTED_FILES
 
 
+@pytest.mark.network
 def test_dry_run():
     nasa_url = 'http://archive.org/download/nasa/'
     expected_urls = {nasa_url + f for f in NASA_EXPECTED_FILES}
@@ -46,6 +50,7 @@ def test_dry_run():
     assert expected_urls == dry_run_urls
 
 
+@pytest.mark.network
 def test_glob(tmpdir_ch):
     expected_files = {
         'globe_west_540.jpg',
@@ -58,6 +63,7 @@ def test_glob(tmpdir_ch):
     assert files_downloaded(path='nasa') == expected_files
 
 
+@pytest.mark.network
 def test_exclude(tmpdir_ch):
     expected_files = {
         'globe_west_540.jpg',
@@ -141,11 +147,13 @@ def test_exclude_repeated(tmpdir_ch, capsys):
     assert _dry_run_filenames(capsys) == {'nasa_meta.xml'}
 
 
+@pytest.mark.network
 def test_format(tmpdir_ch):
     call_cmd('ia --insecure download --format="Archive BitTorrent" nasa')
     assert files_downloaded(path='nasa') == {'nasa_archive.torrent'}
 
 
+@pytest.mark.network
 def test_on_the_fly_format():
     i = 'wonderfulwizardo00baumiala'
 
@@ -158,6 +166,7 @@ def test_on_the_fly_format():
     assert stdout == f'http://archive.org/download/{i}/{i}_daisy.zip'
 
 
+@pytest.mark.network
 def test_clobber(tmpdir_ch):
     cmd = 'ia --insecure download nasa nasa_meta.xml'
     call_cmd(cmd)
@@ -173,6 +182,7 @@ def test_clobber(tmpdir_ch):
     assert expected_stderr == stderr
 
 
+@pytest.mark.network
 def test_checksum(tmpdir_ch):
     call_cmd('ia --insecure download nasa nasa_meta.xml')
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
@@ -187,6 +197,7 @@ def test_checksum(tmpdir_ch):
     )
 
 
+@pytest.mark.network
 def test_checksum_archive(tmpdir_ch):
     call_cmd('ia --insecure download nasa nasa_meta.xml')
     assert files_downloaded('nasa') == {'nasa_meta.xml'}
@@ -219,11 +230,13 @@ def test_checksum_archive(tmpdir_ch):
     )
 
 
+@pytest.mark.network
 def test_no_directories(tmpdir_ch):
     call_cmd('ia --insecure download --no-directories nasa nasa_meta.xml')
     assert files_downloaded('.') == {'nasa_meta.xml'}
 
 
+@pytest.mark.network
 def test_destdir(tmpdir_ch):
     cmd = 'ia --insecure download --destdir=thisdirdoesnotexist/ nasa nasa_meta.xml'
     _stdout, stderr = call_cmd(cmd, expected_exit_code=2)
@@ -240,6 +253,7 @@ def test_destdir(tmpdir_ch):
     assert files_downloaded('dir2') == {'nasa_meta.xml'}
 
 
+@pytest.mark.network
 def test_no_change_timestamp(tmpdir_ch):
     # TODO: Handle the case of daylight savings time
 
@@ -290,10 +304,9 @@ def test_download_history_flag(capsys):
 
 
 def test_count_views_flag(tmpdir_ch):
-    download_url_re = re.compile(r'https?://archive\.org/download/.*')
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, download_url_re, body='test content')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content')
         ia_call(
             [
                 'ia',
@@ -309,10 +322,9 @@ def test_count_views_flag(tmpdir_ch):
 
 
 def test_default_sends_cnt_zero(tmpdir_ch):
-    download_url_re = re.compile(r'https?://archive\.org/download/.*')
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, download_url_re, body='test content')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test content')
         ia_call(
             [
                 'ia',
@@ -375,10 +387,9 @@ def _range_headers(rsps):
 
 
 def test_range_single_bare(tmpdir_ch):
-    download_url_re = re.compile(r'https?://archive\.org/download/.*')
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, download_url_re, body='test')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test')
         ia_call(
             [
                 'ia',
@@ -396,10 +407,9 @@ def test_range_single_bare(tmpdir_ch):
 
 
 def test_range_suffix_bare(tmpdir_ch):
-    download_url_re = re.compile(r'https?://archive\.org/download/.*')
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, download_url_re, body='test')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='test')
         ia_call(
             [
                 'ia',
@@ -417,11 +427,10 @@ def test_range_suffix_bare(tmpdir_ch):
 
 
 def test_range_bare_multi_range_one_file(tmpdir_ch):
-    download_url_re = re.compile(r'https?://archive\.org/download/.*')
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, download_url_re, body='AAAA')
-        rsps.add(responses.GET, download_url_re, body='BBBB')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='AAAA')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='BBBB')
         ia_call(
             [
                 'ia',
@@ -442,11 +451,10 @@ def test_range_bare_multi_range_one_file(tmpdir_ch):
 
 
 def test_range_bare_comma_one_file(tmpdir_ch):
-    download_url_re = re.compile(r'https?://archive\.org/download/.*')
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, download_url_re, body='AAAA')
-        rsps.add(responses.GET, download_url_re, body='BBBB')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='AAAA')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='BBBB')
         ia_call(
             [
                 'ia',
@@ -466,11 +474,10 @@ def test_range_bare_comma_one_file(tmpdir_ch):
 
 
 def test_range_file_form_comma(tmpdir_ch):
-    download_url_re = re.compile(r'https?://archive\.org/download/.*')
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, download_url_re, body='AAAA')
-        rsps.add(responses.GET, download_url_re, body='BBBB')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='AAAA')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='BBBB')
         ia_call(
             [
                 'ia',
@@ -489,11 +496,10 @@ def test_range_file_form_comma(tmpdir_ch):
 
 
 def test_range_bare_single_range_multi_file(tmpdir_ch):
-    download_url_re = re.compile(r'https?://archive\.org/download/.*')
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, download_url_re, body='AAAA')
-        rsps.add(responses.GET, download_url_re, body='BBBB')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='AAAA')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='BBBB')
         ia_call(
             [
                 'ia',
@@ -516,11 +522,10 @@ def test_range_bare_single_range_multi_file(tmpdir_ch):
 
 
 def test_range_file_form_multi_file(tmpdir_ch):
-    download_url_re = re.compile(r'https?://archive\.org/download/.*')
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, download_url_re, body='AAAA')
-        rsps.add(responses.GET, download_url_re, body='BBBB')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='AAAA')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='BBBB')
         ia_call(
             [
                 'ia',
@@ -542,11 +547,10 @@ def test_range_file_form_multi_file(tmpdir_ch):
 
 
 def test_range_file_form_same_file_repeated(tmpdir_ch):
-    download_url_re = re.compile(r'https?://archive\.org/download/.*')
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
-        rsps.add(responses.GET, download_url_re, body='AAAA')
-        rsps.add(responses.GET, download_url_re, body='BBBB')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='AAAA')
+        rsps.add(responses.GET, DOWNLOAD_URL_RE, body='BBBB')
         ia_call(
             [
                 'ia',
@@ -653,12 +657,11 @@ def test_range_invalid_invocations(argv):
 def test_range_job_failure_exits_nonzero(tmpdir_ch):
     """A failed range segment must propagate a nonzero exit code, so a downstream
     pipe consumer can tell the bytes are incomplete."""
-    download_url_re = re.compile(r'https?://archive\.org/download/.*')
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
         rsps.add_metadata_mock('nasa')
         rsps.add(
             responses.GET,
-            download_url_re,
+            DOWNLOAD_URL_RE,
             status=416,
             adding_headers={'Content-Range': 'bytes */7105'},
         )

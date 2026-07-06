@@ -11,3 +11,12 @@ updates:
           - "*"  # Group all Actions updates into a single larger pull request
     schedule:
       interval: weekly
+  # Python dependencies: setup.cfg extras + tests/docs/pex requirements files.
+  - package-ecosystem: pip
+    directory: /
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"  # Group all Python dependency updates into a single pull request
+    schedule:
+      interval: weekly

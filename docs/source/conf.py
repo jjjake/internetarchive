@@ -2,16 +2,7 @@
 Internet Archive Python Library documentation configuration.
 """
 
-import os
-import sys
-
-import alabaster
-
-import internetarchive
 from internetarchive import __version__
-
-# Add the project root to Python's module search path
-sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information ----------------------------------------------------
 project = 'internetarchive'
@@ -30,7 +21,6 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
-    'alabaster',
     'sphinx_autodoc_typehints',
 ]
 
@@ -62,7 +52,6 @@ intersphinx_mapping = {
 autodoc_member_order = 'bysource'
 
 # -- HTML output configuration ----------------------------------------------
-html_theme_path = [alabaster.get_path()]
 html_theme = 'alabaster'
 
 html_theme_options = {

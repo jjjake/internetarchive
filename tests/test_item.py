@@ -14,6 +14,7 @@ from internetarchive.api import get_item
 from internetarchive.exceptions import InvalidChecksumError
 from internetarchive.utils import InvalidIdentifierException, json, norm_filepath
 from tests.conftest import (
+    DOWNLOAD_URL_RE,
     NASA_METADATA_PATH,
     PROTOCOL,
     IaRequestsMock,
@@ -22,7 +23,6 @@ from tests.conftest import (
 )
 
 S3_URL = f'{PROTOCOL}//s3.us.archive.org/'
-DOWNLOAD_URL_RE = re.compile(rf'{PROTOCOL}//archive\.org/download/.*')
 S3_URL_RE = re.compile(r'.*s3\.us\.archive\.org/.*')
 
 EXPECTED_LAST_MOD_HEADER = {"Last-Modified": "Tue, 14 Nov 2023 20:25:48 GMT"}
@@ -430,9 +430,11 @@ def test_upload(nasa_item):
 
 
 def test_upload_validate_identifier(session):
-    item = session.get_item('føø')
+    # Mock the metadata fetches so get_item() never hits the live site.
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('føø', body='{}')
         rsps.add(responses.PUT, S3_URL_RE, adding_headers=EXPECTED_S3_HEADERS)
+        item = session.get_item('føø')
         try:
             item.upload(
                 NASA_METADATA_PATH,
@@ -446,9 +448,10 @@ def test_upload_validate_identifier(session):
         except Exception as exc:
             assert isinstance(exc, InvalidIdentifierException)
 
-    valid_item = session.get_item('foo')
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add_metadata_mock('foo', body='{}')
         rsps.add(responses.PUT, S3_URL_RE, adding_headers=EXPECTED_S3_HEADERS)
+        valid_item = session.get_item('foo')
         valid_item.upload(
             NASA_METADATA_PATH, access_key='a', secret_key='b', validate_identifier=True
         )

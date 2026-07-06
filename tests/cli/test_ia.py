@@ -6,7 +6,9 @@ def test_ia(capsys):
     out, err = capsys.readouterr()
     assert 'A command line interface to Archive.org.' in out
 
-    ia_call(['ia', '--insecure', 'ls', 'nasa'])
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        ia_call(['ia', '--insecure', 'ls', 'nasa'])
 
     ia_call(['ia', 'nocmd'], expected_exit_code=2)
     out, err = capsys.readouterr()

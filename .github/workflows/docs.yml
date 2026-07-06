@@ -1,0 +1,19 @@
+name: docs
+on: [pull_request, push]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: true
+      - run: uv pip install --system .[docs]
+      # -W: treat warnings (broken refs, bad markup, autodoc failures) as errors.
+      - run: sphinx-build -W --keep-going -b html docs/source docs/build/html

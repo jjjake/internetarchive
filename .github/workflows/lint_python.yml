@@ -1,5 +1,8 @@
 name: lint_python
 on: [pull_request, push]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   lint_python:
     runs-on: ubuntu-latest

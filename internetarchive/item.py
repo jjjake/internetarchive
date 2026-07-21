@@ -1296,7 +1296,7 @@ class Item(BaseItem):
                         if S3 returns a 503 SlowDown error.
 
         :param retries_sleep: Amount of time to sleep between
-                              ``retries``.
+                              ``retries``, in seconds.
 
         :param verbose: Print progress to stdout.
 

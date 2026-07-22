@@ -87,8 +87,8 @@ def test_get_config_with_config_file(tmpdir):
 
 
 def test_get_config_no_config_file():
-    os.environ['HOME'] = ''
-    config = internetarchive.config.get_config()
+    with _environ(HOME='', XDG_CONFIG_HOME=None, IA_CONFIG_FILE=None):
+        config = internetarchive.config.get_config()
     assert config == {}
 
 
@@ -104,8 +104,8 @@ def test_get_config_with_config():
         },
     }
 
-    os.environ['HOME'] = ''
-    config = internetarchive.config.get_config(config=test_conf)
+    with _environ(HOME='', XDG_CONFIG_HOME=None, IA_CONFIG_FILE=None):
+        config = internetarchive.config.get_config(config=test_conf)
     assert config['cookies']['logged-in-sig'] == 'test-sig'
     assert config['cookies']['logged-in-user'] == 'test@archive.org'
     assert config['s3']['access'] == 'custom-access'
@@ -113,8 +113,8 @@ def test_get_config_with_config():
 
 
 def test_get_config_home_not_set():
-    os.environ['HOME'] = '/none'
-    config = internetarchive.config.get_config()
+    with _environ(HOME='/none', XDG_CONFIG_HOME=None, IA_CONFIG_FILE=None):
+        config = internetarchive.config.get_config()
     assert isinstance(config, dict)
 
 
@@ -125,8 +125,8 @@ def test_get_config_home_not_set_with_config():
             'secret': 'no-home-secret',
         },
     }
-    os.environ['HOME'] = '/none'
-    config = internetarchive.config.get_config(config=test_conf)
+    with _environ(HOME='/none', XDG_CONFIG_HOME=None, IA_CONFIG_FILE=None):
+        config = internetarchive.config.get_config(config=test_conf)
     assert isinstance(config, dict)
     assert config['s3']['access'] == 'no-home-access'
     assert config['s3']['secret'] == 'no-home-secret'
@@ -169,20 +169,21 @@ def test_get_config_config_and_config_file(tmpdir):
 
 @contextlib.contextmanager
 def _environ(**kwargs):
+    # A value of None means "ensure the variable is unset".
     old_values = {k: os.environ.get(k) for k in kwargs}
     try:
         for k, v in kwargs.items():
             if v is not None:
                 os.environ[k] = v
             else:
-                del os.environ[k]
+                os.environ.pop(k, None)
         yield
     finally:
         for k, v in old_values.items():
             if v is not None:
                 os.environ[k] = v
             else:
-                del os.environ[k]
+                os.environ.pop(k, None)
 
 
 def _test_parse_config_file(
@@ -192,14 +193,18 @@ def _test_parse_config_file(
     home=None,
     xdg_config_home=None,
     config_file_param=None,
+    ia_config_file=None,
 ):
     # expected_result: (config_file_path, is_xdg); config isn't compared.
     # config_file_contents: str
     # config_file_paths: list of filenames to write config_file_contents to
     # home: str, override HOME env var; default: path of the temporary dir
-    # xdg_config_home: str, set XDG_CONFIG_HOME
+    # xdg_config_home: str, set XDG_CONFIG_HOME; unset if None
     # config_file_param: str, filename to pass to parse_config_file
+    # ia_config_file: str, set IA_CONFIG_FILE; unset if None
     # All paths starting with '$TMPTESTDIR/' get evaluated relative to the temp dir.
+    # XDG_CONFIG_HOME and IA_CONFIG_FILE are cleared unless explicitly given, so
+    # the host environment (e.g. GitHub runners set XDG_CONFIG_HOME) can't leak in.
 
     if not config_file_paths:
         config_file_paths = []
@@ -224,9 +229,11 @@ def _test_parse_config_file(
 
         if home is None:
             home = tmp_test_dir
-        env = {'HOME': home}
-        if xdg_config_home is not None:
-            env['XDG_CONFIG_HOME'] = xdg_config_home
+        env = {
+            'HOME': home,
+            'XDG_CONFIG_HOME': xdg_config_home,
+            'IA_CONFIG_FILE': ia_config_file,
+        }
         with _environ(**env):
             config_file_path, is_xdg, _config = (
                 internetarchive.config.parse_config_file(config_file=config_file_param)
@@ -309,18 +316,18 @@ def test_parse_config_file_direct_path_overrides_existing_files():
 
 
 def test_parse_config_file_with_environment_variable():
-    with _environ(IA_CONFIG_FILE='/inexistent.ia.ini'):
-        _test_parse_config_file(
-            expected_result=('/inexistent.ia.ini', False),
-        )
+    _test_parse_config_file(
+        expected_result=('/inexistent.ia.ini', False),
+        ia_config_file='/inexistent.ia.ini',
+    )
 
 
 def test_parse_config_file_with_environment_variable_and_parameter():
-    with _environ(IA_CONFIG_FILE='/inexistent.ia.ini'):
-        _test_parse_config_file(
-            expected_result=('/inexistent.other.ia.ini', False),
-            config_file_param='/inexistent.other.ia.ini',
-        )
+    _test_parse_config_file(
+        expected_result=('/inexistent.other.ia.ini', False),
+        config_file_param='/inexistent.other.ia.ini',
+        ia_config_file='/inexistent.ia.ini',
+    )
 
 
 def _test_write_config_file(
@@ -348,7 +355,7 @@ def _test_write_config_file(
         ]
         if config_file_param:
             config_file_param = os.path.join(temp_home_dir, config_file_param)
-        with _environ(HOME=temp_home_dir):
+        with _environ(HOME=temp_home_dir, XDG_CONFIG_HOME=None, IA_CONFIG_FILE=None):
             # Need to account for the umask in the expected_modes comparisons.
             # The umask can't just be retrieved, so set and then restore previous value.
             umask = os.umask(0)
@@ -451,7 +458,7 @@ def test_write_config_file_custom_path_existing():
 def test_write_config_file_custom_path_not_existing():
     """Ensure that an exception is thrown if the custom path dir doesn't exist"""
     with tempfile.TemporaryDirectory() as temp_home_dir:
-        with _environ(HOME=temp_home_dir):
+        with _environ(HOME=temp_home_dir, XDG_CONFIG_HOME=None, IA_CONFIG_FILE=None):
             config_file = os.path.join(temp_home_dir, 'foo/ia.ini')
             with pytest.raises(IOError):
                 internetarchive.config.write_config_file({}, config_file)

@@ -3,6 +3,27 @@
 Release History
 ---------------
 
+5.11.0 (2026-07-22)
++++++++++++++++++++
+
+**Breaking changes**
+
+- Dropped support for Python 3.9. Python 3.10 or newer is now required.
+
+**Features and Improvements**
+
+- Releases are now built, tested, and published to PyPI from GitHub Actions via
+  Trusted Publishing (OIDC) when a release tag is pushed. The ``ia`` pex binary
+  is built and smoke-tested in CI and attached to the GitHub release.
+- Modernized development tooling: the codebase is now formatted with
+  ``ruff format`` (enforced in CI), CI installs dependencies with uv, and tests
+  that hit archive.org are marked with a ``network`` marker so the offline
+  suite can be run with ``pytest -m "not network"``.
+
+**Documentation**
+
+- Clarified that the ``retries_sleep`` upload argument is in seconds.
+
 5.10.1 (2026-06-29)
 +++++++++++++++++++
 

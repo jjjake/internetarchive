@@ -14,10 +14,10 @@ jobs:
         python: ['3.10', '3.11', '3.12', '3.13', '3.14', 'pypy-3.11']
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
-      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: true
       # Install tox into the matrix interpreter so `tox -e py` targets it;

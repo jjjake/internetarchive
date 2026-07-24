@@ -49,6 +49,7 @@ from tqdm import tqdm
 from internetarchive import catalog, exceptions
 from internetarchive.auth import S3Auth
 from internetarchive.files import File
+from internetarchive.forums import Forum
 from internetarchive.iarequest import MetadataRequest, S3Request
 from internetarchive.utils import (
     IdentifierListAsItems,
@@ -546,6 +547,19 @@ class Item(BaseItem):
         )
         r.raise_for_status()
         return r
+
+    def get_forum(self):
+        """Get the :class:`Forum <internetarchive.forums.Forum>` associated
+        with this item.
+
+        Forums belong to collections, and a forum's identifier is its
+        collection's identifier. This is a convenience factory; all forum
+        operations live on the returned object. Not every collection has a
+        forum -- see :meth:`Forum.exists <internetarchive.forums.Forum.exists>`.
+
+        :returns: A :class:`Forum <internetarchive.forums.Forum>` object.
+        """
+        return Forum(self.session, self.identifier)
 
     def get_review(self) -> Response:
         """Get review written by the current user for this item.

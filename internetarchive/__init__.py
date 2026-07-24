@@ -44,6 +44,7 @@ from internetarchive.api import (
     delete,
     download,
     get_files,
+    get_forum,
     get_item,
     get_session,
     get_tasks,
@@ -55,6 +56,7 @@ from internetarchive.api import (
 )
 from internetarchive.catalog import Catalog
 from internetarchive.files import File
+from internetarchive.forums import Forum
 from internetarchive.item import Item
 from internetarchive.search import Search
 from internetarchive.session import ArchiveSession
@@ -64,6 +66,7 @@ __all__ = [
     'ArchiveSession',
     'Catalog',
     'File',
+    'Forum',
     'Item',
     'Search',
     '__version__',
@@ -72,6 +75,7 @@ __all__ = [
     'download',
     'get_files',
     # API.
+    'get_forum',
     'get_item',
     'get_session',
     'get_tasks',

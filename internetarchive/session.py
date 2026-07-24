@@ -51,6 +51,7 @@ from urllib3 import Retry
 
 from internetarchive import __version__, auth, catalog
 from internetarchive.config import get_config
+from internetarchive.forums import Forum
 from internetarchive.item import Collection, Item
 from internetarchive.search import Search
 from internetarchive.utils import parse_dict_cookies, reraise_modify
@@ -408,6 +409,17 @@ class ArchiveSession(requests.sessions.Session):
         except TypeError:
             item_class = Item
         return item_class(self, identifier, item_metadata)
+
+    def get_forum(self, identifier: str):
+        """Get a :class:`Forum <internetarchive.forums.Forum>` object for
+        a collection's forum.
+
+        :param identifier: The forum identifier, which is the identifier
+                           of the collection the forum belongs to.
+
+        :returns: A :class:`Forum <internetarchive.forums.Forum>` object.
+        """
+        return Forum(self, identifier)
 
     def get_metadata(
         self, identifier: str, request_kwargs: MutableMapping | None = None

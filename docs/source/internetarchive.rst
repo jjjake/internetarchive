@@ -40,6 +40,25 @@ Internetarchive: A Python Interface to archive.org
     :show-inheritance:
 
 
+:class:`internetarchive.Forum`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Forum
+    :members:
+    :show-inheritance:
+
+.. autofunction:: internetarchive.forums.get_thread
+
+.. autoclass:: internetarchive.forums.ThreadSummary
+    :members:
+
+.. autoclass:: internetarchive.forums.ForumThread
+    :members:
+
+.. autoclass:: internetarchive.forums.ForumPost
+    :members:
+
+
 :class:`internetarchive.ArchiveSession`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

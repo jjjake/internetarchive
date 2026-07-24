@@ -149,6 +149,43 @@ Searching for Items
 
 For complete search documentation, see :ref:`search-module`.
 
+Working with Forums
+-------------------
+
+Collections can have forums. A forum's identifier is its collection's
+identifier; threads and posts have their own numeric ids. Forum support is
+currently backed by the legacy archive.org forum pages (listing returns a
+recent-activity window, not the full history); a proper forum API is planned
+and will slot in without interface changes.
+
+.. code-block:: python
+
+    from internetarchive import get_forum
+    from internetarchive.forums import get_thread
+
+    forum = get_forum('GratefulDead')
+
+    # List recent threads (ThreadSummary objects)
+    for thread in forum.threads():
+        print(f"{thread.id}: {thread.subject} ({thread.replies} replies)")
+
+    # Read a thread and all of its posts
+    thread = forum.thread('2445301')
+    for post in thread.posts:
+        print('  ' * post.depth + f"{post.poster}: {post.subject}")
+
+    # Write operations require being configured with your account.
+    # All of them accept dry_run=True, which returns the fields that
+    # would be submitted without submitting anything.
+    forum.post('My subject', 'My post body.')
+    forum.reply('2445301', 'My reply.')  # subject defaults to "Re: ..."
+    forum.edit('2445303', '2445301', 'New subject', 'New body.')
+
+    # A thread can also be fetched by bare id, without knowing its
+    # forum; the result's forum_id tells you where it lives.
+    thread = get_thread(forum.session, '2445301')
+    print(thread.forum_id)
+
 Common Patterns
 ---------------
 

@@ -46,6 +46,7 @@ Check out the help menu to see all available commands:
         delete (rm)         Delete files from archive.org items
         download (do)       Download files from archive.org
         flag (fl)           Manage flags
+        forum               Read and write collection forums
         list (ls)           list files from archive.org items
         metadata (md)       Retrieve and modify archive.org item metadata
         move (mv)           Move and rename files in archive.org items
@@ -529,6 +530,78 @@ They are saved to a directory in the item named ``history/files/``.
 The files are named in the format ``$key.~N~``.
 These files can be deleted like normal files.
 You can also prevent the backup from happening on clobbers or deletes by adding ``-H x-archive-keep-old-version:0`` to your command.
+
+.. _cli-forum:
+
+Forums
+------
+
+``ia forum`` reads and writes collection forums. A forum's identifier is the
+identifier of the collection it belongs to; threads and posts have their own
+numeric ids (a thread id is the id of its root post).
+
+.. note::
+
+   Forum support is currently backed by the legacy archive.org forum pages;
+   listing returns a recent-activity window rather than the forum's full
+   history. A proper forum API is planned and will slot in without interface
+   changes.
+
+List recent threads in a forum (``ia forum <identifier>`` is a shortcut for
+``ia forum list <identifier>``):
+
+.. code:: console
+
+    $ ia forum GratefulDead
+    $ ia forum list GratefulDead --json
+
+Read a thread and all of its posts:
+
+.. code:: console
+
+    $ ia forum read 2445301
+    $ ia forum read 2445301 --json
+
+Post a new thread (requires being :ref:`configured <configuration>` with your
+archive.org account):
+
+.. code:: console
+
+    $ ia forum post GratefulDead --subject 'My subject' --body 'My post.'
+    $ ia forum post GratefulDead --subject 'My subject' --body-file post.txt
+
+Reply to a thread — the forum and a default ``Re:`` subject are resolved from
+the thread automatically. Use ``--parent`` to reply to a specific post rather
+than the thread root:
+
+.. code:: console
+
+    $ ia forum reply 2445301 --body 'My reply.'
+    $ ia forum reply 2445301 --parent 2445303 --body 'My reply.'
+
+Edit one of your own posts:
+
+.. code:: console
+
+    $ ia forum edit 2445303 --thread 2445301 --subject 'New subject' --body-file v2.txt
+
+All write verbs accept ``--dry-run``, which prints exactly what would be
+submitted without submitting anything — try it first:
+
+.. code:: console
+
+    $ ia forum post GratefulDead --subject test --body test --dry-run
+
+Creating a forum for a collection is an explicit operation (nothing in ``ia``
+ever creates a forum implicitly) and requires special privileges on
+archive.org:
+
+.. code:: console
+
+    $ ia forum create <identifier> --name 'My Collection Forum' --home '/details/<identifier>?tab=forum'
+
+See ``ia forum --help`` and ``ia forum <verb> --help`` for more details.
+
 
 Performance Tips
 ----------------

@@ -34,7 +34,7 @@ from getpass import getpass
 import requests
 from urllib3 import Retry
 
-from internetarchive import auth, catalog, files, item, search, session
+from internetarchive import auth, catalog, files, forums, item, search, session
 from internetarchive import config as config_module
 from internetarchive.exceptions import AuthenticationError
 
@@ -132,6 +132,45 @@ def get_item(
     if not archive_session:
         archive_session = get_session(config, config_file, debug, http_adapter_kwargs)
     return archive_session.get_item(identifier, request_kwargs=request_kwargs)
+
+
+def get_forum(
+    identifier: str,
+    config: Mapping | None = None,
+    config_file: str | None = None,
+    archive_session: session.ArchiveSession | None = None,
+    debug: bool = False,
+    http_adapter_kwargs: MutableMapping | None = None,
+) -> forums.Forum:
+    """Get a :class:`Forum <internetarchive.forums.Forum>` object for a
+    collection's forum.
+
+    :param identifier: The forum identifier, which is the identifier of the
+                       collection the forum belongs to (e.g. ``GratefulDead``).
+
+    :param config: A dictionary used to configure your session.
+
+    :param config_file: A path to a config file used to configure your session.
+
+    :param archive_session: An :class:`ArchiveSession` object can be provided
+                            via the ``archive_session`` parameter.
+
+    :param debug: To be passed on to get_session().
+
+    :param http_adapter_kwargs: Keyword arguments that
+                                :py:class:`requests.adapters.HTTPAdapter` takes.
+
+    :returns: The forum of the given collection.
+
+    Usage:
+        >>> from internetarchive import get_forum
+        >>> forum = get_forum('GratefulDead')
+        >>> for thread in forum.threads():
+        ...     print(thread.id, thread.subject)
+    """
+    if not archive_session:
+        archive_session = get_session(config, config_file, debug, http_adapter_kwargs)
+    return archive_session.get_forum(identifier)
 
 
 def get_files(

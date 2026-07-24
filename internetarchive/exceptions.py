@@ -57,3 +57,11 @@ class AccountAPIError(Exception):
 
 class DirectoryTraversalError(Exception):
     """Raised when a computed local file path escapes the intended destination directory."""
+
+
+class ForumError(Exception):
+    """Base exception for forum operation failures."""
+
+
+class ForumNotFoundError(ForumError):
+    """Raised when a forum or thread does not exist."""

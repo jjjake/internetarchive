@@ -3,6 +3,19 @@
 Release History
 ---------------
 
+Unreleased
+++++++++++
+
+**Features and Improvements**
+
+- Added forum support: the ``ia forum`` subcommand (``list``, ``read``,
+  ``post``, ``reply``, ``edit``, ``create`` verbs) and a ``Forum`` class in
+  the Python library (``internetarchive.get_forum()``,
+  ``ArchiveSession.get_forum()``, ``Item.get_forum()``) for reading and
+  writing collection forums. Currently backed by the legacy forum pages; the
+  interface is designed to be stable when a proper forum API replaces the
+  backend.
+
 5.11.0 (2026-07-22)
 +++++++++++++++++++
 

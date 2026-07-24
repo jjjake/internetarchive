@@ -32,6 +32,7 @@ from internetarchive.cli import (
     ia_delete,
     ia_download,
     ia_flag,
+    ia_forum,
     ia_list,
     ia_metadata,
     ia_move,
@@ -124,6 +125,7 @@ def main():
     ia_delete.setup(subparsers)
     ia_download.setup(subparsers)
     ia_flag.setup(subparsers)
+    ia_forum.setup(subparsers)
     ia_list.setup(subparsers)
     ia_metadata.setup(subparsers)
     ia_move.setup(subparsers)
@@ -134,7 +136,8 @@ def main():
     ia_upload.setup(subparsers)
 
     # Suppress help for alias subcommands
-    args = parser.parse_args()
+    # ('ia forum <identifier>' is a shortcut for 'ia forum list <identifier>')
+    args = parser.parse_args(ia_forum.insert_default_verb(sys.argv[1:]))
 
     config: dict[str, dict] = {}
     if args.log:

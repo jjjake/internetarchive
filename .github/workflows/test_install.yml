@@ -9,7 +9,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  install_matrix:
+  install_internetarchive:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -26,22 +26,18 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install .
-      # Verifies the console script and that the version resolves from the
-      # build-time _version.py rather than falling back to 0.0.0.dev0.
-      - run: ia --version
-
-  # Stable gate job. A matrix job's check name carries its matrix values
-  # (install_matrix (3.10), ...), which would change every time the matrix
-  # changes and break the branch-protection rule. This job's name never
-  # changes, so it stays the required check.
-  install_internetarchive:
-    runs-on: ubuntu-latest
-    needs: install_matrix
-    if: always()
-    steps:
-      - name: Check matrix result
+      # Checks the console script runs and that the version was actually
+      # derived from git rather than falling back. Two fallbacks are possible
+      # and both must fail here: hatch-vcs yields 0.1.devN when it finds no
+      # tags, and internetarchive/__version__.py yields 0.0.0.dev0 when
+      # _version.py is missing entirely.
+      - name: Verify the version resolved from git
         run: |
-          if [ "${{ needs.install_matrix.result }}" != "success" ]; then
-            echo "install_matrix: ${{ needs.install_matrix.result }}" >&2
-            exit 1
-          fi
+          version=$(ia --version)
+          echo "ia --version -> $version"
+          case "$version" in
+            0.1.dev*|0.0.0.dev0|'')
+              echo "Version did not resolve from git tags: '$version'" >&2
+              exit 1
+              ;;
+          esac

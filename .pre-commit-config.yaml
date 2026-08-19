@@ -41,6 +41,5 @@ repos:
           - tqdm-stubs
           - types-jsonpatch
           - types-requests
-          - types-setuptools
           - types-ujson
           - types-urllib3

@@ -64,7 +64,7 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 - Line length: 88 characters (configured in `pyproject.toml`)
 - Linter: ruff (configured in `pyproject.toml`)
 - Formatter: `ruff format` (quote style and line length configured in `pyproject.toml`; enforced in CI)
-- Type checking: mypy (type stubs in `options.extras_require` under `types`)
+- Type checking: mypy (configured in `pyproject.toml`; type stubs in the `types` extra)
 - Docstrings: Always add or update docstrings when editing or adding code. Use Sphinx-style format with `:param:`, `:returns:`, and `:raises:` sections
 
 ## Key Dependencies
@@ -86,7 +86,12 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 
 - `master` is protected by GitHub rulesets — never push directly
 - Always create feature branches and open PRs
-- Required CI checks must pass before merge: `lint_python`, `pre-commit`, `install_internetarchive`, `tox`
+- Required CI checks must pass before merge (per the `main-protection` ruleset, verified
+  2026-08-19): `lint_python`, `pre-commit`, and each `tox` matrix leg by name — `tox (3.10)`
+  through `tox (3.14)` and `tox (pypy-3.11)`. `install_internetarchive` and `docs` run on every
+  PR but are **not** required.
+- Because each `tox` leg is required by name, changing the `tox.yml` matrix breaks branch
+  protection until the ruleset is updated.
 
 ## Versioning
 

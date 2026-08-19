@@ -15,13 +15,19 @@ Release History
   being stored in ``internetarchive/__version__.py``. Tagging ``vX.Y.Z`` is what
   sets the version, so the tag and the released version cannot disagree, and
   releases no longer need a version-bump PR or a follow-up ``.devN`` bump.
-  ``internetarchive.__version__`` continues to work unchanged.
+  ``internetarchive.__version__`` keeps working for installed packages, reading
+  the value hatch-vcs generates at build time. In a source checkout that has
+  never been built it falls back to the installed distribution metadata, and
+  reports ``0.0.0.dev0`` if the package is not installed at all.
 - ``make release RELEASE=X.Y.Z`` replaces ``make prepare-release`` /
   ``check-version``; it validates the branch, tree, tag, and changelog section
   before pushing the tag.
 - The ``install_internetarchive`` CI job now tests installation across Python
   3.10-3.14 rather than across historical setuptools versions, which no longer
-  mean anything now that hatchling is the build backend.
+  mean anything now that hatchling is the build backend, and asserts that the
+  installed version resolved from git rather than falling back.
+- ``setuptools`` and ``types-setuptools`` dropped from the development extras;
+  nothing imports ``setuptools`` or ``pkg_resources`` at runtime.
 
 5.11.1 (2026-08-19)
 +++++++++++++++++++

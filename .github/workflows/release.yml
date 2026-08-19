@@ -1,4 +1,4 @@
-# Tag-triggered release: push a v* tag (e.g. via `make tag push-tag`) and this
+# Tag-triggered release: push a v* tag (via `make release RELEASE=X.Y.Z`) and this
 # workflow tests, builds the sdist/wheel and pex, publishes to PyPI via Trusted
 # Publishing (OIDC — no stored token), and creates the GitHub release with the
 # curated HISTORY.rst notes and the pex attached.
@@ -47,25 +47,31 @@ jobs:
         with:
           enable-cache: true
       - run: uv build
+      - run: uv pip install --system twine packaging
       # The version now comes from the tag via hatch-vcs, so a mismatch is not
       # possible in the way it used to be. What is possible is a checkout with
       # no tags (shallow clone), which silently yields a 0.1.dev1 build --
       # assert the artifact names carry the tag so that fails loudly here.
+      #
+      # Artifact filenames use the PEP 440 normalized form, which is not always
+      # the tag with `v` stripped: v5.99.0-rc1 builds 5.99.0rc1. Normalize the
+      # tag the same way before comparing.
       - name: Verify built artifacts match the tag
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
-          for f in "dist/internetarchive-${TAG_VERSION}.tar.gz" \
-                   "dist/internetarchive-${TAG_VERSION}-py3-none-any.whl"; do
+          VERSION=$(python -c "import sys; from packaging.version import Version; print(Version(sys.argv[1]))" "$TAG_VERSION")
+          echo "tag $GITHUB_REF_NAME -> normalized $VERSION"
+          for f in "dist/internetarchive-${VERSION}.tar.gz" \
+                   "dist/internetarchive-${VERSION}-py3-none-any.whl"; do
             if [ ! -f "$f" ]; then
               echo "Expected $f, but the build produced:" >&2
               ls -1 dist >&2
               exit 1
             fi
           done
-          case "$TAG_VERSION" in
-            *dev*) echo "Refusing to release a dev version: $TAG_VERSION" >&2; exit 1 ;;
+          case "$VERSION" in
+            *dev*) echo "Refusing to release a dev version: $VERSION" >&2; exit 1 ;;
           esac
-      - run: uv pip install --system twine
       - run: twine check dist/*
       - uses: actions/upload-artifact@v7
         with:

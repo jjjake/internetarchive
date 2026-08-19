@@ -1,5 +1,9 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+# hatchling >= 1.27 is required for PEP 639 (`license` as an SPDX expression
+# plus `license-files`); older versions reject project.license-files. Pinning a
+# floor matters for --no-build-isolation builds, where the backend comes from
+# the environment rather than being resolved fresh.
+requires = ["hatchling>=1.27", "hatch-vcs>=0.4"]
 build-backend = "hatchling.build"
 
 [project]
@@ -42,7 +46,6 @@ dev = [
   "mypy",
   "pre-commit",
   "pytest",
-  "setuptools",
   "twine",
 ]
 docs = [
@@ -62,7 +65,6 @@ types = [
   "types-jsonpatch>=0.1.0a0",
   "types-pygments",
   "types-requests>=2.25.0,<3.0.0",
-  "types-setuptools",
   "types-ujson>=4.2.0",
   "types-urllib3>=1.26.0",
 ]
@@ -80,6 +82,23 @@ raw-options = { local_scheme = "no-local-version" }
 # Not tracked in git -- see .gitignore.
 [tool.hatch.build.hooks.vcs]
 version-file = "internetarchive/_version.py"
+
+# Enumerated rather than `packages = ["internetarchive"]`, which takes the whole
+# directory and ships any untracked-but-not-gitignored subdirectory sitting in
+# it (stale package dirs left behind by other branches, for instance). This
+# mirrors what setup.cfg's explicit `packages` list used to constrain.
+# Selecting the `internetarchive` directory takes everything in it, including
+# any untracked-but-not-gitignored subdirectory that happens to be sitting
+# there (stale package dirs left behind by other branches, for instance).
+# Exclude subdirectories wholesale and add the one real subpackage back, so a
+# new subpackage has to be declared here to ship -- the constraint setup.cfg's
+# explicit `packages` list used to provide. Applies to both targets, since
+# `uv build` builds the wheel from the sdist.
+[tool.hatch.build]
+exclude = ["internetarchive/*/"]
+
+[tool.hatch.build.force-include]
+"internetarchive/cli" = "internetarchive/cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["internetarchive"]

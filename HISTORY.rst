@@ -3,6 +3,22 @@
 Release History
 ---------------
 
+5.11.1 (unreleased)
++++++++++++++++++++
+
+**Bugfixes**
+
+- Task logs are now fetched from ``archive.org`` rather than
+  ``catalogd.archive.org``. Direct access to ``catalogd.archive.org`` is
+  restricted to Archive.org's VPN, so ``ia tasks --get-task-log`` and
+  ``ia tasks --follow-task-log`` (and the corresponding
+  ``ArchiveSession.get_task_log()`` / ``follow_task_log()`` methods) failed
+  with a connection timeout for everyone else. Task listing and submission
+  already used ``archive.org``; only log retrieval was hardcoded to
+  ``catalogd``.
+- ``ia reviews`` no longer prints a ``catalogd.archive.org`` task-log URL on
+  success. It now prints an ``archive.org`` URL derived from the session host.
+
 5.11.0 (2026-07-22)
 +++++++++++++++++++
 

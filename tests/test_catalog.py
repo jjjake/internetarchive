@@ -9,10 +9,7 @@ from internetarchive import get_session
 from internetarchive.catalog import Catalog, CatalogTask
 from tests.conftest import IaRequestsMock
 
-TASKS_URL = 'https://catalogd.archive.org/services/tasks.php'
-# Status queries (get_tasks) go to session.host (archive.org), while task-log
-# fetches are rewritten to catalogd.archive.org.
-TASKS_STATUS_URL = 'https://archive.org/services/tasks.php'
+TASKS_URL = 'https://archive.org/services/tasks.php'
 
 
 def _session():
@@ -142,7 +139,7 @@ def _assert_task_active(status_body, expected):
     with IaRequestsMock() as rsps:
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body=status_body,
             match=[
                 responses.matchers.query_param_matcher(
@@ -188,7 +185,7 @@ def test_follow_task_log_yields_delta(monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body='',
             match=[
                 responses.matchers.query_param_matcher(
@@ -212,7 +209,7 @@ def test_follow_task_log_seeds_lines(monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body='',
             match=[
                 responses.matchers.query_param_matcher(
@@ -255,7 +252,7 @@ def test_follow_task_log_304_yields_nothing(monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body='',
             match=[
                 responses.matchers.query_param_matcher(
@@ -294,7 +291,7 @@ def test_follow_task_log_304_still_active_keeps_polling(monkeypatch):
         # 304 is reached while running and does not end the follow.
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body=_task_status_body('running'),
             match=[
                 responses.matchers.query_param_matcher(
@@ -304,7 +301,7 @@ def test_follow_task_log_304_still_active_keeps_polling(monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body=_task_status_body('running'),
             match=[
                 responses.matchers.query_param_matcher(
@@ -314,7 +311,7 @@ def test_follow_task_log_304_still_active_keeps_polling(monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body='',
             match=[
                 responses.matchers.query_param_matcher(
@@ -357,7 +354,7 @@ def test_follow_task_log_skips_transient_shrink(monkeypatch):
         # polling instead of exiting; the next healthy poll yields the delta.
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body=_task_status_body('running'),
             match=[
                 responses.matchers.query_param_matcher(
@@ -367,7 +364,7 @@ def test_follow_task_log_skips_transient_shrink(monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body=_task_status_body('running'),
             match=[
                 responses.matchers.query_param_matcher(
@@ -377,7 +374,7 @@ def test_follow_task_log_skips_transient_shrink(monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body='',
             match=[
                 responses.matchers.query_param_matcher(
@@ -409,7 +406,7 @@ def test_follow_task_log_final_fetch_shrink_emits_nothing(monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body='',
             match=[
                 responses.matchers.query_param_matcher(
@@ -438,7 +435,7 @@ def test_follow_task_log_forwards_params(monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body='',
             match=[
                 responses.matchers.query_param_matcher(
@@ -464,7 +461,7 @@ def test_session_follow_task_log(monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body='',
             match=[
                 responses.matchers.query_param_matcher(
@@ -538,7 +535,7 @@ def test_follow_task_log_recovers_from_transient_error(monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body='',
             match=[
                 responses.matchers.query_param_matcher(
@@ -568,7 +565,7 @@ def test_follow_task_log_5xx_is_transient(monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body='',
             match=[
                 responses.matchers.query_param_matcher(

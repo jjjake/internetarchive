@@ -128,7 +128,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             print(
                 (
                     f"{item.identifier} - success: "
-                    f"https://catalogd.archive.org/log/{task_id}"
+                    f"{args.session.protocol}//{args.session.host}/log/{task_id}"
                 ),
                 file=sys.stderr,
             )

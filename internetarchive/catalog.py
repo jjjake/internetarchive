@@ -377,11 +377,7 @@ class CatalogTask:
         """
         request_kwargs = request_kwargs or {}
         _auth = auth.S3Auth(session.access_key, session.secret_key)
-        if session.host == 'archive.org':
-            host = 'catalogd.archive.org'
-        else:
-            host = session.host
-        url = f'{session.protocol}//{host}/services/tasks.php'
+        url = f'{session.protocol}//{session.host}/services/tasks.php'
         _params = {'task_log': task_id}
         if params:
             _params.update(params)

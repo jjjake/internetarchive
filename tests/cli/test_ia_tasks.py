@@ -6,9 +6,7 @@ import responses
 import internetarchive.catalog as catalog_mod
 from tests.conftest import IaRequestsMock, ia_call
 
-TASKS_URL = 'https://catalogd.archive.org/services/tasks.php'
-# Status queries (get_tasks) go to session.host (archive.org).
-TASKS_STATUS_URL = 'https://archive.org/services/tasks.php'
+TASKS_URL = 'https://archive.org/services/tasks.php'
 
 
 def _task_status_body(status, category='catalog', task_id=123):
@@ -76,7 +74,7 @@ def test_ia_tasks_follow_task_log(capsys, monkeypatch):
         # the loop terminates after emitting the log.
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body=_task_status_body(None, category='history'),
             match=[
                 responses.matchers.query_param_matcher(
@@ -101,7 +99,7 @@ def test_ia_tasks_follow_task_log_lines(capsys, monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body=_task_status_body(None, category='history'),
             match=[
                 responses.matchers.query_param_matcher(
@@ -122,7 +120,7 @@ def test_ia_tasks_follow_task_log_not_found(capsys, monkeypatch):
         # Unknown id -> Tasks API returns an empty body (no matching task).
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body='',
             match=[
                 responses.matchers.query_param_matcher(
@@ -162,7 +160,7 @@ def test_ia_tasks_follow_task_log_forwards_params(capsys, monkeypatch):
         )
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body=_task_status_body(None, category='history'),
             match=[
                 responses.matchers.query_param_matcher(
@@ -197,7 +195,7 @@ def test_ia_tasks_follow_task_log_request_error(capsys, monkeypatch):
         # Upfront existence check succeeds: the task is running.
         rsps.add(
             responses.GET,
-            TASKS_STATUS_URL,
+            TASKS_URL,
             body=_task_status_body('running'),
             match=[
                 responses.matchers.query_param_matcher(

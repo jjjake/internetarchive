@@ -22,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # hatch-vcs reads the version from git tags
       - uses: actions/setup-python@v7
         with:
           python-version: 3.x
@@ -36,25 +38,34 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # hatch-vcs reads the version from git tags
       - uses: actions/setup-python@v7
         with:
           python-version: 3.x
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
-      - name: Verify tag matches package version
+      - run: uv build
+      # The version now comes from the tag via hatch-vcs, so a mismatch is not
+      # possible in the way it used to be. What is possible is a checkout with
+      # no tags (shallow clone), which silently yields a 0.1.dev1 build --
+      # assert the artifact names carry the tag so that fails loudly here.
+      - name: Verify built artifacts match the tag
         run: |
-          PKG_VERSION=$(python -c "import re; print(re.search(r\"__version__ = '(.*)'\", open('internetarchive/__version__.py').read()).group(1))")
           TAG_VERSION="${GITHUB_REF_NAME#v}"
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match __version__ $PKG_VERSION" >&2
-            exit 1
-          fi
-          case "$PKG_VERSION" in
-            *dev*) echo "Refusing to release a dev version: $PKG_VERSION" >&2; exit 1 ;;
+          for f in "dist/internetarchive-${TAG_VERSION}.tar.gz" \
+                   "dist/internetarchive-${TAG_VERSION}-py3-none-any.whl"; do
+            if [ ! -f "$f" ]; then
+              echo "Expected $f, but the build produced:" >&2
+              ls -1 dist >&2
+              exit 1
+            fi
+          done
+          case "$TAG_VERSION" in
+            *dev*) echo "Refusing to release a dev version: $TAG_VERSION" >&2; exit 1 ;;
           esac
-      - run: uv pip install --system build twine
-      - run: python -m build
+      - run: uv pip install --system twine
       - run: twine check dist/*
       - uses: actions/upload-artifact@v7
         with:
@@ -66,6 +77,8 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # hatch-vcs reads the version from git tags
       - uses: actions/setup-python@v7
         with:
           python-version: 3.x

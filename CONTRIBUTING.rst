@@ -67,16 +67,20 @@ Even easier is simply creating a pull request. `GitHub Actions <https://docs.git
 Releasing
 ---------
 
-``master`` is branch-protected (pull requests and required status checks; no direct pushes), so a release is three steps: land the version bump through a pull request, push the release tag, and upload the ``pex`` binary to archive.org.
+The package version is derived from the git tag by `hatch-vcs <https://github.com/ofek/hatch-vcs>`_ -- there is no version string stored in the repository. Tagging ``vX.Y.Z`` *is* what sets the version, so a release cannot disagree with its tag, and there is no version-bump PR and no post-release ``.devN`` bump.
 
-#. **Bump the version (via a PR).** On a branch, run ``make prepare-release RELEASE=X.Y.Z`` -- this sets ``internetarchive/__version__.py`` (and the ``HISTORY.rst`` date when the heading is ``X.Y.Z (?)``). Open a pull request with those changes and merge it once CI passes.
+``master`` is branch-protected (pull requests and required status checks; no direct pushes), so a release is three steps: land the changelog entry through a pull request, push the release tag, and upload the ``pex`` binary to archive.org.
+
+#. **Date the changelog (via a PR).** On a branch, run ``make prepare-history RELEASE=X.Y.Z`` -- this rewrites the ``X.Y.Z (?)`` heading in ``HISTORY.rst`` to today's date. Open a pull request with that change and merge it once CI passes. The GitHub release notes are extracted from this section, so it needs to exist before tagging.
 
 #. **Tag.** Update your local ``master`` and push the release tag:
 
    .. code:: bash
 
        $ git checkout master && git pull
-       $ make check-version check-release tag push-tag
+       $ make release RELEASE=X.Y.Z
+
+   ``make release`` verifies you are on an up-to-date, clean ``master``, that the tag does not already exist, and that ``HISTORY.rst`` has a dated section for the release, then creates and pushes the tag.
 
    Pushing the ``vX.Y.Z`` tag triggers the ``release`` GitHub Actions workflow, which runs the tests, builds and validates the sdist/wheel and ``pex`` binary, publishes to PyPI via `Trusted Publishing <https://docs.pypi.org/trusted-publishers/>`_ (OIDC -- no PyPI token involved), and creates the GitHub release with the curated ``HISTORY.rst`` notes and the ``pex`` (plus its sha256) attached.
 
@@ -86,4 +90,4 @@ Releasing
 
        $ make publish-binary
 
-**Fallback:** if the release workflow is unavailable, ``make publish`` still performs the entire release from your machine -- tests, builds, tag push, PyPI upload (requires a PyPI API token), archive.org upload, and the GitHub release. Don't run it after CI has already published; the PyPI upload and GitHub release steps will fail as duplicates.
+**Fallback:** if the release workflow is unavailable, ``make publish RELEASE=X.Y.Z`` still performs the entire release from your machine -- tests, builds, tag push, PyPI upload (requires a PyPI API token), archive.org upload, and the GitHub release. Don't run it after CI has already published; the PyPI upload and GitHub release steps will fail as duplicates.

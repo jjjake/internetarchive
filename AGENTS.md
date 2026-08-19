@@ -90,21 +90,29 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 
 ## Versioning
 
-After a release, bump the version to a dev suffix (e.g., `5.7.3.dev0`) to indicate development builds. The version in `internetarchive/__version__.py` should always be either:
-- A release version (e.g., `5.7.2`) - only during the release process
-- A dev version (e.g., `5.7.3.dev0`) - at all other times
+The version is derived from the git tag by hatch-vcs (`[tool.hatch.version] source = "vcs"`
+in `pyproject.toml`). Nothing in the tree stores a version string:
+`internetarchive/__version__.py` is a shim over the build-time-generated
+`internetarchive/_version.py`, which is gitignored.
 
-When merging new features to master, increment the dev number if needed (e.g., `5.7.3.dev0` → `5.7.3.dev1`).
+Do not add a version string back to the repo, and do not open version-bump PRs. Between
+tags the version resolves to the next patch with a `.devN` suffix (e.g. `5.11.2.dev1`
+one commit after `v5.11.1`), which is what the old manual dev-bump policy was
+approximating by hand.
+
+Because the version comes from tags, any workflow or local build that needs a correct
+version must check out with full history (`fetch-depth: 0`); a shallow clone silently
+produces `0.1.dev1`.
 
 ## Releasing
 
-`master` is branch-protected, so a release is three steps: (1) bump the version via a
-PR, (2) push the release tag (`make check-version check-release tag push-tag`) — the
-tag-triggered `release` workflow tests, builds the sdist/wheel and pex, publishes to
-PyPI via Trusted Publishing (OIDC), and creates the GitHub release with the pex
-attached — then (3) `make publish-binary` to upload the pex to the archive.org
-`ia-pex` item (CI has no IA credentials). `make publish` remains a laptop fallback
-when the workflow is unavailable.
+`master` is branch-protected, so a release is three steps: (1) date the `HISTORY.rst`
+section via a PR (`make prepare-history RELEASE=X.Y.Z`), (2) `make release RELEASE=X.Y.Z`
+to validate and push the tag — the tag-triggered `release` workflow tests, builds the
+sdist/wheel and pex, publishes to PyPI via Trusted Publishing (OIDC), and creates the
+GitHub release with the pex attached — then (3) `make publish-binary` to upload the pex
+to the archive.org `ia-pex` item (CI has no IA credentials).
+`make publish RELEASE=X.Y.Z` remains a laptop fallback when the workflow is unavailable.
 
 Full steps are in the **Releasing** section of `CONTRIBUTING.rst`.
 

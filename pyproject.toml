@@ -1,3 +1,102 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "internetarchive"
+description = "A Python interface to archive.org."
+readme = "README.rst"
+requires-python = ">=3.10"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
+authors = [{ name = "Jacob M. Johnson", email = "jake@archive.org" }]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Natural Language :: English",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "jsonpatch>=0.4",
+  "requests>=2.25.0,<3.0.0",
+  "tqdm>=4.0.0",
+  "urllib3>=1.26.0",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/jjjake/internetarchive"
+Documentation = "https://archive.org/developers/internetarchive/"
+Source = "https://github.com/jjjake/internetarchive"
+Changelog = "https://github.com/jjjake/internetarchive/blob/master/HISTORY.rst"
+
+[project.scripts]
+ia = "internetarchive.cli.ia:main"
+
+[project.optional-dependencies]
+dev = [
+  "mypy",
+  "pre-commit",
+  "pytest",
+  "setuptools",
+  "twine",
+]
+docs = [
+  "alabaster==1.0.0",
+  "sphinx==8.1.3",
+  "sphinx-autodoc-typehints==3.0.0",
+  "typing-extensions",
+]
+test = [
+  "pytest==9.0.3",
+  "responses==0.26.1",
+  "ruff==0.14.1",
+]
+types = [
+  "tqdm-stubs>=0.2.0",
+  "types-colorama",
+  "types-jsonpatch>=0.1.0a0",
+  "types-pygments",
+  "types-requests>=2.25.0,<3.0.0",
+  "types-setuptools",
+  "types-ujson>=4.2.0",
+  "types-urllib3>=1.26.0",
+]
+all = ["internetarchive[dev,test,types]"]
+
+# The version is derived from the git tag rather than stored in a file, so a
+# release is `git tag vX.Y.Z` and nothing else -- no version-bump PR, and no
+# way for the tag and the packaged version to disagree. Working from a
+# checkout between tags yields the next patch version with a .devN suffix.
+[tool.hatch.version]
+source = "vcs"
+raw-options = { local_scheme = "no-local-version" }
+
+# Written at build time and imported by internetarchive/__version__.py.
+# Not tracked in git -- see .gitignore.
+[tool.hatch.build.hooks.vcs]
+version-file = "internetarchive/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["internetarchive"]
+
+# only-include (not include): file selection otherwise falls back to VCS ignore
+# rules for anything not listed, which sweeps in whatever untracked directories
+# happen to sit in the working tree -- local virtualenvs, in particular.
+[tool.hatch.build.targets.sdist]
+only-include = [
+  "internetarchive",
+  "tests",
+  "AUTHORS.rst",
+  "HISTORY.rst",
+  "LICENSE",
+  "README.rst",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--strict-markers"
@@ -103,3 +202,14 @@ max-statements = 124
 "tests/cli/test_ia_list.py" = ["E741"]
 "tests/test_api.py" = ["E712"]
 "tests/test_config.py" = ["PT011"]
+
+[tool.mypy]
+exclude = "^\\.git/|^__pycache__/|^docs/source/conf.py$|^old/|^build/|^dist/|\\.tox"
+python_version = "3.10"
+pretty = true
+scripts_are_modules = true
+show_error_codes = true
+show_error_context = true
+
+[tool.codespell]
+ignore-words-list = "alers"

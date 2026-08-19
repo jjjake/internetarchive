@@ -34,3 +34,6 @@ ia.dist/
 ia.bin
 scripts/
 foo.txt
+
+# Written at build time by hatch-vcs (see [tool.hatch.build.hooks.vcs]).
+internetarchive/_version.py

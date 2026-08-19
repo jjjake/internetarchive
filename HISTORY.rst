@@ -3,6 +3,26 @@
 Release History
 ---------------
 
+5.12.0 (?)
+++++++++++
+
+**Features and Improvements**
+
+- Packaging metadata moved from ``setup.cfg`` to a PEP 621 ``pyproject.toml``,
+  built with hatchling. ``setup.py``, ``setup.cfg``, and ``MANIFEST.in`` are
+  gone.
+- The package version is now derived from the git tag by hatch-vcs instead of
+  being stored in ``internetarchive/__version__.py``. Tagging ``vX.Y.Z`` is what
+  sets the version, so the tag and the released version cannot disagree, and
+  releases no longer need a version-bump PR or a follow-up ``.devN`` bump.
+  ``internetarchive.__version__`` continues to work unchanged.
+- ``make release RELEASE=X.Y.Z`` replaces ``make prepare-release`` /
+  ``check-version``; it validates the branch, tree, tag, and changelog section
+  before pushing the tag.
+- The ``install_internetarchive`` CI job now tests installation across Python
+  3.10-3.14 rather than across historical setuptools versions, which no longer
+  mean anything now that hatchling is the build backend.
+
 5.11.1 (2026-08-19)
 +++++++++++++++++++
 

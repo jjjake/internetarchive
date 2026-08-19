@@ -9,13 +9,39 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  install_internetarchive:
+  install_matrix:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      # Previously a setuptools-version matrix, which tested the old
+      # setuptools build backend. The backend is now hatchling, so the useful
+      # axis is the supported Python range instead.
       matrix:
-        setuptools-version: ["45.2.0", "58.1.0", "62.4.0"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
-      - run: pip install setuptools=="${{ matrix.setuptools-version }}"
+        with:
+          fetch-depth: 0  # hatch-vcs reads the version from git tags
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
       - run: pip install .
+      # Verifies the console script and that the version resolves from the
+      # build-time _version.py rather than falling back to 0.0.0.dev0.
+      - run: ia --version
+
+  # Stable gate job. A matrix job's check name carries its matrix values
+  # (install_matrix (3.10), ...), which would change every time the matrix
+  # changes and break the branch-protection rule. This job's name never
+  # changes, so it stays the required check.
+  install_internetarchive:
+    runs-on: ubuntu-latest
+    needs: install_matrix
+    if: always()
+    steps:
+      - name: Check matrix result
+        run: |
+          if [ "${{ needs.install_matrix.result }}" != "success" ]; then
+            echo "install_matrix: ${{ needs.install_matrix.result }}" >&2
+            exit 1
+          fi

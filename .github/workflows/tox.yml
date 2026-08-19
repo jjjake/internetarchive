@@ -14,6 +14,8 @@ jobs:
         python: ['3.10', '3.11', '3.12', '3.13', '3.14', 'pypy-3.11']
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # hatch-vcs reads the version from git tags
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}

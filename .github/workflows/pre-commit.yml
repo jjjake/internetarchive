@@ -15,13 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # hatch-vcs reads the version from git tags
       - uses: actions/setup-python@v7
         with:
           python-version: 3.x
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
-      - run: uv pip install --system pre-commit
-      - run: pre-commit --version
-      - run: pre-commit install
-      - run: pre-commit run --all-files
+      # pre-commit comes from the locked dev extra, so its version is pinned
+      # rather than resolved fresh on every run.
+      - run: uv sync --locked --extra dev
+      - run: uv run pre-commit --version
+      - run: uv run pre-commit run --all-files

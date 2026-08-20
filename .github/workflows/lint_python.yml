@@ -18,8 +18,13 @@ jobs:
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
-      - run: uv pip install --system .[all]
-      - run: ruff format --check --diff .  # See pyproject.toml for configuration
-      - run: ruff check --output-format=github  # See pyproject.toml for configuration
-      - run: uv pip install --system -r pex-requirements.txt -r tests/requirements.txt
-      - run: mypy .  # See pyproject.toml for configuration
+      # --locked fails the build if uv.lock and pyproject.toml have drifted,
+      # rather than silently resolving something else.
+      - run: uv sync --locked --all-extras
+      - run: uv run ruff format --check --diff .  # See pyproject.toml for configuration
+      - run: uv run ruff check --output-format=github  # See pyproject.toml for configuration
+      # The pex requirements are not part of the locked project environment
+      # (they pin the runtime set the pex bundles), so mypy needs them added on
+      # top to type-check against what the binary actually ships.
+      - run: uv pip install -r pex-requirements.txt
+      - run: uv run mypy .  # See pyproject.toml for configuration

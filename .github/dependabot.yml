@@ -11,12 +11,24 @@ updates:
           - "*"  # Group all Actions updates into a single larger pull request
     schedule:
       interval: weekly
-  # Python dependencies: pyproject.toml extras + tests/docs/pex requirements files.
-  - package-ecosystem: pip
+  # Python dependencies. The `uv` ecosystem covers pyproject.toml and uv.lock,
+  # keeping the lockfile in step with the declared dependencies -- a stale
+  # lockfile fails CI, since the workflows sync with --locked.
+  - package-ecosystem: uv
     directory: /
     groups:
       python-dependencies:
         patterns:
           - "*"  # Group all Python dependency updates into a single pull request
+    schedule:
+      interval: weekly
+  # pex-requirements.txt and docs/requirements.txt are not part of the locked
+  # project environment, so they need the pip ecosystem to be seen at all.
+  - package-ecosystem: pip
+    directory: /
+    groups:
+      python-requirements-files:
+        patterns:
+          - "*"
     schedule:
       interval: weekly

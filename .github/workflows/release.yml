@@ -30,8 +30,8 @@ jobs:
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
-      - run: uv pip install --system .[test]
-      - run: pytest -m "not network"
+      - run: uv sync --locked --extra test
+      - run: uv run pytest -m "not network"
 
   build:
     runs-on: ubuntu-latest
@@ -91,8 +91,11 @@ jobs:
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
-      - run: uv pip install --system pex
-      - run: make test-binary  # builds the pex (via `binary`) and smoke-tests it
+      - run: uv sync --locked --extra pex
+      # `uv run` puts .venv/bin on PATH, so the bare `pex` call in the Makefile
+      # resolves to the locked version without the Makefile needing to know
+      # about uv (it still works with a system pex locally).
+      - run: uv run make test-binary  # builds the pex (via `binary`) and smoke-tests it
       - name: Generate sha256 checksum
         run: sha256sum ia-*.pex > ia-pex.sha256
       - uses: actions/upload-artifact@v7

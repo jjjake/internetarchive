@@ -59,6 +59,12 @@ test = [
   "responses==0.26.1",
   "ruff==0.14.1",
 ]
+# The pex build tool. Declared here so uv.lock pins it: CI previously installed
+# it unpinned, which is how the pex bootstrap grew ~500 KB between 5.11.0 and
+# 5.11.1 (pex 2.98.2 -> 2.100.5) with no change on our side.
+pex = [
+  "pex",
+]
 types = [
   "tqdm-stubs>=0.2.0",
   "types-colorama",
@@ -223,7 +229,9 @@ max-statements = 124
 "tests/test_config.py" = ["PT011"]
 
 [tool.mypy]
-exclude = "^\\.git/|^__pycache__/|^docs/source/conf.py$|^old/|^build/|^dist/|\\.tox"
+# .venv is excluded because `uv sync` creates it inside the working tree, and
+# `mypy .` would otherwise walk every installed dependency.
+exclude = "^\\.git/|^__pycache__/|^docs/source/conf.py$|^old/|^build/|^dist/|^\\.venv/|\\.tox"
 python_version = "3.10"
 pretty = true
 scripts_are_modules = true

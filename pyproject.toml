@@ -97,10 +97,6 @@ raw-options = { local_scheme = "no-local-version" }
 [tool.hatch.build.hooks.vcs]
 version-file = "internetarchive/_version.py"
 
-# Enumerated rather than `packages = ["internetarchive"]`, which takes the whole
-# directory and ships any untracked-but-not-gitignored subdirectory sitting in
-# it (stale package dirs left behind by other branches, for instance). This
-# mirrors what setup.cfg's explicit `packages` list used to constrain.
 # Selecting the `internetarchive` directory takes everything in it, including
 # any untracked-but-not-gitignored subdirectory that happens to be sitting
 # there (stale package dirs left behind by other branches, for instance).

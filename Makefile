@@ -18,6 +18,14 @@ ifeq ($(strip $(VERSION)),)
 endif
 
 # ============ Development ============
+# Installs into whatever environment is active. `.[all]` covers dev, docs, test
+# and types; the pex build tool is a dependency group rather than an extra (it
+# is a build tool, not something an installing user should be offered), so
+# `make binary` additionally needs either a system pex or
+# `uv sync --locked --group pex`.
+#
+# For the exact versions CI uses, `uv sync --locked --all-extras --all-groups`
+# instead -- but note that manages its own .venv rather than the active one.
 init:
 	pip install -e '.[all]'
 
@@ -184,6 +192,10 @@ release: check-release check-history tag push-tag
 # publishes to PyPI while this target is still building, and whichever finishes
 # second fails as a duplicate. So: tag locally, build and validate everything,
 # then make the tag public.
+#
+# Requires twine and pex, which are dependency groups rather than extras and so
+# are not in `.[all]`. Before running this:
+#     uv sync --locked --group release --group pex
 # Usage: make publish RELEASE=5.11.2
 publish: check-release check-history test tag build check-dist binary test-binary push-tag upload-pypi publish-binary-upload github-release
 	@echo "\n\033[92mRelease v$(RELEASE) published to PyPI, archive.org, and GitHub!\033[0m"

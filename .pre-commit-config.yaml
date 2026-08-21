@@ -42,7 +42,9 @@ repos:
     hooks:
       - id: mypy
         name: mypy
-        entry: uv run --locked --extra dev --extra types mypy
+        # Same extras as lint_python: mypy needs `test` too, since the test
+        # suite imports responses.
+        entry: uv run --locked --extra dev --extra test --extra types mypy
         language: system
         types: [python]
         pass_filenames: false

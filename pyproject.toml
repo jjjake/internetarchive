@@ -46,7 +46,6 @@ dev = [
   "mypy",
   "pre-commit",
   "pytest",
-  "twine",
 ]
 docs = [
   "alabaster==1.0.0",
@@ -68,7 +67,22 @@ types = [
   "types-ujson>=4.2.0",
   "types-urllib3>=1.26.0",
 ]
-all = ["internetarchive[dev,test,types]"]
+all = ["internetarchive[dev,docs,test,types]"]
+
+# Build and release tooling. These are PEP 735 dependency groups rather than
+# extras: uv.lock pins them exactly as it does extras, but they are not
+# published in the wheel's metadata, so `pip install internetarchive[pex]`
+# cannot hand an end user a build tool.
+[dependency-groups]
+# CI previously installed pex unpinned, which is how the pex bootstrap grew
+# ~500 KB between 5.11.0 and 5.11.1 (pex 2.98.2 -> 2.100.5) with no change on
+# our side.
+pex = ["pex"]
+# twine validates the built artifacts and packaging normalizes the tag for the
+# artifact-name assertion. Both run on the publish path, after `make release`
+# has already pushed the tag, so an unpinned upgrade there breaks a release
+# that is already in progress.
+release = ["twine", "packaging"]
 
 # The version is derived from the git tag rather than stored in a file, so a
 # release is `git tag vX.Y.Z` and nothing else -- no version-bump PR, and no
@@ -83,10 +97,6 @@ raw-options = { local_scheme = "no-local-version" }
 [tool.hatch.build.hooks.vcs]
 version-file = "internetarchive/_version.py"
 
-# Enumerated rather than `packages = ["internetarchive"]`, which takes the whole
-# directory and ships any untracked-but-not-gitignored subdirectory sitting in
-# it (stale package dirs left behind by other branches, for instance). This
-# mirrors what setup.cfg's explicit `packages` list used to constrain.
 # Selecting the `internetarchive` directory takes everything in it, including
 # any untracked-but-not-gitignored subdirectory that happens to be sitting
 # there (stale package dirs left behind by other branches, for instance).
@@ -115,6 +125,13 @@ only-include = [
   "LICENSE",
   "README.rst",
 ]
+
+# The tool that enforces `--locked` is itself a dependency of the build being
+# reproducible. This is a floor rather than a pin: CI's setup-uv is bumped by
+# the Actions Dependabot group, and this only fails if it goes backwards past
+# the version that authored the lockfile format.
+[tool.uv]
+required-version = ">=0.9"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

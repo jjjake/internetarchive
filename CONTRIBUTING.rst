@@ -53,6 +53,21 @@ Run the linter, the format check, and the tests:
 
     $ ruff check && ruff format --check && pytest
 
+**If you add, remove, or change a dependency**, regenerate the lockfile in the same commit:
+
+.. code:: bash
+
+    $ uv lock
+
+``uv.lock`` pins the exact versions CI installs, and the workflows sync with ``--locked``, which fails if the lockfile and ``pyproject.toml`` disagree. A dependency change without a matching ``uv lock`` will red the ``lint_python``, ``pre-commit``, and ``docs`` checks with a drift error. `uv <https://docs.astral.sh/uv/>`_ is the only tool needed for this; it does not replace ``pip`` for the setup above.
+
+Alternatively, work in the locked environment directly, which is what CI does:
+
+.. code:: bash
+
+    $ uv sync --locked --all-extras
+    $ uv run pytest
+
 Note that this will only test against the Python version you are currently using, however ``internetarchive`` tests against multiple Python versions defined in `tox.ini <https://github.com/jjjake/internetarchive/blob/master/tox.ini>`_. Tests must pass on all versions defined in ``tox.ini`` for all pull requests.
 
 To test against all supported Python versions, first make sure you have all of the required versions of Python installed. Then install and execute tox from the root directory of the repo:

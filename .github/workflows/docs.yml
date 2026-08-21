@@ -18,6 +18,6 @@ jobs:
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
-      - run: uv pip install --system .[docs]
+      - run: uv sync --locked --extra docs
       # -W: treat warnings (broken refs, bad markup, autodoc failures) as errors.
-      - run: sphinx-build -W --keep-going -b html docs/source docs/build/html
+      - run: uv run sphinx-build -W --keep-going -b html docs/source docs/build/html

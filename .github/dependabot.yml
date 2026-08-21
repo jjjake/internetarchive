@@ -11,24 +11,21 @@ updates:
           - "*"  # Group all Actions updates into a single larger pull request
     schedule:
       interval: weekly
-  # Python dependencies. The `uv` ecosystem covers pyproject.toml and uv.lock,
-  # keeping the lockfile in step with the declared dependencies -- a stale
-  # lockfile fails CI, since the workflows sync with --locked.
+  # Python dependencies. The `uv` ecosystem covers pyproject.toml *and* uv.lock,
+  # so a bump updates both together -- a PR that edited only pyproject.toml
+  # would leave the lockfile stale and red every `uv sync --locked` job.
+  #
+  # There is deliberately no `pip` entry. pip has no per-file scoping: it
+  # discovers every manifest under `directory`, pyproject.toml included, so it
+  # would keep opening exactly those lockfile-stale PRs (as #803 did) and
+  # compete with this entry for the same bumps. That leaves
+  # pex-requirements.txt unmanaged until it is generated from this lockfile;
+  # see the plan's step C.
   - package-ecosystem: uv
     directory: /
     groups:
       python-dependencies:
         patterns:
           - "*"  # Group all Python dependency updates into a single pull request
-    schedule:
-      interval: weekly
-  # pex-requirements.txt and docs/requirements.txt are not part of the locked
-  # project environment, so they need the pip ecosystem to be seen at all.
-  - package-ecosystem: pip
-    directory: /
-    groups:
-      python-requirements-files:
-        patterns:
-          - "*"
     schedule:
       interval: weekly

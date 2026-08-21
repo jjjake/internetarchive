@@ -496,34 +496,33 @@ dependencies = [
 
 [package.optional-dependencies]
 all = [
+    { name = "alabaster" },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "responses" },
     { name = "ruff" },
+    { name = "sphinx" },
+    { name = "sphinx-autodoc-typehints" },
     { name = "tqdm-stubs" },
-    { name = "twine" },
     { name = "types-colorama" },
     { name = "types-jsonpatch" },
     { name = "types-pygments" },
     { name = "types-requests" },
     { name = "types-ujson" },
     { name = "types-urllib3" },
+    { name = "typing-extensions" },
 ]
 dev = [
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pytest" },
-    { name = "twine" },
 ]
 docs = [
     { name = "alabaster" },
     { name = "sphinx" },
     { name = "sphinx-autodoc-typehints" },
     { name = "typing-extensions" },
-]
-pex = [
-    { name = "pex" },
 ]
 test = [
     { name = "pytest" },
@@ -540,13 +539,22 @@ types = [
     { name = "types-urllib3" },
 ]
 
+[package.dev-dependencies]
+pex = [
+    { name = "pex" },
+]
+release = [
+    { name = "packaging" },
+    { name = "twine" },
+]
+
 [package.metadata]
 requires-dist = [
+    { name = "alabaster", marker = "extra == 'all'", specifier = "==1.0.0" },
     { name = "alabaster", marker = "extra == 'docs'", specifier = "==1.0.0" },
     { name = "jsonpatch", specifier = ">=0.4" },
     { name = "mypy", marker = "extra == 'all'" },
     { name = "mypy", marker = "extra == 'dev'" },
-    { name = "pex", marker = "extra == 'pex'" },
     { name = "pre-commit", marker = "extra == 'all'" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'all'" },
@@ -558,13 +566,13 @@ requires-dist = [
     { name = "responses", marker = "extra == 'test'", specifier = "==0.26.1" },
     { name = "ruff", marker = "extra == 'all'", specifier = "==0.14.1" },
     { name = "ruff", marker = "extra == 'test'", specifier = "==0.14.1" },
+    { name = "sphinx", marker = "extra == 'all'", specifier = "==8.1.3" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = "==8.1.3" },
+    { name = "sphinx-autodoc-typehints", marker = "extra == 'all'", specifier = "==3.0.0" },
     { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'", specifier = "==3.0.0" },
     { name = "tqdm", specifier = ">=4.0.0" },
     { name = "tqdm-stubs", marker = "extra == 'all'", specifier = ">=0.2.0" },
     { name = "tqdm-stubs", marker = "extra == 'types'", specifier = ">=0.2.0" },
-    { name = "twine", marker = "extra == 'all'" },
-    { name = "twine", marker = "extra == 'dev'" },
     { name = "types-colorama", marker = "extra == 'all'" },
     { name = "types-colorama", marker = "extra == 'types'" },
     { name = "types-jsonpatch", marker = "extra == 'all'", specifier = ">=0.1.0a0" },
@@ -577,10 +585,18 @@ requires-dist = [
     { name = "types-ujson", marker = "extra == 'types'", specifier = ">=4.2.0" },
     { name = "types-urllib3", marker = "extra == 'all'", specifier = ">=1.26.0" },
     { name = "types-urllib3", marker = "extra == 'types'", specifier = ">=1.26.0" },
+    { name = "typing-extensions", marker = "extra == 'all'" },
     { name = "typing-extensions", marker = "extra == 'docs'" },
     { name = "urllib3", specifier = ">=1.26.0" },
 ]
-provides-extras = ["all", "dev", "docs", "pex", "test", "types"]
+provides-extras = ["all", "dev", "docs", "test", "types"]
+
+[package.metadata.requires-dev]
+pex = [{ name = "pex" }]
+release = [
+    { name = "packaging" },
+    { name = "twine" },
+]
 
 [[package]]
 name = "jaraco-classes"

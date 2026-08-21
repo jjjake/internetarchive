@@ -28,6 +28,23 @@ Release History
   installed version resolved from git rather than falling back.
 - ``setuptools`` and ``types-setuptools`` dropped from the development extras;
   nothing imports ``setuptools`` or ``pkg_resources`` at runtime.
+- Dependencies are now locked in ``uv.lock``, and CI installs from it with
+  ``uv sync --locked`` rather than resolving fresh on every run. Contributors
+  who change a dependency must run ``uv lock`` in the same commit; the
+  ``--locked`` flag fails the build when the lockfile and ``pyproject.toml``
+  disagree. ``tox`` still resolves per interpreter, since that is the point of
+  running it.
+- The ``pex`` build tool and the ``twine``/``packaging`` release tools are now
+  declared as PEP 735 dependency groups, so their versions are pinned by the
+  lockfile without being published as installable extras. Previously CI
+  installed them unpinned, which is how the ``pex`` bootstrap grew roughly
+  500 KB between 5.11.0 and 5.11.1 with no change in this repository.
+- ``tests/requirements.txt`` is gone; it duplicated the ``test`` extra, which
+  ``tox`` now uses directly.
+- mypy runs from the locked environment in both ``lint_python`` and the
+  pre-commit hook, against explicit targets. The two checks previously used
+  different mypy versions and different type-stub sets, so they could disagree
+  about the same file.
 
 5.11.1 (2026-08-19)
 +++++++++++++++++++

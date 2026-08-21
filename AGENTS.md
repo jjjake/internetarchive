@@ -13,6 +13,14 @@ Python library and `ia` CLI for interacting with archive.org. Used for uploading
 # Install for development (includes linting, tests, type-checking, and docs tooling)
 pip install -e '.[all]'
 
+# Or work in the locked environment CI uses. --locked fails if uv.lock and
+# pyproject.toml disagree; prefix commands with `uv run` to use it.
+uv sync --locked --all-extras
+
+# REQUIRED after any dependency change in pyproject.toml, in the same commit.
+# Without it, lint_python/pre-commit/docs fail with a lockfile drift error.
+uv lock
+
 # Run tests
 pytest
 

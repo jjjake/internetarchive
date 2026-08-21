@@ -19,12 +19,14 @@ jobs:
         with:
           enable-cache: true
       # --locked fails the build if uv.lock and pyproject.toml have drifted,
-      # rather than silently resolving something else.
-      - run: uv sync --locked --all-extras
+      # rather than silently resolving something else. Only the extras this job
+      # needs: ruff comes from test, mypy from dev, and the stubs from types.
+      # --all-extras would additionally pull sphinx and twine's keyring and
+      # cryptography chain into a job that only lints.
+      - run: uv sync --locked --extra dev --extra test --extra types
       - run: uv run ruff format --check --diff .  # See pyproject.toml for configuration
       - run: uv run ruff check --output-format=github  # See pyproject.toml for configuration
-      # The pex requirements are not part of the locked project environment
-      # (they pin the runtime set the pex bundles), so mypy needs them added on
-      # top to type-check against what the binary actually ships.
-      - run: uv pip install -r pex-requirements.txt
-      - run: uv run mypy .  # See pyproject.toml for configuration
+      # Explicit targets, matching the pre-commit hook: `mypy .` walks whatever
+      # is in the working tree, which differs between CI and a contributor's
+      # checkout. See pyproject.toml for configuration.
+      - run: uv run mypy internetarchive tests

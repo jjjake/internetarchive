@@ -47,7 +47,10 @@ jobs:
         with:
           enable-cache: true
       - run: uv build
-      - run: uv pip install --system twine packaging
+      # Locked, not `uv pip install twine packaging`: these run after
+      # `make release` has already pushed the tag, so an unpinned upgrade that
+      # changes `twine check` breaks a release mid-flight.
+      - run: uv sync --locked --group release
       # The version now comes from the tag via hatch-vcs, so a mismatch is not
       # possible in the way it used to be. What is possible is a checkout with
       # no tags (shallow clone), which silently yields a 0.1.dev1 build --
@@ -59,7 +62,7 @@ jobs:
       - name: Verify built artifacts match the tag
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
-          VERSION=$(python -c "import sys; from packaging.version import Version; print(Version(sys.argv[1]))" "$TAG_VERSION")
+          VERSION=$(uv run python -c "import sys; from packaging.version import Version; print(Version(sys.argv[1]))" "$TAG_VERSION")
           echo "tag $GITHUB_REF_NAME -> normalized $VERSION"
           for f in "dist/internetarchive-${VERSION}.tar.gz" \
                    "dist/internetarchive-${VERSION}-py3-none-any.whl"; do
@@ -72,7 +75,7 @@ jobs:
           case "$VERSION" in
             *dev*) echo "Refusing to release a dev version: $VERSION" >&2; exit 1 ;;
           esac
-      - run: twine check dist/*
+      - run: uv run twine check dist/*
       - uses: actions/upload-artifact@v7
         with:
           name: dist
@@ -91,7 +94,7 @@ jobs:
       - uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
-      - run: uv sync --locked --extra pex
+      - run: uv sync --locked --group pex
       # `uv run` puts .venv/bin on PATH, so the bare `pex` call in the Makefile
       # resolves to the locked version without the Makefile needing to know
       # about uv (it still works with a system pex locally).

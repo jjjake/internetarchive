@@ -33,13 +33,20 @@ repos:
     hooks:
       - id: codespell  # See pyproject.toml for args
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.18.2
+  # mypy runs from the locked project environment rather than from
+  # mirrors-mypy, which would build its own environment with an independently
+  # pinned mypy and a hand-copied stub list. Two required checks running two
+  # mypy versions against two stub sets can disagree about the same file; this
+  # way there is one mypy (uv.lock) and one stub list (the `types` extra).
+  - repo: local
     hooks:
       - id: mypy
-        additional_dependencies:
-          - tqdm-stubs
-          - types-jsonpatch
-          - types-requests
-          - types-ujson
-          - types-urllib3
+        name: mypy
+        entry: uv run --locked --extra dev --extra types mypy
+        language: system
+        types: [python]
+        pass_filenames: false
+        # Explicit targets rather than `.`: mypy walks whatever is in the
+        # working tree, so a local virtualenv sitting in the repo root breaks
+        # the run. lint_python passes the same targets.
+        args: ["internetarchive", "tests"]

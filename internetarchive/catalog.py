@@ -310,6 +310,32 @@ class Catalog:
         )
         return r
 
+    def rerun_task(
+        self,
+        task_id: int | str,
+        data: dict | None = None,
+        headers: dict | None = None,
+    ) -> Response:
+        """Rerun an archive.org task.
+
+        :param task_id: Task ID to rerun.
+
+        :param data: Extra POST data to submit with
+                     the request. Refer to `Tasks API Rerunning a Task
+                     <https://archive.org/developers/tasks.html#rerunning-a-task>`_.
+
+        :param headers: Add additional headers to request.
+
+        :returns: :class:`requests.Response`
+        """
+        data = data or {}
+        data.update({'task_id': task_id, 'op': 'rerun'})
+
+        r = self.session.put(
+            self.url, json=data, auth=self.auth, headers=headers, **self.request_kwargs
+        )
+        return r
+
 
 class CatalogTask:
     """This class represents an Archive.org catalog task. It is primarily used by
@@ -353,6 +379,20 @@ class CatalogTask:
         return self.get_task_log(
             task_id, self.session, request_kwargs=self.request_kwargs
         )
+
+    def rerun(self) -> Response:
+        """Rerun the task. Raises a ValueError if the task is not failed (red).
+
+        :returns: :class:`requests.Response` from the Tasks API rerun request.
+        """
+        task_id = self.task_id  # type: ignore
+        if task_id is None:
+            raise ValueError('task_id is None')
+
+        if self.color != 'red':
+            raise ValueError('Only failed tasks (red rows) can be rerun.')
+
+        return self.session.rerun_task(task_id, request_kwargs=self.request_kwargs)
 
     @staticmethod
     def _request_task_log(

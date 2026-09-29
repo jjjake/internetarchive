@@ -354,6 +354,44 @@ def test_download_dry_run(tmpdir, capsys, nasa_item):
     assert {x.split('/')[-1] for x in out.split('\n') if x} == expected
 
 
+def test_download_dry_run_ignore_existing(tmpdir, capsys, nasa_item):
+    tmpdir.chdir()
+    os.makedirs('nasa', exist_ok=True)
+    with open('nasa/nasa_meta.xml', 'w') as fh:
+        fh.write('already here')
+
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(
+            responses.GET,
+            DOWNLOAD_URL_RE,
+            body='unused',
+            adding_headers={'content-length': '100'},
+        )
+        nasa_item.download(files='nasa_meta.xml', dry_run=True, ignore_existing=True)
+        out, _err = capsys.readouterr()
+        assert out.strip() == ''
+
+        nasa_item.download(files='nasa_meta.xml', dry_run=True)
+        out, _err = capsys.readouterr()
+        assert 'nasa_meta.xml' in out
+
+        nasa_item.download(formats='Metadata', dry_run=True, ignore_existing=True)
+        out, _err = capsys.readouterr()
+        listed = {x.split('/')[-1] for x in out.split('\n') if x}
+        assert listed == {'nasa_reviews.xml', 'nasa_files.xml'}
+
+        with open('nasa_meta.xml', 'w') as fh:
+            fh.write('already here')
+        nasa_item.download(
+            files='nasa_meta.xml',
+            dry_run=True,
+            ignore_existing=True,
+            no_directory=True,
+        )
+        out, _err = capsys.readouterr()
+        assert out.strip() == ''
+
+
 def test_download_dry_run_on_the_fly_formats(tmpdir, capsys, nasa_item):
     tmpdir.chdir()
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:

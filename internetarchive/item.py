@@ -773,6 +773,11 @@ class Item(BaseItem):
         for name, byte_range in range_jobs:
             f = self.get_file(name)
             if kwargs.get("dry_run"):
+                dest = name
+                if kwargs.get("destdir"):
+                    dest = os.path.join(kwargs["destdir"], dest)
+                if kwargs.get("ignore_existing") and os.path.exists(dest):
+                    continue
                 print(f.url)
                 continue
             r = f.download(
@@ -1020,7 +1025,10 @@ class Item(BaseItem):
                     path = f'{self.identifier}/{f.name}'
                 else:
                     path = os.path.join(str(self.identifier), f.name)
+            dest = os.path.join(destdir, path) if destdir else path
             if dry_run:
+                if ignore_existing and os.path.exists(dest):
+                    continue
                 print(f.url)
                 continue
             if stdout and file_count < len(files):  # type: ignore

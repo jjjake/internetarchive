@@ -29,6 +29,12 @@ Release History
 - ``setuptools`` and ``types-setuptools`` dropped from the development extras;
   nothing imports ``setuptools`` or ``pkg_resources`` at runtime.
 
+**Bugfixes**
+
+- ``Item.download(dry_run=True, ignore_existing=True)`` now skips files that
+  already exist locally, matching a real download. Previously dry-run printed
+  every URL.
+
 5.11.1 (2026-08-19)
 +++++++++++++++++++
 

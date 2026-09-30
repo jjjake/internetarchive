@@ -198,7 +198,8 @@ class File(BaseFile):
                                     current time instead of changing it to
                                     that given in the original archive.
         :param stdout: Print contents of file to stdout instead of
-                       downloading to file.
+                       downloading to file. Local files and their timestamps
+                       are left unchanged.
         :param ors: Append a newline or $ORS to the end of file.
                     This is mainly intended to be used internally with `stdout`.
         :param params: URL parameters to send with download request.
@@ -510,7 +511,7 @@ class File(BaseFile):
                     raise exc
 
         # Set mtime with timestamp from Last-Modified header
-        if not no_change_timestamp:
+        if not (no_change_timestamp or stdout):
             # If we want to set the timestamp to that of the original archive...
             with suppress(OSError):  # Probably file-like object, e.g. sys.stdout.
                 os.utime(file_path.encode('utf-8'), (0, last_mod_mtime))

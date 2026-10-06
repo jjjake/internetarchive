@@ -243,8 +243,18 @@ class IterableToFileAdapter:
             # As of 2022, iso-8859-1 encoding is used to meet the HTTP standard,
             # see in the cpython repo (https://github.com/python/cpython
             # Lib/http/client.py lines 246; 1340; or grep 'iso-8859-1'
-            return next(self.iterator, '').encode("iso-8859-1")
-        return next(self.iterator, b'')
+            chunk = next(self.iterator, '')
+            return chunk.encode('iso-8859-1')
+
+        chunk = next(self.iterator, b'')
+
+        if isinstance(chunk, int):
+            return bytes((chunk,))
+
+        if isinstance(chunk, bytes):
+            return chunk
+
+        return bytes(chunk)
 
     def read(self, size: int = -1) -> bytes:
         if size == 0:

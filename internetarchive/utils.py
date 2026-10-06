@@ -234,8 +234,9 @@ class IterableToFileAdapter:
         # in the Iterator from tqdm.
         # So, this FileAdapter provides pre-encoded output
         self.pre_encode = pre_encode
+        self._buffer = bytearray()
 
-    def read(self, size: int = -1):  # TBD: add buffer for `len(data) > size` case
+    def _next_chunk(self) -> bytes:
         if self.pre_encode:
             # this adapter is intended to emulate the encoding that is usually
             # done by the http lib.
@@ -244,6 +245,53 @@ class IterableToFileAdapter:
             # Lib/http/client.py lines 246; 1340; or grep 'iso-8859-1'
             return next(self.iterator, '').encode("iso-8859-1")
         return next(self.iterator, b'')
+
+    def read(self, size: int = -1) -> bytes:
+        if size == 0:
+            return b''
+
+        if size < 0:
+            chunks = []
+            if self._buffer:
+                chunks.append(bytes(self._buffer))
+                self._buffer.clear()
+
+            while True:
+                chunk = self._next_chunk()
+                if not chunk:
+                    break
+                chunks.append(chunk)
+
+            return b''.join(chunks)
+
+        chunks = []
+        remaining = size
+
+        if self._buffer:
+            if len(self._buffer) >= remaining:
+                data = bytes(self._buffer[:remaining])
+                del self._buffer[:remaining]
+                return data
+
+            chunks.append(bytes(self._buffer))
+            remaining -= len(self._buffer)
+            self._buffer.clear()
+
+        while remaining:
+            chunk = self._next_chunk()
+            if not chunk:
+                break
+
+            if len(chunk) <= remaining:
+                chunks.append(chunk)
+                remaining -= len(chunk)
+                continue
+
+            chunks.append(chunk[:remaining])
+            self._buffer.extend(chunk[remaining:])
+            remaining = 0
+
+        return b''.join(chunks)
 
     def __len__(self) -> int:
         return self.length

@@ -412,7 +412,7 @@ def recursive_file_count_and_size(files, item=None, checksum=False):
     :param checksum: If ``True``, skip files whose MD5 matches any file in ``item``.
     :returns: A tuple of (total_file_count, total_size_in_bytes).
     """
-    if not isinstance(files, (list, set)):
+    if not isinstance(files, (list, set, dict)):
         files = [files]
     total_files = 0
     total_size = 0

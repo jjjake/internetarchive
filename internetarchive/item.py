@@ -127,8 +127,13 @@ class BaseItem:
         :param item_metadata: Optional new metadata dict to load.
                              If not provided, uses the existing metadata.
         """
-        if item_metadata:
+        if item_metadata is not None:
+            old_keys = set(self.item_metadata)
             self.item_metadata = item_metadata
+
+            for key in old_keys - set(self.item_metadata):
+                if hasattr(self, key):
+                    delattr(self, key)
 
         self.exists = bool(self.item_metadata)
 

@@ -94,7 +94,12 @@ def main(args: argparse.Namespace) -> None:
         else:
             account = Account.from_account_lookup('email', args.user)
     except AccountAPIError as exc:
-        print(json.dumps(exc.error_data))
+        if exc.error_data is None:
+            # Request-level failure (connection refused, HTTP error, etc.);
+            # there is no API response to print, so report the message.
+            print(f'error: {exc}', file=sys.stderr)
+        else:
+            print(json.dumps(exc.error_data))
         sys.exit(1)
 
     if args.get_email:

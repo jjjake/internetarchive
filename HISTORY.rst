@@ -35,9 +35,9 @@ Release History
 **Bugfixes**
 
 - ``ia account`` now reports the error on stderr when the account lookup
-  request itself fails (e.g. a 403 or connection error because the endpoint
-  is only reachable on the VPN), instead of printing ``null``. The JSON error
-  body is still printed when the API returns one.
+  request itself fails (e.g. an HTTP 400 with no JSON body, or a connection
+  error), instead of printing ``null``. The JSON error body is still printed
+  when the API returns one.
 - Task logs are now fetched from ``archive.org`` rather than
   ``catalogd.archive.org``. Direct access to ``catalogd.archive.org`` is
   restricted to Archive.org's VPN, so ``ia tasks --get-task-log`` and

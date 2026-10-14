@@ -45,11 +45,12 @@ def test_ia_account_api_error_prints_response(capsys):
 
 
 def test_ia_account_request_error_prints_message(capsys):
-    # e.g. an admin-gated endpoint refused off-VPN: no API response body,
-    # so the CLI must report the failure rather than printing "null".
+    # The endpoint answers some requests with an HTTP 400 and a generic HTML
+    # page: no JSON body, so the CLI must report the failure rather than
+    # printing "null".
     with IaRequestsMock() as rsps:
-        rsps.add(responses.POST, XAUTHN_URL, status=403)
+        rsps.add(responses.POST, XAUTHN_URL, status=400, body='<html></html>')
         ia_call(['ia', 'account', 'nobody'], expected_exit_code=1)
     out, err = capsys.readouterr()
     assert out == ''
-    assert err.startswith('error: Failed to fetch account data: 403')
+    assert err.startswith('error: Failed to fetch account data: 400')

@@ -3,7 +3,7 @@
 Release History
 ---------------
 
-5.12.0 (?)
+5.12.0 (2026-10-14)
 ++++++++++
 
 **Features and Improvements**

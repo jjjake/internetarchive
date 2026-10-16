@@ -3,6 +3,7 @@ import sys
 from contextlib import contextmanager
 from io import StringIO
 
+import pytest
 import responses
 
 from internetarchive.utils import json
@@ -424,6 +425,29 @@ def test_ia_upload_checksum(tmpdir_ch, caplog):
         f'test.txt already exists: {PROTOCOL}//s3.us.archive.org/nasa/test.txt'
         in caplog.text
     )
+
+
+@pytest.mark.parametrize('spreadsheet', [False, True])
+@pytest.mark.parametrize('directory', ['my dir', 'my dir/', 'parent/my dir'])
+def test_ia_upload_keep_directories_directory(tmpdir_ch, spreadsheet, directory):
+    os.makedirs(f'{directory}/nested')
+    for filename in ['first.txt', 'nested/second.txt']:
+        with open(f'{directory}/{filename}', 'w') as fh:
+            fh.write(filename)
+
+    if spreadsheet:
+        with open('test.csv', 'w') as fh:
+            fh.write(f'identifier,file\nnasa,{directory}\n')
+        args = ['--spreadsheet', 'test.csv']
+    else:
+        args = ['nasa', directory]
+
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        for filename in ['first.txt', 'nested/second.txt']:
+            key = f'{directory.rstrip("/")}/{filename}'.replace(' ', '%20')
+            rsps.add(responses.PUT, f'{PROTOCOL}//s3.us.archive.org/nasa/{key}')
+        ia_call(['ia', 'upload', *args, '--keep-directories'])
 
 
 def test_ia_upload_keep_directories(tmpdir_ch, caplog):

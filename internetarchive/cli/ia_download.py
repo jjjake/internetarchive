@@ -416,6 +416,9 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
 def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for 'ia download'.
+
+    :raises SystemExit: Status 1 if metadata retrieval or a file download fails;
+        status 0 otherwise. Other items are still processed after metadata errors.
     """
     args.search_parameters = args.search_parameters or {}
     args.parameters = args.parameters or {}
@@ -476,6 +479,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         try:
             item = args.session.get_item(identifier)
         except Exception as exc:
+            errors.append(exc)
             print(
                 f"{identifier}: failed to retrieve item metadata - errors",
                 file=sys.stderr,

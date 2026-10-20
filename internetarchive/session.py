@@ -57,9 +57,40 @@ from internetarchive.utils import parse_dict_cookies, reraise_modify
 
 logger = logging.getLogger(__name__)
 
-_ORIGINAL_SOCKET_CONNECT = socket.socket.connect
-_SOCKET_ALREADY_PATCHED = False
+_ORIGINAL_SOCKET_CONNECT = getattr(
+    socket.socket.connect, 'internetarchive_original_connect', socket.socket.connect
+)
 _active_session_local = threading.local()  # shared thread-local for all sessions
+
+
+def _instrumented_connect(sock, address):
+    """Connect and record diagnostics shared by sessions in the current thread.
+
+    :param sock: The socket being connected.
+    :param address: The destination address accepted by the socket.
+    :returns: The result of the original socket connect method.
+    :raises OSError: If the underlying connection fails.
+    """
+    result = _ORIGINAL_SOCKET_CONNECT(sock, address)
+    try:
+        src_ip, src_port = sock.getsockname()
+        dst_ip, dst_port = address
+        _active_session_local.info = {
+            'src': f"{src_ip}:{src_port}",
+            'dst': f"{dst_ip}:{dst_port}",
+            'src_ip': src_ip,
+            'src_port': src_port,
+            'dst_ip': dst_ip,
+            'dst_port': dst_port,
+        }
+    except Exception:
+        _active_session_local.info = {}
+    return result
+
+
+# Retain the underlying method when this module is reloaded.
+_instrumented_connect.internetarchive_original_connect = _ORIGINAL_SOCKET_CONNECT  # type: ignore[attr-defined]
+socket.socket.connect = _instrumented_connect  # type: ignore[method-assign]
 
 
 class ArchiveSession(requests.sessions.Session):
@@ -174,41 +205,12 @@ class ArchiveSession(requests.sessions.Session):
                         'urllib3',
                     )
 
-        # Monkey-patch socket.connect only once.  The guard prevents re-patching on every
-        # ArchiveSession instantiation.  Without it, each new session would re-capture
-        # socket.socket.connect — which is by then already the instrumented version — as
-        # its "_original", producing infinite mutual recursion the first time a socket is used.
-        global _SOCKET_ALREADY_PATCHED
-        if not _SOCKET_ALREADY_PATCHED:
-
-            def instrumented_connect(sock, address):
-                # _ORIGINAL_SOCKET_CONNECT is the real unpatched method, captured at
-                # module import time.  Calling it directly (not via self) guarantees
-                # we never end up calling the patched version accidentally.
-                result = _ORIGINAL_SOCKET_CONNECT(sock, address)
-                try:
-                    src_ip, src_port = sock.getsockname()
-                    dst_ip, dst_port = address
-                    _active_session_local.info = {
-                        'src': f"{src_ip}:{src_port}",
-                        'dst': f"{dst_ip}:{dst_port}",
-                        'src_ip': src_ip,
-                        'src_port': src_port,
-                        'dst_ip': dst_ip,
-                        'dst_port': dst_port,
-                    }
-                except Exception:
-                    _active_session_local.info = {}
-                return result
-
-            socket.socket.connect = instrumented_connect  # type: ignore[method-assign]
-            _SOCKET_ALREADY_PATCHED = True
-
     def get_connection_info(self) -> dict:
         """Get connection info for the current thread.
 
         Returns diagnostic information about the most recent socket connection
-        made by this thread, useful for debugging connection issues.
+        made by any session in this thread, useful for debugging connection issues.
+        Information is shared across sessions, not stored per session.
 
         :returns: A dict containing connection details:
                   - ``src``: Source IP:port string

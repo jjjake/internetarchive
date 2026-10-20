@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: 3.x
-      - uses: astral-sh/setup-uv@v10.0.1
+      - uses: astral-sh/setup-uv@v10.3.0
         with:
           enable-cache: true
       # pre-commit comes from the locked dev extra, so its version is pinned

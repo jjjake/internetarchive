@@ -3,6 +3,21 @@
 Release History
 ---------------
 
+5.12.1 (?)
+++++++++++
+
+**Security**
+
+- The published ``ia`` pex binary for 5.12.0 bundled certifi 2026.7.22, which
+  still trusts the emSign root CAs whose intermediate keys were compromised
+  (GHSA-6q48-6c7w-9gw2). This release rebuilds the binary with certifi
+  2026.10.19. ``certifi>=2026.10.19`` is now also a declared dependency, so
+  ``pip install -U internetarchive`` carries the fix into existing environments.
+- Development and CI dependencies updated past their open advisories:
+  urllib3 2.8.0 (CVE-2026-97687, CVE-2026-97688, CVE-2026-97689) and
+  virtualenv 21.14.12 (sixteen activation-script and seed-wheel advisories).
+  The pex build now pins charset-normalizer 3.5.2 instead of the 2022 release.
+
 5.12.0 (2026-10-14)
 +++++++++++++++++++
 

@@ -53,8 +53,16 @@ docs:
 	@echo "\033[95m\n\nBuild successful! View the docs homepage at docs/build/html/index.html.\n\033[0m"
 
 # ============ Binary Building ============
+# The pex's inputs are derived from uv.lock on every build rather than
+# maintained by hand, so the binary carries exactly the reviewed, locked
+# versions (see tools/pex_requirements.py for why). pip verifies every wheel
+# against the sha256 recorded in the lockfile; that hash-checking mode cannot
+# take a source directory, so the project goes in as a wheel built first.
+# pex-requirements.txt and build/ are gitignored.
 binary: require-version
-	pex . --python-shebang='/usr/bin/env python3' --python python3 -e internetarchive.cli.ia:main -o ia-$(VERSION)-py3-none-any.pex -r pex-requirements.txt --use-pep517
+	rm -rf build/pex && uv build --wheel -o build/pex
+	python3 tools/pex_requirements.py build/pex/internetarchive-$(VERSION)-py3-none-any.whl > pex-requirements.txt
+	pex --python-shebang='/usr/bin/env python3' --python python3 -e internetarchive.cli.ia:main -o ia-$(VERSION)-py3-none-any.pex -r pex-requirements.txt
 	# The pex is named after $(VERSION); assert the package inside agrees, so a
 	# mislabeled binary can never be uploaded.
 	@built=$$(./ia-$(VERSION)-py3-none-any.pex --version); \

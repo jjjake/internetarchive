@@ -18,9 +18,9 @@ updates:
   # There is deliberately no `pip` entry. pip has no per-file scoping: it
   # discovers every manifest under `directory`, pyproject.toml included, so it
   # would keep opening exactly those lockfile-stale PRs (as #803 did) and
-  # compete with this entry for the same bumps. That leaves
-  # pex-requirements.txt unmanaged until it is generated from this lockfile;
-  # see the plan's step C.
+  # compete with this entry for the same bumps. pex-requirements.txt is
+  # generated from uv.lock at build time (tools/pex_requirements.py), so a
+  # lockfile bump here is all it takes to change what the pex bundles.
   - package-ecosystem: uv
     directory: /
     groups:

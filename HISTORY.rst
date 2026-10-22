@@ -21,6 +21,11 @@ Release History
   request, including S3 keys and cookies, goes over unencrypted HTTP, and its
   ``--help`` text says the same. A ``SECURITY.md`` documents how to report
   vulnerabilities privately.
+- The ``ia`` pex binary is now built from the versions pinned in ``uv.lock``,
+  with every bundled wheel verified against the lockfile's sha256, instead of
+  from a hand-maintained list of version floors that took whatever PyPI served
+  on build day. The build fails if any dependency lacks a universal wheel, so
+  the binary stays platform-independent.
 
 5.12.0 (2026-10-14)
 +++++++++++++++++++

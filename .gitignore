@@ -15,6 +15,8 @@ plans/
 *.egg-info
 *.log
 *.pex
+# Generated from uv.lock by tools/pex_requirements.py at build time.
+pex-requirements.txt
 *.pyc
 *gz
 build

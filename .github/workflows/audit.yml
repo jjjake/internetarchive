@@ -1,0 +1,18 @@
+name: audit
+# Weekly check of uv.lock against the OSV / PyPI advisory databases. Dependabot
+# alerts already cover this; the workflow is a second signal that does not
+# depend on GitHub's alert pipeline, and a one-click way to re-check on demand.
+# It runs on a schedule only, so it never blocks a pull request.
+on:
+  schedule:
+    - cron: '17 6 * * 1'  # Mondays 06:17 UTC
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
+      - run: uv audit --locked

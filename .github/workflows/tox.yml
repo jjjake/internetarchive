@@ -23,8 +23,11 @@ jobs:
         with:
           enable-cache: true
       # Install tox into the matrix interpreter so `tox -e py` targets it;
-      # tox-uv makes tox build its test envs with uv.
-      - run: uv pip install --system tox tox-uv
+      # tox-uv makes tox build its test envs with uv. The versions come from
+      # uv.lock's `tox` group (exported with hashes) rather than an unpinned
+      # install, so this step cannot drift between legs or runs.
+      - run: uv export --locked --only-group tox --no-emit-project -o tox-requirements.txt
+      - run: uv pip install --system --require-hashes -r tox-requirements.txt
       # Live-network tests (marker: network) are excluded in CI; run them
       # locally with plain `pytest`.
       - run: tox -e py -- -m "not network"

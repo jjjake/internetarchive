@@ -1,6 +1,0 @@
-charset-normalizer==3.5.2
-jsonpatch>=0.4
-requests>=2.25.0,<3.0.0
-setuptools
-tqdm>=4.0.0
-urllib3>=1.26.0

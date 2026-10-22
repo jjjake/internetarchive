@@ -179,6 +179,9 @@ class File(BaseFile):
     ):
         """Download the file into the current working directory.
 
+        Each retry recalculates automatic resume state from the local file.
+        A partial file rejected by checksum validation is retried from the start.
+
         :param file_path: Download file to the given file_path.
         :param verbose: Turn on verbose output.
         :param ignore_existing: Overwrite local files if they already exist.
@@ -234,7 +237,6 @@ class File(BaseFile):
         headers = headers or {}
         retries_sleep = 3  # TODO: exponential sleep
         retrying = False  # for retry loop
-        resume = False  # True when auto-resuming a partial local download
         # Whether the caller supplied an explicit Range header (case-insensitive).
         # An explicit range is an intentional partial fetch and must never trigger
         # auto-resume or full-file checksum validation.
@@ -339,6 +341,8 @@ class File(BaseFile):
 
         # Retry loop
         while True:
+            resume = False  # Re-evaluate the local file on every attempt.
+            request_headers = headers
             try:
                 if parent_dir != '' and not (return_responses or stdout):
                     os.makedirs(parent_dir, exist_ok=True)
@@ -367,7 +371,7 @@ class File(BaseFile):
                         # below; a stale Range left over from a prior attempt would
                         # re-fetch already-written bytes and corrupt the file.
                         # Preserve any caller-supplied headers; only set Range.
-                        headers = {**headers, "Range": f"bytes={st.st_size}-"}
+                        request_headers = {**headers, "Range": f"bytes={st.st_size}-"}
                         resume = True
 
                 response = self.item.session.get(
@@ -376,7 +380,7 @@ class File(BaseFile):
                     timeout=timeout,
                     auth=self.auth,
                     params=params,
-                    headers=headers,
+                    headers=request_headers,
                 )
                 # Get timestamp from Last-Modified header
                 last_mod_header = response.headers.get('Last-Modified')
@@ -487,7 +491,7 @@ class File(BaseFile):
                     continue
                 if unsatisfiable:
                     valid = resp.headers.get('Content-Range', '')
-                    rng = headers.get('Range', '')
+                    rng = request_headers.get('Range', '')
                     msg = (
                         f'error downloading {file_path}: requested range '
                         f'{rng!r} not satisfiable'

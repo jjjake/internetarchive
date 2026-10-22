@@ -25,6 +25,11 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
+  # Security floor, not a feature need: certifi is a transitive dependency of
+  # requests, but 2026.10.19 is the first release without the emSign root CAs
+  # whose intermediate keys were compromised (GHSA-6q48-6c7w-9gw2). The floor
+  # makes `pip install -U internetarchive` carry the fix into stale environments.
+  "certifi>=2026.10.19",
   "jsonpatch>=0.4",
   "requests>=2.25.0,<3.0.0",
   "tqdm>=4.0.0",
@@ -50,13 +55,13 @@ dev = [
 docs = [
   "alabaster==1.0.0",
   "sphinx==8.1.3",
-  "sphinx-autodoc-typehints==3.0.0",
+  "sphinx-autodoc-typehints==3.0.1",
   "typing-extensions",
 ]
 test = [
   "pytest==9.0.3",
-  "responses==0.26.1",
-  "ruff==0.14.1",
+  "responses==0.26.3",
+  "ruff==0.17.1",
 ]
 types = [
   "tqdm-stubs>=0.2.0",

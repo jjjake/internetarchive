@@ -33,7 +33,8 @@ Check out the help menu to see all available commands:
                             path to configuration file
       -l, --log             enable logging
       -d, --debug           enable debugging
-      -i, --insecure        allow insecure connections
+      -i, --insecure        Use plain HTTP instead of HTTPS (sends your
+                            credentials unencrypted)
       -H HOST, --host HOST  host to connect to (doesn't work for requests made to s3.us.archive.org)
       --user-agent-suffix SUFFIX
                             append SUFFIX to the default User-Agent header

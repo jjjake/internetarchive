@@ -9,6 +9,8 @@ def test_ia(capsys):
     with IaRequestsMock() as rsps:
         rsps.add_metadata_mock('nasa')
         ia_call(['ia', '--insecure', 'ls', 'nasa'])
+    out, err = capsys.readouterr()
+    assert 'warning: --insecure sends every request' in err
 
     ia_call(['ia', 'nocmd'], expected_exit_code=2)
     out, err = capsys.readouterr()

@@ -9,6 +9,15 @@ HTTPS Issues
 The ``internetarchive`` library uses the HTTPS protocol for making secure requests by default.
 If you run into problems with this, you can use HTTP to make insecure requests in one of the following ways:
 
+.. warning::
+
+   Plain HTTP sends your archive.org S3 keys (in the ``Authorization`` header) and
+   login cookies unencrypted, where anyone on the network path can read them.
+   Treat it as a last resort for diagnosing a broken certificate store, not as a
+   setting to leave on. The ``ia`` command prints a reminder on every ``--insecure``
+   invocation. Upgrading ``certifi`` (``pip install -U certifi``) fixes most
+   certificate problems without giving up HTTPS.
+
     + Adding the following lines to your ``ia.ini`` config file (usually located at ``~/.config/internetarchive/ia.ini``; older installations may use ``~/.config/ia.ini`` or ``~/.ia``):
 
         .. code:: bash

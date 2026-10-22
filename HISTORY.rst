@@ -17,6 +17,10 @@ Release History
   urllib3 2.8.0 (CVE-2026-97687, CVE-2026-97688, CVE-2026-97689) and
   virtualenv 21.14.12 (sixteen activation-script and seed-wheel advisories).
   The pex build now pins charset-normalizer 3.5.2 instead of the 2022 release.
+- ``ia --insecure`` now prints a warning to stderr on every invocation that the
+  request, including S3 keys and cookies, goes over unencrypted HTTP, and its
+  ``--help`` text says the same. A ``SECURITY.md`` documents how to report
+  vulnerabilities privately.
 
 5.12.0 (2026-10-14)
 +++++++++++++++++++

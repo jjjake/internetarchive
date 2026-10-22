@@ -88,6 +88,9 @@ pex = ["pex"]
 # has already pushed the tag, so an unpinned upgrade there breaks a release
 # that is already in progress.
 release = ["twine", "packaging"]
+# The tox workflow installs tox into each matrix interpreter. Locked here so
+# every leg runs the same tox/tox-uv rather than whatever PyPI serves that day.
+tox = ["tox", "tox-uv"]
 
 # The version is derived from the git tag rather than stored in a file, so a
 # release is `git tag vX.Y.Z` and nothing else -- no version-bump PR, and no

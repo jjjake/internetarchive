@@ -95,7 +95,10 @@ def main():
     )
     parser.add_argument("-d", "--debug", action="store_true", help="Enable debugging")
     parser.add_argument(
-        "-i", "--insecure", action="store_true", help="Allow insecure connections"
+        "-i",
+        "--insecure",
+        action="store_true",
+        help="Use plain HTTP instead of HTTPS (sends your credentials unencrypted)",
     )
     parser.add_argument(
         "-H",
@@ -144,6 +147,14 @@ def main():
 
     if args.insecure:
         config["general"] = {"secure": False}
+        # Plain HTTP carries the S3 keys in the Authorization header and any
+        # login cookies in the clear. Say so every time rather than once at
+        # configure time, since the flag is per invocation.
+        print(
+            "warning: --insecure sends every request, including your archive.org "
+            "S3 keys and cookies, over unencrypted HTTP.",
+            file=sys.stderr,
+        )
     if args.host:
         if config.get("general"):
             config["general"]["host"] = args.host

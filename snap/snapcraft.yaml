@@ -1,16 +1,26 @@
 name: ia
+title: internetarchive
 version: master
 summary: A Command-Line Interface to Archive.org
 description: |
   This package installs a command-line tool named ia for using Archive.org
   from the command-line.
-
-grade: devel # must be 'stable' to release into candidate/stable channels
+icon: docs/source/_static/ia.png
+license: AGPL-3.0
+base: core24
+grade: stable
 confinement: strict
+issues: https://github.com/jjjake/internetarchive/issues
+source-code: https://github.com/jjjake/internetarchive
+website: https://archive.org/
+donation: https://archive.org/donate?origin=snap
+
 
 apps:
   ia:
-    command: ia
+    command: bin/ia
+    environment:
+      XDG_CONFIG_HOME: $SNAP_USER_COMMON
     plugs: [network, home, removable-media]
 
 parts:

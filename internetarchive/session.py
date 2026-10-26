@@ -582,6 +582,44 @@ class ArchiveSession(requests.sessions.Session):
             headers=headers,
         )
 
+    def rerun_task(
+        self,
+        task_id: str | int,
+        data: dict | None = None,
+        headers: dict | None = None,
+        reduced_priority: bool = False,
+        request_kwargs: Mapping | None = None,
+    ) -> Response:
+        """Rerun an archive.org task.
+
+        :param task_id: The task id to rerun.
+
+        :param data: Extra POST data to submit with
+                     the request. Refer to `Tasks API Rerunning a Task
+                     <https://archive.org/services/docs/api/tasks.html#rerunning-a-task>`_.
+
+        :param headers: Add additional headers to request.
+
+        :param reduced_priority: Submit your rerun at a lower priority.
+                                 This option is helpful to get around rate-limiting.
+                                 Your task will more likely be accepted, but it might
+                                 not run for a long time. Note that you still may be
+                                 subject to rate-limiting.
+
+        :param request_kwargs: Keyword arguments to be used in
+                               :meth:`requests.sessions.Session.post` request.
+
+        :returns: :class:`requests.Response`
+        """
+        headers = headers or {}
+        if reduced_priority:
+            headers.update({'X-Accept-Reduced-Priority': '1'})
+        return catalog.Catalog(self, request_kwargs).rerun_task(
+            task_id,
+            data=data,
+            headers=headers,
+        )
+
     def iter_history(
         self,
         identifier: str | None,

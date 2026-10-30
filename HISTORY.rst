@@ -69,6 +69,12 @@ Release History
   different mypy versions and different type-stub sets, so they could disagree
   about the same file.
 
+**Bugfixes**
+
+- ``Item.download(dry_run=True, ignore_existing=True)`` now skips files that
+  already exist locally, matching a real download. Previously dry-run printed
+  every URL.
+
 5.11.1 (2026-08-19)
 +++++++++++++++++++
 

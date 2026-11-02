@@ -236,7 +236,8 @@ def test_range_not_satisfiable_raises_without_ignore_errors(tmpdir, nasa_item):
 
 def test_stdout_ignores_local_file_no_resume_or_skip(tmpdir, nasa_item, capfd):
     """A stdout download must never consult the local filesystem: no skip,
-    no auto-resume seek/append, regardless of a same-named local file.
+    no auto-resume seek/append or timestamp changes, regardless of a same-named
+    local file.
 
     A same-named local file whose size differs from the remote size is what
     normally triggers the auto-resume path (and seeking a pipe would fail).
@@ -245,6 +246,9 @@ def test_stdout_ignores_local_file_no_resume_or_skip(tmpdir, nasa_item, capfd):
     file_obj = nasa_item.get_file('nasa_meta.xml')
     with open(os.path.join(str(tmpdir), 'nasa_meta.xml'), 'w') as fh:
         fh.write('AA')
+    local_path = tmpdir.join('nasa_meta.xml')
+    os.utime(local_path, ns=(1_000_000_000, 2_000_000_000))
+    original_stat = os.stat(local_path)
     assert len('AA') != file_obj.size
 
     with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
@@ -260,6 +264,10 @@ def test_stdout_ignores_local_file_no_resume_or_skip(tmpdir, nasa_item, capfd):
 
     # ...and the full body went to stdout (not skipped, not appended locally).
     assert capfd.readouterr().out == 'test'
+    downloaded_stat = os.stat(local_path)
+    assert downloaded_stat.st_mtime_ns == original_stat.st_mtime_ns
+    assert downloaded_stat.st_atime_ns == original_stat.st_atime_ns
+    assert local_path.read() == 'AA'
 
 
 def test_stdout_retry_writes_to_stdout_not_local_file(

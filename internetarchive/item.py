@@ -32,6 +32,7 @@ import os
 import socket
 import sys
 from collections.abc import Mapping, MutableMapping
+from contextlib import suppress
 from copy import deepcopy
 from datetime import datetime
 from fnmatch import fnmatch
@@ -68,6 +69,30 @@ from internetarchive.utils import (
 
 log = getLogger(__name__)
 
+#: Metadata API extended-error codes meaning the identifier is not taken:
+#: 103 (unbacked user item, never created) and 104 (deleted).
+NOT_EXISTS_ERRCODES = frozenset({103, 104})
+
+# Attributes never removed when a reload drops a response key of the same name.
+_PROTECTED_ATTRS = frozenset(
+    {'identifier', 'session', 'urls', 'item_metadata', 'exists', 'errcode', 'error'}
+)
+
+
+def _parse_errcode(value) -> int | None:
+    """Return a Metadata API ``errcode`` as an int, or ``None``.
+
+    :param value: The ``errcode`` value from the response, if any.
+
+    :returns: The code as an int, or ``None`` if absent or not an integer.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
 
 @total_ordering
 class BaseItem:
@@ -92,9 +117,20 @@ class BaseItem:
         # Default attributes.
         self.identifier = identifier
         self.item_metadata = item_metadata or {}
+        #: ``True`` if the identifier is taken. See :meth:`load` for the rule.
         self.exists = False
+        #: Integer ``errcode`` from a Metadata API extended error, else ``None``.
+        self.errcode: int | None = None
+        #: ``error`` text from a Metadata API extended error, else ``None``.
+        self.error: str | None = None
 
-        # Archive.org metadata attributes.
+        self._reset_response_attrs()
+
+        # Load item.
+        self.load()
+
+    def _reset_response_attrs(self) -> None:
+        """Set the attributes filled from a Metadata API response to defaults."""
         self.metadata: dict = {}
         self.files: list[dict] = []
         self.created = None
@@ -110,12 +146,15 @@ class BaseItem:
         self.tasks = None
         self.is_dark = None
 
-        # Load item.
-        self.load()
-
     def __repr__(self) -> str:
+        name = self.__class__.__name__
+        if self.error is not None or self.errcode is not None:
+            return (
+                f'{name}(identifier={self.identifier!r}, '
+                f'errcode={self.errcode!r}, error={self.error!r})'
+            )
         notloaded = ', item_metadata={}' if not self.exists else ''
-        return f'{self.__class__.__name__}(identifier={self.identifier!r}{notloaded})'
+        return f'{name}(identifier={self.identifier!r}{notloaded})'
 
     def load(self, item_metadata: Mapping | None = None) -> None:
         """Load or reload item metadata.
@@ -124,16 +163,43 @@ class BaseItem:
         called automatically during initialization and can be called
         again to refresh the item's state.
 
+        Sets :attr:`exists`, :attr:`errcode` and :attr:`error` from the
+        Metadata API response, which is requested with ``extended_err=1``
+        (see :meth:`ArchiveSession.get_metadata
+        <internetarchive.session.ArchiveSession.get_metadata>`):
+
+        - ``{}`` (never created): ``exists`` is ``False``.
+        - ``errcode`` 103 (unbacked user item, never created) or 104
+          (deleted): ``exists`` is ``False``.
+        - Any other non-empty response, including one with no ``metadata``
+          key, ``errcode`` 101 (creation pending), 102 (data nodes
+          offline), 105, 106, 400, or an ``error`` with no ``errcode``:
+          ``exists`` is ``True``. The identifier is taken, but the item may
+          not be readable right now; check :attr:`error`.
+
         :param item_metadata: Optional new metadata dict to load.
                              If not provided, uses the existing metadata.
+                             When given (including ``{}``), it replaces the
+                             previous response: attributes set from keys of
+                             the old response are reset or removed first.
         """
-        if item_metadata:
+        if item_metadata is not None:
+            for key in self.item_metadata:
+                if key not in _PROTECTED_ATTRS:
+                    with suppress(AttributeError):
+                        delattr(self, key)
+            self._reset_response_attrs()
             self.item_metadata = item_metadata
-
-        self.exists = bool(self.item_metadata)
 
         for key in self.item_metadata:
             setattr(self, key, self.item_metadata[key])
+
+        error = self.item_metadata.get('error')
+        self.error = None if error is None else str(error)
+        self.errcode = _parse_errcode(self.item_metadata.get('errcode'))
+        self.exists = (
+            bool(self.item_metadata) and self.errcode not in NOT_EXISTS_ERRCODES
+        )
 
         if not self.identifier:
             self.identifier = self.metadata.get('identifier')
@@ -192,6 +258,22 @@ class Item(BaseItem):
 
     You can retrieve S3 keys here: `https://archive.org/account/s3.php
     <https://archive.org/account/s3.php>`__
+
+    Use ``item.exists`` to check whether the identifier is taken. Metadata
+    is requested with ``extended_err=1``, so an item that exists or existed
+    but cannot be served sets ``item.error`` (text) and usually
+    ``item.errcode`` (int); both are ``None`` for a normal item:
+
+        >>> item = get_item('some-deleted-item')
+        >>> item.exists, item.errcode, item.error
+        (False, 104, '...')
+
+    ``exists`` is ``False`` for ``{}`` (never created) and for ``errcode``
+    103 (unbacked user item, never created) or 104 (deleted). It is
+    ``True`` for every other response, including 101 (creation pending)
+    and 102 (data nodes offline), where the identifier is taken but the
+    item cannot be read right now. See
+    `Extended errors <https://archive.org/developers/md-read.html>`__.
     """
 
     def __init__(

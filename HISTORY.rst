@@ -27,6 +27,18 @@ Release History
   Previously the API returned ``{}`` for all of these, so a pending or
   temporarily unreadable item read as not existing.
 
+  Compatibility: ``exists`` no longer implies the metadata is loaded. For
+  101, 102 and the other non-deleted error codes, ``exists`` is ``True``
+  while ``item.metadata`` is ``{}`` and ``item.files`` is ``[]``; check
+  ``item.error`` before reading them. As a result ``ia delete`` on such an
+  item prints "no files found, nothing deleted." and exits 1 instead of
+  "item doesn't exist" with exit 0 (no delete requests are sent), and
+  ``ia download`` still reports it as "item does not exist".
+- Reloading an item (``Item.refresh``, ``Item.load``) now resets the
+  attributes set from the previous response, so an item that was deleted
+  or became unreadable no longer keeps its old ``files`` and ``metadata``.
+  ``load({})`` now replaces the previous response instead of being ignored.
+
 5.12.1 (2026-10-22)
 +++++++++++++++++++
 

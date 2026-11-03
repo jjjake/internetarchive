@@ -32,6 +32,7 @@ import os
 import socket
 import sys
 from collections.abc import Mapping, MutableMapping
+from contextlib import suppress
 from copy import deepcopy
 from datetime import datetime
 from fnmatch import fnmatch
@@ -71,6 +72,11 @@ log = getLogger(__name__)
 #: Metadata API extended-error codes meaning the identifier is not taken:
 #: 103 (unbacked user item, never created) and 104 (deleted).
 NOT_EXISTS_ERRCODES = frozenset({103, 104})
+
+# Attributes never removed when a reload drops a response key of the same name.
+_PROTECTED_ATTRS = frozenset(
+    {'identifier', 'session', 'urls', 'item_metadata', 'exists', 'errcode', 'error'}
+)
 
 
 def _parse_errcode(value) -> int | None:
@@ -118,7 +124,13 @@ class BaseItem:
         #: ``error`` text from a Metadata API extended error, else ``None``.
         self.error: str | None = None
 
-        # Archive.org metadata attributes.
+        self._reset_response_attrs()
+
+        # Load item.
+        self.load()
+
+    def _reset_response_attrs(self) -> None:
+        """Set the attributes filled from a Metadata API response to defaults."""
         self.metadata: dict = {}
         self.files: list[dict] = []
         self.created = None
@@ -133,9 +145,6 @@ class BaseItem:
         self.updated = None
         self.tasks = None
         self.is_dark = None
-
-        # Load item.
-        self.load()
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
@@ -170,8 +179,16 @@ class BaseItem:
 
         :param item_metadata: Optional new metadata dict to load.
                              If not provided, uses the existing metadata.
+                             When given (including ``{}``), it replaces the
+                             previous response: attributes set from keys of
+                             the old response are reset or removed first.
         """
-        if item_metadata:
+        if item_metadata is not None:
+            for key in self.item_metadata:
+                if key not in _PROTECTED_ATTRS:
+                    with suppress(AttributeError):
+                        delattr(self, key)
+            self._reset_response_attrs()
             self.item_metadata = item_metadata
 
         for key in self.item_metadata:

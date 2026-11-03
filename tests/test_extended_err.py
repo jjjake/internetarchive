@@ -203,6 +203,39 @@ def test_reload_clears_previous_error():
     assert item.error is None
 
 
+def test_reload_error_clears_previous_item_state():
+    s = get_session(config_file=TEST_CONFIG)
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa')
+        item = s.get_item('nasa')
+    assert item.files
+    assert item.metadata
+    item.refresh(item_metadata={'error': 'item is deleted', 'errcode': 104})
+    assert item.exists is False
+    assert item.errcode == 104
+    assert item.files == []
+    assert item.metadata == {}
+    assert list(item.get_files()) == []
+    # Keys only the old response had are gone.
+    assert not hasattr(item, 'workable_servers')
+    assert item.identifier == 'nasa'
+
+
+def test_reload_empty_clears_previous_error():
+    s = get_session(config_file=TEST_CONFIG)
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock(
+            'nasa', body='{"error": "data nodes offline", "errcode": 102}'
+        )
+        rsps.add_metadata_mock('nasa', body='{}')
+        item = s.get_item('nasa')
+        assert item.exists is True
+        item.refresh()
+    assert item.exists is False
+    assert item.errcode is None
+    assert item.error is None
+
+
 def test_repr():
     s = get_session(config_file=TEST_CONFIG)
     with IaRequestsMock() as rsps:
@@ -240,6 +273,14 @@ def test_ia_metadata_exists_unreachable_prints_error(capsys):
         ia_call(['ia', 'metadata', '--exists', 'nasa'], expected_exit_code=0)
         _out, err = capsys.readouterr()
     assert err == 'nasa: data nodes offline (errcode 102)\nnasa exists\n'
+
+
+def test_ia_metadata_exists_empty_error_text(capsys):
+    with IaRequestsMock() as rsps:
+        rsps.add_metadata_mock('nasa', body='{"error": "", "errcode": 104}')
+        ia_call(['ia', 'metadata', '--exists', 'nasa'], expected_exit_code=1)
+        _out, err = capsys.readouterr()
+    assert err == 'nasa: (errcode 104)\nnasa does not exist\n'
 
 
 def test_ia_metadata_exists_error_without_errcode(capsys):

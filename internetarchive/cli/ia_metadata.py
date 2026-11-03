@@ -331,9 +331,13 @@ def exit_on_exists(itm: item.Item, identifier: str) -> NoReturn:
 
     :raises SystemExit: Always; code 0 if the item exists, 1 if it does not.
     """
-    if itm.error is not None:
-        code = f" (errcode {itm.errcode})" if itm.errcode is not None else ""
-        print(f"{identifier}: {itm.error}{code}", file=sys.stderr)
+    parts = []
+    if itm.error:
+        parts.append(itm.error)
+    if itm.errcode is not None:
+        parts.append(f"(errcode {itm.errcode})")
+    if parts:
+        print(f"{identifier}: {' '.join(parts)}", file=sys.stderr)
     if itm.exists:
         print(f"{identifier} exists", file=sys.stderr)
         sys.exit(0)

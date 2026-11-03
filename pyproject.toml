@@ -59,9 +59,9 @@ docs = [
   "typing-extensions",
 ]
 test = [
-  "pytest==9.0.3",
+  "pytest==9.2.0",
   "responses==0.26.3",
-  "ruff==0.17.1",
+  "ruff==0.17.3",
 ]
 types = [
   "tqdm-stubs>=0.2.0",

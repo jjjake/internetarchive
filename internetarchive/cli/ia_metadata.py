@@ -27,6 +27,7 @@ import sys
 from collections import defaultdict
 from collections.abc import Mapping
 from copy import copy
+from typing import NoReturn
 
 from requests import Request, Response
 
@@ -319,6 +320,27 @@ def remove_metadata(
     return r
 
 
+def exit_on_exists(itm: item.Item, identifier: str) -> NoReturn:
+    """Report whether an item exists and exit, for ``ia metadata --exists``.
+
+    If the Metadata API response carried an extended error, it is printed to
+    stderr first.
+
+    :param itm: The item to check.
+    :param identifier: The identifier as given on the command line.
+
+    :raises SystemExit: Always; code 0 if the item exists, 1 if it does not.
+    """
+    if itm.error is not None:
+        code = f" (errcode {itm.errcode})" if itm.errcode is not None else ""
+        print(f"{identifier}: {itm.error}{code}", file=sys.stderr)
+    if itm.exists:
+        print(f"{identifier} exists", file=sys.stderr)
+        sys.exit(0)
+    print(f"{identifier} does not exist", file=sys.stderr)
+    sys.exit(1)
+
+
 def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     """
     Main entry point for 'ia metadata'.
@@ -341,16 +363,7 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
 
     # Check existence of item.
     if args.exists:
-        if item.exists:
-            responses.append(True)
-            print(f"{args.identifier} exists", file=sys.stderr)
-        else:
-            responses.append(False)
-            print(f"{args.identifier} does not exist", file=sys.stderr)
-        if all(r is True for r in responses):
-            sys.exit(0)
-        else:
-            sys.exit(1)
+        exit_on_exists(item, args.identifier)
 
     # Modify metadata.
     elif args.modify or args.append or args.append_list or args.remove or args.insert:

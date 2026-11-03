@@ -125,6 +125,34 @@ Once you have an item (from :func:`get_item` or :meth:`~internetarchive.session.
     for file in item.files:
         print(file.name, file.format)
 
+Checking whether an item exists
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``item.exists`` says whether the identifier is taken. Metadata is requested
+with ``extended_err=1`` (see `Extended errors
+<https://archive.org/developers/md-read.html>`_), so an item that exists or
+existed but cannot be served carries ``item.error`` (text) and usually
+``item.errcode`` (int); both are ``None`` for a normal item.
+
+.. code-block:: python
+
+    item = get_item('some-identifier')
+    if not item.exists:
+        print('not taken', item.errcode)  # None (never created), 103 or 104
+    elif item.error:
+        print('taken, but not readable now:', item.errcode, item.error)
+
+====================================  ==========  ===========
+Metadata API response                 ``exists``  ``errcode``
+====================================  ==========  ===========
+``{}`` (never created)                ``False``   ``None``
+``errcode`` 103 (unbacked user item)  ``False``   ``103``
+``errcode`` 104 (deleted)             ``False``   ``104``
+``errcode`` 101, 102, 105, 106, 400   ``True``    the code
+``error`` with no ``errcode``         ``True``    ``None``
+any other non-empty response          ``True``    ``None``
+====================================  ==========  ===========
+
 For complete item documentation, see :ref:`item-module`.
 
 Searching for Items

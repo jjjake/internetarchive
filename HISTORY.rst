@@ -3,6 +3,30 @@
 Release History
 ---------------
 
+5.13.0 (?)
+++++++++++
+
+**Features and Improvements**
+
+- Metadata reads (``ArchiveSession.get_metadata``, and so ``get_item``,
+  ``Item.refresh`` and ``ia metadata``) now send ``extended_err=1``, merged
+  with any caller-supplied ``params``. An identifier that exists or existed
+  but cannot be served now returns ``{"error": ..., "errcode": ...}`` instead
+  of ``{}``; ``ia metadata <identifier>`` prints that body.
+- ``Item.errcode`` (int or ``None``) and ``Item.error`` (str or ``None``)
+  expose the extended error, so callers can tell a deleted item from one that
+  is temporarily unreadable. ``Item.__repr__`` shows them when set.
+- ``ia metadata --exists`` prints the error to stderr when the response
+  carried one. Exit codes are unchanged.
+
+**Bugfixes**
+
+- ``Item.exists`` is now ``False`` for ``errcode`` 103 (unbacked user item,
+  never created) and 104 (deleted), and ``True`` for every other non-empty
+  response, including 101 (creation pending) and 102 (data nodes offline).
+  Previously the API returned ``{}`` for all of these, so a pending or
+  temporarily unreadable item read as not existing.
+
 5.12.1 (2026-10-22)
 +++++++++++++++++++
 

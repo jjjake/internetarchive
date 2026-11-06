@@ -195,12 +195,66 @@ class Search:
                     )
                 break
 
+    @staticmethod
+    def _fts_response_json(r):
+        """Parse a full-text search API response, raising on API errors.
+
+        The FTS API reports errors in three shapes, all seen in November 2026:
+
+        - ``{"user_message": {"msg_type": "ERROR", "text": "..."}}``, with a
+          4xx status for invalid parameters;
+        - ``{"user_message": {"msg_type": "Invalid or expired scroll id"}}``,
+          with a 200 status and no ``text`` key;
+        - ``{"error": "UPSTREAM_ERROR", "message": "..."}``, with a 5xx status.
+
+        Any ``user_message`` is treated as an error, even alongside hits: no
+        advisory (non-error) ``user_message`` has been observed, and raising is
+        safer than silently returning partial results.
+
+        :param r: The :class:`requests.Response` from the FTS API.
+        :returns: The decoded JSON body.
+        :raises ValueError: If the body is not JSON, the status is not 2xx, or
+            the body carries a ``user_message``. The message includes the
+            server's text when there is one, otherwise the HTTP status.
+        """
+        try:
+            j = r.json()
+        except ValueError:
+            raise ValueError(
+                f'full-text search failed: {r.status_code} {r.reason}'
+            ) from None
+
+        user_message = j.get('user_message') if isinstance(j, dict) else None
+        if r.ok and not user_message:
+            return j
+
+        text = None
+        if isinstance(user_message, dict):
+            text = user_message.get('text') or user_message.get('msg_type')
+        elif user_message:
+            text = str(user_message)
+        elif isinstance(j, dict):
+            text = j.get('message') or j.get('error')
+        if not text:
+            text = f'{r.status_code} {r.reason}'
+        raise ValueError(f'full-text search failed: {text}')
+
     def _full_text_search(self):
+        """Yield hits from the full-text search API, following the scroll.
+
+        Pages are requested with ``scroll`` set to the JSON boolean ``true``
+        and the previous page's ``_scroll_id`` until a page has no hits. If a
+        ``size`` param is given, a single page of that size is requested with
+        ``scroll`` set to ``false``.
+
+        :returns: A generator of hit dicts.
+        :raises ValueError: If the API reports an error on any page.
+        """
         d = {
             'q': self.query,
             'size': '10000',
             'from': '0',
-            'scroll': 'true',
+            'scroll': True,
         }
 
         if 'scope' in self.params:
@@ -214,13 +268,13 @@ class Search:
             r = self.session.post(
                 self.fts_url, json=d, auth=self.auth, **self.request_kwargs
             )
-            j = r.json()
+            j = self._fts_response_json(r)
             scroll_id = j.get('_scroll_id')
             hits = j.get('hits', {}).get('hits')
             if not hits:
                 return
             yield from hits
-            if not hits or d['scroll'] is False:
+            if d['scroll'] is False:
                 break
             d['scroll_id'] = scroll_id
 
@@ -279,7 +333,7 @@ class Search:
                     auth=self.auth,
                     **self.request_kwargs,
                 )
-                j = r.json()
+                j = self._fts_response_json(r)
                 self._num_found = j.get('hits', {}).get('total')
         return self._num_found
 
@@ -300,6 +354,9 @@ class Search:
         """Iterate over search results as raw result dicts.
 
         :returns: A :class:`SearchIterator` yielding result dicts.
+        :raises ValueError: While iterating, if the search API reports an
+            error. For full-text search this can happen partway through, for
+            example when the scroll id expires between pages.
 
         Usage::
 
@@ -316,6 +373,9 @@ class Search:
         which may result in additional API calls.
 
         :returns: A :class:`SearchIterator` yielding :class:`Item` objects.
+        :raises ValueError: While iterating, if the search API reports an
+            error. For full-text search this can happen partway through, for
+            example when the scroll id expires between pages.
 
         Usage::
 

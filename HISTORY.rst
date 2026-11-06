@@ -3,6 +3,22 @@
 Release History
 ---------------
 
+5.12.2 (?)
+++++++++++
+
+**Bugfixes**
+
+- ``ia search --fts`` and ``search_items(..., full_text_search=True)`` returned
+  no results after the full-text search API began validating parameter types:
+  the request sent ``scroll`` as the string ``"true"``, which the API now
+  rejects with a 400. It is now sent as a JSON boolean. Errors from the
+  full-text search API (a 4xx or 5xx status, or a ``user_message`` in the
+  response body) now raise ``ValueError`` with the server's message, so
+  ``ia search --fts`` prints it and exits 1 instead of printing nothing and
+  exiting 0 (#842). This includes an expired scroll id partway through
+  iteration, which previously ended the results early without warning, and a
+  failed ``num_found`` request, which previously returned ``None``.
+
 5.12.1 (2026-10-22)
 +++++++++++++++++++
 

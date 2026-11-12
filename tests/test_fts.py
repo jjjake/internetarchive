@@ -196,3 +196,17 @@ def test_fts_num_found(session):
 
         s = search_items('computer', full_text_search=True, archive_session=session)
         assert s.num_found == 305
+
+
+def test_fts_yields_hits_unchanged_when_identifier_is_in_source(session):
+    # Later scroll pages carry the identifier in ``_source`` rather than
+    # ``fields``; the library yields hits exactly as the API returns them.
+    hit = {
+        '_id': 'manualsbase-id-247624|1039d0366f2d4c0ab76d74993a097b5c0ca1319f',
+        '_source': {'identifier': 'manualsbase-id-247624'},
+    }
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.POST, FTS_URL, json=_page([hit], 'scroll-1'))
+        rsps.add(responses.POST, FTS_URL, json=_page([], 'scroll-2'))
+        s = search_items('computer', full_text_search=True, archive_session=session)
+        assert _collect(s) == [hit]

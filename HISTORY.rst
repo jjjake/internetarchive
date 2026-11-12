@@ -18,6 +18,12 @@ Release History
   exiting 0 (#842). This includes an expired scroll id partway through
   iteration, which previously ended the results early without warning, and a
   failed ``num_found`` request, which previously returned ``None``.
+- ``ia search --fts --itemlist`` crashed with ``TypeError`` on the second and
+  later scroll pages: the API returns the identifier in ``_source`` there
+  rather than in ``fields``. The identifier is now taken from
+  ``fields.identifier``, else ``_source.identifier``, else the part of the hit's
+  ``_id`` before the ``|``. ``search_items(..., full_text_search=True)`` still
+  yields the hits exactly as the API returns them.
 
 5.12.1 (2026-10-22)
 +++++++++++++++++++

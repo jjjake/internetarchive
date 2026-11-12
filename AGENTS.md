@@ -75,13 +75,6 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 - Type checking: mypy (configured in `pyproject.toml`; type stubs in the `types` extra)
 - Docstrings: Always add or update docstrings when editing or adding code. Use Sphinx-style format with `:param:`, `:returns:`, and `:raises:` sections
 
-## Key Dependencies
-
-- `requests` - HTTP client
-- `jsonpatch` - JSON patching for metadata updates
-- `tqdm` - Progress bars
-- `responses` - HTTP mocking for tests
-
 ## Contributing Notes
 
 - All new features should be developed on a feature branch, not directly on master
@@ -94,6 +87,9 @@ Convenience functions that wrap the core classes: `get_item()`, `search_items()`
 
 - `master` is protected by GitHub rulesets — never push directly
 - Always create feature branches and open PRs
+- The maintainer reviews and merges every change by hand. Agents never merge. Change only
+  what the task needs: no unrelated refactoring or reformatting.
+- Update a PR branch with `git rebase origin/master`, never a merge commit.
 - Required CI checks must pass before merge (per the `main-protection` ruleset, verified
   2026-08-19): `lint_python`, `pre-commit`, and each `tox` matrix leg by name — `tox (3.10)`
   through `tox (3.14)` and `tox (pypy-3.11)`. `install_internetarchive` and `docs` run on every
@@ -118,6 +114,9 @@ version must check out with full history (`fetch-depth: 0`); a shallow clone sil
 produces `0.1.dev1`.
 
 ## Releasing
+
+A release happens only when the maintainer asks for one in the session. `make release`
+pushes the tag, which publishes to PyPI and cannot be undone: confirm before running it.
 
 `master` is branch-protected, so a release is three steps: (1) date the `HISTORY.rst`
 section via a PR (`make prepare-history RELEASE=X.Y.Z`), (2) `make release RELEASE=X.Y.Z`

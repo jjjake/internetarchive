@@ -131,6 +131,36 @@ def perform_search(args, fields, sorts, r_kwargs):
     )
 
 
+def fts_hit_identifiers(hit):
+    """
+    Return the item identifiers of a full-text search hit as a list.
+
+    The full-text search API has been observed to put the identifier in
+    different places: hits on the first scroll page carry it in ``fields``
+    (as a list), hits on later pages carry it in ``_source`` (as a plain
+    string). The identifier is taken from ``fields.identifier``, else
+    ``_source.identifier``, else the part of ``_id`` before the ``|``.
+    Empty and non-string values are ignored.
+
+    :param hit: A hit from the full-text search API.
+    :returns: A list of identifiers; empty if the hit has none.
+    """
+    if not isinstance(hit, dict):
+        return []
+    for key in ("fields", "_source"):
+        container = hit.get(key)
+        value = container.get("identifier") if isinstance(container, dict) else None
+        values = [value] if isinstance(value, str) else value
+        if isinstance(values, list):
+            found = [v for v in values if isinstance(v, str) and v]
+            if found:
+                return found
+    doc_id = hit.get("_id")
+    if isinstance(doc_id, str) and doc_id.split("|")[0]:
+        return [doc_id.split("|")[0]]
+    return []
+
+
 def handle_search_results(args, search):
     """
     Handle search results based on command-line arguments.
@@ -142,7 +172,8 @@ def handle_search_results(args, search):
     for result in search:
         if args.itemlist:
             if args.fts or args.dsl_fts:
-                print("\n".join(result.get("fields", {}).get("identifier")))
+                for identifier in fts_hit_identifiers(result):
+                    print(identifier)
             else:
                 print(result.get("identifier", ""))
         else:

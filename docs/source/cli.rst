@@ -83,6 +83,22 @@ A particularly useful tool to use alongside ``ia`` is `jq <https://stedolan.gith
     $ ia metadata TripDown1905 | jq '.metadata.date'
     "1906"
 
+Metadata is requested with ``extended_err=1``, so an item that exists or
+existed but cannot be served prints ``{"error": "...", "errcode": N}``
+instead of ``{}`` (see `Extended errors
+<https://archive.org/developers/md-read.html>`_).
+
+To check whether an identifier is taken, use ``--exists``. It exits ``0`` if
+the identifier is taken and ``1`` if it is not (never created, an unbacked
+user item, or deleted). If the response carried an error, it is printed to
+stderr first:
+
+.. code:: console
+
+    $ ia metadata --exists some-deleted-item
+    some-deleted-item: <error text> (errcode 104)
+    some-deleted-item does not exist
+
 
 Modifying Metadata
 ^^^^^^^^^^^^^^^^^^

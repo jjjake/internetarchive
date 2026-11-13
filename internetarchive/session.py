@@ -62,6 +62,33 @@ _SOCKET_ALREADY_PATCHED = False
 _active_session_local = threading.local()  # shared thread-local for all sessions
 
 
+def _with_extended_err(params):
+    """Return a copy of ``params`` with ``extended_err=1`` added.
+
+    Accepts any form :mod:`requests` takes for ``params``: ``None``, a
+    mapping, a sequence of ``(key, value)`` pairs, or a query string. If the
+    caller already set ``extended_err``, its value is kept. The input is not
+    modified.
+
+    :param params: Query parameters supplied by the caller.
+
+    :returns: Query parameters including ``extended_err``.
+    """
+    if params is None:
+        return {'extended_err': 1}
+    if isinstance(params, Mapping):
+        return {'extended_err': 1, **params}
+    if isinstance(params, (str, bytes)):
+        text = params.decode() if isinstance(params, bytes) else params
+        if any(p.split('=', 1)[0] == 'extended_err' for p in text.split('&')):
+            return text
+        return f'{text}&extended_err=1' if text else 'extended_err=1'
+    pairs = list(params)
+    if any(k == 'extended_err' for k, _ in pairs):
+        return pairs
+    return [*pairs, ('extended_err', 1)]
+
+
 class ArchiveSession(requests.sessions.Session):
     """The :class:`ArchiveSession <internetarchive.ArchiveSession>`
     object collects together useful functionality from `internetarchive`
@@ -413,13 +440,27 @@ class ArchiveSession(requests.sessions.Session):
         self, identifier: str, request_kwargs: MutableMapping | None = None
     ):
         """Get an item's metadata from the `Metadata API
-        <http://blog.archive.org/2013/07/04/metadata-api/>`__
+        <https://archive.org/developers/md-read.html>`__
+
+        The request always carries ``extended_err=1``, merged into any
+        ``params`` in ``request_kwargs`` (a caller-supplied ``extended_err``
+        is left as given). With it, an identifier that was never created
+        returns ``{}``, and one that exists or existed but cannot be served
+        returns ``{"error": "<text>", "errcode": <int>}`` instead of ``{}``.
+        A normal item's response is unchanged.
 
         :param identifier: Globally unique Archive.org identifier.
 
+        :param request_kwargs: Keyword arguments passed to
+                               :meth:`requests.Session.get`. Not modified.
+
         :returns: Metadata API response.
+
+        :raises requests.exceptions.RequestException: If the request fails
+                                                     or returns an HTTP error.
         """
-        request_kwargs = request_kwargs or {}
+        request_kwargs = dict(request_kwargs or {})
+        request_kwargs['params'] = _with_extended_err(request_kwargs.get('params'))
         url = f'{self.protocol}//{self.host}/metadata/{identifier}'
         if 'timeout' not in request_kwargs:
             request_kwargs['timeout'] = 12

@@ -6,6 +6,7 @@ import time
 
 import pytest
 import responses
+from requests.exceptions import ReadTimeout
 
 from internetarchive import get_item
 from internetarchive.cli.ia_download import (
@@ -702,3 +703,52 @@ def test_build_range_jobs_filename_with_colon():
     parser = argparse.ArgumentParser()
     args = _range_args(['weird:name.warc.gz:0-9'])
     assert build_range_jobs(args, parser) == [('weird:name.warc.gz', 'bytes=0-9')]
+
+
+@pytest.mark.parametrize("failure", [ReadTimeout("metadata timed out"), 503])
+def test_metadata_failure_exits_nonzero(tmpdir_ch, capsys, failure):
+    with IaRequestsMock() as mocker:
+        if isinstance(failure, Exception):
+            mocker.add(
+                responses.GET,
+                "https://archive.org/metadata/unavailable",
+                body=failure,
+            )
+        else:
+            mocker.add(
+                responses.GET,
+                "https://archive.org/metadata/unavailable",
+                status=failure,
+            )
+        ia_call(["ia", "download", "unavailable"], expected_exit_code=1)
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert "unavailable: failed to retrieve item metadata" in err
+    assert not os.path.exists("unavailable")
+
+
+@pytest.mark.parametrize("identifiers", ["unavailable\nnasa\n", "nasa\nunavailable\n"])
+def test_metadata_failure_continues_itemlist(tmpdir_ch, capsys, identifiers):
+    with open("items.txt", "w") as itemlist:
+        itemlist.write(identifiers)
+    with IaRequestsMock() as mocker:
+        mocker.add(
+            responses.GET,
+            "https://archive.org/metadata/unavailable",
+            body=ReadTimeout("metadata timed out"),
+        )
+        mocker.add_metadata_mock("nasa")
+        mocker.add(
+            responses.GET,
+            "https://archive.org/download/nasa/nasa_meta.xml",
+            body=b"downloaded metadata",
+        )
+        ia_call(
+            ["ia", "download", "--itemlist", "items.txt", "--glob", "nasa_meta.xml"],
+            expected_exit_code=1,
+        )
+    assert files_downloaded("nasa") == {"nasa_meta.xml"}
+    with open("nasa/nasa_meta.xml", "rb") as downloaded:
+        assert downloaded.read() == b"downloaded metadata"
+    _out, err = capsys.readouterr()
+    assert "unavailable: failed to retrieve item metadata" in err

@@ -267,15 +267,17 @@ class ArchiveSession(requests.sessions.Session):
         """Rebuild authentication for redirects, except for archive.org URLs.
 
         This override prevents stripping authentication headers when following
-        redirects to archive.org domains. For other domains, the default
+        redirects to archive.org or one of its subdomains (the hostname is
+        compared, so look-alike hosts such as ``evilarchive.org`` do not
+        match). For other domains, the default
         requests behavior is used (which removes auth headers on redirect
         to a different host for security).
 
         :param prepared_request: The redirected request being prepared.
         :param response: The response that triggered the redirect.
         """
-        u = urlparse(prepared_request.url)
-        if u.netloc.endswith('archive.org'):
+        host = urlparse(prepared_request.url).hostname or ''
+        if host == 'archive.org' or host.endswith('.archive.org'):
             return
         super().rebuild_auth(prepared_request, response)
 

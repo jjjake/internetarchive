@@ -89,6 +89,13 @@ def setup(subparsers):
         help="Args to submit to the Tasks API. Can be specified multiple times.",
     )
     parser.add_argument(
+        "-R",
+        "--rerun",
+        type=int,
+        metavar="TASK_ID",
+        help="Rerun a previously submitted task by its task_id.",
+    )
+    parser.add_argument(
         "-d",
         "--data",
         nargs=1,
@@ -157,6 +164,21 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         )
         handle_task_submission_result(r.json(), args.cmd)
         sys.exit(0)
+
+    # Tasks rerun API.
+    if args.rerun:
+        r = args.session.rerun_task(
+            args.rerun,
+            data=args.data,
+            reduced_priority=args.reduced_priority,
+        )
+        result = r.json()
+        if result.get("success"):
+            print(f"success: task {args.rerun} will be rerun", file=sys.stderr)
+            sys.exit(0)
+
+        print(f"error: {result.get('error')}", file=sys.stderr)
+        sys.exit(1)
 
     # A positional identifier selects a metadata query and would silently
     # shadow -G/-f (which take their own task id), so reject the combination.

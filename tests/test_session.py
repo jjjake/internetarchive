@@ -1,5 +1,6 @@
 import os
 
+import requests
 import responses
 
 import internetarchive.session
@@ -225,3 +226,31 @@ def test_cookies():
         assert 'logged-in-sig' not in r.request.headers.get('Cookie', '')
         assert 'logged-in-user' not in r.request.headers.get('Cookie', '')
         assert '.archive.org' not in r.request.headers.get('Cookie', '')
+
+
+def _redirected_auth(url):
+    """Return the Authorization header left after a redirect from archive.org.
+
+    :param url: The URL the redirect points to.
+    :returns: The ``Authorization`` header value, or ``None`` if it was removed.
+    """
+    s = internetarchive.session.ArchiveSession(CONFIG)
+    s.trust_env = False  # keep requests from reading ~/.netrc
+    original = requests.Request('GET', f'{PROTOCOL}//archive.org/').prepare()
+    response = requests.Response()
+    response.request = original
+    redirected = requests.Request(
+        'GET', url, headers={'Authorization': 'LOW a:b'}
+    ).prepare()
+    s.rebuild_auth(redirected, response)
+    return redirected.headers.get('Authorization')
+
+
+def test_rebuild_auth_keeps_auth_for_archive_org_hosts():
+    assert _redirected_auth(f'{PROTOCOL}//archive.org/x') == 'LOW a:b'
+    assert _redirected_auth(f'{PROTOCOL}//ia800.us.archive.org/x') == 'LOW a:b'
+
+
+def test_rebuild_auth_strips_auth_for_lookalike_hosts():
+    assert _redirected_auth(f'{PROTOCOL}//evilarchive.org/x') is None
+    assert _redirected_auth(f'{PROTOCOL}//example.com/archive.org') is None

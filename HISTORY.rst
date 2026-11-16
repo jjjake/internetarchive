@@ -3,6 +3,16 @@
 Release History
 ---------------
 
+5.13.1 (?)
+++++++++++
+
+**Bugfixes**
+
+- ``ArchiveSession`` kept the ``Authorization`` header on redirects to any
+  host whose name ended in ``archive.org``, including unrelated domains such
+  as ``evilarchive.org``. It now keeps it only for ``archive.org`` and its
+  subdomains, and strips it everywhere else as ``requests`` does by default.
+
 5.13.0 (2026-11-16)
 +++++++++++++++++++
 

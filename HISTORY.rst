@@ -54,6 +54,14 @@ Release History
   ``_id`` before the ``|``. ``search_items(..., full_text_search=True)`` still
   yields the hits exactly as the API returns them.
 
+**Security**
+
+- Development and CI dependencies updated past their open advisories:
+  virtualenv 21.15.6 (was 21.14.12) and filelock 4.2.10 (was 3.32.3). On
+  Python 3.10 filelock stays at 4.1.0, the last release that supports it, which
+  still has open advisories. The security notice in the README now names the
+  correct fixed version, v5.5.1 (it said v5.4.2, which was never released).
+
 5.12.1 (2026-10-22)
 +++++++++++++++++++
 

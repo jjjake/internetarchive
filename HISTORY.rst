@@ -3,8 +3,8 @@
 Release History
 ---------------
 
-5.13.0 (?)
-++++++++++
+5.13.0 (2026-11-16)
++++++++++++++++++++
 
 **Features and Improvements**
 
@@ -37,12 +37,6 @@ Release History
   attributes set from the previous response, so an item that was deleted
   or became unreadable no longer keeps its old ``files`` and ``metadata``.
   ``load({})`` now replaces the previous response instead of being ignored.
-
-5.12.2 (?)
-++++++++++
-
-**Bugfixes**
-
 - ``ia search --fts`` and ``search_items(..., full_text_search=True)`` returned
   no results after the full-text search API began validating parameter types:
   the request sent ``scroll`` as the string ``"true"``, which the API now

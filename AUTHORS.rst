@@ -19,3 +19,4 @@ Patches and Suggestions
 -----------------------
 
 - VM Brasseur
+- Nathan Suttie

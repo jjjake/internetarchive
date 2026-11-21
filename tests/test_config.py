@@ -86,6 +86,18 @@ def test_get_config_with_config_file(tmpdir):
     assert config['custom'] == 'test'
 
 
+def test_get_config_general_section_without_screenname(tmpdir):
+    # The documented way to set only a user agent suffix.
+    test_conf = '[general]\nuser_agent_suffix = MyApp/1.0\n'
+
+    tmpdir.chdir()
+    with open('ia_test.ini', 'w') as fp:
+        fp.write(test_conf)
+
+    config = internetarchive.config.get_config(config_file='ia_test.ini')
+    assert config['general'] == {'user_agent_suffix': 'MyApp/1.0'}
+
+
 def test_get_config_no_config_file():
     with _environ(HOME='', XDG_CONFIG_HOME=None, IA_CONFIG_FILE=None):
         config = internetarchive.config.get_config()

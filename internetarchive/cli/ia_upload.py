@@ -220,6 +220,17 @@ def validate_file(arg):
         raise argparse.ArgumentTypeError(f"'{arg}' is not a valid file or directory")
 
 
+def _keep_directory_paths(paths):
+    """Map local paths to the same remote paths without duplicating directory names.
+
+    :param paths: Local file and directory paths.
+    :returns: Remote-name mapping suitable for :meth:`Item.upload`.
+    """
+    # A trailing slash makes Item.upload append only the directory contents to
+    # the explicit remote name, rather than append the local directory again.
+    return {p: p.rstrip('/') + '/' if os.path.isdir(p) else p for p in paths}
+
+
 def main(args, parser):  # noqa: PLR0912,C901
     # TODO: Refactor to deal with PLR0912 and C901
     # add type hints
@@ -330,7 +341,7 @@ def main(args, parser):  # noqa: PLR0912,C901
         if args.remote_name:
             files = {args.remote_name: local_file}
         elif args.keep_directories:
-            files = {f: f for f in local_file}
+            files = _keep_directory_paths(local_file)
         else:
             files = local_file
 
@@ -369,7 +380,7 @@ def main(args, parser):  # noqa: PLR0912,C901
                     local_file = {row["REMOTE_NAME"]: row["file"]}
                     del row["REMOTE_NAME"]
                 elif args.keep_directories:
-                    local_file = {row["file"]: row["file"]}
+                    local_file = _keep_directory_paths([row["file"]])
                 else:
                     local_file = row["file"]
                 identifier = row.get("item", row.get("identifier"))

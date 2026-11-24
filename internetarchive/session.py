@@ -639,7 +639,7 @@ class ArchiveSession(requests.sessions.Session):
 
         :param data: Extra POST data to submit with
                      the request. Refer to `Tasks API Rerunning a Task
-                     <https://archive.org/services/docs/api/tasks.html#rerunning-a-task>`__.
+                     <https://archive.org/developers/tasks.html#rerunning-a-task>`__.
 
         :param headers: Add additional headers to request.
 
@@ -650,7 +650,7 @@ class ArchiveSession(requests.sessions.Session):
                                  subject to rate-limiting.
 
         :param request_kwargs: Keyword arguments to be used in
-                               :meth:`requests.sessions.Session.post` request.
+                               :meth:`requests.sessions.Session.put` request.
 
         :returns: :class:`requests.Response`
         """

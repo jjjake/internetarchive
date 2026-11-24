@@ -214,3 +214,61 @@ def test_ia_tasks_follow_task_log_request_error(capsys, monkeypatch):
     _out, err = capsys.readouterr()
     assert 'error: connection reset' in err
     assert 'Traceback' not in err
+
+
+def test_ia_tasks_rerun_success(capsys):
+    """``ia tasks --rerun ID`` PUTs the rerun and exits 0 on success."""
+    with IaRequestsMock() as rsps:
+        rsps.add(
+            responses.PUT,
+            TASKS_URL,
+            json={'success': True},
+            match=[
+                responses.matchers.json_params_matcher({'op': 'rerun', 'task_id': 123})
+            ],
+        )
+        ia_call(['ia', 'tasks', '--rerun', '123'])
+    _out, err = capsys.readouterr()
+    assert 'success: task 123 will be rerun' in err
+
+
+def test_ia_tasks_rerun_error(capsys):
+    """``ia tasks --rerun ID`` prints the API error and exits 1 on failure."""
+    with IaRequestsMock() as rsps:
+        rsps.add(
+            responses.PUT,
+            TASKS_URL,
+            json={'success': False, 'error': 'task is not failed'},
+        )
+        ia_call(['ia', 'tasks', '--rerun', '123'], expected_exit_code=1)
+    _out, err = capsys.readouterr()
+    assert 'error: task is not failed' in err
+
+
+def test_ia_tasks_rerun_and_cmd_rejected():
+    """``--rerun`` plus ``-c`` is rejected (exit 2); no request is sent."""
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        ia_call(
+            ['ia', 'tasks', '--rerun', '123', '-c', 'make_dark.php'],
+            expected_exit_code=2,
+        )
+        assert len(rsps.calls) == 0
+
+
+def test_ia_tasks_rerun_ignores_identifier(capsys):
+    """A positional identifier with ``--rerun`` is accepted and ignored.
+
+    The rerun needs only the task id, so the identifier is not sent.
+    """
+    with IaRequestsMock() as rsps:
+        rsps.add(
+            responses.PUT,
+            TASKS_URL,
+            json={'success': True},
+            match=[
+                responses.matchers.json_params_matcher({'op': 'rerun', 'task_id': 123})
+            ],
+        )
+        ia_call(['ia', 'tasks', 'foo', '--rerun', '123'])
+    _out, err = capsys.readouterr()
+    assert 'success: task 123 will be rerun' in err

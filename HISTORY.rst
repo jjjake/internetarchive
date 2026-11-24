@@ -6,12 +6,25 @@ Release History
 5.13.1 (?)
 ++++++++++
 
+**Features and Improvements**
+
+- Catalog tasks can be rerun with ``ia tasks -R/--rerun TASK_ID``,
+  ``ArchiveSession.rerun_task()``, ``Catalog.rerun_task()`` and
+  ``CatalogTask.rerun()``, which raises ``ValueError`` unless the task is red.
+  ``ia tasks`` rejects ``--rerun`` combined with ``-c/--cmd``. Thanks to
+  `@DigitalDwagon <https://github.com/DigitalDwagon>`_
+  (`#806 <https://github.com/jjjake/internetarchive/pull/806>`_).
+
 **Bugfixes**
 
 - ``ArchiveSession`` kept the ``Authorization`` header on redirects to any
   host whose name ended in ``archive.org``, including unrelated domains such
   as ``evilarchive.org``. It now keeps it only for ``archive.org`` and its
   subdomains, and strips it everywhere else as ``requests`` does by default.
+- Reading a config file whose ``[general]`` section has no ``screenname``
+  raised ``configparser.NoOptionError``; it is now treated as unset, thanks to
+  `@saisriramlanke <https://github.com/saisriramlanke>`_
+  (`#851 <https://github.com/jjjake/internetarchive/pull/851>`_).
 
 5.13.0 (2026-11-16)
 +++++++++++++++++++

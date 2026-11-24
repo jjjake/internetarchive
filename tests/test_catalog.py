@@ -607,3 +607,79 @@ def test_follow_task_log_4xx_is_fatal(monkeypatch):
         with pytest.raises(requests.exceptions.HTTPError):
             list(CatalogTask.follow_task_log(123, _session()))
         assert len(rsps.calls) == 1
+
+
+def test_rerun_task_sends_put_with_json_body():
+    """``Catalog.rerun_task`` PUTs ``{"op": "rerun", "task_id": ...}`` as JSON."""
+    with IaRequestsMock() as rsps:
+        rsps.add(
+            responses.PUT,
+            TASKS_URL,
+            json={'success': True},
+            match=[
+                responses.matchers.json_params_matcher({'op': 'rerun', 'task_id': 123})
+            ],
+        )
+        r = Catalog(_session()).rerun_task(123)
+    assert r.json() == {'success': True}
+
+
+def test_session_rerun_task_merges_data():
+    """Extra ``data`` is merged into the rerun request's JSON body."""
+    with IaRequestsMock() as rsps:
+        rsps.add(
+            responses.PUT,
+            TASKS_URL,
+            json={'success': True},
+            match=[
+                responses.matchers.json_params_matcher(
+                    {'op': 'rerun', 'task_id': 123, 'priority': 5}
+                )
+            ],
+        )
+        _session().rerun_task(123, data={'priority': 5})
+
+
+def test_session_rerun_task_reduced_priority_header():
+    """``reduced_priority=True`` sends ``X-Accept-Reduced-Priority: 1``."""
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.PUT, TASKS_URL, json={'success': True})
+        _session().rerun_task(123, reduced_priority=True)
+        assert rsps.calls[0].request.headers['X-Accept-Reduced-Priority'] == '1'
+
+
+def test_session_rerun_task_no_reduced_priority_header_by_default():
+    """Without ``reduced_priority`` the ``X-Accept-Reduced-Priority`` header is absent."""
+    with IaRequestsMock() as rsps:
+        rsps.add(responses.PUT, TASKS_URL, json={'success': True})
+        _session().rerun_task(123)
+        assert 'X-Accept-Reduced-Priority' not in rsps.calls[0].request.headers
+
+
+@pytest.mark.parametrize('color', [None, 'green', 'blue'])
+def test_catalog_task_rerun_rejects_non_red_task(color):
+    """``CatalogTask.rerun`` raises ``ValueError`` unless the task is red."""
+    task_dict = {'task_id': 123}
+    if color:
+        task_dict['color'] = color
+    task = CatalogTask(task_dict, Catalog(_session()))
+    with IaRequestsMock(assert_all_requests_are_fired=False) as rsps:
+        with pytest.raises(ValueError, match='Only failed tasks'):
+            task.rerun()
+        assert len(rsps.calls) == 0
+
+
+def test_catalog_task_rerun_red_task_sends_request():
+    """A red (failed) task is rerun with a PUT for its task_id."""
+    task = CatalogTask({'task_id': 123, 'color': 'red'}, Catalog(_session()))
+    with IaRequestsMock() as rsps:
+        rsps.add(
+            responses.PUT,
+            TASKS_URL,
+            json={'success': True},
+            match=[
+                responses.matchers.json_params_matcher({'op': 'rerun', 'task_id': 123})
+            ],
+        )
+        r = task.rerun()
+    assert r.json() == {'success': True}

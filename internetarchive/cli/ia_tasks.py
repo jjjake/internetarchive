@@ -147,6 +147,11 @@ def main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     args.task_args = args.task_args or {}
     args.data = args.data or {}
 
+    # With -c, a new task would be submitted and --rerun silently skipped, so
+    # reject the combination.
+    if args.rerun is not None and args.cmd:
+        parser.error("argument -R/--rerun: not allowed with -c/--cmd")
+
     # Tasks write API.
     if args.cmd:
         if args.get_rate_limit:

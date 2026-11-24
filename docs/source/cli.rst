@@ -500,6 +500,12 @@ Any other ``-p`` parameters are forwarded to the Tasks API on each poll.
 Press Ctrl-C to stop following at any time. Transient network or server
 errors are retried for a short period before giving up.
 
+To rerun a failed task, use ``-R/--rerun`` with the task id:
+
+.. code:: console
+
+    $ ia tasks --rerun <task_id>
+
 See ``ia tasks --help`` for more details.
 
 

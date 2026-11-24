@@ -12,6 +12,8 @@ Release History
   host whose name ended in ``archive.org``, including unrelated domains such
   as ``evilarchive.org``. It now keeps it only for ``archive.org`` and its
   subdomains, and strips it everywhere else as ``requests`` does by default.
+- ``ia account`` looked up an email address as a screenname when its domain had
+  more than two labels (e.g. ``foo@example.co.uk`` or ``foo@mail.example.org``).
 
 5.13.0 (2026-11-16)
 +++++++++++++++++++

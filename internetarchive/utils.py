@@ -611,14 +611,15 @@ def parse_dict_cookies(value: str) -> dict[str, str | None]:
 def is_valid_email(email):
     """Check if a string is a valid email address format.
 
-    Uses a simple regex that requires a TLD of at least 2 characters.
+    Uses a simple regex that requires a TLD of at least 2 characters. The domain
+    may have any number of labels (e.g. ``example.com``, ``mail.example.co.uk``).
 
     :param email: The email address string to validate.
     :returns: ``True`` if the email format is valid, ``False`` otherwise.
     """
     # Regular expression pattern for a valid email address
     # Ensures the TLD has at least 2 characters
-    pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$'
+    pattern = r'^[a-zA-Z0-9_.+-]+@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
 

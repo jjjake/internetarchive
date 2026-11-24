@@ -122,6 +122,38 @@ def test_is_valid_metadata_key():
         assert not internetarchive.utils.is_valid_metadata_key(metadata_key)
 
 
+@pytest.mark.parametrize(
+    'email',
+    [
+        'foo@example.com',
+        'foo.bar+baz@example.com',
+        'foo@example.co.uk',
+        'foo@mail.example.org',
+        'foo@cs.dept.example.edu',
+    ],
+)
+def test_is_valid_email(email):
+    assert internetarchive.utils.is_valid_email(email)
+
+
+@pytest.mark.parametrize(
+    'email',
+    [
+        'foo',
+        '@foo',
+        'foo@example',
+        'foo@example.c',
+        'foo@.example.com',
+        'foo@example..com',
+        'foo@example.co.uk.',
+        'foo@bar@example.com',
+        'foo bar@example.com',
+    ],
+)
+def test_is_valid_email_invalid(email):
+    assert not internetarchive.utils.is_valid_email(email)
+
+
 def test_is_windows():
     with (
         patch('platform.system', return_value='Windows'),

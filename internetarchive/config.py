@@ -190,7 +190,7 @@ def parse_config_file(config_file=None) -> tuple:
         for k, _v in config.items('general'):
             if k in ['secure']:
                 config.set('general', k, str(config.getboolean('general', k)))
-        if not config.get('general', 'screenname'):
+        if not config.get('general', 'screenname', fallback=None):
             config.set('general', 'screenname', None)
     else:
         config.add_section('general')

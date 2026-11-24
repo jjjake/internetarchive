@@ -14,6 +14,7 @@ Contributors
 - Bryce Drennan <internetarchive@brycedrennan.com>
 - Max Zettlmeißl <max@zettlmeissl.de>
 - Ian Tait <thetaiter@gmail.com>
+- Sinkleberg
 
 Patches and Suggestions
 -----------------------

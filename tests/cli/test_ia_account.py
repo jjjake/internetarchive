@@ -1,5 +1,6 @@
 import json
 
+import pytest
 import responses
 
 from tests.conftest import IaRequestsMock, ia_call
@@ -32,6 +33,25 @@ def test_ia_account_lookup(capsys):
         assert rsps.calls[0].request.body == 'screenname=foo'
     out, _err = capsys.readouterr()
     assert json.loads(out) == ACCOUNT_VALUES
+
+
+@pytest.mark.parametrize(
+    ('email', 'body'),
+    [
+        ('foo@example.com', 'email=foo%40example.com'),
+        ('foo@example.co.uk', 'email=foo%40example.co.uk'),
+        ('foo@mail.example.org', 'email=foo%40mail.example.org'),
+    ],
+)
+def test_ia_account_lookup_by_email(capsys, email, body):
+    with IaRequestsMock() as rsps:
+        rsps.add(
+            responses.POST,
+            XAUTHN_URL,
+            json={'success': True, 'values': ACCOUNT_VALUES},
+        )
+        ia_call(['ia', 'account', email])
+        assert rsps.calls[0].request.body == body
 
 
 def test_ia_account_api_error_prints_response(capsys):

@@ -9,7 +9,7 @@ from internetarchive import ArchiveSession
 
 
 def test_socket_instrumented_before_session_creation():
-    result = subprocess.run(  # noqa: S603 -- the interpreter and script are fixed test inputs.
+    result = subprocess.run(
         [
             sys.executable,
             '-c',
@@ -66,7 +66,7 @@ def test_connection_info_is_shared_per_thread(tmp_path):
 
 
 def test_reloading_session_does_not_stack_socket_wrappers():
-    result = subprocess.run(  # noqa: S603 -- the interpreter and script are fixed test inputs.
+    result = subprocess.run(
         [
             sys.executable,
             '-c',
